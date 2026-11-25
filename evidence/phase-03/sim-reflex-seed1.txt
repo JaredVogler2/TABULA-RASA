@@ -1,0 +1,126 @@
+# 2026-11-25T03:34:01Z — headless reference runs (reflex policy), each executed twice and compared
+TABULA RASA headless run — scenario=first_light seed=1 days=40 policy=reflex population=50
+world 64×64  land 2047 (50.0%)  streams 107  ponds 28  drinkable tiles 471
+biomes  sea 2049  shore 208  wetland 122  meadow 653  forest 556  scrub 183  highland 325
+nodes   berry_bush 107 (stock 950)  root_patch 86 (stock 499)  tree 269 (stock 3530)  reed_bed 71 (stock 607)  stone_outcrop 47 (stock 2355)  clay_bank 11 (stock 349)  fishing_water 26 (stock 421)
+terrain hash 706c1b04cbe3cdb8  config hash a1f6acaebb0b4a49
+day   0 spring    5.4°C clear     alive  50  E 813 H 819 R 929 W1000 hp1000  food carried  118 wild  1870  fires 0 shelters 0 stores 0 plots 0
+day   5 spring    8.7°C overcast  alive  50  E 896 H 760 R 953 W 991 hp1000  food carried  165 wild  1494  fires 0 shelters 0 stores 0 plots 0
+day  10 summer   16.8°C overcast  alive  50  E 898 H 734 R 704 W1000 hp1000  food carried  169 wild  1323  fires 0 shelters 0 stores 0 plots 0
+day  15 summer   21.8°C clear     alive  50  E 876 H 709 R 505 W1000 hp1000  food carried  162 wild  1177  fires 0 shelters 0 stores 0 plots 0
+day  20 autumn   18.4°C clear     alive  50  E 858 H 692 R 615 W1000 hp1000  food carried  165 wild  1094  fires 0 shelters 0 stores 0 plots 0
+day  25 autumn    8.7°C overcast  alive  50  E 862 H 742 R 925 W 995 hp1000  food carried  173 wild   725  fires 0 shelters 0 stores 0 plots 0
+day  30 winter   -0.6°C snow      alive  50  E 776 H 724 R 970 W 614 hp1000  food carried  204 wild   417  fires 0 shelters 0 stores 0 plots 0
+day  35 winter   -1.4°C overcast  alive  50  E 679 H 672 R 853 W 659 hp 988  food carried   67 wild    97  fires 3 shelters 0 stores 0 plots 0
+day  39 winter   -1.8°C snow      alive  48  E 125 H 513 R 196 W 738 hp 787  food carried    1 wild    27  fires 0 shelters 0 stores 0 plots 0
+day  40 spring    2.2°C clear     alive  41  E  73 H 377 R  81 W 824 hp 616  food carried    1 wild    21  fires 0 shelters 0 stores 0 plots 0
+
+ticks 3840  events 28208  wall 960 ms  (4001 ticks/s, 5.00 µs per agent-tick)
+survival 82.0%  welfare 53.8% (living 54.0%)  gini 0.288  cooperation 0/1000 agent-days  specialization 0.529  commons min 0.2%
+deaths {"hunger":9}  structures built 15  decisions 11705  rejected intents 756  utterances 0
+events  gather 4099  eat 3621  drink 2667  decision:forage 2599  decision:eat 2090  sleep 2053  wake 2051  decision:sleep 1986  decision:drink 1983  decision:explore 1818  decision:idle 869  rejected:nothing_to_gather 627  spoil 605  decision:warm 360  depleted 226  rejected:contested 126  weather 101  recovered 86  fire_out 50  refuel 45  day 39  supply 30  ill 18  found 15  built 15  recover 14  death:hunger 9  rejected:no_item 3  season 3
+goods   root 1  wood 59  stone 27
+final digest e2f7c44b11033d1e  snapshot 6084f3d52ae18c11c44d35150231889e8971eb1e91c2bd8285a7186dab8e8441  (814 KiB)
+
+replay  IDENTICAL  second run snapshot 6084f3d52ae18c11c44d35150231889e8971eb1e91c2bd8285a7186dab8e8441
+
+TABULA RASA headless run — scenario=long_winter seed=1 days=40 policy=reflex population=50
+world 64×64  land 2047 (50.0%)  streams 107  ponds 28  drinkable tiles 471
+biomes  sea 2049  shore 208  wetland 122  meadow 653  forest 556  scrub 183  highland 325
+nodes   berry_bush 107 (stock 950)  root_patch 86 (stock 499)  tree 269 (stock 3530)  reed_bed 71 (stock 607)  stone_outcrop 47 (stock 2355)  clay_bank 11 (stock 349)  fishing_water 26 (stock 421)
+terrain hash 706c1b04cbe3cdb8  config hash 8c9aefe54ec4b2be
+day   0 summer   25.0°C clear     alive  50  E 813 H 819 R 929 W1000 hp1000  food carried  118 wild  1870  fires 0 shelters 0 stores 0 plots 0
+day   5 autumn   15.1°C overcast  alive  50  E 881 H 724 R 672 W1000 hp1000  food carried  164 wild  1481  fires 0 shelters 0 stores 0 plots 0
+day  10 autumn    2.1°C overcast  alive  50  E 755 H 709 R 885 W 900 hp1000  food carried  211 wild  1112  fires 0 shelters 0 stores 0 plots 0
+day  15 winter   -6.7°C clear     alive  50  E 686 H 689 R 616 W 300 hp 887  food carried  120 wild   600  fires 6 shelters 0 stores 0 plots 0
+day  20 winter   -7.1°C overcast  alive  39  E 330 H 499 R 489 W 158 hp 725  food carried   36 wild   354  fires 5 shelters 0 stores 0 plots 0
+day  25 winter   -6.7°C clear     alive   7  E 219 H 394 R 148 W  76 hp 524  food carried   16 wild   318  fires 2 shelters 0 stores 0 plots 0
+day  30 spring    0.9°C snow      alive   1  E 219 H 324 R 464 W 399 hp 111  food carried    6 wild   412  fires 0 shelters 0 stores 0 plots 0
+day  35 spring   16.7°C clear     alive   1  E 753 H 744 R 974 W1000 hp 548  food carried    6 wild   593  fires 0 shelters 0 stores 0 plots 0
+day  39 summer   20.0°C overcast  alive   1  E 786 H 981 R 803 W1000 hp 919  food carried    6 wild   773  fires 0 shelters 0 stores 0 plots 0
+day  40 summer   21.8°C clear     alive   1  E 985 H 598 R 821 W1000 hp1000  food carried    5 wild   822  fires 0 shelters 0 stores 0 plots 0
+
+ticks 3840  events 21334  wall 400 ms  (9609 ticks/s, 2.08 µs per agent-tick)
+survival 2.0%  welfare 23.6% (living 42.4%)  gini 0.218  cooperation 0/1000 agent-days  specialization 0.454  commons min 6.2%
+deaths {"cold":30,"hunger":17,"exhaustion":2}  structures built 14  decisions 8775  rejected intents 90  utterances 0
+events  decision:warm 3527  sleep 2724  wake 2724  gather 2637  eat 1864  drink 1483  decision:explore 1184  decision:forage 1058  decision:eat 1049  decision:drink 1020  decision:sleep 930  spoil 365  recovered 113  refuel 110  weather 103  fire_out 100  depleted 78  rejected:nothing_to_gather 48  rejected:contested 40  day 39  death:cold 30  supply 28  death:hunger 17  found 14  built 14  ill 11  decision:idle 7  pickup 5  season 4  recover 4  death:exhaustion 2  rejected:no_item 1  rejected:fire_full 1
+goods   root 5  wood 74  stone 36
+final digest 632f1b24693fcaa7  snapshot 11a2e26b027677dc68f6e17ad603a16206e11b1625171a542d87d41c79a97299  (787 KiB)
+
+replay  IDENTICAL  second run snapshot 11a2e26b027677dc68f6e17ad603a16206e11b1625171a542d87d41c79a97299
+
+TABULA RASA headless run — scenario=thin_commons seed=1 days=40 policy=reflex population=50
+world 64×64  land 2047 (50.0%)  streams 107  ponds 28  drinkable tiles 471
+biomes  sea 2049  shore 208  wetland 122  meadow 653  forest 556  scrub 183  highland 325
+nodes   berry_bush 61 (stock 805)  root_patch 47 (stock 395)  tree 148 (stock 2947)  reed_bed 34 (stock 456)  stone_outcrop 22 (stock 1632)  clay_bank 9 (stock 472)  fishing_water 15 (stock 361)
+terrain hash 706c1b04cbe3cdb8  config hash 06c4b13598c16fa1
+day   0 spring    5.4°C clear     alive  50  E 813 H 819 R 929 W1000 hp1000  food carried  118 wild  1561  fires 0 shelters 0 stores 0 plots 0
+day   5 spring    8.7°C overcast  alive  50  E 885 H 719 R 935 W 990 hp1000  food carried  162 wild  1087  fires 0 shelters 0 stores 0 plots 0
+day  10 summer   16.8°C overcast  alive  50  E 894 H 768 R 669 W1000 hp1000  food carried  154 wild   711  fires 0 shelters 0 stores 0 plots 0
+day  15 summer   21.8°C clear     alive  50  E 860 H 767 R 444 W1000 hp1000  food carried  147 wild   351  fires 0 shelters 0 stores 0 plots 0
+day  20 autumn   18.4°C clear     alive  50  E 780 H 683 R 524 W1000 hp1000  food carried   63 wild    74  fires 0 shelters 0 stores 0 plots 0
+day  25 autumn    8.7°C overcast  alive  46  E  70 H 441 R  88 W 999 hp 712  food carried    0 wild     1  fires 0 shelters 0 stores 0 plots 0
+day  30 winter   -0.6°C snow      alive   5  E 117 H 392 R 113 W 737 hp 331  food carried    1 wild    12  fires 0 shelters 0 stores 0 plots 0
+day  35 winter   -1.4°C overcast  alive   0  E   0 H   0 R   0 W   0 hp   0  food carried    0 wild    19  fires 0 shelters 0 stores 0 plots 0
+day  39 winter   -1.8°C snow      alive   0  E   0 H   0 R   0 W   0 hp   0  food carried    0 wild    33  fires 0 shelters 0 stores 0 plots 0
+day  40 spring    2.2°C clear     alive   0  E   0 H   0 R   0 W   0 hp   0  food carried    0 wild    36  fires 0 shelters 0 stores 0 plots 0
+
+ticks 3840  events 19011  wall 391 ms  (9810 ticks/s, 2.04 µs per agent-tick)
+survival 0.0%  welfare 29.7% (living 43.7%)  gini 0.259  cooperation 0/1000 agent-days  specialization 0.659  commons min 0.1%
+deaths {"hunger":47,"exhaustion":3}  structures built 1  decisions 7658  rejected intents 747  utterances 0
+events  gather 2471  eat 2277  decision:forage 2136  drink 1879  sleep 1463  wake 1463  decision:sleep 1437  decision:explore 1387  decision:eat 1349  decision:drink 1309  rejected:nothing_to_gather 646  spoil 353  depleted 281  recovered 198  weather 101  rejected:contested 97  death:hunger 47  decision:warm 40  day 39  ill 11  recover 7  rejected:no_item 4  supply 4  season 3  death:exhaustion 3  found 2  fire_out 2  built 1  refuel 1
+goods   wood 5
+final digest 24e8bc35be26d6a1  snapshot b03be578d6309540089d9c7373db7a67b7c601bdbec2e7899dc77d4cc5a8bdee  (623 KiB)
+
+replay  IDENTICAL  second run snapshot b03be578d6309540089d9c7373db7a67b7c601bdbec2e7899dc77d4cc5a8bdee
+
+TABULA RASA headless run — scenario=two_shores seed=1 days=40 policy=reflex population=50
+world 64×64  land 2053 (50.1%)  streams 107  ponds 21  drinkable tiles 470
+biomes  sea 2043  shore 223  wetland 123  meadow 646  forest 552  scrub 182  highland 327
+nodes   berry_bush 109 (stock 983)  root_patch 79 (stock 430)  tree 274 (stock 3618)  reed_bed 71 (stock 609)  stone_outcrop 40 (stock 1983)  clay_bank 12 (stock 374)  fishing_water 30 (stock 481)
+terrain hash fb83dd1c91264954  config hash 1e108e9dcca07543
+day   0 spring    5.4°C clear     alive  50  E 813 H 819 R 929 W1000 hp1000  food carried  118 wild  1894  fires 0 shelters 0 stores 0 plots 0
+day   5 spring    8.7°C overcast  alive  50  E 856 H 717 R 903 W 990 hp1000  food carried  171 wild  1532  fires 0 shelters 0 stores 0 plots 0
+day  10 summer   16.8°C overcast  alive  50  E 860 H 754 R 638 W1000 hp1000  food carried  150 wild  1349  fires 0 shelters 0 stores 0 plots 0
+day  15 summer   21.8°C clear     alive  50  E 831 H 723 R 482 W1000 hp1000  food carried  152 wild  1266  fires 0 shelters 0 stores 0 plots 0
+day  20 autumn   18.4°C clear     alive  50  E 818 H 654 R 503 W1000 hp1000  food carried  157 wild  1057  fires 0 shelters 0 stores 0 plots 0
+day  25 autumn    8.7°C overcast  alive  50  E 810 H 667 R 688 W 996 hp1000  food carried  137 wild   639  fires 0 shelters 0 stores 0 plots 0
+day  30 winter   -0.6°C snow      alive  50  E 704 H 689 R 805 W 755 hp 998  food carried  142 wild   319  fires 0 shelters 0 stores 0 plots 0
+day  35 winter   -1.4°C overcast  alive  50  E 381 H 567 R 484 W 508 hp 902  food carried   20 wild    53  fires 3 shelters 0 stores 0 plots 0
+day  39 winter   -1.8°C snow      alive  22  E  75 H 431 R 141 W 726 hp 546  food carried    1 wild    36  fires 0 shelters 0 stores 0 plots 0
+day  40 spring    2.2°C clear     alive  14  E  96 H 497 R 188 W 777 hp 498  food carried    1 wild    31  fires 0 shelters 0 stores 0 plots 0
+
+ticks 3840  events 26737  wall 681 ms  (5636 ticks/s, 3.55 µs per agent-tick)
+survival 28.0%  welfare 44.0% (living 45.9%)  gini 0.362  cooperation 0/1000 agent-days  specialization 0.539  commons min 0.3%
+deaths {"hunger":32,"cold":4}  structures built 12  decisions 10504  rejected intents 601  utterances 0
+events  gather 3884  eat 3496  drink 2589  decision:forage 2425  sleep 2178  wake 2175  decision:sleep 2008  decision:eat 1915  decision:explore 1768  decision:drink 1760  spoil 580  rejected:nothing_to_gather 483  decision:warm 438  depleted 276  decision:idle 190  recovered 122  rejected:contested 114  weather 101  fire_out 42  day 39  refuel 32  death:hunger 32  supply 24  ill 15  recover 14  found 12  built 12  rejected:no_item 4  death:cold 4  season 3  pickup 2
+goods   berry 1  wood 78  stone 12
+final digest 0a25f4d9b1e5aadb  snapshot 5471df7064cd8812b5edbeccdf43787e6d89c56107e089d573f02a14b9c2e169  (794 KiB)
+
+replay  IDENTICAL  second run snapshot 5471df7064cd8812b5edbeccdf43787e6d89c56107e089d573f02a14b9c2e169
+
+TABULA RASA headless run — scenario=dry_year seed=1 days=40 policy=reflex population=50
+world 64×64  land 2047 (50.0%)  streams 107  ponds 28  drinkable tiles 471
+biomes  sea 2049  shore 208  wetland 122  meadow 653  forest 556  scrub 183  highland 325
+nodes   berry_bush 107 (stock 950)  root_patch 86 (stock 499)  tree 269 (stock 3530)  reed_bed 71 (stock 607)  stone_outcrop 47 (stock 2355)  clay_bank 11 (stock 349)  fishing_water 26 (stock 421)
+terrain hash 706c1b04cbe3cdb8  config hash 39a9759bacdbcb3f
+day   0 spring    5.4°C clear     alive  50  E 813 H 819 R 929 W1000 hp1000  food carried  118 wild  1870  fires 0 shelters 0 stores 0 plots 0
+day   5 spring    8.7°C overcast  alive  50  E 896 H 760 R 953 W 991 hp1000  food carried  165 wild  1494  fires 0 shelters 0 stores 0 plots 0
+day  10 summer   16.8°C overcast  alive  50  E 873 H 710 R 643 W1000 hp 998  food carried  153 wild  1206  fires 0 shelters 0 stores 0 plots 0
+day  15 summer   21.8°C clear     alive  50  E 868 H 689 R 484 W1000 hp1000  food carried  138 wild   566  fires 0 shelters 0 stores 0 plots 0
+day  20 autumn   18.4°C clear     alive  50  E 648 H 537 R 365 W1000 hp 994  food carried   69 wild   212  fires 0 shelters 0 stores 0 plots 0
+day  25 autumn    8.7°C overcast  alive  47  E 357 H 533 R 355 W 999 hp 870  food carried    5 wild    46  fires 0 shelters 0 stores 0 plots 0
+day  30 winter   -0.6°C snow      alive  24  E  92 H 453 R 127 W 747 hp 574  food carried    0 wild    10  fires 0 shelters 0 stores 0 plots 0
+day  35 winter   -1.4°C overcast  alive   3  E  99 H 345 R  53 W 193 hp  80  food carried    0 wild    12  fires 0 shelters 0 stores 0 plots 0
+day  39 winter   -1.8°C snow      alive   0  E   0 H   0 R   0 W   0 hp   0  food carried    0 wild    38  fires 0 shelters 0 stores 0 plots 0
+day  40 spring    2.2°C clear     alive   0  E   0 H   0 R   0 W   0 hp   0  food carried    0 wild    44  fires 0 shelters 0 stores 0 plots 0
+
+ticks 3840  events 20753  wall 496 ms  (7736 ticks/s, 2.59 µs per agent-tick)
+survival 0.0%  welfare 30.9% (living 41.6%)  gini 0.354  cooperation 0/1000 agent-days  specialization 0.651  commons min 0.0%
+deaths {"hunger":46,"cold":4}  structures built 1  decisions 8215  rejected intents 863  utterances 0
+events  gather 2780  eat 2425  decision:forage 2415  drink 2003  decision:sleep 1588  sleep 1587  wake 1587  decision:eat 1504  decision:drink 1372  decision:explore 1308  rejected:nothing_to_gather 755  depleted 425  spoil 385  recovered 268  rejected:contested 105  weather 96  death:hunger 46  day 39  decision:warm 23  ill 10  recover 7  decision:idle 5  supply 4  death:cold 4  season 3  rejected:no_item 2  found 2  shock 1  rejected:not_fresh 1  pickup 1  built 1  fire_out 1
+goods   wood 13
+final digest ff0f84029553de73  snapshot e91353e5f189f3393de23cbd63cb1ef7470cda255aa9d8859f694949339424aa  (773 KiB)
+
+replay  IDENTICAL  second run snapshot e91353e5f189f3393de23cbd63cb1ef7470cda255aa9d8859f694949339424aa
+

@@ -1,6 +1,6 @@
 # Affordance registry
 
-> Generated from `src/engine/affordances.ts` (affordance version `2026.11-a`). Do not edit by hand; run `pnpm gen:affordances`.
+> Generated from `src/engine/affordances.ts` (affordance version `2026.11-b`). Do not edit by hand; run `pnpm gen:affordances`.
 
 Everything the designers supplied to the world. Read any claim that something *emerged* against this list: agents invent within these affordances; they did not invent the affordances. Entries marked *planned* describe the design and are not yet in the engine.
 
@@ -10,14 +10,14 @@ The physical stage: land, water, seasons, weather and the laws by which resource
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **A bounded island**<br>`world.island` | A seed-generated island on a square grid (default 64×64 tiles) with elevation, sea, streams, ponds and biomes (shore, wetland, meadow, forest, scrub, highland). The sea bounds the world; nobody can leave. | A closed world makes resources finite and neighbours unavoidable. Grid resolution limits how fine-grained territory can be. | `size, landFraction, relief` | planned |
-| **Days, seasons and years**<br>`world.time` | 96 ticks per day, 10 days per season, four seasons per year. Daylight, temperature and plant growth follow fixed seasonal and daily curves. | Seasonality creates a predictable period of scarcity (winter) that rewards foresight and storage. | `daysPerSeason, winterSeverity, startDay` | planned |
-| **Weather**<br>`world.weather` | Clear, overcast, rain, storm and (in winter) snow, drawn from a seasonal Markov chain. Weather shifts temperature, visibility and how fast warmth is lost outdoors. | Exogenous shocks that agents cannot control but can prepare for. | `weatherVolatility` | planned |
-| **Renewable resources with collapse**<br>`world.renewables` | Berry bushes, root patches, reed beds, trees and fishing waters regrow logistically toward a capacity, faster in the growing season. Fishing waters and bushes regrow very slowly once nearly emptied. | Creates genuine common-pool dilemmas: restraint is collectively valuable and individually costly. | `richness, regrowthRate, collapseThreshold` | planned |
-| **Finite deposits**<br>`world.finite` | Stone outcrops and clay banks hold a fixed quantity that never regenerates. | Introduces exhaustible wealth and location advantage. | `richness` | planned |
-| **Fresh water is a place**<br>`world.freshwater` | Only streams and ponds are drinkable; the sea is not. Drinking requires standing next to fresh water (or carrying water in a fired pot). | Anchors daily life to particular places without designating settlements. | — | planned |
-| **Food spoils**<br>`world.spoilage` | Fresh food decays at item-specific rates; smoked rations decay slowly; a built store slows decay. | Makes saving costly and gives shared storage a real advantage. | `spoilageRate` | planned |
-| **Travel takes time**<br>`world.terrain-cost` | Entering a tile costs ticks according to terrain and load. Repeated foot traffic wears paths that are cheaper to walk. | Distance creates search costs and local advantage; worn paths are an unowned, emergent public good. | `movementCost` | planned |
+| **A bounded island**<br>`world.island` | A seed-generated island on a square grid (default 64×64 tiles) with elevation, sea, streams, ponds and biomes (shore, wetland, meadow, forest, scrub, highland). The sea bounds the world; nobody can leave. | A closed world makes resources finite and neighbours unavoidable. Grid resolution limits how fine-grained territory can be. | `size, landFraction, relief` | implemented |
+| **Days, seasons and years**<br>`world.time` | 96 ticks per day, 10 days per season, four seasons per year. Daylight, temperature and plant growth follow fixed seasonal and daily curves. | Seasonality creates a predictable period of scarcity (winter) that rewards foresight and storage. | `daysPerSeason, winterSeverity, startDay` | implemented |
+| **Weather**<br>`world.weather` | Clear, overcast, rain, storm and (in winter) snow, drawn from a seasonal Markov chain. Weather shifts temperature, visibility and how fast warmth is lost outdoors. | Exogenous shocks that agents cannot control but can prepare for. | `weatherVolatility` | implemented |
+| **Renewable resources with collapse**<br>`world.renewables` | Berry bushes, root patches, reed beds, trees and fishing waters regrow logistically toward a capacity, faster in the growing season. Fishing waters and bushes regrow very slowly once nearly emptied. | Creates genuine common-pool dilemmas: restraint is collectively valuable and individually costly. | `richness, regrowthRate, collapseThreshold` | implemented |
+| **Finite deposits**<br>`world.finite` | Stone outcrops and clay banks hold a fixed quantity that never regenerates. | Introduces exhaustible wealth and location advantage. | `richness` | implemented |
+| **Fresh water is a place**<br>`world.freshwater` | Only streams and ponds are drinkable; the sea is not. Drinking requires standing next to fresh water (or carrying water in a fired pot). | Anchors daily life to particular places without designating settlements. | — | implemented |
+| **Food spoils**<br>`world.spoilage` | Fresh food decays at item-specific rates; smoked rations decay slowly; a built store slows decay. | Makes saving costly and gives shared storage a real advantage. | `spoilageRate` | implemented |
+| **Travel takes time**<br>`world.terrain-cost` | Entering a tile costs ticks according to terrain and load. Repeated foot traffic wears paths that are cheaper to walk. | Distance creates search costs and local advantage; worn paths are an unowned, emergent public good. | `movementCost` | implemented |
 
 ## Bodies and needs
 
@@ -25,10 +25,11 @@ What it takes to stay alive. These are the only built-in objectives.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Four needs and health**<br>`body.needs` | Energy (food), hydration, rest and warmth each fall over time and with exertion. When a need is exhausted, health falls; at zero health the agent dies. Health recovers slowly when all needs are met. | Physiological survival is the only objective the designers impose. Everything else is preference. | `metabolism` | planned |
-| **Limited carrying capacity and one action at a time**<br>`body.capacity` | An agent carries a bounded weight and performs one physical action at a time, each with a duration. | Time and load constraints are what make help, exchange and division of labour worthwhile. | — | planned |
-| **Learning by doing**<br>`body.skills` | Each agent has a skill level per activity that rises with practice (diminishing returns) and raises yield or speed. | Allows — but does not assign — specialization. | `learningRate` | planned |
-| **Death is permanent**<br>`body.death` | A dead agent stops acting; carried items fall to the ground where they stand. | Stakes. No respawning, no replacement unless the observer brings newcomers. | — | planned |
+| **Four needs and health**<br>`body.needs` | Energy (food), hydration, rest and warmth each fall over time and with exertion. When a need is exhausted, health falls; at zero health the agent dies. Health recovers slowly when all needs are met. | Physiological survival is the only objective the designers impose. Everything else is preference. | `metabolism` | implemented |
+| **Limited carrying capacity and one action at a time**<br>`body.capacity` | An agent carries a bounded weight and performs one physical action at a time, each with a duration. | Time and load constraints are what make help, exchange and division of labour worthwhile. | — | implemented |
+| **Learning by doing**<br>`body.skills` | Each agent has a skill level per activity that rises with practice (diminishing returns) and raises yield or speed. | Allows — but does not assign — specialization. | `learningRate` | implemented |
+| **Death is permanent**<br>`body.death` | A dead agent stops acting; carried items fall to the ground where they stand. | Stakes. No respawning, no replacement unless the observer brings newcomers. | — | implemented |
+| **Illness strikes individuals at random**<br>`body.illness` | Each day an agent has a small chance of falling ill for three to six days (higher when cold, hungry or exhausted). The ill work and walk more slowly and burn more energy. Illness is not contagious. | Idiosyncratic misfortune is what gives mutual aid and risk-sharing something to insure against. | `illness` | implemented |
 
 ## Materials, tools and structures
 
@@ -36,10 +37,10 @@ Generic materials and the fixed recipes that transform them.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Generic materials**<br>`items.materials` | Berries, roots, fish, smoked rations (food); wood, stone, fiber, clay (materials); carried water. | A small material basis from which production chains can be composed. No item is designated as money. | — | planned |
-| **Fixed recipes**<br>`items.recipes` | Tools (axe, spear, basket, pot) and structures (campfire, shelter, store, drying rack, planted plot) are made from fixed material lists with fixed labour. Tools wear out. | Recipes are designer knowledge given to every agent; agents cannot invent new technology. This bounds material culture. | `recipesEnabled` | planned |
-| **Fire as a local public good**<br>`items.fire` | A fuelled campfire warms everyone within a short radius and enables smoking food and firing clay. It burns wood continuously. | A non-excludable benefit with a private cost: a built-in public-goods problem. | — | planned |
-| **Planting**<br>`items.planting` | A root can be planted on fertile ground and yields several roots after a growing period. Anyone can harvest a ripe plot. | Delayed returns that others can appropriate: the raw material for property norms. Planting is given, ownership is not. | `plantingEnabled` | planned |
+| **Generic materials**<br>`items.materials` | Berries, roots, fish, smoked rations (food); wood, stone, fiber, clay (materials); carried water. | A small material basis from which production chains can be composed. No item is designated as money. | — | implemented |
+| **Fixed recipes**<br>`items.recipes` | Tools (axe, spear, basket, pot) and structures (campfire, shelter, store, drying rack, planted plot) are made from fixed material lists with fixed labour. Tools wear out. | Recipes are designer knowledge given to every agent; agents cannot invent new technology. This bounds material culture. | `recipesEnabled` | implemented |
+| **Fire as a local public good**<br>`items.fire` | A fuelled campfire warms everyone within a short radius and enables smoking food and firing clay. It burns wood continuously. | A non-excludable benefit with a private cost: a built-in public-goods problem. | — | implemented |
+| **Planting**<br>`items.planting` | A root can be planted on fertile ground and yields several roots after a growing period. Anyone can harvest a ripe plot. | Delayed returns that others can appropriate: the raw material for property norms. Planting is given, ownership is not. | `plantingEnabled` | implemented |
 
 ## Actions
 
@@ -47,10 +48,10 @@ The complete vocabulary of things an agent can ask the engine to do.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Action vocabulary**<br>`actions.vocabulary` | move, gather, eat, drink, rest, craft, build / contribute labour, refuel, plant, give, drop, pick up, deposit, withdraw, speak, inspect, wait — plus the institutional acts listed under Institution substrate. | Agents can only do these things. Every action has explicit prerequisites, a duration, costs and failure outcomes, and is validated by the engine. | — | planned |
-| **Giving is unilateral and adjacent**<br>`actions.give` | An agent can hand items to an adjacent agent. Nothing forces a return. | Unenforced transfers make reciprocity and trust matter. | — | planned |
-| **Unattended goods can be taken**<br>`actions.take` | Anyone present can pick items up from the ground or from a store that is not bound to an institution. Carried items cannot be taken. | Appropriation must be physically possible for property to be a social fact rather than physics. The limit (no taking from bodies, no violence) is a designer simplification. | `openStoresTakeable` | planned |
-| **Fair simultaneous conflict resolution**<br>`actions.arbitration` | When several agents contend for the same units in the same tick, priority is a keyed random order re-drawn each tick. | No agent is systematically first. | — | planned |
+| **Action vocabulary**<br>`actions.vocabulary` | move, gather, eat, drink, rest, craft, build / contribute labour, refuel, plant, give, drop, pick up, deposit, withdraw, speak, inspect, wait — plus the institutional acts listed under Institution substrate. | Agents can only do these things. Every action has explicit prerequisites, a duration, costs and failure outcomes, and is validated by the engine. | — | implemented |
+| **Giving is unilateral and adjacent**<br>`actions.give` | An agent can hand items to an adjacent agent. Nothing forces a return. | Unenforced transfers make reciprocity and trust matter. | — | implemented |
+| **Unattended goods can be taken**<br>`actions.take` | Anyone present can pick items up from the ground or from a store that is not bound to an institution. Carried items cannot be taken. | Appropriation must be physically possible for property to be a social fact rather than physics. The limit (no taking from bodies, no violence) is a designer simplification. | `openStoresTakeable` | implemented |
+| **Fair simultaneous conflict resolution**<br>`actions.arbitration` | When several agents contend for the same units in the same tick, priority is a keyed random order re-drawn each tick. | No agent is systematically first. | — | implemented |
 
 ## Perception and knowledge
 
@@ -58,9 +59,9 @@ What an agent can know, and how that knowledge ages.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Local perception**<br>`senses.local` | An agent perceives terrain, resources, structures and other agents within a radius that shrinks at night and in bad weather. It sees others' coarse condition (hungry, tired, cold, ill) and what they are doing, not their thoughts, plans or exact inventory. | No agent has a global view. The observer does. | `sightRadius` | planned |
-| **Beliefs age**<br>`senses.beliefs` | What an agent knows about a place is the last thing it saw or was told, stamped with when and from whom. Confidence decays; the world changes behind its back. | Decisions are made on stale, partial, sometimes second-hand information. | — | planned |
-| **Bounded memory**<br>`senses.memory` | A fixed-size episodic memory with salience-weighted forgetting, plus running summaries per acquaintance. | Bounded rationality. The size and scoring rule are designer choices. | `memoryCapacity` | planned |
+| **Local perception**<br>`senses.local` | An agent perceives terrain, resources, structures and other agents within a radius that shrinks at night and in bad weather. It sees others' coarse condition (hungry, tired, cold, ill) and what they are doing, not their thoughts, plans or exact inventory. | No agent has a global view. The observer does. | `sightRadius` | implemented |
+| **Beliefs age**<br>`senses.beliefs` | What an agent knows about a place is the last thing it saw or was told, stamped with when and from whom. Confidence decays; the world changes behind its back. | Decisions are made on stale, partial, sometimes second-hand information. | — | implemented |
+| **Bounded memory**<br>`senses.memory` | A fixed-size episodic memory with salience-weighted forgetting, plus running summaries per acquaintance. | Bounded rationality. The size and scoring rule are designer choices. | `memoryCapacity` | implemented |
 
 ## Communication
 
@@ -68,9 +69,9 @@ How information moves between minds.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Speech has a range**<br>`comm.range` | Public speech reaches agents within hearing distance on the next tick; a private remark reaches one nearby agent. There is no long-distance messaging. | Information diffuses through contact, so geography shapes who can coordinate. | `hearingRadius` | planned |
+| **Speech has a range**<br>`comm.range` | Public speech reaches agents within hearing distance on the next tick; a private remark reaches one nearby agent. There is no long-distance messaging. | Information diffuses through contact, so geography shapes who can coordinate. | `hearingRadius` | implemented |
 | **Structured speech acts**<br>`comm.acts` | greet, inform (about a place, a person, a proposal), request, offer, accept, decline, promise, invite, warn — each optionally carrying a short free text. | A shared, machine-readable protocol that heuristic and model-driven agents both understand. It presupposes concepts such as 'promise' and 'offer'. | — | planned |
-| **Speech is not verified**<br>`comm.truth` | The engine delivers what was said. It does not check that it is true. | Trust in testimony has to be earned. | — | planned |
+| **Speech is not verified**<br>`comm.truth` | The engine delivers what was said. It does not check that it is true. | Trust in testimony has to be earned. | — | implemented |
 
 ## Baseline (non-LLM) cognition
 
@@ -78,8 +79,8 @@ Hand-written decision machinery used by offline agents. These are designer prior
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Trait vector**<br>`base.traits` | Each agent has fixed traits (industry, sociability, generosity, prudence, curiosity, boldness, conformity, trustfulness, patience) and physical differences (strength, stamina, dexterity, metabolism). | Heterogeneity without assigned roles. The trait list is a psychological prior. | `diversity` | planned |
-| **Reflex policy**<br>`base.reflex` | Satisfy the most urgent need using the nearest known source; explore when nothing is known. | A competent survival floor and the fallback when a model-driven agent has no valid plan. | — | planned |
+| **Trait vector**<br>`base.traits` | Each agent has fixed traits (industry, sociability, generosity, prudence, curiosity, boldness, conformity, trustfulness, patience) and physical differences (strength, stamina, dexterity, metabolism). | Heterogeneity without assigned roles. The trait list is a psychological prior. | `diversity` | implemented |
+| **Reflex policy**<br>`base.reflex` | Satisfy the most urgent need using the nearest known source; explore when nothing is known. | A competent survival floor and the fallback when a model-driven agent has no valid plan. | — | implemented |
 | **Bounded-rational planner**<br>`base.planner` | Scores candidate goals (needs, stockpiling, tools, shelter, helping, exchanging, exploring, institutional acts) by expected benefit minus time and risk under the agent's beliefs and traits, with noise. | A strong non-LLM comparison. Its utility model is hand-written and therefore a prior about rational behaviour. | `policy` | planned |
 | **Trust and reciprocity bookkeeping**<br>`base.trust` | Per acquaintance: gifts given and received, promises kept and broken, hearsay weighted by trust in its source. | Enables conditional cooperation. The update rule is a designer choice. | — | planned |
 | **Institutional search (treatment)**<br>`base.grammar-search` | When enabled, an agent that has suffered a recurring problem may sample candidate charters from a documented distribution over the rule grammar, tune parameters by its own utility estimate, and propose the best. | A non-LLM source of proposals for comparison. The sampling distribution is a designer prior; results are search outcomes, not open-ended invention. | `institutions = 'grammar_search'` | planned |
@@ -124,8 +125,8 @@ How every world starts.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Fifty unrelated adults**<br>`init.population` | Fifty adults with drawn traits and modest random skill differences, dispersed over habitable land, carrying a little food. No relationships, groups or shared history. | A blank social slate. Dispersal versus clustering is a parameter. | `population, spawn` | planned |
-| **Innate knowledge**<br>`init.knowledge` | Every agent knows its own needs, which things are edible, all recipes and the action vocabulary. It knows nothing about the map beyond what it can see, nothing about other agents, and has not experienced a winter. | Technical know-how is given; geography, people and the future are not. | — | planned |
+| **Fifty unrelated adults**<br>`init.population` | Fifty adults with drawn traits and modest random skill differences, dispersed over habitable land, carrying a little food. No relationships, groups or shared history. | A blank social slate. Dispersal versus clustering is a parameter. | `population, spawn` | implemented |
+| **Innate knowledge**<br>`init.knowledge` | Every agent knows its own needs, which things are edible, all recipes and the action vocabulary. It knows nothing about the map beyond what it can see, nothing about other agents, and has not experienced a winter. | Technical know-how is given; geography, people and the future are not. | — | implemented |
 
 ## Deliberately absent
 

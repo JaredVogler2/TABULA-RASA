@@ -4,12 +4,12 @@ Status vocabulary: **PASS** (gate proven by an executed check with evidence) · 
 **NOT RUN**. "Implemented" is never recorded as "tested", and "tested" is never recorded as "deployed".
 Evidence paths are relative to the repository root; raw outputs live under `evidence/`.
 
-Last updated: 2026-11-25 (phase 02).
+Last updated: 2026-11-25 (phase 03).
 
 | # | Criterion | Command(s) | Expected | Actual | Evidence | Status | Commit | Caveats |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Fresh install, lint, typecheck, unit, build, E2E | `pnpm install --frozen-lockfile && pnpm check && pnpm e2e` | all exit 0 | lint, typecheck, 21 unit tests, build and 4 E2E tests pass on the skeleton | `evidence/phase-02/checks.txt` | PARTIAL | phase 02 | Skeleton only; re-run at every phase. CI run on GitHub not yet observed. |
-| 2 | Headless seeded 50-agent world; resource/authority invariants; hash replay; invalid-intent tests | `pnpm test`, `pnpm sim` | — | — | — | NOT RUN | — | Phase 03. |
+| 1 | Fresh install, lint, typecheck, unit, build, E2E | `pnpm install --frozen-lockfile && pnpm check && pnpm e2e` | all exit 0 | passes locally and on GitHub Actions (runs 45537321704, 45537354841 for the phase-02 commit) | `evidence/phase-02/checks.txt`, `evidence/phase-03/tests.txt` | PARTIAL | phase 03 | Re-run at every phase; final status is set at release. |
+| 2 | Headless seeded 50-agent world; resource/authority invariants; hash replay; invalid-intent tests | `pnpm test`, `pnpm sim -- --replay` | replay identical; conservation audit clean every tick; invalid intents rejected | as expected (98 tests; five scenarios `replay IDENTICAL`) | `evidence/phase-03/` | PARTIAL | phase 03 | Resource invariants and replay are proven. *Authority* invariants (institutional permissions) arrive with phase 09. |
 | 3 | Offline baseline playable with zero credentials; live state rendered; all core interactions real | `pnpm e2e` | — | — | — | NOT RUN | — | Phase 04. |
 | 4 | Private observations, memory provenance, independent agents, no hidden scripted institution progression | `pnpm test` | — | — | — | NOT RUN | — | Phases 05, 09. |
 | 5 | Institution DSL validated and executable; fuzz rejects escape, overflow, infinite evaluation, forged consent | `pnpm test` | — | — | — | NOT RUN | — | Phase 09. |
@@ -27,5 +27,6 @@ Last updated: 2026-11-25 (phase 02).
 | Phase | Gate (abridged) | Status | Notes |
 |---|---|---|---|
 | 01 | Charter, experiment protocol, affordance register, scenarios, acceptance matrix, UI flow, unresolved decisions, slice priority | **PASS** | `docs/CHARTER.md`, `EXPERIMENT_PROTOCOL.md`, `AFFORDANCES.md` (generated), this file. Literature list is being verified separately (`LITERATURE.md`); the protocol cites no specific work until it is. |
-| 02 | Runnable skeleton, CI, lockfile, typed interfaces, empty world canvas, seeded worker spike, data design, ADRs, commands; engine feasibility benchmark | **PARTIAL** | Done: skeleton, lockfile, lint-enforced boundaries, seeded worker spike with cross-runtime digest check, ADRs D-001…D-011, commands, CI workflow file. Open: CI not yet observed green on GitHub; domain interfaces and feasibility benchmark land with phase 03; world canvas with phase 04; SQL migrations with phase 07. |
-| 03–20 | see `prompts/` | NOT RUN | |
+| 02 | Runnable skeleton, CI, lockfile, typed interfaces, empty world canvas, seeded worker spike, data design, ADRs, commands; engine feasibility benchmark | **PARTIAL** | Done: skeleton, lockfile, lint-enforced boundaries, seeded worker spike with cross-runtime digest check, ADRs, commands, CI green on GitHub, typed domain model, feasibility benchmark. Open: world canvas (phase 04); SQL migrations (phase 07). |
+| 03 | 50 agents, ≥ 1000 headless ticks, deterministic hash under replay, resource balances, invalid action rejection, property tests, reproducible seed, useful trace; 100/500-agent benchmarks | **PASS** | See `EVIDENCE.md` § Phase 03. Trace: `pnpm sim -- --trace 40`. |
+| 04–20 | see `prompts/` | NOT RUN | |

@@ -4,9 +4,9 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Current state (2026-11-25)
 
-- **Branch:** `claude/friendly-gauss-kejb2m`
-- **Phase:** 02 complete enough to build on (PARTIAL — see `ACCEPTANCE.md`); **next: phase 03, world engine.**
-- **Last verified commit:** see `git log -1` (phase 02 skeleton).
+- **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/1
+- **Phase:** 03 PASS. **Next: phase 04, playable offline slice** (worker host, renderer, HUD, saves, E2E).
+- **Last verified commit:** see `git log -1`.
 - **Spend:** $0. No API key present. Live mode must stay disabled until the owner authorizes a capped run.
 
 ## Verify the tree
@@ -15,9 +15,11 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 pnpm install --frozen-lockfile
 pnpm check        # lint + typecheck + unit + affordance-doc freshness + build
 pnpm e2e          # Playwright, production build, desktop + phone emulation
+pnpm sim -- --scenario first_light --seed 1 --days 40 --policy reflex --replay
+pnpm bench
 ```
 
-Expected at this commit: 21 unit tests and 4 E2E tests pass.
+Expected at this commit: 98 unit/property tests and 4 E2E tests pass; `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
@@ -25,14 +27,18 @@ Expected at this commit: 21 unit tests and 4 E2E tests pass.
 
 ## Next actions
 
-1. Phase 03: `src/engine/model` (state types, config, items, recipes), `src/engine/world` (terrain, hydrology,
-   biomes, nodes, seasons, weather), `src/engine/sim` (tick pipeline, intents, validation, arbitration,
-   application, events), reflex baseline policy, snapshot + hash + migrations, `scripts/sim.ts`,
-   `scripts/bench.ts`, property tests. Gate: 50 agents, ≥ 1000 ticks, replay hash equality, conservation,
-   invalid-intent rejection, benchmarks at 100/500 agents.
-2. Fold the research files (`docs/LITERATURE.md`, `docs/research/*.md`) into the docs once the background
-   research agents report; re-check D-009 against the platform facts.
-3. Confirm the GitHub Actions run for the pushed commit.
+1. Phase 04: `src/worker/sim.worker.ts` (engine host, view frames, snapshots), `src/render/*` (terrain, water,
+   vegetation, citizens, structures, sky, post), `src/ui/*` (title, HUD, timebar, inspector, chronicle,
+   interventions, save/load, debrief), `src/persist/*` (IndexedDB), Playwright walkthroughs with screenshots.
+2. Phase 05: bounded-rational planner (`src/engine/mind/planner.ts` is a stub that defers to reflex), trust,
+   commitments, speech use; then tune ecology so the planner baseline is viable in First Light.
+3. Engine notes for later phases:
+   - `src/engine/institutions/hooks.ts` is the only seam between physical actions and institutions (phase 09).
+   - External (model) decisions will enter through `adopt()` in `src/engine/mind/decide.ts` after
+     `checkIntent()`; reflex decisions for external minds are already labelled `fallback`.
+   - Reciprocity in `metrics/accumulate.ts` is cumulative; the protocol's 5-day window needs the event log
+     (phase 10).
+   - Snapshots at 500 agents are ~25 MiB (dense belief arrays): sparse encoding is a phase 15 item.
 
 ## Blockers
 

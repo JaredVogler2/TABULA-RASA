@@ -102,7 +102,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "A seed-generated island on a square grid (default 64×64 tiles) with elevation, sea, streams, ponds and biomes (shore, wetland, meadow, forest, scrub, highland). The sea bounds the world; nobody can leave.",
     why: "A closed world makes resources finite and neighbours unavoidable. Grid resolution limits how fine-grained territory can be.",
     knob: "size, landFraction, relief",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.time",
@@ -111,7 +111,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "96 ticks per day, 10 days per season, four seasons per year. Daylight, temperature and plant growth follow fixed seasonal and daily curves.",
     why: "Seasonality creates a predictable period of scarcity (winter) that rewards foresight and storage.",
     knob: "daysPerSeason, winterSeverity, startDay",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.weather",
@@ -120,7 +120,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Clear, overcast, rain, storm and (in winter) snow, drawn from a seasonal Markov chain. Weather shifts temperature, visibility and how fast warmth is lost outdoors.",
     why: "Exogenous shocks that agents cannot control but can prepare for.",
     knob: "weatherVolatility",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.renewables",
@@ -129,7 +129,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Berry bushes, root patches, reed beds, trees and fishing waters regrow logistically toward a capacity, faster in the growing season. Fishing waters and bushes regrow very slowly once nearly emptied.",
     why: "Creates genuine common-pool dilemmas: restraint is collectively valuable and individually costly.",
     knob: "richness, regrowthRate, collapseThreshold",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.finite",
@@ -138,7 +138,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Stone outcrops and clay banks hold a fixed quantity that never regenerates.",
     why: "Introduces exhaustible wealth and location advantage.",
     knob: "richness",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.freshwater",
@@ -146,7 +146,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Fresh water is a place",
     what: "Only streams and ponds are drinkable; the sea is not. Drinking requires standing next to fresh water (or carrying water in a fired pot).",
     why: "Anchors daily life to particular places without designating settlements.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.spoilage",
@@ -155,7 +155,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Fresh food decays at item-specific rates; smoked rations decay slowly; a built store slows decay.",
     why: "Makes saving costly and gives shared storage a real advantage.",
     knob: "spoilageRate",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "world.terrain-cost",
@@ -164,7 +164,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Entering a tile costs ticks according to terrain and load. Repeated foot traffic wears paths that are cheaper to walk.",
     why: "Distance creates search costs and local advantage; worn paths are an unowned, emergent public good.",
     knob: "movementCost",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── body
@@ -175,7 +175,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Energy (food), hydration, rest and warmth each fall over time and with exertion. When a need is exhausted, health falls; at zero health the agent dies. Health recovers slowly when all needs are met.",
     why: "Physiological survival is the only objective the designers impose. Everything else is preference.",
     knob: "metabolism",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "body.capacity",
@@ -183,7 +183,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Limited carrying capacity and one action at a time",
     what: "An agent carries a bounded weight and performs one physical action at a time, each with a duration.",
     why: "Time and load constraints are what make help, exchange and division of labour worthwhile.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "body.skills",
@@ -192,7 +192,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Each agent has a skill level per activity that rises with practice (diminishing returns) and raises yield or speed.",
     why: "Allows — but does not assign — specialization.",
     knob: "learningRate",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "body.death",
@@ -200,7 +200,16 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Death is permanent",
     what: "A dead agent stops acting; carried items fall to the ground where they stand.",
     why: "Stakes. No respawning, no replacement unless the observer brings newcomers.",
-    status: "planned",
+    status: "implemented",
+  },
+  {
+    id: "body.illness",
+    category: "body",
+    name: "Illness strikes individuals at random",
+    what: "Each day an agent has a small chance of falling ill for three to six days (higher when cold, hungry or exhausted). The ill work and walk more slowly and burn more energy. Illness is not contagious.",
+    why: "Idiosyncratic misfortune is what gives mutual aid and risk-sharing something to insure against.",
+    knob: "illness",
+    status: "implemented",
   },
 
   // ───────────────────────── items
@@ -210,7 +219,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Generic materials",
     what: "Berries, roots, fish, smoked rations (food); wood, stone, fiber, clay (materials); carried water.",
     why: "A small material basis from which production chains can be composed. No item is designated as money.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "items.recipes",
@@ -219,7 +228,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Tools (axe, spear, basket, pot) and structures (campfire, shelter, store, drying rack, planted plot) are made from fixed material lists with fixed labour. Tools wear out.",
     why: "Recipes are designer knowledge given to every agent; agents cannot invent new technology. This bounds material culture.",
     knob: "recipesEnabled",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "items.fire",
@@ -227,7 +236,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Fire as a local public good",
     what: "A fuelled campfire warms everyone within a short radius and enables smoking food and firing clay. It burns wood continuously.",
     why: "A non-excludable benefit with a private cost: a built-in public-goods problem.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "items.planting",
@@ -236,7 +245,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "A root can be planted on fertile ground and yields several roots after a growing period. Anyone can harvest a ripe plot.",
     why: "Delayed returns that others can appropriate: the raw material for property norms. Planting is given, ownership is not.",
     knob: "plantingEnabled",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── actions
@@ -246,7 +255,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Action vocabulary",
     what: "move, gather, eat, drink, rest, craft, build / contribute labour, refuel, plant, give, drop, pick up, deposit, withdraw, speak, inspect, wait — plus the institutional acts listed under Institution substrate.",
     why: "Agents can only do these things. Every action has explicit prerequisites, a duration, costs and failure outcomes, and is validated by the engine.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "actions.give",
@@ -254,7 +263,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Giving is unilateral and adjacent",
     what: "An agent can hand items to an adjacent agent. Nothing forces a return.",
     why: "Unenforced transfers make reciprocity and trust matter.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "actions.take",
@@ -263,7 +272,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Anyone present can pick items up from the ground or from a store that is not bound to an institution. Carried items cannot be taken.",
     why: "Appropriation must be physically possible for property to be a social fact rather than physics. The limit (no taking from bodies, no violence) is a designer simplification.",
     knob: "openStoresTakeable",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "actions.arbitration",
@@ -271,7 +280,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Fair simultaneous conflict resolution",
     what: "When several agents contend for the same units in the same tick, priority is a keyed random order re-drawn each tick.",
     why: "No agent is systematically first.",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── senses
@@ -282,7 +291,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "An agent perceives terrain, resources, structures and other agents within a radius that shrinks at night and in bad weather. It sees others' coarse condition (hungry, tired, cold, ill) and what they are doing, not their thoughts, plans or exact inventory.",
     why: "No agent has a global view. The observer does.",
     knob: "sightRadius",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "senses.beliefs",
@@ -290,7 +299,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Beliefs age",
     what: "What an agent knows about a place is the last thing it saw or was told, stamped with when and from whom. Confidence decays; the world changes behind its back.",
     why: "Decisions are made on stale, partial, sometimes second-hand information.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "senses.memory",
@@ -299,7 +308,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "A fixed-size episodic memory with salience-weighted forgetting, plus running summaries per acquaintance.",
     why: "Bounded rationality. The size and scoring rule are designer choices.",
     knob: "memoryCapacity",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── communication
@@ -310,7 +319,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Public speech reaches agents within hearing distance on the next tick; a private remark reaches one nearby agent. There is no long-distance messaging.",
     why: "Information diffuses through contact, so geography shapes who can coordinate.",
     knob: "hearingRadius",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "comm.acts",
@@ -326,7 +335,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Speech is not verified",
     what: "The engine delivers what was said. It does not check that it is true.",
     why: "Trust in testimony has to be earned.",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── baseline cognition
@@ -337,7 +346,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Each agent has fixed traits (industry, sociability, generosity, prudence, curiosity, boldness, conformity, trustfulness, patience) and physical differences (strength, stamina, dexterity, metabolism).",
     why: "Heterogeneity without assigned roles. The trait list is a psychological prior.",
     knob: "diversity",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "base.reflex",
@@ -345,7 +354,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Reflex policy",
     what: "Satisfy the most urgent need using the nearest known source; explore when nothing is known.",
     why: "A competent survival floor and the fallback when a model-driven agent has no valid plan.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "base.planner",
@@ -497,7 +506,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "Fifty adults with drawn traits and modest random skill differences, dispersed over habitable land, carrying a little food. No relationships, groups or shared history.",
     why: "A blank social slate. Dispersal versus clustering is a parameter.",
     knob: "population, spawn",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "init.knowledge",
@@ -505,7 +514,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Innate knowledge",
     what: "Every agent knows its own needs, which things are edible, all recipes and the action vocabulary. It knows nothing about the map beyond what it can see, nothing about other agents, and has not experienced a winter.",
     why: "Technical know-how is given; geography, people and the future are not.",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── absent

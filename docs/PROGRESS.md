@@ -6,8 +6,8 @@ checks recorded in `EVIDENCE.md`. Execution order follows D-001.
 | Phase | Title | Status | Date | Summary |
 |---|---|---|---|---|
 | 01 | Product and science | **PASS** | 2026-11-25 | Charter, pre-registered protocol (H1–H6), affordance registry (code + generated doc), five scenarios, acceptance matrix, UI flow. Bibliography verification in progress. |
-| 02 | Architecture | **PARTIAL** | 2026-11-25 | Next.js 16 + TS skeleton; lint-enforced engine purity and server isolation; deterministic core (keyed RNG, SHA-256, canonical JSON) with 21 tests; Turbopack-bundled worker verified; Playwright desktop + phone emulation; CI workflow written; ADRs D-001–D-011. Remaining items listed in `ACCEPTANCE.md`. |
-| 03 | World engine | NOT RUN | | |
+| 02 | Architecture | **PARTIAL** | 2026-11-25 | Next.js 16 + TS skeleton; lint-enforced engine purity and server isolation; deterministic core (keyed RNG, SHA-256, canonical JSON); Turbopack-bundled worker verified; Playwright desktop + phone emulation; CI observed green on GitHub; ADRs D-001–D-011; typed domain model and feasibility benchmark delivered with phase 03. Still open: world canvas (phase 04), SQL migrations (phase 07). |
+| 03 | World engine | **PASS** | 2026-11-25 | Seeded island (terrain, drainage, biomes, nodes), seasons/weather, needs/illness/death, 20 physical actions with structural + semantic validation and fair arbitration, knowledge-limited pathfinding, local perception and beliefs, reflex baseline, events with causal parents, declared source/sink ledger, canonical snapshots, forks, migrations. 98 tests; five scenarios replay bit-identically; benchmarks at 50/100/250/500 agents. |
 | 04 | Playable slice | NOT RUN | | |
 | 05 | Agent cognition | NOT RUN | | |
 | 09 | Institution DSL | NOT RUN | | |
