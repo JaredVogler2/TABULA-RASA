@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createWorld, makeConfig, observe, step, type SimEvent } from "@/engine";
 import { MockProvider } from "@/providers/mock";
 import { costFromUsage, priceOf } from "@/providers/prices";
 import { buildRequest, promptFeatures } from "@/providers/prompt";
 import type { DecisionCall } from "@/providers/types";
-import { LiveAnthropicProvider, classifyError, liveProvider, readUsage, sdkClient, type MessagesClient } from "./anthropic";
+import { classifyError, guardedFetch, LiveAnthropicProvider, liveProvider, type MessagesClient, PROVIDER_ORIGIN, PROVIDER_PATH, readUsage, sdkClient } from "./anthropic";
 
 /**
  * No test here makes a network request. The adapter is exercised two ways: against a stand-in
@@ -151,7 +151,11 @@ describe("the live adapter (no network)", () => {
   });
 
   it("classifies failures by what they mean for the money", () => {
-    const http = (status: number, extra: Record<string, unknown> = {}) => Object.assign(new Error("provider said something we do not keep"), { status, requestID: "req_x", apiMessage: "", errorCode: null, ...extra });
+    // an error as the SDK builds it from the provider's own refusal: its error envelope in the body, and the request id it gave
+    const http = (status: number, extra: Record<string, unknown> = {}) =>
+      Object.assign(new Error("provider said something we do not keep"), { status, requestID: "req_x", apiMessage: "", errorCode: null, error: { type: "error", error: { type: "some_error", message: "provider said something we do not keep" } }, ...extra });
+    // the same status from something that is not the provider: no envelope, or no request id
+    const foreign = (status: number, extra: Record<string, unknown> = {}) => Object.assign(new Error("<html>502 Bad Gateway</html>"), { status, requestID: null, apiMessage: null, errorCode: null, error: undefined, ...extra });
     const named = (name: string) => Object.assign(new Error("…"), { name, status: undefined });
     const table: [unknown, "rejected" | "unknown", string, boolean][] = [
       [http(429), "rejected", "rate_limited", true],
@@ -170,6 +174,24 @@ describe("the live adapter (no network)", () => {
       [http(400, { apiMessage: "You have reached your specified workspace API usage limits." }), "rejected", "spend_limit", false],
       [http(400, { apiMessage: "In order to access this model, your organization or workspace must have data retention enabled." }), "rejected", "model_unavailable", false],
       [http(422), "rejected", "client_error", false],
+      // A status is not proof. The same numbers from something between here and the provider —
+      // a gateway's own page, a body that is not the provider's envelope, no request id — say
+      // nothing about whether the work was done and charged for: the money stays held.
+      [foreign(500), "unknown", "unrecognized_response", false],
+      [foreign(502), "unknown", "unrecognized_response", false],
+      [foreign(503), "unknown", "unrecognized_response", false],
+      [foreign(529), "unknown", "unrecognized_response", false],
+      [foreign(429), "unknown", "unrecognized_response", false],
+      [foreign(401), "unknown", "unrecognized_response", false],
+      [foreign(403), "unknown", "unrecognized_response", false],
+      [foreign(400), "unknown", "unrecognized_response", false],
+      [foreign(404), "unknown", "unrecognized_response", false],
+      [foreign(413), "unknown", "unrecognized_response", false],
+      [foreign(503, { error: "Service Unavailable", requestID: "req_x" }), "unknown", "unrecognized_response", false],
+      [foreign(503, { error: { message: "upstream connect error" }, requestID: "req_x" }), "unknown", "unrecognized_response", false],
+      [foreign(500, { error: { type: "error", error: { type: "api_error" } } }), "unknown", "unrecognized_response", false], // the envelope, but no request id
+      [foreign(500, { error: { type: "error", error: { type: "api_error" } }, requestID: "" }), "unknown", "unrecognized_response", false],
+      [http(500, { error: { type: "error" } }), "unknown", "unrecognized_response", false], // a request id, but not the envelope
       // the request may have run: nothing is given back and nothing is sent again
       [http(408), "unknown", "gateway_timeout", false],
       [http(499), "unknown", "gateway_timeout", false],
@@ -186,6 +208,9 @@ describe("the live adapter (no network)", () => {
       expect([c.status, c.error.code, c.error.retryable], `${code}`).toEqual([status, code, retryable]);
       // the provider's free text is never carried along
       expect(JSON.stringify(c)).not.toContain("provider said something");
+      expect(JSON.stringify(c)).not.toContain("Bad Gateway");
+      // and nothing that leaves the money unaccounted for is ever tried again
+      if (c.status === "unknown") expect(c.error.retryable).toBe(false);
     }
   });
 
@@ -208,10 +233,41 @@ describe("the live adapter (no network)", () => {
  */
 describe("the live adapter through the real SDK (network replaced by canned responses)", () => {
   const respond = (status: number, body: unknown, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "request-id": "req_from_header", ...headers } });
+  /** A response from something that is not the provider: no request id, and whatever body it likes. */
+  const gateway = (status: number, body: string, type = "text/html") => new Response(body, { status, headers: { "content-type": type } });
   const wire = (m: Record<string, unknown>) => {
     const { _request_id: _ignored, ...rest } = m;
     return rest;
   };
+
+  it("sends the key to the provider's own host whatever the environment says about a base URL or another credential", async () => {
+    const { call, answer } = await sampleCall();
+    const seen: { url: string; authorization: string | null; apiKeyHeader: string | null }[] = [];
+    const fakeFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      seen.push({ url: String(input instanceof Request ? input.url : input), authorization: headers.get("authorization"), apiKeyHeader: headers.get("x-api-key") });
+      return respond(200, wire(message(answer)));
+    }) as typeof fetch;
+    const before = { base: process.env.ANTHROPIC_BASE_URL, token: process.env.ANTHROPIC_AUTH_TOKEN, key: process.env.ANTHROPIC_API_KEY };
+    process.env.ANTHROPIC_BASE_URL = "https://elsewhere.example/steal";
+    process.env.ANTHROPIC_AUTH_TOKEN = "token-from-the-environment";
+    process.env.ANTHROPIC_API_KEY = "key-from-the-environment";
+    try {
+      const r = await new LiveAnthropicProvider(sdkClient(KEY, fakeFetch), MODEL).decide(call);
+      expect(r.status).toBe("ok");
+    } finally {
+      for (const [name, value] of [["ANTHROPIC_BASE_URL", before.base], ["ANTHROPIC_AUTH_TOKEN", before.token], ["ANTHROPIC_API_KEY", before.key]] as const) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+    }
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.url).toBe(`${PROVIDER_ORIGIN}/v1/messages`);
+    expect(new URL(seen[0]?.url ?? "").origin).toBe("https://api.anthropic.com");
+    // the credential is the one passed in code, and only that one
+    expect(`${seen[0]?.authorization ?? ""} ${seen[0]?.apiKeyHeader ?? ""}`).toContain(KEY);
+    expect(`${seen[0]?.authorization ?? ""} ${seen[0]?.apiKeyHeader ?? ""}`).not.toContain("from-the-environment");
+  });
 
   it("posts one request to the Messages API with the key in the Authorization header and the current API version", async () => {
     const { call, answer } = await sampleCall();
@@ -265,6 +321,93 @@ describe("the live adapter through the real SDK (network replaced by canned resp
       // nothing of the provider's message text is kept (it can quote the request back)
       expect(JSON.stringify(r)).not.toMatch(/slow down|invalid x-api-key|regain access|too complex/);
     }
+  });
+
+  it("an error page from something between here and the provider proves nothing: the outcome is unknown, the money stays held, nothing is sent again", async () => {
+    const { call } = await sampleCall();
+    const pages: [number, Response][] = [
+      [502, gateway(502, "<html><body>502 Bad Gateway</body></html>")],
+      [503, gateway(503, "upstream connect error or disconnect/reset before headers", "text/plain")],
+      [500, gateway(500, JSON.stringify({ message: "Internal Server Error" }), "application/json")],
+      [520, gateway(520, "")],
+      [403, gateway(403, "<html>Access denied by the corporate proxy</html>")],
+      // the provider's envelope, relayed by something that dropped the request id: still not proof
+      [503, gateway(503, JSON.stringify({ type: "error", error: { type: "api_error", message: "relayed" } }), "application/json")],
+    ];
+    for (const [status, page] of pages) {
+      let sent = 0;
+      const fakeFetch = (async () => {
+        sent++;
+        return page;
+      }) as typeof fetch;
+      const r = await new LiveAnthropicProvider(sdkClient(KEY, fakeFetch), MODEL).decide(call);
+      expect(sent, `${status} must not be retried`).toBe(1);
+      expect([r.status, r.error?.code, r.error?.retryable, r.costMicroUsd], `${status}`).toEqual(["unknown", "unrecognized_response", false, null]);
+      expect(JSON.stringify(r)).not.toMatch(/Bad Gateway|upstream|corporate|relayed/);
+    }
+  });
+
+  it("nothing in the environment adds a header, turns on a log or a trace, or moves the request: the guard lets one request through, to one place", async () => {
+    const { call, answer } = await sampleCall();
+    const sent: { url: string; headers: Headers; redirect: unknown }[] = [];
+    const fakeFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      sent.push({ url: String(input instanceof Request ? input.url : input), headers: new Headers(init?.headers), redirect: init?.redirect });
+      return respond(200, wire(message(answer)));
+    }) as typeof fetch;
+    const names = ["ANTHROPIC_CUSTOM_HEADERS", "ANTHROPIC_LOG", "ANTHROPIC_OPEN_TELEMETRY", "ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE", "ANTHROPIC_BASE_URL"] as const;
+    const before = names.map((n) => process.env[n]);
+    process.env.ANTHROPIC_CUSTOM_HEADERS = "anthropic-beta: something-2026-01-01\nx-smuggled: yes\ncookie: a=b";
+    process.env.ANTHROPIC_LOG = "debug";
+    process.env.ANTHROPIC_OPEN_TELEMETRY = "true";
+    process.env.ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE = "content";
+    process.env.ANTHROPIC_BASE_URL = "https://elsewhere.example";
+    const printed: string[] = [];
+    const spies = (["log", "info", "debug", "warn", "error"] as const).map((k) => vi.spyOn(console, k).mockImplementation((...args: unknown[]) => void printed.push(args.map(String).join(" "))));
+    try {
+      const r = await new LiveAnthropicProvider(sdkClient(KEY, fakeFetch), MODEL).decide(call);
+      expect(r.status).toBe("ok");
+    } finally {
+      for (const spy of spies) spy.mockRestore();
+      names.forEach((n, i) => {
+        if (before[i] === undefined) delete process.env[n];
+        else process.env[n] = before[i];
+      });
+    }
+    expect(sent).toHaveLength(1);
+    const q = sent[0]!;
+    expect(q.url).toBe("https://api.anthropic.com/v1/messages");
+    expect(q.redirect).toBe("error");
+    // only what a Messages request needs was sent: nothing the environment asked for, no trace context
+    const headerNames = [...q.headers.keys()].sort();
+    for (const name of headerNames) expect(name, name).toMatch(/^(accept|content-type|content-length|user-agent|authorization|x-api-key|anthropic-version|x-stainless-[a-z0-9-]+)$/);
+    for (const absent of ["anthropic-beta", "x-smuggled", "cookie", "traceparent", "tracestate", "baggage"]) expect(q.headers.get(absent), absent).toBeNull();
+    // and the SDK said nothing: no request or response body, no key, on any console stream
+    expect(printed.join("\n")).toBe("");
+  });
+
+  it("the guard refuses anything that is not that one request, before it is sent", async () => {
+    let reached = 0;
+    const inner = (async () => {
+      reached++;
+      return new Response("{}");
+    }) as typeof fetch;
+    const guarded = guardedFetch(inner);
+    const post = { method: "POST", headers: { "x-api-key": KEY, "content-type": "application/json" }, body: "{}" };
+    for (const [url, init] of [
+      ["https://elsewhere.example/v1/messages", post],
+      ["http://api.anthropic.com/v1/messages", post], // not over TLS
+      ["https://api.anthropic.com.evil.example/v1/messages", post],
+      ["https://api.anthropic.com/v1/messages/batches", post],
+      ["https://api.anthropic.com/v1/files", post],
+      ["https://api.anthropic.com/v1/messages?beta=true", post],
+      ["https://api.anthropic.com/v1/messages", { ...post, method: "GET", body: undefined }],
+      ["https://api.anthropic.com/v1/messages", { headers: post.headers }], // no method: a GET
+    ] as [string, RequestInit][]) {
+      await expect(guarded(url, init), url).rejects.toThrow(/refused/);
+    }
+    expect(reached).toBe(0);
+    await guarded(`${PROVIDER_ORIGIN}${PROVIDER_PATH}`, post);
+    expect(reached).toBe(1);
   });
 
   it("a request that gets no answer in time, or loses its connection, has an unknown outcome and is not sent again", async () => {

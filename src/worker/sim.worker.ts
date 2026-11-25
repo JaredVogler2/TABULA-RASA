@@ -18,6 +18,7 @@ import {
   calendarAt,
   carriedWeight,
   carryCapacity,
+  cloneWorld,
   commonsHealthPermille,
   createWorld,
   forkWorld,
@@ -83,6 +84,13 @@ let lastLoop = 0;
 let lastTickAt = 0;
 let frameHz = 30;
 let timer: ReturnType<typeof setInterval> | null = null;
+/** Set when the world on hand could not be carried on: nothing more is asked of it. */
+let faulted = false;
+/** How far the world on hand can be vouched for (see HistoryView.provenance), and what the next adopted world will be. */
+let provenance: HistoryView["provenance"] = "made";
+let arriving: HistoryView["provenance"] = "made";
+/** How long a world from a file is lived on a copy before it is let in (half a day). */
+const TRIAL_TICKS = TICKS_PER_DAY / 2;
 
 const uiEvents: SimEvent[] = [];
 const scratchEvents: SimEvent[] = [];
@@ -129,6 +137,10 @@ let rerun: { fromTick: number; untilTick: number; log: Intervention[]; next: num
 /** Recent events of every kind, by id, so that the recorded causes of one can be followed back. */
 const eventLog = new Map<number, SimEvent>();
 const EVENT_LOG_CAP = 40_000;
+
+/** How long the most recent ticks took, for the performance probe (a ring: it costs one write per tick). */
+const tickRing = new Float32Array(1024);
+let tickRingCount = 0;
 
 /** True while the frames sent to the UI show the twin instead of the world being lived. Changes nothing in either. */
 let viewTwin = false;
@@ -225,6 +237,7 @@ function historyView(): HistoryView | null {
     rebuildable: partial && blocked === "" && rebuild === null && !(rerun && rerun.verified === null),
     rebuildBlocked: blocked,
     rebuilding: rebuild ? { tick: rebuild.w.tick, untilTick: rebuild.untilTick } : null,
+    provenance,
   };
 }
 
@@ -278,6 +291,7 @@ function advanceRebuild(budgetMs: number): void {
     return;
   }
   // the re-lived past is the past: its moments can be returned to, and its record of causes can be followed
+  provenance = "relived";
   const present = keyframes.filter((k) => k.tick === job.untilTick);
   keyframes = thin([...job.frames.filter((k) => k.tick < job.untilTick), ...(present.length ? present : job.frames.filter((k) => k.tick === job.untilTick))]);
   takeKeyframe();
@@ -742,6 +756,7 @@ function tickOnce(): void {
     // the recorded decisions for this tick are offered to the world exactly as they were then
     rec.cursor = replayTape(world, rec.tape, rec.cursor, scratchEvents);
   }
+  const tickStarted = performance.now();
   step(world, scratchEvents);
   if (rec) {
     const mark = rec.marks[rec.mark];
@@ -779,6 +794,7 @@ function tickOnce(): void {
     controlSink.length = 0;
   }
   lastTickAt = performance.now();
+  tickRing[tickRingCount++ % tickRing.length] = lastTickAt - tickStarted;
   if (world.tick % TICKS_PER_DAY === 0) {
     const s = sample(world);
     series.push(s);
@@ -792,7 +808,46 @@ function tickOnce(): void {
   if (world.tick % KEY_EVERY === 0) takeKeyframe();
 }
 
+/**
+ * The engine threw while this world was being lived or drawn. That should never happen — and
+ * if it does, the worst outcome is a world that silently stands still, or one that is carried
+ * on half-stepped. So time stops for good, the page is told in words, and the world is not
+ * touched again; what was saved before stays as it was.
+ */
+function fault(err: unknown): void {
+  faulted = true;
+  playing = false;
+  if (timer) clearInterval(timer);
+  timer = null;
+  const what = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  post({ type: "error", requestId: -1, code: "fault", message: `This world has stopped: something in it could not be carried on (${what.slice(0, 160)}). Worlds you saved earlier are untouched.` });
+}
+
+/** A world from a file is lived for a little while on a copy before it takes the place of the one on hand. */
+function trial(w: WorldState): void {
+  const copy = cloneWorld(w);
+  const sink: SimEvent[] = [];
+  try {
+    for (let i = 0; i < TRIAL_TICKS; i++) {
+      step(copy, sink);
+      sink.length = 0;
+    }
+    buildFrame(copy, true);
+  } catch {
+    throw new SnapshotError("corrupt", "the world in this file cannot be carried on from where it stops");
+  }
+}
+
 function loop(): void {
+  if (!world || faulted) return;
+  try {
+    frameOnce();
+  } catch (err) {
+    fault(err);
+  }
+}
+
+function frameOnce(): void {
   if (!world) return;
   const now = performance.now();
   const dt = Math.min(250, now - lastLoop);
@@ -808,7 +863,12 @@ function loop(): void {
       n++;
       if (performance.now() - started > budgetMs) break;
     }
-    if (acc > 8) acc = 0; // never let a backlog build up behind a slow device
+    // A tick that ran long is made up on the frames that follow; a device that cannot keep the pace asked is
+    // never chased. What is owed beyond half a second of the speed asked is forgotten, and time simply passes
+    // more slowly there. (This used to forget everything as soon as eight ticks were owed — a sixteenth of a
+    // second at the fastest speed — so a few slow ticks cost a 100-person world a tenth of its pace.)
+    const owedAtMost = Math.max(8, tps / 2);
+    if (acc > owedAtMost) acc = owedAtMost;
   }
   if (rebuild) advanceRebuild(11);
   const frame = buildFrame(shown() ?? world, false);
@@ -838,6 +898,7 @@ function restart(): void {
  */
 function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySample[], requestId: number, recording: typeof rec = null, keepHistory = false, imported?: { manifest: Manifest; extras: Record<string, unknown> }): void {
   worldEpoch++;
+  faulted = false;
   rec = recording;
   world = w;
   control = c;
@@ -845,6 +906,7 @@ function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySampl
   rebuild = null;
   outsideMinds = w.agents.some((a) => a.controller === "external");
   if (!keepHistory) {
+    provenance = arriving;
     branches = [];
     branchSeq = 0;
     rerun = null;
@@ -853,6 +915,7 @@ function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySampl
     const b = currentBranch();
     b.view = { ...b.view, id: w.meta.branch.id, parent: w.meta.branch.parent, forkTick: w.meta.branch.forkTick, luck: w.meta.branch.rngEpoch === 0 ? "same" : "new" };
   }
+  arriving = "made";
   forkTick = c ? c.meta.branch.forkTick : -1;
   series = s.slice();
   controlSeries = cs.slice();
@@ -979,10 +1042,23 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         break;
       }
       case "load": {
+        let text = msg.snapshot;
+        let controlText = msg.control;
+        if (msg.packed) {
+          // bytes that do not unpack are a damaged save, like text that does not parse
+          try {
+            text = strFromU8(gunzipSync(msg.packed.snapshot));
+            controlText = msg.packed.control ? strFromU8(gunzipSync(msg.packed.control)) : null;
+          } catch {
+            throw new SnapshotError("corrupt", "this save cannot be unpacked");
+          }
+        }
         // a stored save carries the hash of its own text: storage that returns something else is not believed
-        if (msg.hash !== undefined && snapshotHash(msg.snapshot) !== msg.hash) throw new SnapshotError("corrupt", "this save does not match the hash it was stored with");
-        const w = restoreWorld(msg.snapshot);
-        const c = msg.control ? restoreWorld(msg.control) : null;
+        if (msg.hash !== undefined && snapshotHash(text) !== msg.hash) throw new SnapshotError("corrupt", "this save does not match the hash it was stored with");
+        const w = restoreWorld(text);
+        const c = controlText ? restoreWorld(controlText) : null;
+        // a world that begins at its first tick has no past to take on trust
+        arriving = w.tick > 0 ? "opened" : "made";
         adopt(w, c, msg.series, msg.controlSeries, msg.requestId);
         break;
       }
@@ -1001,7 +1077,7 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       }
       case "play":
         // a recording that has ended, or that this engine failed to reproduce, does not go on
-        playing = !(rec && rec.view.state !== "playing") && rebuild === null;
+        playing = !(rec && rec.view.state !== "playing") && rebuild === null && !faulted;
         lastLoop = performance.now();
         break;
       case "pause":
@@ -1010,6 +1086,8 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         break;
       case "speed":
         tps = Math.max(0.25, Math.min(4096, msg.tps));
+        // what was owed at the old speed is not owed at the new one
+        if (acc > 1) acc = 1;
         break;
       case "frameRate":
         frameHz = Math.max(4, Math.min(60, msg.hz));
@@ -1054,10 +1132,15 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         playing = false;
         acc = 0;
         const n = Math.max(1, Math.min(TICKS_PER_DAY * 5, Math.floor(msg.ticks)));
-        for (let i = 0; i < n; i++) {
-          tickOnce();
-          // a re-run that has just arrived stops there, so that its verdict is seen before time goes on
-          if (rerun && rerun.verified !== null) break;
+        if (faulted) break;
+        try {
+          for (let i = 0; i < n; i++) {
+            tickOnce();
+            // a re-run that has just arrived stops there, so that its verdict is seen before time goes on
+            if (rerun && rerun.verified !== null) break;
+          }
+        } catch (err) {
+          fault(err);
         }
         break;
       }
@@ -1186,9 +1269,38 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       }
       case "import": {
         const opened = openBundle(msg.text);
+        // a file is not believed because it is well formed: it is lived a little first, on a copy
+        trial(opened.world);
+        if (opened.control) trial(opened.control);
+        arriving = opened.world.tick > 0 ? "opened" : "made";
         const extras = opened.extras;
         const daily = (v: unknown): DaySample[] => (Array.isArray(v) ? (v as DaySample[]).filter((d) => d && typeof d.day === "number").slice(0, 4000) : []);
         adopt(opened.world, opened.control, daily(extras.series), opened.control ? daily(extras.controlSeries) : [], msg.requestId, null, false, { manifest: opened.manifest, extras });
+        break;
+      }
+      case "perf": {
+        if (!world) throw new Error("no world");
+        const n = Math.min(tickRingCount, tickRing.length);
+        const sorted = Array.from(tickRing.subarray(0, n)).sort((p, q) => p - q);
+        const at = (q: number): number => (n ? Math.round((sorted[Math.min(n - 1, Math.floor(n * q))] as number) * 1000) / 1000 : 0);
+        const memory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+        post({
+          type: "perf",
+          requestId: msg.requestId,
+          perf: {
+            tick: world.tick,
+            agents: world.agents.length,
+            samples: n,
+            tickMsP50: at(0.5),
+            tickMsP95: at(0.95),
+            tickMsMax: n ? Math.round((sorted[n - 1] as number) * 1000) / 1000 : 0,
+            twin: control !== null,
+            heapMb: memory ? Math.round((memory.usedJSHeapSize / 1048576) * 10) / 10 : null,
+            keyframes: keyframes.length,
+            keyframeKb: Math.round(keyframes.reduce((sum, k) => sum + k.world.byteLength + (k.control?.byteLength ?? 0), 0) / 1024),
+            eventsHeld: eventLog.size,
+          },
+        });
         break;
       }
       case "ledger": {
@@ -1244,15 +1356,22 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       case "save": {
         if (!world) throw new Error("no world to save");
         if (rec) throw new Error("a recording is watched, not saved");
+        const built = performance.now();
         const snapshot = serializeWorld(world);
+        const controlText = control ? serializeWorld(control) : null;
+        // storage keeps the text compressed: mostly-unknown belief arrays shrink to a small fraction of their size
+        const packed = msg.packed ? { snapshot: gzipSync(strToU8(snapshot), { level: 4 }), control: controlText ? gzipSync(strToU8(controlText), { level: 4 }) : null } : null;
         const cal = calendarAt(world.config, world.tick);
         post({
           type: "saved",
           requestId: msg.requestId,
           payload: {
-            snapshot,
+            snapshot: packed ? "" : snapshot,
             hash: snapshotHash(snapshot),
-            control: control ? serializeWorld(control) : null,
+            control: packed ? null : controlText,
+            packed,
+            textBytes: snapshot.length + (controlText?.length ?? 0),
+            buildMs: Math.round(performance.now() - built),
             tick: world.tick,
             day: cal.day,
             alive: world.agents.filter((a) => a.alive).length,

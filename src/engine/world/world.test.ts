@@ -3,10 +3,12 @@ import { SCENARIOS, makeConfig, validateConfig, type WorldConfig } from "../mode
 import { Biome, NODE_SPECS, NodeKind, TICKS_PER_DAY, Water, Weather } from "../model/constants";
 import { calendarAt, dayLength, daylight, initialClimate, seasonalMean, updateClimate } from "./climate";
 import { createWorld } from "./create";
-import { placeNodes } from "./nodes";
+import { placeNodes, shoreSides } from "./nodes";
 import { generateTerrain } from "./terrain";
 
 const SEEDS = [1, 2, 3, 11, 42, 97, 314, 777];
+/** Counted at the commit before the shores could differ (git 8cf713f): `placeNodes` for two_shores, seed 3. */
+const NODES_TWO_SHORES_SEED_3_UNSPLIT = 861;
 
 describe("terrain generation", () => {
   it("is a pure function of the config", () => {
@@ -72,6 +74,112 @@ describe("terrain generation", () => {
       expect(big.length).toBeGreaterThanOrEqual(2);
       for (const f of extras.fords) expect(terrain.moveCost[f]).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("two shores", () => {
+  const count = (cfg: WorldConfig) => {
+    const t = generateTerrain(cfg).terrain;
+    const nodes = placeNodes(cfg, t);
+    const sides = shoreSides(cfg, t);
+    const per = [new Array<number>(NODE_SPECS.length).fill(0), new Array<number>(NODE_SPECS.length).fill(0)];
+    for (let k = 0; k < nodes.count; k++) {
+      const side = sides.side[(nodes.y[k] as number) * t.w + (nodes.x[k] as number)] as number;
+      if (side > 0) per[side - 1]![nodes.kind[k] as number]!++;
+    }
+    return { a: per[0]!, b: per[1]!, total: nodes.count, sides };
+  };
+  const sum = (xs: number[]) => xs.reduce((p, q) => p + q, 0);
+
+  it("most of the stone and clay lie on one shore, most of the timber, berries and roots on the other", () => {
+    const totals = { a: new Array<number>(NODE_SPECS.length).fill(0), b: new Array<number>(NODE_SPECS.length).fill(0) };
+    for (const seed of SEEDS) {
+      const cfg = makeConfig("two_shores", seed);
+      expect(cfg.shoreSplit).toBeGreaterThan(0);
+      const c = count(cfg);
+      expect(c.sides.shores).toBe(true);
+      // in every world, each of these is the larger part on its shore
+      expect(c.a[NodeKind.stone_outcrop]! + c.a[NodeKind.clay_bank]!, `seed ${seed} minerals`).toBeGreaterThan(2 * (c.b[NodeKind.stone_outcrop]! + c.b[NodeKind.clay_bank]!));
+      expect(c.b[NodeKind.tree]!, `seed ${seed} trees`).toBeGreaterThan(2 * c.a[NodeKind.tree]!);
+      expect(c.b[NodeKind.berry_bush]! + c.b[NodeKind.root_patch]!, `seed ${seed} food`).toBeGreaterThan(2 * (c.a[NodeKind.berry_bush]! + c.a[NodeKind.root_patch]!));
+      // and neither shore is without something to eat, to burn or to drink from
+      expect(c.a[NodeKind.berry_bush]! + c.a[NodeKind.root_patch]! + c.a[NodeKind.fishing_water]!).toBeGreaterThan(20);
+      expect(c.a[NodeKind.tree]!).toBeGreaterThan(10);
+      for (let k = 0; k < NODE_SPECS.length; k++) {
+        totals.a[k]! += c.a[k]!;
+        totals.b[k]! += c.b[k]!;
+      }
+    }
+    // over the seeds: at least three quarters of each on its own shore, and reeds and fish on both
+    const share = (xs: number[], ys: number[], kinds: number[]) => sum(kinds.map((k) => xs[k]!)) / sum(kinds.map((k) => xs[k]! + ys[k]!));
+    expect(share(totals.a, totals.b, [NodeKind.stone_outcrop, NodeKind.clay_bank])).toBeGreaterThan(0.75);
+    expect(share(totals.b, totals.a, [NodeKind.tree])).toBeGreaterThan(0.75);
+    expect(share(totals.b, totals.a, [NodeKind.berry_bush, NodeKind.root_patch])).toBeGreaterThan(0.7);
+    const reeds = share(totals.a, totals.b, [NodeKind.reed_bed, NodeKind.fishing_water]);
+    expect(reeds).toBeGreaterThan(0.35);
+    expect(reeds).toBeLessThan(0.65);
+  });
+
+  it("what one shore lacks the other has: the island as a whole is not poorer in food or stone than an undivided one", () => {
+    let split = 0;
+    let even = 0;
+    let splitMinerals = 0;
+    let evenMinerals = 0;
+    for (const seed of SEEDS) {
+      const yes = count(makeConfig("two_shores", seed));
+      const no = count(makeConfig("two_shores", seed, { shoreSplit: 0 }));
+      split += yes.a[NodeKind.berry_bush]! + yes.a[NodeKind.root_patch]! + yes.b[NodeKind.berry_bush]! + yes.b[NodeKind.root_patch]!;
+      even += no.a[NodeKind.berry_bush]! + no.a[NodeKind.root_patch]! + no.b[NodeKind.berry_bush]! + no.b[NodeKind.root_patch]!;
+      splitMinerals += yes.a[NodeKind.stone_outcrop]! + yes.a[NodeKind.clay_bank]! + yes.b[NodeKind.stone_outcrop]! + yes.b[NodeKind.clay_bank]!;
+      evenMinerals += no.a[NodeKind.stone_outcrop]! + no.a[NodeKind.clay_bank]! + no.b[NodeKind.stone_outcrop]! + no.b[NodeKind.clay_bank]!;
+    }
+    expect(split / even).toBeGreaterThan(0.9);
+    expect(split / even).toBeLessThan(1.15);
+    expect(splitMinerals / evenMinerals).toBeGreaterThan(0.9);
+    expect(splitMinerals / evenMinerals).toBeLessThan(1.3);
+  });
+
+  it("which shore is the poor one depends on the seed, and a world with no split is exactly as it was", () => {
+    // the western shore is the poor one in some worlds and the eastern in others
+    const westIsPoor = new Set<boolean>();
+    for (let seed = 1; seed <= 24; seed++) {
+      const cfg = makeConfig("two_shores", seed);
+      const t = generateTerrain(cfg).terrain;
+      const { side } = shoreSides(cfg, t);
+      let ax = 0;
+      let an = 0;
+      let bx = 0;
+      let bn = 0;
+      for (let i = 0; i < side.length; i++) {
+        if (side[i] === 1) {
+          ax += i % t.w;
+          an++;
+        } else if (side[i] === 2) {
+          bx += i % t.w;
+          bn++;
+        }
+      }
+      westIsPoor.add(ax / an < bx / bn);
+    }
+    expect(westIsPoor.size).toBe(2);
+    // shoreSplit 0 places exactly the nodes that were placed before the knob existed (D-041)
+    const cfg = makeConfig("two_shores", 3, { shoreSplit: 0 });
+    const nodes = placeNodes(cfg, generateTerrain(cfg).terrain);
+    expect(nodes.count).toBe(NODES_TWO_SHORES_SEED_3_UNSPLIT);
+    // and an island with no strait has no shores, whatever the knob says
+    const island = makeConfig("first_light", 3, { shoreSplit: 800 });
+    const plain = makeConfig("first_light", 3);
+    const t = generateTerrain(island).terrain;
+    expect(shoreSides(island, t).shores).toBe(false);
+    expect(Array.from(placeNodes(island, t).kind)).toEqual(Array.from(placeNodes(plain, generateTerrain(plain).terrain).kind));
+  });
+
+  it("a configuration written before the shores could differ means that they are alike", () => {
+    const old = { ...makeConfig("two_shores", 5) } as Partial<WorldConfig>;
+    delete old.shoreSplit;
+    expect(validateConfig(old as WorldConfig).shoreSplit).toBe(0);
+    expect(() => makeConfig("two_shores", 5, { shoreSplit: 1001 })).toThrow(/shoreSplit/);
+    expect(() => makeConfig("two_shores", 5, { shoreSplit: -1 })).toThrow(/shoreSplit/);
   });
 });
 

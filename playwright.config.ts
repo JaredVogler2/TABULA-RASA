@@ -21,6 +21,9 @@ const serverEnv: Record<string, string> = {
   DATABASE_SCHEMA: "e2e",
   ANTHROPIC_API_KEY: "",
   ANTHROPIC_MODEL: "",
+  // the most this test deployment could ever be authorized for: the console test authorizes two
+  // dollars under it and is refused six. (Nothing can be spent: live mode is off and there is no key.)
+  BUDGET_CEILING_USD: "5",
 };
 
 /**

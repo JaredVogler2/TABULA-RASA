@@ -1,6 +1,13 @@
 {
   "bundles": [
     {
+      "id": "confirmatory",
+      "title": "Confirmatory batch of the registered studies (holdout seeds 9000–9031)",
+      "seedClass": "confirmatory",
+      "date": "2026-11-25",
+      "path": "/studies/confirmatory"
+    },
+    {
       "id": "pilot",
       "title": "Pilot of the registered studies (development seeds 1–16)",
       "seedClass": "pilot",

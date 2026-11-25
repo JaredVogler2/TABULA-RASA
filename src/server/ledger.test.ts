@@ -5,6 +5,8 @@ import { num, type Db } from "./db";
 import { Ledger } from "./ledger";
 
 const USD = 1_000_000;
+/** The deployment's ceiling in these tests, unless a test is about the ceiling itself. */
+const CEILING = 10_000 * USD;
 
 /** The ledger's books must agree with themselves, whatever has happened. */
 async function audit(db: Db): Promise<void> {
@@ -15,18 +17,20 @@ async function audit(db: Db): Promise<void> {
   expect(num(b!.settled_microusd)).toBe(num(spent!.s));
   expect(num(b!.overage_microusd)).toBe(num(spent!.o));
   expect(num(b!.reserved_microusd) + num(b!.settled_microusd)).toBeLessThanOrEqual(num(b!.authorized_microusd));
-  for (const r of await db.query("SELECT id, cap_microusd, reserved_microusd, settled_microusd FROM runs")) {
+  for (const r of await db.query("SELECT id, cap_microusd, reserved_microusd, settled_microusd, overage_microusd FROM runs")) {
     const [h] = await db.query("SELECT COALESCE(SUM(reserved_microusd),0) AS s FROM reservations WHERE run_id = $1 AND state IN ('reserved','unknown')", [r.id]);
-    const [s] = await db.query("SELECT COALESCE(SUM(settled_microusd),0) AS s FROM reservations WHERE run_id = $1 AND state = 'settled'", [r.id]);
+    const [s] = await db.query("SELECT COALESCE(SUM(settled_microusd),0) AS s, COALESCE(SUM(overage_microusd),0) AS o FROM reservations WHERE run_id = $1 AND state = 'settled'", [r.id]);
     expect(num(r.reserved_microusd)).toBe(num(h!.s));
     expect(num(r.settled_microusd)).toBe(num(s!.s));
+    expect(num(r.overage_microusd)).toBe(num(s!.o));
     expect(num(r.reserved_microusd) + num(r.settled_microusd)).toBeLessThanOrEqual(num(r.cap_microusd));
   }
-  for (const d of await db.query("SELECT day::text AS day, reserved_microusd, settled_microusd FROM daily_spend")) {
+  for (const d of await db.query("SELECT day::text AS day, reserved_microusd, settled_microusd, overage_microusd FROM daily_spend")) {
     const [h] = await db.query("SELECT COALESCE(SUM(reserved_microusd),0) AS s FROM reservations WHERE day = $1::date AND state IN ('reserved','unknown')", [d.day]);
-    const [s] = await db.query("SELECT COALESCE(SUM(settled_microusd),0) AS s FROM reservations WHERE day = $1::date AND state = 'settled'", [d.day]);
+    const [s] = await db.query("SELECT COALESCE(SUM(settled_microusd),0) AS s, COALESCE(SUM(overage_microusd),0) AS o FROM reservations WHERE day = $1::date AND state = 'settled'", [d.day]);
     expect(num(d.reserved_microusd)).toBe(num(h!.s));
     expect(num(d.settled_microusd)).toBe(num(s!.s));
+    expect(num(d.overage_microusd)).toBe(num(s!.o));
   }
 }
 
@@ -41,8 +45,8 @@ describe("the budget ledger (PostgreSQL semantics, in memory)", () => {
   const reserve = (id: string, amount: number, runId = "run") => ledger.reserve({ id, runId, amount, model: "claude-fable-5-2", requestHash: "h" });
 
   const reset = async () => {
-    for (const t of ["reservations", "daily_spend", "runs", "audit_log"]) await db.query(`DELETE FROM ${t}`);
-    await db.query("UPDATE budget SET authorized_microusd = 0, daily_cap_microusd = 0, reserved_microusd = 0, settled_microusd = 0, overage_microusd = 0, kill_switch = true, kill_reason = 'never enabled' WHERE id = 1");
+    for (const t of ["calls", "reservations", "daily_spend", "runs", "audit_log"]) await db.query(`DELETE FROM ${t}`);
+    await db.query("UPDATE budget SET authorized_microusd = 0, daily_cap_microusd = 0, reserved_microusd = 0, settled_microusd = 0, overage_microusd = 0, kill_switch = true, kill_reason = 'never enabled', kill_code = '' WHERE id = 1");
   };
   beforeAll(async () => {
     db = await memoryDb();
@@ -53,7 +57,7 @@ describe("the budget ledger (PostgreSQL semantics, in memory)", () => {
   beforeEach(async () => {
     await reset();
     now = new Date("2026-12-01T10:00:00Z");
-    ledger = new Ledger(db, () => now);
+    ledger = new Ledger(db, { ceilingMicroUsd: CEILING, clock: () => now });
     await insertRun(db, "run", 1 * USD);
   });
 
@@ -98,9 +102,108 @@ describe("the budget ledger (PostgreSQL semantics, in memory)", () => {
     expect(await ledger.settle("never", { costMicroUsd: 1 })).toBe("missing");
     expect(await reserve("r", 100_000)).toEqual({ ok: true });
     expect(await ledger.release("r", "definite error")).toBe("released");
-    expect(await ledger.settle("r", { costMicroUsd: 99_000 })).toBe("already");
+    expect(await ledger.settle("r", { costMicroUsd: 0 })).toBe("already");
     expect(await ledger.release("r", "again")).toBe("already");
-    expect(await ledger.summary()).toMatchObject({ reservedMicroUsd: 0, settledMicroUsd: 50_000 });
+    expect(await ledger.summary()).toMatchObject({ reservedMicroUsd: 0, settledMicroUsd: 50_000, overageMicroUsd: 0, killSwitch: false });
+    await audit(db);
+  });
+
+  it("a charge that arrives after its hold was given back is never dropped: all of it is overage, and spending stops", async () => {
+    await open(1 * USD, 1 * USD);
+    expect(await reserve("r", 100_000)).toEqual({ ok: true });
+    // the owner releases it as unbilled while its request is still in flight…
+    await ledger.markUnknown("r", "timeout");
+    expect(await ledger.reconcile("r", { release: true }, "owner")).toBe("done");
+    expect(await ledger.summary()).toMatchObject({ reservedMicroUsd: 0, settledMicroUsd: 0, remainingMicroUsd: 1 * USD });
+    // …and then the provider's answer arrives after all, with what it cost
+    expect(await ledger.settle("r", { costMicroUsd: 99_000, requestId: "req_late" })).toBe("late");
+    const after = await ledger.summary();
+    expect(after).toMatchObject({ reservedMicroUsd: 0, settledMicroUsd: 0, overageMicroUsd: 99_000, remainingMicroUsd: 1 * USD - 99_000, killSwitch: true, killCode: "overage", killReason: "a request was charged after its hold had been released" });
+    expect((await ledger.get("r"))!).toMatchObject({ state: "settled", settledMicroUsd: 0, overageMicroUsd: 99_000, note: "charged after its hold was released" });
+    // once only, however often it is reported
+    expect(await ledger.settle("r", { costMicroUsd: 99_000 })).toBe("already");
+    expect((await ledger.summary()).overageMicroUsd).toBe(99_000);
+    expect(await reserve("next", 1000)).toEqual({ ok: false, reason: "kill_switch" });
+    const log = (await db.query("SELECT action FROM audit_log ORDER BY id")).map((l) => l.action);
+    expect(log).toContain("late_settlement");
+    await audit(db);
+  });
+
+  it("the deployment's ceiling stands above what the owner can authorize, and above what was authorized before it was lowered", async () => {
+    const five = new Ledger(db, { ceilingMicroUsd: 5 * USD, clock: () => now });
+    // more than the deployment allows: refused, nothing changes, and the attempt is on record
+    expect(await five.authorize(5 * USD + 1, 1 * USD, "owner")).toEqual({ ok: false, reason: "above_ceiling" });
+    expect(await five.summary()).toMatchObject({ ceilingMicroUsd: 5 * USD, authorizedMicroUsd: 0, remainingMicroUsd: 0 });
+    expect((await db.query("SELECT action FROM audit_log ORDER BY id")).map((l) => l.action)).toEqual(["budget.authorize_refused"]);
+    expect(await five.authorize(5 * USD, 5 * USD, "owner")).toEqual({ ok: true });
+    await five.setKillSwitch(false, "test", "owner");
+    await db.query("UPDATE runs SET cap_microusd = $1 WHERE id = 'run'", [5 * USD]);
+    const hold = (l: Ledger, id: string, amount: number) => l.reserve({ id, runId: "run", amount, model: "claude-fable-5-2", requestHash: "h" });
+    expect(await hold(five, "a", 1 * USD)).toEqual({ ok: true });
+    // the deployment's ceiling is lowered to two dollars: the row in the database still says five
+    const two = new Ledger(db, { ceilingMicroUsd: 2 * USD, clock: () => now });
+    expect(await two.summary()).toMatchObject({ ceilingMicroUsd: 2 * USD, authorizedMicroUsd: 5 * USD, remainingMicroUsd: 1 * USD });
+    expect(await hold(two, "b", 1 * USD)).toEqual({ ok: true });
+    expect(await hold(two, "c", 1)).toEqual({ ok: false, reason: "ceiling" });
+    expect(await hold(five, "c", 1)).toEqual({ ok: true }); // (the same request under the old ceiling: it is the ceiling that refused)
+    // a ceiling that is not a sum of money is no ceiling at all: nothing is authorized or held under it
+    for (const none of [0, -1, Number.NaN, 1.5, Number.POSITIVE_INFINITY]) {
+      const closed = new Ledger(db, { ceilingMicroUsd: none, clock: () => now });
+      expect(await closed.authorize(1, 1, "owner")).toEqual({ ok: false, reason: "above_ceiling" });
+      expect(await hold(closed, `z${String(none)}`, 1)).toEqual({ ok: false, reason: "ceiling" });
+      expect((await closed.summary()).remainingMicroUsd).toBe(0);
+    }
+    await audit(db);
+  });
+
+  it("money charged beyond a hold counts against the total, the run and the day from then on", async () => {
+    await open(1 * USD, 1 * USD);
+    await db.query("UPDATE runs SET cap_microusd = $1 WHERE id = 'run'", [1 * USD]);
+    expect(await reserve("a", 100_000)).toEqual({ ok: true });
+    expect(await ledger.settle("a", { costMicroUsd: 400_000 })).toBe("settled");
+    expect(await ledger.summary()).toMatchObject({ settledMicroUsd: 100_000, overageMicroUsd: 300_000, remainingMicroUsd: 600_000, killSwitch: true, killCode: "overage" });
+    expect((await ledger.summary()).today).toMatchObject({ settledMicroUsd: 100_000, overageMicroUsd: 300_000, remainingMicroUsd: 600_000 });
+    await ledger.setKillSwitch(false, "checked", "owner");
+    expect((await ledger.summary()).killCode).toBe("");
+    // 600,000 is left, not the 900,000 that ignoring the overage would give
+    expect(await reserve("b", 600_001)).toEqual({ ok: false, reason: "global_cap" });
+    // with room in the total, the run's own cap refuses for the same reason…
+    expect(await ledger.authorize(3 * USD, 3 * USD, "owner")).toEqual({ ok: true });
+    expect(await reserve("b", 600_001)).toEqual({ ok: false, reason: "run_cap" });
+    // …and so does the day's
+    await db.query("UPDATE runs SET cap_microusd = $1 WHERE id = 'run'", [3 * USD]);
+    expect(await ledger.authorize(3 * USD, 1 * USD, "owner")).toEqual({ ok: true });
+    expect(await reserve("b", 600_001)).toEqual({ ok: false, reason: "daily_cap" });
+    expect(await reserve("b", 600_000)).toEqual({ ok: true });
+    await audit(db);
+  });
+
+  it("what became of a request and the record of it are written together, or neither is", async () => {
+    await open(1 * USD, 1 * USD);
+    const note = (q: { query: (sql: string, params?: unknown[]) => Promise<unknown> }, id: string) => q.query("INSERT INTO calls (run_id, epoch, agent, attempt, status, reservation_id, result) VALUES ('run', 0, 0, 1, 'ok', $1, '{}')", [id]).then(() => undefined);
+    expect(await reserve("run:0:0:1", 100_000)).toEqual({ ok: true });
+    // the record cannot be written: then the money is not moved either
+    await expect(
+      ledger.conclude("run:0:0:1", { kind: "settle", input: { costMicroUsd: 40_000 } }, async () => {
+        throw new Error("the record could not be written");
+      }),
+    ).rejects.toThrow("could not be written");
+    expect((await ledger.get("run:0:0:1"))!.state).toBe("reserved");
+    expect(await ledger.summary()).toMatchObject({ reservedMicroUsd: 100_000, settledMicroUsd: 0 });
+    expect(await db.query("SELECT 1 FROM calls")).toEqual([]);
+    // both, in one step
+    expect(await ledger.conclude("run:0:0:1", { kind: "settle", input: { costMicroUsd: 40_000 } }, (q) => note(q, "run:0:0:1"))).toBe("settled");
+    expect((await ledger.get("run:0:0:1"))!.state).toBe("settled");
+    expect(await db.query("SELECT reservation_id FROM calls")).toEqual([{ reservation_id: "run:0:0:1" }]);
+    expect(await ledger.summary()).toMatchObject({ reservedMicroUsd: 0, settledMicroUsd: 40_000 });
+    // the same holds for giving money back and for holding it as unknown
+    expect(await reserve("run:0:1:1", 50_000)).toEqual({ ok: true });
+    await expect(ledger.conclude("run:0:1:1", { kind: "release", note: "rejected" }, async () => Promise.reject(new Error("no")))).rejects.toThrow("no");
+    expect((await ledger.get("run:0:1:1"))!.state).toBe("reserved");
+    await expect(ledger.conclude("run:0:1:1", { kind: "unknown", note: "timeout" }, async () => Promise.reject(new Error("no")))).rejects.toThrow("no");
+    expect((await ledger.get("run:0:1:1"))!.state).toBe("reserved");
+    expect(await ledger.conclude("run:0:1:1", { kind: "unknown", note: "timeout" }, async () => undefined)).toBe("unknown");
+    expect((await ledger.get("run:0:1:1"))!.state).toBe("unknown");
     await audit(db);
   });
 
@@ -233,7 +336,7 @@ describe("the budget ledger (PostgreSQL semantics, in memory)", () => {
       fc.asyncProperty(fc.array(op, { minLength: 5, maxLength: 40 }), async (ops) => {
         await reset();
         now = new Date("2026-12-01T10:00:00Z");
-        ledger = new Ledger(db, () => now);
+        ledger = new Ledger(db, { ceilingMicroUsd: CEILING, clock: () => now });
         await insertRun(db, "run", 900_000);
         await insertRun(db, "r2", 600_000);
         await ledger.authorize(1_500_000, 1_000_000, "t");
@@ -278,8 +381,8 @@ describe.skipIf(!TEST_DATABASE_URL)("the budget ledger under real concurrency (P
   beforeAll(async () => {
     handle = await serverDb(24);
     db = handle.db;
-    a = new Ledger(db);
-    b = new Ledger(await handle.second());
+    a = new Ledger(db, { ceilingMicroUsd: CEILING });
+    b = new Ledger(await handle.second(), { ceilingMicroUsd: CEILING });
   });
   afterAll(async () => {
     await handle.drop();
@@ -395,10 +498,14 @@ describe("database plumbing", () => {
     const { migrate } = await import("./db");
     expect(await migrate(db)).toEqual([]); // nothing left to apply
     const versions = (await db.query("SELECT version FROM schema_migrations ORDER BY version")).map((r) => r.version);
-    expect(versions).toEqual(["0001_ledger.sql"]);
-    for (const table of ["budget", "runs", "daily_spend", "reservations", "calls", "epochs", "audit_log", "rate_limits"]) {
+    expect(versions).toEqual(["0001_ledger.sql", "0002_hardening.sql"]);
+    for (const table of ["budget", "runs", "daily_spend", "reservations", "calls", "epochs", "audit_log", "rate_limits", "smoke_runs"]) {
       expect(await db.query(`SELECT COUNT(*) AS n FROM ${table}`)).toHaveLength(1);
     }
+    // what the second migration added, with the values a deployment starts from
+    expect(await db.query("SELECT kill_code, session_epoch, overage_microusd FROM budget WHERE id = 1")).toEqual([{ kill_code: "", session_epoch: 0, overage_microusd: expect.anything() as unknown }]);
+    await db.query("SELECT overage_microusd FROM runs");
+    await db.query("SELECT overage_microusd FROM daily_spend");
     await db.close();
   });
 

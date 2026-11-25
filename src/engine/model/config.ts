@@ -42,6 +42,7 @@ export interface WorldConfig {
   landFraction: number; // permille of tiles that are land
   relief: number; // permille: ruggedness
   strait: boolean; // split the island with a strait and a single ford ("Two Shores")
+  shoreSplit: number; // permille: with a strait, how unevenly the two shores are endowed (0 = alike)
 
   // ecology
   richness: number; // permille: scales node capacities
@@ -103,6 +104,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   landFraction: 500,
   relief: 1000,
   strait: false,
+  shoreSplit: 0,
   // Reference ecology (D-014): tuned on development seeds so that an island feeds fifty
   // people with slack when its patches are left half full, and about two thirds of them
   // when every patch is picked bare. 1000 is the neutral multiplier of the underlying tables.
@@ -152,6 +154,15 @@ export interface ScenarioDef {
   overrides: Partial<WorldConfig>;
 }
 
+/**
+ * How unevenly Two Shores endows its halves (permille, see world/nodes.ts): at 800, one shore
+ * has a fifth of the trees and two fifths of the berries and roots it would otherwise have,
+ * the other a fifth of the stone and clay. Chosen on development seeds as the strongest split
+ * under which the baseline minds on the poorer shore still come through the year in most
+ * worlds (scripts/shores.ts; D-041).
+ */
+const SHORE_SPLIT = 800;
+
 export const SCENARIOS: readonly ScenarioDef[] = [
   {
     id: "first_light",
@@ -195,10 +206,11 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     title: "Two Shores",
     tagline: "One island, one ford, two unequal halves.",
     description:
-      "A strait divides the land. Stone and clay lie on one shore; timber and most food on the other. A single shallow ford joins them.",
+      "A strait divides the land. Most of the stone and clay lie on one shore; most of the timber, berries and roots on the other. A single shallow ford joins them.",
     objective: { id: "narrow_gap", text: "Narrow the gap in well-being between the shores." },
     overrides: {
       strait: true,
+      shoreSplit: SHORE_SPLIT,
       landFraction: 540,
     },
   },
@@ -249,6 +261,9 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   intInRange("seed", cfg.seed, 0, 0xffffffff);
   intInRange("size", cfg.size, 24, 128);
   intInRange("landFraction", cfg.landFraction, 200, 800);
+  // configurations written before the shores could differ (recordings, stored runs) mean "alike"
+  if ((cfg as { shoreSplit?: number }).shoreSplit === undefined) cfg.shoreSplit = 0;
+  intInRange("shoreSplit", cfg.shoreSplit, 0, 1000);
   intInRange("relief", cfg.relief, 200, 2000);
   intInRange("richness", cfg.richness, 100, 4000);
   intInRange("nodeDensity", cfg.nodeDensity, 100, 3000);

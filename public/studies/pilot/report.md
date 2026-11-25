@@ -1,6 +1,6 @@
 # Study bundle — pilot (development seeds)
 
-Engine 0.6.0 · schema 5 · affordances 2026.11-h · 224 of 224 runs finished · seeds 1–16 (16) · no model consulted, no cost.
+Engine 0.7.0 · schema 6 · affordances 2026.11-i · 224 of 224 runs finished · seeds 1–16 (16) · no model consulted, no cost.
 
 Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, fixed analysis seed). Conditions are paired by seed. Nothing here is a claim about human societies (protocol §1).
 
@@ -9,7 +9,7 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 48 of 48 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
-> 2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Reciprocity | Specialization | Inequality of holdings | Commons health | Deliberations |
 |---|---|---|---|---|---|---|---|---|---|
@@ -19,14 +19,15 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 
 | Hypothesis | Claim | Paired estimate [95% interval] | n | SD of differences | d_z | Cliff's δ | p (Holm) | By the registered rule |
 |---|---|---|---|---|---|---|---|---|
-| H1 | Cooperation is higher at richness 0.7 than at 1.3. | 0.0161 [0.0104, 0.0218] | 16 | 0.0121 | 1.33 | 0.88 | 0.0001 (0.0002) | would read "supported" |
-| H1 | Cooperation is higher at richness 0.7 than at 0.4. | 0.0113 [0.0054, 0.0171] | 16 | 0.0123 | 0.92 | 0.55 | 0.0002 (0.0002) | would read "supported" |
+| H1 | Cooperation is higher at richness 0.7 than at 1.3. | 0.0161 [0.0104, 0.0218] | 16 | 0.0121 | 1.33 | 0.88 | 0.0001 (0.0007) | would read "supported" |
+| H1 | Cooperation is higher at richness 0.7 than at 0.4. | 0.0113 [0.0054, 0.0171] | 16 | 0.0123 | 0.92 | 0.55 | 0.0002 (0.0010) | would read "supported" |
 
 ### H2 — Mobility and specialization
 
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 32 of 32 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Reciprocity | Specialization | Inequality of holdings | Commons health | Deliberations |
 |---|---|---|---|---|---|---|---|---|---|
@@ -35,13 +36,14 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 
 | Hypothesis | Claim | Paired estimate [95% interval] | n | SD of differences | d_z | Cliff's δ | p (Holm) | By the registered rule |
 |---|---|---|---|---|---|---|---|---|
-| H2 | Doubling the cost of movement raises the specialization index. | 0.063 [0.055, 0.071] | 16 | 0.017 | 3.68 | 0.97 | 0.0001 (0.0001) | would read "supported" |
+| H2 | Doubling the cost of movement raises the specialization index. | 0.063 [0.055, 0.071] | 16 | 0.017 | 3.68 | 0.97 | 0.0001 (0.0007) | would read "supported" |
 
 ### H3 — Communication range and adoption
 
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 32 of 32 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Reciprocity | Specialization | Inequality of holdings | Commons health | Reached E2 (adopted) | Deliberations |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -50,13 +52,14 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 
 | Hypothesis | Claim | Paired estimate [95% interval] | n | SD of differences | d_z | Cliff's δ | p (Holm) | By the registered rule |
 |---|---|---|---|---|---|---|---|---|
-| H3 | More runs reach E2 when voices carry nine tiles than when they carry two. | 0.13 [-0.19, 0.44] | 16 | 0.62 | 0.20 | 0.13 | 0.5313 (0.5313) | would read "falsified" |
+| H3 | More runs reach E2 when voices carry nine tiles than when they carry two. | 0.13 [-0.19, 0.44] | 16 | 0.62 | 0.20 | 0.13 | 0.5313 (1.0000) | would read "falsified" |
 
 ### H4 — Diversity and resilience
 
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 32 of 32 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Reciprocity | Specialization | Inequality of holdings | Commons health | Deliberations |
 |---|---|---|---|---|---|---|---|---|---|
@@ -65,14 +68,14 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 
 | Hypothesis | Claim | Paired estimate [95% interval] | n | SD of differences | d_z | Cliff's δ | p (Holm) | By the registered rule |
 |---|---|---|---|---|---|---|---|---|
-| H4 | After the same blight on day 16, more people survive where temperaments and skills vary more. | -0.001 [-0.005, 0.003] | 16 | 0.009 | -0.14 | -0.01 | 0.7614 (0.7614) | would read "falsified" |
+| H4 | After the same blight on day 16, more people survive where temperaments and skills vary more. | -0.001 [-0.005, 0.003] | 16 | 0.009 | -0.14 | -0.01 | 0.7614 (1.0000) | would read "falsified" |
 
 ### H5 — Cadence has diminishing returns
 
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 32 of 32 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
-> 2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Specialization | Inequality of holdings | Commons health | Deliberations |
 |---|---|---|---|---|---|---|---|---|
@@ -89,7 +92,7 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 **Pilot** (development seeds) · 16 seeds (1–16) · 40 days · 48 of 48 runs finished
 
 > Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.
-> 2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family.
+> Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none).
 
 | Condition | n | Survival | Welfare | Voluntary cooperation | Reciprocity | Specialization | Inequality of holdings | Commons health | Reached E2 (adopted) | Reached E4 (persistent) | Deliberations |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -99,8 +102,8 @@ Intervals are 95% percentile bootstrap intervals over seeds (10,000 resamples, f
 
 | Hypothesis | Claim | Paired estimate [95% interval] | n | SD of differences | d_z | Cliff's δ | p (Holm) | By the registered rule |
 |---|---|---|---|---|---|---|---|---|
-| H6a | Positive control: a charter written by the designers raises survival. | -0.058 [-0.114, 0.000] | 16 | 0.123 | -0.47 | -0.27 | 0.0559 (0.1118) | would read "falsified" |
-| H6b | Institutions found by non-LLM search change survival (no prediction of sign). | -0.041 [-0.101, 0.016] | 16 | 0.125 | -0.33 | -0.14 | 0.1816 (0.1816) | would read "reported" |
+| H6a | Positive control: a charter written by the designers raises survival. | -0.058 [-0.114, 0.000] | 16 | 0.123 | -0.47 | -0.27 | 0.0559 (0.2236) | would read "falsified" |
+| H6b | Institutions found by non-LLM search change survival (no prediction of sign). | -0.041 [-0.101, 0.016] | 16 | 0.125 | -0.33 | -0.14 | 0.1816 (0.5447) | would read "reported" |
 
 ### Sizing the confirmatory batch (precision before power)
 

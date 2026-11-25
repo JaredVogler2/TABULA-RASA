@@ -1,0 +1,76 @@
+# How often the registered studies' own worlds refuse a step as unreachable (the refusal whose repetition slowed crowded worlds: D-046).
+# 2026-11-25 · three holdout seeds per condition (9000, 9007, 9019), 42 cells, each for its study's forty days; only cells with any refusal are listed.
+# These are re-runs of cells of the published batch, counted for this one diagnostic. No outcome measure was looked at.
+
+h4-diversity d10 seed 9000: 1 refusals as unreachable, 50 alive
+h5-cadence c12 seed 9000: 32 refusals as unreachable, 50 alive
+h5-cadence c48 seed 9000: 66 refusals as unreachable, 50 alive
+h6-institutions off seed 9000: 6 refusals as unreachable, 27 alive
+h6-institutions scripted seed 9000: 5 refusals as unreachable, 31 alive
+42 cells of the registered studies re-run (three holdout seeds per condition): 5 had any refusal as unreachable; 110 refusals in all
+
+# The reference world and three crowded ones, day by day (planner minds): refusals as unreachable
+
+## first_light seed 1, 50 people, 64 x 64, 40 days
+day  1  events    859  alive 50  contested/gather 2, nothing_to_gather/gather 1  | agents refused as unreachable: 0, most often 
+day  2  events    959  alive 50  nothing_to_gather/gather 1  | agents refused as unreachable: 0, most often 
+day  3  events    925  alive 50  contested/gather 1  | agents refused as unreachable: 0, most often 
+day  4  events    929  alive 50  contested/gather 3, nothing_to_gather/gather 2  | agents refused as unreachable: 0, most often 
+day  5  events    961  alive 50    | agents refused as unreachable: 0, most often 
+day  6  events    986  alive 50  too_far/pact_accept 3, contested/gather 1  | agents refused as unreachable: 0, most often 
+day  7  events    953  alive 50  too_far/pact_accept 3, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day  8  events    954  alive 50  no_such_offer/pact_accept 4, contested/gather 1  | agents refused as unreachable: 0, most often 
+day  9  events    911  alive 50  contested/gather 2, nothing_to_gather/gather 2  | agents refused as unreachable: 0, most often 
+day 10  events    970  alive 50  contested/gather 2, nothing_to_gather/gather 2, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 11  events    898  alive 50  nothing_to_gather/gather 1, too_far/pact_accept 1, nothing_here/withdraw 1  | agents refused as unreachable: 0, most often 
+day 12  events    930  alive 50  no_such_offer/pact_accept 2  | agents refused as unreachable: 0, most often 
+day 13  events    870  alive 50  nothing_to_gather/gather 2, nothing_here/withdraw 1, no_such_offer/pact_accept 1, contested/gather 1  | agents refused as unreachable: 0, most often 
+day 14  events    938  alive 50  nothing_to_gather/gather 3, nothing_here/withdraw 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 15  events    936  alive 50  nothing_to_gather/gather 2, contested/gather 1, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 16  events    842  alive 50  nothing_here/withdraw 4, no_materials/craft 1  | agents refused as unreachable: 0, most often 
+day 17  events    854  alive 50  nothing_to_gather/gather 2, nothing_here/withdraw 1  | agents refused as unreachable: 0, most often 
+day 18  events    925  alive 50  contested/gather 3, nothing_here/withdraw 2, nothing_to_gather/gather 1  | agents refused as unreachable: 0, most often 
+day 19  events    939  alive 50  contested/gather 1, no_such_offer/pact_accept 1, nothing_here/withdraw 1  | agents refused as unreachable: 0, most often 
+day 20  events    905  alive 50  nothing_here/withdraw 2, too_far/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 21  events    887  alive 50  nothing_here/withdraw 4  | agents refused as unreachable: 0, most often 
+day 22  events    819  alive 50  nothing_here/withdraw 2, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 23  events    864  alive 50  too_far/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 24  events    846  alive 50  nothing_here/withdraw 4, no_item/eat 1  | agents refused as unreachable: 0, most often 
+day 25  events    813  alive 50  nothing_here/withdraw 3, nothing_to_gather/gather 2  | agents refused as unreachable: 0, most often 
+day 26  events    755  alive 50  nothing_here/withdraw 2  | agents refused as unreachable: 0, most often 
+day 27  events    796  alive 50  nothing_here/withdraw 2, no_item/eat 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 28  events    713  alive 50  contested/gather 2, nothing_here/withdraw 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 29  events    793  alive 50  nothing_here/withdraw 3, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 30  events    753  alive 50  too_far/pact_accept 4, nothing_here/withdraw 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 31  events    758  alive 50  nothing_here/withdraw 4, too_far/pact_accept 1, no_fire/craft 1, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 32  events    747  alive 50  nothing_here/withdraw 3  | agents refused as unreachable: 0, most often 
+day 33  events    721  alive 50  nothing_here/withdraw 3, nothing_to_gather/gather 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 34  events    745  alive 50  nothing_here/withdraw 5  | agents refused as unreachable: 0, most often 
+day 35  events    695  alive 50  nothing_here/withdraw 2, no_fire/craft 2, nothing_to_gather/gather 1  | agents refused as unreachable: 0, most often 
+day 36  events    712  alive 50  nothing_to_gather/gather 4, no_fire/craft 3, nothing_here/withdraw 2, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 37  events    730  alive 50  nothing_to_gather/gather 5, no_fire/craft 4, nothing_here/withdraw 2, too_far/pact_accept 1  | agents refused as unreachable: 0, most often 
+day 38  events    736  alive 50  no_fire/craft 4, contested/gather 1, nothing_to_gather/gather 1, no_capacity/withdraw 1  | agents refused as unreachable: 0, most often 
+day 39  events    736  alive 50  nothing_to_gather/gather 5, no_fire/craft 2, nothing_here/withdraw 1, no_capacity/withdraw 1  | agents refused as unreachable: 0, most often 
+day 40  events    750  alive 50  nothing_to_gather/gather 9, no_fire/craft 5, contested/gather 1, nothing_here/withdraw 1  | agents refused as unreachable: 0, most often 
+
+## first_light seed 1, 250 people, 96 x 96, 20 days
+day  1  events   4323  alive 250  contested/gather 28, nothing_to_gather/gather 4, no_materials/craft 2  | agents refused as unreachable: 0, most often 
+day  2  events   4515  alive 250  contested/gather 27, nothing_to_gather/gather 9, fire_full/refuel 4, no_materials/craft 2  | agents refused as unreachable: 0, most often 
+day  3  events   4287  alive 250  contested/gather 30, nothing_to_gather/gather 19, too_far/pact_accept 3, no_such_offer/pact_accept 1  | agents refused as unreachable: 0, most often 
+day  4  events   4482  alive 250  contested/gather 14, nothing_to_gather/gather 12, no_such_offer/pact_accept 1, no_materials/craft 1  | agents refused as unreachable: 0, most often 
+day  5  events   4373  alive 250  nothing_to_gather/gather 24, contested/gather 14, no_item/eat 2, too_far/pact_accept 1  | agents refused as unreachable: 0, most often 
+day  6  events   4265  alive 250  nothing_to_gather/gather 14, contested/gather 9, too_far/pact_accept 3, no_item/eat 2  | agents refused as unreachable: 0, most often 
+day  7  events   4169  alive 250  unreachable/goto 28, nothing_to_gather/gather 26, contested/gather 13, no_fire/craft 2  | agents refused as unreachable: 1, most often 28
+day  8  events   3956  alive 250  nothing_to_gather/gather 42, contested/gather 15, no_fire/craft 2, no_materials/craft 1  | agents refused as unreachable: 0, most often 
+day  9  events   3905  alive 250  nothing_to_gather/gather 43, contested/gather 16, no_fire/craft 3, no_materials/craft 2  | agents refused as unreachable: 0, most often 
+day 10  events   3804  alive 250  nothing_to_gather/gather 43, contested/gather 16, no_fire/craft 4, no_materials/craft 3  | agents refused as unreachable: 0, most often 
+day 11  events   3913  alive 250  nothing_to_gather/gather 58, contested/gather 17, too_far/pact_accept 5, no_fire/craft 4  | agents refused as unreachable: 0, most often 
+day 12  events   3820  alive 250  nothing_to_gather/gather 70, contested/gather 17, nothing_here/withdraw 4, no_fire/craft 3  | agents refused as unreachable: 0, most often 
+day 13  events   3818  alive 249  nothing_to_gather/gather 100, contested/gather 27, no_fire/craft 3, no_bond/propose 2  | agents refused as unreachable: 0, most often 
+day 14  events   3898  alive 249  nothing_to_gather/gather 159, contested/gather 34, no_bond/propose 1, no_fire/craft 1  | agents refused as unreachable: 0, most often 
+day 15  events   3778  alive 248  nothing_to_gather/gather 168, unreachable/gather 34, contested/gather 30, no_bond/propose 7  | agents refused as unreachable: 2, most often 33/1
+day 16  events   4373  alive 248  unreachable/gather 252, nothing_to_gather/gather 175, contested/gather 32, nothing_here/withdraw 9  | agents refused as unreachable: 9, most often 57/51/40
+day 17  events   5549  alive 247  unreachable/gather 892, nothing_to_gather/gather 179, contested/gather 29, nothing_here/withdraw 9  | agents refused as unreachable: 32, most often 96/94/77
+day 18  events   9098  alive 244  unreachable/gather 2711, nothing_to_gather/gather 166, contested/gather 40, nothing_here/withdraw 14  | agents refused as unreachable: 67, most often 92/89/88
+day 19  events  13785  alive 231  unreachable/gather 5139, nothing_to_gather/gather 135, contested/gather 34, nothing_here/withdraw 19  | agents refused as unreachable: 86, most often 96/96/95
+day 20  events  17354  alive 215  unreachable/gather 7014, nothing_to_gather/gather 105, nothing_here/withdraw 19, contested/gather 18  | agents refused as unreachable: 113, most often 96/96/96

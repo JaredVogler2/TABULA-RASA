@@ -1,0 +1,146 @@
+{
+ "date": "2026-11-25T18:00:52.367Z",
+ "node": "v22.23.5",
+ "mutants": [
+  {
+   "id": "ledger-kill-switch",
+   "invariant": "with the kill switch on, nothing new is held",
+   "killed": true,
+   "failedTests": 4,
+   "seconds": 4.9
+  },
+  {
+   "id": "ledger-total",
+   "invariant": "what is held, settled and overcharged never exceeds what was authorized",
+   "killed": true,
+   "failedTests": 6,
+   "seconds": 25.7
+  },
+  {
+   "id": "ledger-ceiling",
+   "invariant": "nothing above the deployment's ceiling can be authorized",
+   "killed": true,
+   "failedTests": 2,
+   "seconds": 24.6
+  },
+  {
+   "id": "ledger-settle-once",
+   "invariant": "a settlement is applied once, however many times it arrives",
+   "killed": true,
+   "failedTests": 3,
+   "seconds": 5.9
+  },
+  {
+   "id": "gate-csrf",
+   "invariant": "a write without the session's own token changes nothing",
+   "killed": true,
+   "failedTests": 3,
+   "seconds": 23.9
+  },
+  {
+   "id": "gate-origin",
+   "invariant": "a write from another site is refused",
+   "killed": true,
+   "failedTests": 5,
+   "seconds": 22.1
+  },
+  {
+   "id": "session-epoch",
+   "invariant": "signing out ends every session",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 24.9
+  },
+  {
+   "id": "sign-in-limit",
+   "invariant": "guessing the passphrase is slowed",
+   "killed": true,
+   "failedTests": 3,
+   "seconds": 19.2
+  },
+  {
+   "id": "provider-error-proves-nothing",
+   "invariant": "a failure that is not in the provider's own format is never taken as unbilled",
+   "killed": true,
+   "failedTests": 2,
+   "seconds": 1.5
+  },
+  {
+   "id": "run-lease",
+   "invariant": "one stepper at a time holds a run",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 7.3
+  },
+  {
+   "id": "goods-conserved",
+   "invariant": "nothing is made from nothing: what is gathered leaves the place it was gathered from, unit for unit",
+   "killed": true,
+   "failedTests": 7,
+   "seconds": 11.8
+  },
+  {
+   "id": "speech-untold",
+   "invariant": "a speaker can tell only of what they know",
+   "killed": true,
+   "failedTests": 2,
+   "seconds": 7.9
+  },
+  {
+   "id": "hearing-belief",
+   "invariant": "a hearer learns of an agreement only from someone who knows of it",
+   "killed": false,
+   "failedTests": 0,
+   "seconds": 8.1
+  },
+  {
+   "id": "role-label",
+   "invariant": "the name of a role cannot be a sentence",
+   "killed": true,
+   "failedTests": 2,
+   "seconds": 6.5
+  },
+  {
+   "id": "authority-members",
+   "invariant": "only a member can put a motion to an agreement",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 6.1
+  },
+  {
+   "id": "payload-depth",
+   "invariant": "what a mind attaches to an intent is bounded in depth",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 0.6
+  },
+  {
+   "id": "file-ranges",
+   "invariant": "an opened world whose numbers are out of range is refused",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 35.8
+  },
+  {
+   "id": "replay-digest",
+   "invariant": "a recording that this engine does not reproduce is not accepted as reproduced",
+   "killed": true,
+   "failedTests": 4,
+   "seconds": 5.8
+  },
+  {
+   "id": "route-memo",
+   "invariant": "a failed route search is remembered only while what the agent has seen is unchanged",
+   "killed": false,
+   "failedTests": 0,
+   "seconds": 6.2
+  },
+  {
+   "id": "determinism",
+   "invariant": "the same seed and the same decisions make the same world (the golden recording)",
+   "killed": true,
+   "failedTests": 1,
+   "seconds": 1
+  }
+ ]
+}

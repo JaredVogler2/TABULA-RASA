@@ -9,6 +9,7 @@
  * same units are settled fairly and deterministically.
  */
 import { clampInt } from "../core/math";
+import { cleanText } from "../core/text";
 import { Stream, below, chance, stochasticDiv } from "../core/rng";
 import {
   FIRE_MAX_FUEL,
@@ -32,7 +33,7 @@ import {
 import { Activity, type Agent, type Intent, type Structure, type WorldState } from "../model/types";
 import { droughtActive, hearingRadius, sightRadius } from "../world/climate";
 import { noteFeedback } from "../mind/feedback";
-import { believedDrinkable, remember, structureStateCode } from "../mind/knowledge";
+import { believedDrinkable, remember, structureStateCode, untold } from "../mind/knowledge";
 import { notePromiseMade, noteTaking, settleGift } from "../mind/social";
 import { gathered, institutionalIntent, storeAccess, supplied, withdrawLimit } from "../institutions/hooks";
 import { emit, parentsOf, type EventOut } from "./events";
@@ -128,16 +129,10 @@ function wearTool(world: WorldState, a: Agent, tool: number, out: EventOut): voi
   a.toolUses[tool] = uses;
 }
 
+/** Spoken words as they are stored: cleaned and bounded here whatever door they came through. */
 function sanitizeText(text: string | undefined): string | undefined {
   if (text === undefined) return undefined;
-  let out = "";
-  for (let i = 0; i < text.length && out.length < MAX_TEXT; i++) {
-    const c = text.charCodeAt(i);
-    // drop control characters; keep printable text and ordinary whitespace as a space
-    if (c === 9 || c === 10 || c === 13) out += " ";
-    else if (c >= 32 && c !== 127) out += text[i];
-  }
-  out = out.trim();
+  const out = cleanText(text, MAX_TEXT);
   return out.length > 0 ? out : undefined;
 }
 
@@ -574,6 +569,12 @@ export function startNext(world: WorldState, sc: Scratch, a: Agent, out: EventOu
             reject(world, a, out, intent, "too_far");
             return;
           }
+        }
+        // a person can tell only of what they know (whoever or whatever is deciding for them)
+        const gap = untold(world, a, intent.act);
+        if (gap) {
+          reject(world, a, out, intent, gap);
+          return;
         }
         begin(a, "say", 1);
         return;

@@ -38,6 +38,9 @@ jobs:
           --health-retries 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # the whole history, for the scan of everything any commit has ever added
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -53,8 +56,11 @@ jobs:
       - run: pnpm gen:affordances --check
       - run: pnpm gen:migrations --check
       - run: pnpm gen:prompts --check
+      - run: pnpm gen:licenses --check
       - name: Secret scan (tracked files)
         run: pnpm scan:secrets
+      - name: Secret scan (every line any commit has added)
+        run: pnpm scan:history
       - run: pnpm build
       - name: Client bundle scan (no server code or secrets sent to browsers)
         run: pnpm scan:bundle

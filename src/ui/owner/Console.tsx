@@ -28,6 +28,10 @@ interface Budget {
   today: { day: string; reservedMicroUsd: number; settledMicroUsd: number; remainingMicroUsd: number };
   killSwitch: boolean;
   killReason: string;
+  /** "overage" when money tripped the switch: releasing it then takes a typed phrase. */
+  killCode: string;
+  /** The most this deployment may ever be authorized to spend: set where it is deployed, never from this page. */
+  ceilingMicroUsd: number;
 }
 interface Live {
   available: boolean;
@@ -68,6 +72,8 @@ interface Status {
   csrf?: string;
   live?: Live;
   budget?: Budget;
+  /** Present when money tripped the kill switch: the words that release it. */
+  releasePhrase?: string | null;
   runs?: RunView[];
   unknown?: Unknown[];
   audit?: { at: string; actor: string; action: string; detail: string }[];
@@ -99,6 +105,10 @@ const REASONS: Record<string, string> = {
   bad_request: "the provider rejected the request as malformed",
   too_large: "the request was too large for the provider",
   snapshot_mismatch: "the stored world did not match its digest",
+  ceiling: "the deployment's ceiling is reached (BUDGET_CEILING_USD)",
+  unusable_answers: "three answers in a row were paid for and could not be used",
+  wrong_model: "the provider answered with a model other than the one approved",
+  charged_after_release: "a request was charged after its hold had been released",
 };
 
 const usd = (micro: number): string => formatUsd(micro);
@@ -188,13 +198,15 @@ export function Console() {
           <button
             type="button"
             className={styles.quiet}
+            data-testid="signout"
+            title="Ends every session there is, on every device"
             onClick={async () => {
               await call("/api/owner/logout", {});
               csrf.current = "";
               await refresh();
             }}
           >
-            Sign out
+            Sign out everywhere
           </button>
         }
       />
@@ -205,7 +217,7 @@ export function Console() {
       ) : null}
       <div className={styles.columns}>
         <LivePanel live={live} />
-        <BudgetPanel budget={budget} call={call} refresh={refresh} />
+        <BudgetPanel budget={budget} releasePhrase={typeof status.releasePhrase === "string" ? status.releasePhrase : null} call={call} refresh={refresh} />
       </div>
       {status.unknown && status.unknown.length > 0 ? <UnknownPanel items={status.unknown} call={call} refresh={refresh} /> : null}
       <NewRun live={live} budget={budget} call={call} refresh={refresh} />
@@ -238,7 +250,7 @@ function SignIn({ possible, call, onDone, setCsrf }: { possible: boolean; call: 
         <h2>Sign-in is not set up</h2>
         <p>This deployment has no owner passphrase configured, so there is no owner and nothing here can be used. The public game does not need one.</p>
         <p className={styles.small}>
-          To set it up, run <code>pnpm owner:hash</code> on your own machine and put the two lines it prints in the server&apos;s environment. See <code>docs/SECURITY.md</code>.
+          To set it up, run <code>pnpm owner:hash</code> on your own machine and put the two lines it prints in the server&apos;s environment. It also needs a database: <code>docs/DEPLOYMENT.md</code> has the steps.
         </p>
       </section>
     );
@@ -363,12 +375,15 @@ function Meter({ budget }: { budget: Budget }) {
   );
 }
 
-function BudgetPanel({ budget, call, refresh }: { budget: Budget; call: (p: string, b?: unknown) => Promise<Reply>; refresh: () => Promise<void> }) {
+function BudgetPanel({ budget, releasePhrase, call, refresh }: { budget: Budget; releasePhrase: string | null; call: (p: string, b?: unknown) => Promise<Reply>; refresh: () => Promise<void> }) {
   const [total, setTotal] = useState("");
   const [daily, setDaily] = useState("");
   const [phrase, setPhrase] = useState("");
   const [message, setMessage] = useState("");
+  const [released, setReleased] = useState("");
   const PHRASE = "I authorize this spending";
+  // a switch that money tripped is released only by saying, in words, that the charge was looked at
+  const needsWords = budget.killSwitch && releasePhrase !== null;
   return (
     <section className={styles.panel} data-testid="budget-panel">
       <h2>Budget</h2>
@@ -377,6 +392,11 @@ function BudgetPanel({ budget, call, refresh }: { budget: Budget; call: (p: stri
           {usd(budget.authorizedMicroUsd)}
         </span>{" "}
         <small>authorized in total · {usd(budget.dailyCapMicroUsd)} a day</small>
+      </p>
+      <p className={styles.small} data-testid="ceiling">
+        {budget.ceilingMicroUsd > 0
+          ? `This deployment's ceiling is ${usd(budget.ceilingMicroUsd)}: no more than that can ever be authorized from this page. It is set where the application is deployed (BUDGET_CEILING_USD), not here.`
+          : "This deployment has no ceiling set (BUDGET_CEILING_USD), so nothing can be authorized from this page."}
       </p>
       <Meter budget={budget} />
       <p className={styles.small}>
@@ -393,14 +413,24 @@ function BudgetPanel({ budget, call, refresh }: { budget: Budget; call: (p: stri
           type="button"
           data-testid="kill-toggle"
           className={budget.killSwitch ? styles.quiet : styles.danger}
+          disabled={needsWords && released !== releasePhrase}
           onClick={async () => {
-            await call("/api/owner/kill", { on: !budget.killSwitch });
+            await call("/api/owner/kill", { on: !budget.killSwitch, ...(needsWords ? { confirm: released } : {}) });
+            setReleased("");
             await refresh();
           }}
         >
           {budget.killSwitch ? "Release the switch" : "Stop all spending"}
         </button>
       </div>
+      {needsWords ? (
+        <label className={styles.field} data-testid="release-words">
+          <span>
+            A request cost more than was held for it, and that turned the switch on. Look at what the provider charged; then type <em>{releasePhrase}</em> to release it.
+          </span>
+          <input data-testid="release-phrase" value={released} onChange={(e) => setReleased(e.target.value)} autoComplete="off" />
+        </label>
+      ) : null}
 
       <details className={styles.details}>
         <summary>Change the authorization</summary>

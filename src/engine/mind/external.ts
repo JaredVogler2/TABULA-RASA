@@ -15,7 +15,7 @@ import { cleanText } from "../core/text";
 import type { Agent, DecisionSource, Feedback, Intent, SimEvent, WorldState } from "../model/types";
 import { interrupt } from "../sim/actions";
 import { emit, type EventOut } from "../sim/events";
-import { checkIntent } from "../sim/intents";
+import { checkIntent, plainIntent } from "../sim/intents";
 import { scratchOf } from "../sim/scratch";
 import { adopt } from "./decide";
 import { FEEDBACK_LIMITS, feedbackEntry } from "./feedback";
@@ -134,7 +134,14 @@ export function submitDecision(world: WorldState, agentId: number, decision: unk
       feedback.push(feedbackEntry(world.tick, item && typeof item === "object" ? (item as { k?: unknown }).k : "action", reason));
       continue;
     }
-    const intent = item as Intent;
+    // what is kept is the intent and nothing that came along with it: rebuilt from its own
+    // fields, any charter or motion as a bounded plain copy, any words cleaned and cut
+    const intent = plainIntent(item as Intent);
+    if (!intent) {
+      rejected.push({ index: i, reason: "too_large" });
+      feedback.push(feedbackEntry(world.tick, (item as Intent).k, "too_large"));
+      continue;
+    }
     if (intent.k === "say" && intent.text !== undefined) {
       const text = cleanText(intent.text, DECISION_LIMITS.maxTextChars);
       accepted.push(text ? { ...intent, text } : { k: "say", to: intent.to, act: intent.act });

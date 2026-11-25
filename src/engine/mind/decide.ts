@@ -8,6 +8,7 @@ import { emit, type EventOut } from "../sim/events";
 import type { Scratch } from "../sim/scratch";
 import { planDecide } from "./planner";
 import { reflexDecide, urgentNeed, type Plan } from "./reflex";
+import { knownStructure, knowsCharter, knowsPact } from "./knowledge";
 import { noteHeard } from "./social";
 import { learnCharter } from "../institutions/engine";
 import { learnPact } from "../institutions/pacts";
@@ -107,9 +108,13 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
   m.metY[u.from] = u.y;
   m.metTick[u.from] = world.tick;
 
-  // Testimony about places updates beliefs only if it is newer than what the hearer knows
-  // and the hearer trusts the speaker enough; its source is recorded.
+  // What a hearer learns of the world from speech is what the speaker knows and says — never
+  // what is true. The engine reads the speaker's mind here, not the world: a structure is where
+  // the speaker believes it is, an agreement or an offer is one the speaker has themselves
+  // heard of. (Testimony about places carries the speaker's own figures; it updates beliefs
+  // only if it is newer than what the hearer knows and the hearer trusts the speaker enough.)
   const trust = m.trust[u.from] as number;
+  const speaker = world.agents[u.from];
   if (u.act.t === "inform_node" && trust >= 350) {
     const n = u.act.node;
     if (Number.isInteger(n) && n >= 0 && n < world.nodes.count && u.act.tick > (m.nodeTick[n] as number)) {
@@ -120,9 +125,10 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
   } else if (u.act.t === "announce" || u.act.t === "invite") {
     // to hear of a charter is to know it exists; whether to believe in it is another matter
     const id = u.act.t === "announce" ? u.act.proposal : u.act.institution;
-    if (world.inst.proposals.some((p) => p.id === id)) learnCharter(a, id);
+    if (speaker && knowsCharter(world, speaker, id) && world.inst.proposals.some((p) => p.id === id)) learnCharter(a, id);
   } else if (u.act.t === "offer" && u.act.pact !== undefined) {
-    if (world.inst.pacts.some((p) => p.id === (u.act as { pact: number }).pact && p.state === "open")) learnPact(a, u.act.pact);
+    const id = u.act.pact;
+    if (speaker && knowsPact(world, speaker, id) && world.inst.pacts.some((p) => p.id === id && p.state === "open")) learnPact(a, id);
   } else if (u.act.t === "warn" && trust >= 350) {
     // "that place is bare": believed only if it is newer than what the hearer knows first-hand
     const n = u.act.node;
@@ -132,10 +138,11 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
       m.nodeSrc[n] = u.from;
     }
   } else if (u.act.t === "inform_structure" && trust >= 350) {
-    const s = world.structures[u.act.structure];
-    if (s && !s.removed && !m.structs.some((k) => k.id === s.id)) {
-      // the hearer learns that it exists and where; its state is unknown until seen
-      m.structs.push({ id: s.id, kind: s.kind, x: s.x, y: s.y, tick: world.tick, state: s.complete ? 1 : 0, bound: -1 });
+    const told = speaker ? knownStructure(speaker, u.act.structure) : undefined;
+    if (told && !knownStructure(a, told.id)) {
+      // the hearer takes on the speaker's picture of it — kind, place, and how it stood when the
+      // speaker last saw it — dated to then, not to now. Who holds it is not passed on.
+      m.structs.push({ id: told.id, kind: told.kind, x: told.x, y: told.y, tick: told.tick, state: told.state, bound: -1, ...(told.missing ? { missing: told.missing.slice() } : {}) });
     }
   }
 }

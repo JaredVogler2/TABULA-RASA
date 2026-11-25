@@ -7,6 +7,7 @@
  * steps and cannot recurse. Arithmetic saturates; division by zero yields zero. Every
  * evaluated node costs one unit of fuel.
  */
+import { cleanLabel } from "../core/text";
 import { ITEM_COUNT } from "../model/constants";
 import { BINARY_OPS, LIMITS, VARS, type BinaryOp, type Diagnostic, type Expr, type VarName } from "./types";
 
@@ -131,7 +132,7 @@ function walk(raw: unknown, path: string, roles: number, diags: Diagnostic[], bu
     return { c: r.c };
   }
   if ("v" in r) {
-    if (typeof r.v !== "string" || !(VARS as readonly string[]).includes(r.v)) return bad("unknown_fact", `"${String(r.v).slice(0, 24)}" is not a public fact a rule can read`);
+    if (typeof r.v !== "string" || !(VARS as readonly string[]).includes(r.v)) return bad("unknown_fact", `"${cleanLabel(r.v, 24)}" is not a public fact a rule can read`);
     const v = r.v as VarName;
     if (ITEM_VARS.has(v)) {
       const i = r.i === undefined ? -1 : r.i;
@@ -175,7 +176,7 @@ const SEASON_WORDS = ["spring", "summer", "autumn", "winter"] as const;
 export function showExpr(e: Expr, items: readonly string[], roleNames: readonly string[]): string {
   if ("c" in e) return String(e.c);
   if ("v" in e) {
-    if (e.v === "has_role") return `is ${roleNames[e.i ?? 0] ?? "role"}`;
+    if (e.v === "has_role") return `they have the role "${roleNames[e.i ?? 0] ?? "role"}"`;
     if (ITEM_VARS.has(e.v)) return `${e.v}(${(e.i ?? -1) < 0 ? "food" : (items[e.i as number] ?? "?")})`;
     return e.v;
   }

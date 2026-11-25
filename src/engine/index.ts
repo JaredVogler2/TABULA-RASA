@@ -17,6 +17,7 @@ export { canonicalJson, parseCanonical } from "./core/canonical";
 
 export { createWorld, ROOT_BRANCH } from "./world/create";
 export { generateTerrain } from "./world/terrain";
+export { shoreSides } from "./world/nodes";
 export { calendarAt, dayLength, daylight, hearingRadius, seasonalMean, sightRadius, COMFORT_TEMP } from "./world/climate";
 export type { Calendar } from "./world/climate";
 
@@ -37,6 +38,8 @@ export type { Summary } from "./metrics/accumulate";
 export { buildObservation, carriedFoodEnergy, maskAllows, DECISION_LIMITS, OBSERVATION_VERSION } from "./mind/observe";
 export type { ActionOption, Observation, ObservedCivics } from "./mind/observe";
 export { cleanText, dueForDecision, observe, replayRecord, replayTape, submitDecision, tapeFromEvents } from "./mind/external";
+export { cleanLabel } from "./core/text";
+export { PAYLOAD_BOUNDS, boundedCopy } from "./core/bounded";
 export type { DecisionOutcome, DecisionRecord, Dropped, ExternalDecision } from "./mind/external";
 export { FEEDBACK_LIMITS } from "./mind/feedback";
 export { mockDecision } from "./mind/mock";

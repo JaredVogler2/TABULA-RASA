@@ -9,11 +9,11 @@ import { canonicalJson, deepClone, parseCanonical } from "../core/canonical";
 import { StateHasher, sha256Text } from "../core/hash";
 import { Stream, hash3 } from "../core/rng";
 import { validateConfig } from "../model/config";
-import { ITEM_COUNT } from "../model/constants";
 import type { BranchInfo, WorldState } from "../model/types";
 import { SCHEMA_VERSION } from "../version";
 import { generateTerrain } from "../world/terrain";
 import { migrateSnapshot } from "./migrate";
+import { Malformed, validateState } from "./validate";
 
 export interface SnapshotEnvelope {
   /** Format marker. */
@@ -78,17 +78,19 @@ export function restoreWorld(text: string): WorldState {
       "the world generator in this engine does not reproduce the snapshot's terrain; it was saved by an incompatible engine version",
     );
   }
+  // every field is checked for type, length and range before the engine is given any of it:
+  // the hash beside a snapshot shows only that the text is whole, not that it is a world
+  try {
+    validateState(state, cfg, terrain);
+  } catch (err) {
+    if (err instanceof Malformed) throw new SnapshotError("corrupt", `the saved world is malformed at ${err.message}`);
+    throw err;
+  }
   const nodes = state.nodes;
   const n = terrain.w * terrain.h;
-  if (!(nodes.x instanceof Uint8Array) || !(nodes.y instanceof Uint8Array) || nodes.x.length !== nodes.count) {
-    throw new SnapshotError("corrupt", "snapshot node arrays are malformed");
-  }
   const atTile = new Int16Array(n).fill(-1);
   for (let k = 0; k < nodes.count; k++) atTile[(nodes.y[k] as number) * terrain.w + (nodes.x[k] as number)] = k;
   nodes.atTile = atTile;
-  for (const a of state.agents) {
-    if (!Array.isArray(a.inv) || a.inv.length !== ITEM_COUNT) throw new SnapshotError("corrupt", "agent inventory malformed");
-  }
   return { ...state, config: cfg, terrain, nodes } as WorldState;
 }
 

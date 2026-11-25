@@ -10,12 +10,14 @@ import type {
   CompareView,
   DaySample,
   FromWorker,
+  PackedWorld,
   Recording,
   SavePayload,
   StaticWorldView,
   TileDetail,
   ToWorker,
   ViewFrame,
+  WorkerPerf,
 } from "@/worker/protocol";
 
 type Pending = { resolve: (value: FromWorker) => void; reject: (reason: Error) => void };
@@ -102,8 +104,8 @@ export class SimClient {
     return { world: r.world, frame: r.frame, series: r.series };
   }
 
-  async load(snapshot: string, control: string | null, series: DaySample[], controlSeries: DaySample[], hash?: string): Promise<ReadyWorld> {
-    const r = await this.request((requestId) => ({ type: "load", snapshot, control, series, controlSeries, ...(hash !== undefined ? { hash } : {}), requestId }), "ready");
+  async load(snapshot: string, control: string | null, series: DaySample[], controlSeries: DaySample[], hash?: string, packed?: PackedWorld | null): Promise<ReadyWorld> {
+    const r = await this.request((requestId) => ({ type: "load", snapshot, control, ...(packed ? { packed } : {}), series, controlSeries, ...(hash !== undefined ? { hash } : {}), requestId }), "ready");
     return { world: r.world, frame: r.frame, series: r.series, controlSeries: r.controlSeries };
   }
 
@@ -153,8 +155,9 @@ export class SimClient {
     return (await this.request((requestId) => ({ type: "compare", requestId }), "compare")).view;
   }
 
-  async save(): Promise<SavePayload> {
-    return (await this.request((requestId) => ({ type: "save", requestId }), "saved")).payload;
+  /** The world as it stands. `packed` asks for it gzip-compressed, the form the browser's storage keeps. */
+  async save(packed = false): Promise<SavePayload> {
+    return (await this.request((requestId) => ({ type: "save", packed, requestId }), "saved")).payload;
   }
 
   /** Go back to a stored moment: re-run from it exactly, or leave from it on a new line. */
@@ -180,6 +183,11 @@ export class SimClient {
   async importWorld(text: string): Promise<ReadyWorld> {
     const r = await this.request((requestId) => ({ type: "import", text, requestId }), "ready");
     return { world: r.world, frame: r.frame, series: r.series, controlSeries: r.controlSeries, ...(r.imported ? { imported: r.imported } : {}) };
+  }
+
+  /** Measurements from inside the worker: recent tick times, heap, what history it holds. */
+  async perf(): Promise<WorkerPerf> {
+    return (await this.request((requestId) => ({ type: "perf", requestId }), "perf")).perf;
   }
 
   /** The event ledger held in memory for the world being lived, as JSON Lines with a header line. */

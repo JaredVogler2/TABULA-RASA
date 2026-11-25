@@ -1,0 +1,105 @@
+The application behind a transaction pooler — 2026-11-25
+
+What was run: PgBouncer 1.22.0 (Ubuntu package 1.22.0-1build4), installed in the development container for this
+check, in front of the local test database (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) server on 127.0.0.1:5432), listening on
+127.0.0.1:6432. It is a stand-in for a hosted provider's pooler: the same program in the same mode, with its
+default strictness about startup parameters. It is not that provider, and no hosted database has been connected to.
+
+  [pgbouncer]
+  pool_mode = transaction
+  auth_type = scram-sha-256
+  max_client_conn = 400
+  default_pool_size = 40
+  max_prepared_statements = 1000
+  ; ignore_startup_parameters is not set: anything the pooler cannot track is refused
+
+1. What the application sent before D-047 (its limits as settings at connection time) is refused
+
+  $ PGOPTIONS='-c statement_timeout=15000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=30000' psql <pooler> -c "select 1"
+  psql: error: connection to server at "127.0.0.1", port 6432 failed: FATAL:  unsupported startup parameter in options: statement_timeout
+
+  the same through the driver (pg 8.23.1, a Pool given that string as its `options`, as openPostgres built it):
+  through the pooler:     refused: unsupported startup parameter in options: statement_timeout (08P01)
+  straight to the server: connected: [{"one":1}]
+
+  the pooler's own log of those attempts:
+  2026-11-25 19:17:33.002 UTC [3725] WARNING C: (nodb)/(nouser)@127.0.0.1:39558 unsupported startup parameter in options: statement_timeout=15000
+  2026-11-25 19:17:33.002 UTC [3725] LOG C: (nodb)/(nouser)@127.0.0.1:39558 closing because: unsupported startup parameter in options: statement_timeout (age=0s)
+  2026-11-25 19:17:33.002 UTC [3725] WARNING C: (nodb)/(nouser)@127.0.0.1:39558 pooler error: unsupported startup parameter in options: statement_timeout
+
+2. Every server test suite, with TEST_DATABASE_URL pointing at the pooler
+
+  $ TEST_DATABASE_URL=<pooler> pnpm exec vitest run src/server
+  ✓ src/server/ledger.test.ts (23 tests) 7605ms
+  ✓ src/server/runs.test.ts (20 tests) 8711ms
+  ✓ src/server/smoke.test.ts (6 tests) 3315ms
+  ✓ src/server/auth.test.ts (20 tests) 5570ms
+  ✓ src/server/anthropic.test.ts (14 tests) 686ms
+  ✓ src/server/db.test.ts (10 tests) 1994ms
+  ✓ src/server/api.test.ts (14 tests) 25209ms
+  Test Files  7 passed (7)
+       Tests  107 passed (107)
+    Duration  25.65s (tests 98%, import 1%, transform 1%)
+  (ten of these need a real server and are skipped without one: the same command with no TEST_DATABASE_URL
+   reports "97 passed | 10 skipped". Straight to the server: 107 passed.)
+
+3. The ledger under contention, through the pooler
+
+  $ TEST_DATABASE_URL=<pooler> pnpm load
+  reservations a second: 809   (straight to the server, same code, same hour: 1144)
+  one reservation, ms:   p50 33.46  p95 58.19  p99 123.99  longest 471.66
+                straight: p50 21.87  p95 37.54  p99 110.3  longest 615.03
+  one settlement, ms:    p50 30.12  p95 162.13  p99 250.21  longest 377.79
+  errors: 0   ceiling exceeded at a sampled moment: 0   audit failures: 0
+  outcomes: {"reserved": 1554, "settled": 1223, "released": 190, "unknown": 141, "duplicateRefused": 85, "settledTwice": 136}
+  books: {"heldUsd": 5.97, "ofWhichUnknownUsd": 5.97, "settledUsd": 24.03, "overageUsd": 0, "remainingUsd": 10, "killSwitch": false}
+  OK: 20000 reservations attempted by 32 workers through two pools; books balanced; no ceiling exceeded at any sampled moment; no errors.
+
+4. The production server with its database behind the pooler: every route timed, and a mock run from start to finish
+
+  $ TEST_DATABASE_URL=<pooler> pnpm requests
+  request timing — Intel(R) Xeon(R) Processor @ 2.30GHz × 4, Node v22.23.5, loopback, production build
+  milliseconds, measured by the caller; one request at a time unless it says otherwise
+  
+  what                                                                                    n      p50      p95      p99      max    bytes  status
+  GET /api/health                                                                       200     2.42     4.41     6.09     6.83       89  200×200
+  GET / (the game's page)                                                               100     2.12     3.77    12.40    12.40    10958  200×100
+  GET /lab (the laboratory's page)                                                       50     2.23     2.59     4.97     4.97    12676  200×50
+  GET /api/owner/status, signed out (no database)                                       200     1.87     2.88     5.38    35.33       40  200×200
+  GET /api/recordings (reads the database)                                              150     3.15     4.22     6.39     7.13       27  200×150
+  GET /api/owner/status, signed in (budget, runs, audit)                                 60     8.18    20.60    27.76    27.76     1998  200×60
+  POST /api/runs/:id/step (one six-hour epoch, 50 people, 8 mock decisions)               4   138.02   155.47   155.47   155.47           200×4
+  GET /api/runs/:id, a visitor reading the published run (tape and digests)              60     5.10     8.42     9.87     9.87     6922  200×60
+  GET /api/health, 20 at a time                                                         100    19.33    59.78    78.55    78.55           200×100
+  
+  server ready after start (ms)                                                            567.85
+  first request answered in (ms)                                                           143.55
+  first request that needs the database: schema made and migrated (ms)                      88.59
+  POST /api/owner/login (scrypt N = 2^17) (ms)                                             317.58
+  POST /api/runs/preview (50 people) (ms)                                                   51.19
+  POST /api/runs (world made, stored) (ms)                                                  97.82
+  100 requests for /api/health, 20 at a time: wall time (ms)                               126.69
+
+5. The owner's console in a browser, desktop and phone projects, its database behind the pooler
+
+  $ TEST_DATABASE_URL=<pooler> pnpm e2e tests/e2e/owner.spec.ts
+   ✓   1 [desktop] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (367ms)
+   ✓   2 [desktop] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.2s)
+   ✓   3 [desktop] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console (748ms)
+   ✓   4 [desktop] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (10.0s)
+   ✓   5 [desktop] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (44.3s)
+   ✓   6 [desktop] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (352ms)
+   ✓   7 [mobile] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (107ms)
+   ✓   8 [mobile] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.1s)
+   -   9 [mobile] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console
+   ✓  10 [mobile] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (9.3s)
+   ✓  11 [mobile] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (35.1s)
+   ✓  12 [mobile] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (410ms)
+   1 skipped
+   11 passed (1.8m)
+
+6. What the pooler logged besides the refusals above
+
+  2026-11-25 19:17:53.089 UTC [3725] WARNING C: tabula_test/tabula@127.0.0.1:52426 pooler error: server conn crashed?
+  (one line: the test that leaves a transaction idle past its limit. The server ends that session, the pooler
+   says so, and the application sees the transaction fail — which is what the test asserts.)

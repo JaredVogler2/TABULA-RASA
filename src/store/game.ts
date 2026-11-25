@@ -81,6 +81,8 @@ export interface GameState {
   tutorialStep: number;
   toast: string | null;
   error: string | null;
+  /** True when another tab of this browser holds the autosave slot: this tab's world is then saved only by hand. */
+  autosaveElsewhere: boolean;
   /** Views of what the selected citizen knows, laid over the world: unseen land washed out; arcs to people they know. */
   overlay: { knowledge: boolean; ties: boolean };
   /** Whether sound is actually playing (the preference is in settings; a gesture is needed each visit). */
@@ -151,6 +153,7 @@ export const useGame = create<GameState>((set) => ({
   tutorialStep: 0,
   toast: null,
   error: null,
+  autosaveElsewhere: false,
   overlay: { knowledge: false, ties: false },
   soundOn: false,
   vista: true,

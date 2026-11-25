@@ -18,20 +18,26 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test --trace off",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm gen:migrations --check && pnpm gen:prompts --check && pnpm scan:secrets && pnpm build && pnpm scan:bundle",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm gen:migrations --check && pnpm gen:prompts --check && pnpm gen:licenses --check && pnpm scan:secrets && pnpm scan:history && pnpm build && pnpm scan:bundle",
     "sim": "tsx scripts/sim.ts",
     "bench": "tsx scripts/bench.ts",
     "study": "tsx scripts/study.ts",
+    "load": "tsx --conditions=react-server scripts/load.ts",
+    "requests": "tsx scripts/requests.ts",
+    "mutants": "tsx scripts/mutants.ts",
+    "live:smoke": "tsx --conditions=react-server scripts/live-smoke.ts",
     "db:migrate": "tsx --conditions=react-server scripts/db-migrate.ts",
     "owner:hash": "tsx --conditions=react-server scripts/owner-hash.ts",
     "scan:secrets": "tsx scripts/scan-secrets.ts",
+    "scan:history": "tsx scripts/scan-secrets.ts --history",
     "scan:bundle": "tsx scripts/scan-bundle.ts",
     "gen:affordances": "tsx scripts/gen-affordances.ts",
     "compare": "tsx scripts/compare.ts",
     "schedulers": "tsx scripts/schedulers.ts",
     "record": "tsx scripts/record.ts",
     "gen:migrations": "tsx scripts/gen-migrations.ts",
-    "gen:prompts": "tsx scripts/gen-prompts.ts"
+    "gen:prompts": "tsx scripts/gen-prompts.ts",
+    "gen:licenses": "tsx scripts/gen-licenses.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.14.0",
@@ -45,7 +51,6 @@
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
     "three": "0.187.0",
-    "zod": "4.6.7",
     "zustand": "5.1.0"
   },
   "devDependencies": {

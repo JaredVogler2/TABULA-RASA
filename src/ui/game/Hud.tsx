@@ -25,9 +25,11 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { SPEEDS, useGame } from "@/store/game";
 import { scenarioById } from "@/engine";
 import { useController } from "./context";
+import { fitTopBar } from "./fit";
 import styles from "./game.module.css";
 import { clock, seasonName, weatherName } from "./text";
 
@@ -37,6 +39,34 @@ function WeatherIcon({ weather, night }: { weather: number; night: boolean }) {
   if (weather === 4) return <CloudSnow aria-hidden />;
   if (weather === 1) return <Cloud aria-hidden />;
   return night ? <Moon aria-hidden /> : <Sun aria-hidden />;
+}
+
+/**
+ * The bar is measured again whenever what it holds changes width (`widths` is a string that
+ * changes exactly then) and whenever the window does. See fit.ts for what is tried.
+ */
+function useFittedBar(widths: string) {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) fitTopBar(ref.current);
+  }, [widths]);
+  useEffect(() => {
+    let frame = 0;
+    const again = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (ref.current) fitTopBar(ref.current);
+      });
+    };
+    window.addEventListener("resize", again);
+    // the display face is not the width of the face that stands in for it while it loads
+    void document.fonts?.ready.then(again);
+    return () => {
+      window.removeEventListener("resize", again);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return ref;
 }
 
 export function TopBar() {
@@ -49,27 +79,47 @@ export function TopBar() {
   const unread = useGame((s) => s.chronicle.length > 0 && s.panel !== "chronicle");
   const soundOn = useGame((s) => s.soundOn);
   const journalUnread = useGame((s) => s.journalUnread);
+  const condition = hud ? (hud.climate.drought ? "Drought" : hud.climate.cold ? "Cold snap" : weatherName(hud.climate.weather)) : "";
+  // numbers are set in tabular figures, so how wide one is depends only on how many characters it has
+  const widths =
+    hud && world
+      ? [
+          String(hud.cal.day + 1).length,
+          hud.cal.season,
+          condition,
+          (hud.climate.temp / 10).toFixed(0).length,
+          String(hud.alive).length,
+          String(hud.agentCount).length,
+          forkDay >= 0 ? String(forkDay + 1).length : "-",
+          hud.hasTwin ? hud.viewing : "-",
+          world.config.scenario,
+          String(world.config.seed).length,
+          civic && civic.proposals + civic.institutions > 0 ? `${civic.institutions}${civic.proposals ? `+${civic.proposals}` : ""}`.length : 0,
+        ].join("|")
+      : "";
+  const bar = useFittedBar(widths);
   if (!hud || !world) return null;
   const scenario = scenarioById(world.config.scenario);
   const night = hud.climate.light < 250;
-  const condition = hud.climate.drought ? "Drought" : hud.climate.cold ? "Cold snap" : weatherName(hud.climate.weather);
   return (
-    <header className={styles.topbar}>
-      <div className={`${styles.glass} ${styles.brand}`} data-testid="brand">
+    <header className={styles.topbar} ref={bar}>
+      <div className={`${styles.glass} ${styles.brand}`} data-part="brand" data-testid="brand">
         <span className={styles.wordmark}>Tabula Rasa</span>
-        <span className={styles.worldLabel} data-testid="world-label">
+        <span className={styles.worldLabel} data-part="label" data-testid="world-label">
           {scenario.title} · seed {world.config.seed}
         </span>
       </div>
 
       {/* the fork and its twin: one small pill of its own, so that it is never squeezed out of sight by the bars beside it */}
       {forkDay >= 0 || hud.hasTwin ? (
-        <div className={`${styles.glass} ${styles.forkGroup}`} role="group" aria-label={forkDay >= 0 ? "This timeline and its untouched twin" : "The recording and the engine's own minds"} data-testid="fork-controls">
+        <div className={`${styles.glass} ${styles.forkGroup}`} data-part="fork" role="group" aria-label={forkDay >= 0 ? "This timeline and its untouched twin" : "The recording and the engine's own minds"} data-testid="fork-controls">
           {forkDay >= 0 ? (
             <button type="button" className={styles.forked} onClick={() => controller.openPanel("compare")} data-testid="forked-badge" title="This timeline has been changed by you. Open the comparison (K).">
               <GitFork aria-hidden />
               <span>
-                <span className={styles.forkWord}>Forked on </span>day {forkDay + 1}
+                <span className={styles.forkWord}>Forked on </span>
+                <span className={styles.forkDayWord}>day </span>
+                {forkDay + 1}
               </span>
             </button>
           ) : null}
@@ -89,7 +139,7 @@ export function TopBar() {
         </div>
       ) : null}
 
-      <div className={`${styles.glass} ${styles.status}`} role="status" aria-label="World status" data-testid="status-bar">
+      <div className={`${styles.glass} ${styles.status}`} role="status" aria-label="World status" data-part="status" data-testid="status-bar">
         <div className={styles.stat} data-testid="stat-date">
           <b className="tnum">Day {hud.cal.day + 1}</b>
           <span className={`${styles.statMuted} ${styles.statOptional}`}>{seasonName(hud.cal.season)}</span>
@@ -107,7 +157,7 @@ export function TopBar() {
         <div className={styles.stat} data-testid="stat-population" title="Living citizens">
           <Users aria-hidden />
           <b className="tnum">{hud.alive}</b>
-          <span className={`${styles.statMuted} tnum`}>/ {hud.agentCount}</span>
+          <span className={`${styles.statMuted} ${styles.statTotal} tnum`}>/ {hud.agentCount}</span>
         </div>
       </div>
 

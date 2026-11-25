@@ -22,16 +22,55 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSwipeDown } from "./swipe";
 import { AFFORDANCES, AFFORDANCE_CATEGORIES, AFFORDANCE_VERSION, ENGINE_VERSION, type AffordanceCategory } from "@/engine";
 import { useGame } from "@/store/game";
 import { useController } from "./context";
 import styles from "./game.module.css";
 import { clock, type ChronicleGroup } from "./text";
 
-export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+/**
+ * The world on screen could not be carried on (the simulation worker reported a fault). It is
+ * said in words, over everything, and the only thing left to do is leave: a world that is
+ * silently standing still would look like one that is merely paused.
+ */
+export function Fault() {
+  const controller = useController();
+  const error = useGame((s) => s.error);
+  const leave = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    leave.current?.focus();
+  }, [error]);
+  if (!error) return null;
   return (
-    <div className={styles.panelHead}>
+    <div className={styles.scrim} style={{ zIndex: 45 }}>
+      <section className={`${styles.paper} ${styles.sheet}`} role="alertdialog" aria-modal="true" aria-labelledby="fault-title" aria-describedby="fault-text" data-testid="fault">
+        <div className={styles.panelHead}>
+          <div className={styles.panelTitle}>
+            <div className={styles.kicker}>Something went wrong</div>
+            <h2 id="fault-title">This world has stopped</h2>
+          </div>
+        </div>
+        <div className={styles.panelBody}>
+          <p id="fault-text" data-testid="fault-text">
+            {error}
+          </p>
+          <p className={styles.muted}>Nothing more will happen in it, and it will not be saved over anything. From the title you can open a saved world or begin another.</p>
+          <button type="button" ref={leave} className={styles.button} style={{ marginTop: 12 }} onClick={() => void controller.toTitle()} data-testid="fault-leave">
+            Back to the title
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+  // on a phone the sheet can be pulled down by its header to close it
+  const swipe = useSwipeDown(onClose);
+  return (
+    <div className={styles.panelHead} {...swipe}>
       <div className={styles.panelTitle}>
         <div className={styles.kicker}>{kicker}</div>
         <h2 id={testId ? `${testId}-title` : undefined}>{title}</h2>
@@ -216,6 +255,7 @@ export function MenuPanel() {
   const world = useGame((s) => s.world);
   const replay = useGame((s) => s.hud?.replay ?? null);
   const soundOn = useGame((s) => s.soundOn);
+  const autosaveElsewhere = useGame((s) => s.autosaveElsewhere);
   const close = () => controller.openPanel("menu");
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
@@ -259,6 +299,12 @@ export function MenuPanel() {
             <div className={styles.sectionTitle}>
               Saved worlds <span>stored only in this browser</span>
             </div>
+            {autosaveElsewhere ? (
+              <div className={styles.note} data-tone="caution" data-testid="autosave-elsewhere" style={{ marginBottom: 10 }}>
+                <Info aria-hidden />
+                <span>Another tab of this browser is keeping the autosave, so this world is not autosaved here. Save it by hand to keep it.</span>
+              </div>
+            ) : null}
             {saves.length === 0 ? (
               <p className={styles.muted}>No saves yet. The game also autosaves every second day.</p>
             ) : (
@@ -347,6 +393,10 @@ export function MenuPanel() {
                 : "Every citizen here is driven by a deterministic BASELINE policy, not a language model."}{" "}
               No data leaves this device.{" "}
               <Link href="/diagnostics">System check</Link>
+              {" · "}
+              <a href="/licenses.txt" target="_blank" rel="noopener" data-testid="open-source-notices">
+                Open-source notices
+              </a>
             </p>
           </div>
         </div>

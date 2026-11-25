@@ -1,0 +1,37 @@
+# The route finder's memory of failed searches changes no world (D-046). 2026-11-25 · v22.23.5 · Intel Xeon 2.3 GHz x 4 · planner minds
+#
+# Each world below was lived twice from its seed: once with the engine as committed, and once with a copy of the same
+# engine in which the memory is switched off (the first line of knownNoRoute returns false). One line per world:
+# the SHA-256 of the whole saved state (every body, mind and agreement), the engine's 64-bit state digest, the living,
+# the number of refusals as unreachable, and the seconds it took.
+
+## memory switched off
+{"scenario":"first_light","seed":1,"population":120,"size":48,"days":14,"sha256":"b0a3fa7ee00abbbfe4d7c951610b6d269482bfb59ae2eb93091c6360b9c4c23f","digest":"8b21fe8fff39aace","alive":62,"unreachable":40545,"seconds":17.3}
+{"scenario":"first_light","seed":1,"population":250,"size":96,"days":20,"sha256":"22fbbaaa283c32363aae09ed2b6b4ca95e3e1760382d639ecaebf491d6590f21","digest":"8402c861a2bfd16c","alive":215,"unreachable":16070,"seconds":32.4}
+{"scenario":"first_light","seed":1,"population":500,"size":128,"days":20,"sha256":"4da9b41d9fd71a2c21330b1c4935fba9e28865954eecd307c756122ac23cff14","digest":"f2f852d1a6fa156c","alive":187,"unreachable":44299,"seconds":129.8}
+{"scenario":"first_light","seed":5,"population":50,"size":64,"days":40,"sha256":"cb3526115f743ce183bb92d8d3fa45e44cd6448decd3cff723e14cc3849cda6b","digest":"7099d4bff71798ab","alive":50,"unreachable":0,"seconds":2.9}
+
+## engine as committed
+{"scenario":"first_light","seed":1,"population":120,"size":48,"days":14,"sha256":"b0a3fa7ee00abbbfe4d7c951610b6d269482bfb59ae2eb93091c6360b9c4c23f","digest":"8b21fe8fff39aace","alive":62,"unreachable":40545,"seconds":2.7}
+{"scenario":"first_light","seed":1,"population":250,"size":96,"days":20,"sha256":"22fbbaaa283c32363aae09ed2b6b4ca95e3e1760382d639ecaebf491d6590f21","digest":"8402c861a2bfd16c","alive":215,"unreachable":16070,"seconds":9.7}
+{"scenario":"first_light","seed":1,"population":500,"size":128,"days":20,"sha256":"4da9b41d9fd71a2c21330b1c4935fba9e28865954eecd307c756122ac23cff14","digest":"f2f852d1a6fa156c","alive":187,"unreachable":44299,"seconds":27.1}
+{"scenario":"first_light","seed":5,"population":50,"size":64,"days":40,"sha256":"cb3526115f743ce183bb92d8d3fa45e44cd6448decd3cff723e14cc3849cda6b","digest":"7099d4bff71798ab","alive":50,"unreachable":0,"seconds":3.4}
+
+## the same four comparisons, read off
+120 people, 48 x 48, 14 days: the same SHA-256, digest, living and refusals; 40545 refusals as unreachable; 17.3 s without the memory, 2.7 s with it
+250 people, 96 x 96, 20 days: the same SHA-256, digest, living and refusals; 16070 refusals as unreachable; 32.4 s without the memory, 9.7 s with it
+500 people, 128 x 128, 20 days: the same SHA-256, digest, living and refusals; 44299 refusals as unreachable; 129.8 s without the memory, 27.1 s with it
+50 people, 64 x 64, 40 days: the same SHA-256, digest, living and refusals; 0 refusals as unreachable; 2.9 s without the memory, 3.4 s with it
+
+## An earlier comparison in the same session, before and after the memory was written (state digest, living, events,
+## refusals): four worlds, all equal.
+# before
+{"scenario":"first_light","seed":1,"population":250,"size":96,"days":20,"digest":"8402c861a2bfd16c","alive":215,"events":111465,"unreachable":16070,"seconds":32.4}
+{"scenario":"first_light","seed":1,"population":500,"size":128,"days":20,"digest":"f2f852d1a6fa156c","alive":187,"events":229669,"unreachable":44299,"seconds":126.9}
+{"scenario":"two_shores","seed":3,"population":120,"size":64,"days":30,"digest":"d63361300260924d","alive":6,"events":34647,"unreachable":0,"seconds":3.4}
+{"scenario":"first_light","seed":5,"population":50,"size":64,"days":40,"digest":"7099d4bff71798ab","alive":50,"events":33410,"unreachable":0,"seconds":2.8}
+# after
+{"scenario":"first_light","seed":1,"population":250,"size":96,"days":20,"digest":"8402c861a2bfd16c","alive":215,"events":111465,"unreachable":16070,"seconds":8.7}
+{"scenario":"first_light","seed":1,"population":500,"size":128,"days":20,"digest":"f2f852d1a6fa156c","alive":187,"events":229669,"unreachable":44299,"seconds":19.5}
+{"scenario":"two_shores","seed":3,"population":120,"size":64,"days":30,"digest":"d63361300260924d","alive":6,"events":34647,"unreachable":0,"seconds":3.5}
+{"scenario":"first_light","seed":5,"population":50,"size":64,"days":40,"digest":"7099d4bff71798ab","alive":50,"events":33410,"unreachable":0,"seconds":3.3}

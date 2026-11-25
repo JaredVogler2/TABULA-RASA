@@ -5,7 +5,7 @@
  */
 import { clampInt } from "../core/math";
 import { NODE_SPECS, NodeKind, StructureKind } from "../model/constants";
-import type { Agent, KnownStructure, MemoryItem, MemoryKind, Structure, WorldState } from "../model/types";
+import type { Agent, KnownStructure, MemoryItem, MemoryKind, SpeechAct, Structure, WorldState } from "../model/types";
 import { droughtActive, sightRadius } from "../world/climate";
 import { hasSeen, markSeen } from "../sim/pathfind";
 import type { Scratch } from "../sim/scratch";
@@ -28,6 +28,64 @@ export function knownStructure(a: Agent, id: number): KnownStructure | undefined
   const list = a.mind.structs;
   for (let k = 0; k < list.length; k++) if (list[k]!.id === id) return list[k];
   return undefined;
+}
+
+/** Has this agent seen, or been told of, this resource node? */
+export function knowsNode(a: Agent, node: number): boolean {
+  return node >= 0 && node < a.mind.nodeAmt.length && (a.mind.nodeAmt[node] as number) >= 0;
+}
+
+/**
+ * Does this agent know that this agreement exists? They do if they have seen or heard of it —
+ * or are party to it: whoever wrote it, signed it or belongs to it knows of it, however many
+ * other agreements they have heard of since (the list of those is bounded and forgets).
+ */
+export function knowsCharter(world: WorldState, a: Agent, id: number): boolean {
+  if (a.mind.charters.includes(id)) return true;
+  for (const p of world.inst.proposals) {
+    if (p.id !== id) continue;
+    if (p.proposer === a.id || p.endorsers.includes(a.id)) return true;
+    break;
+  }
+  for (const x of world.inst.institutions) {
+    if (x.id !== id) continue;
+    return x.members.some((m) => m.id === a.id);
+  }
+  return false;
+}
+
+/** Does this agent know that this offer exists? Its maker and the person it was made to do, as does anyone who heard it. */
+export function knowsPact(world: WorldState, a: Agent, id: number): boolean {
+  if (a.mind.pacts.includes(id)) return true;
+  for (const p of world.inst.pacts) if (p.id === id) return p.a === a.id || p.b === a.id;
+  return false;
+}
+
+/**
+ * What a speech act would tell that its speaker does not know, as a refusal code, or null.
+ *
+ * A person can tell only of what they know. Nothing checks that what anyone says is true —
+ * amounts, claims about people and promises are the speaker's own — but a place, a structure,
+ * an agreement or an offer has to be in the speaker's own knowledge before they can point
+ * someone else at it. Without this, naming ids one after another would be a way to read the
+ * world: the hearer would learn where things are from the engine, not from the speaker.
+ */
+export function untold(world: WorldState, a: Agent, act: SpeechAct): string | null {
+  switch (act.t) {
+    case "inform_node":
+    case "warn":
+      return knowsNode(a, act.node) ? null : "unknown_place";
+    case "inform_structure":
+      return knownStructure(a, act.structure) ? null : "unknown_structure";
+    case "announce":
+      return knowsCharter(world, a, act.proposal) ? null : "unknown_charter";
+    case "invite":
+      return knowsCharter(world, a, act.institution) ? null : "unknown_charter";
+    case "offer":
+      return act.pact === undefined || knowsPact(world, a, act.pact) ? null : "unknown_offer";
+    default:
+      return null;
+  }
 }
 
 function noteStructure(a: Agent, s: Structure, tick: number): void {

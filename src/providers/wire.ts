@@ -16,10 +16,13 @@
 import {
   DECISION_LIMITS,
   GRAMMAR_VERSION,
+  INSTITUTION_LIMITS,
   ITEMS,
   NODE_KINDS,
   RECIPES,
   STRUCTURE_KINDS,
+  cleanLabel,
+  cleanText,
   formatFormula,
   parseFormula,
   type Charter,
@@ -406,7 +409,8 @@ function charterOf(raw: unknown): Record<string, unknown> {
   const roles = rolesRaw.map((r, i) => {
     need(isObj(r), "bad_charter", `roles[${i}] is not a role`);
     const role = r as Record<string, unknown>;
-    return { name: typeof role.name === "string" ? role.name : "", seats: intOr(role.seats, 0), by: lower(role.filled_by) };
+    // a role's name is a plain label: what the engine's validator would make of it, made of it here
+    return { name: cleanLabel(role.name, INSTITUTION_LIMITS.roleChars), seats: intOr(role.seats, 0), by: lower(role.filled_by) };
   });
   const roleNames = roles.map((r) => r.name);
   const bondName = lower(c.bond_item);
@@ -414,17 +418,20 @@ function charterOf(raw: unknown): Record<string, unknown> {
   const decide = lower(c.decide);
   const structures = Array.isArray(c.structures) ? (c.structures as unknown[]) : [];
   need(structures.length <= WIRE_LIMITS.maxStructures, "bad_charter", `at most ${WIRE_LIMITS.maxStructures} structures`);
+  need(structures.every((s) => isInt(s)), "bad_charter", "structures is a list of structure ids");
+  // nothing passes through as the model wrote it: every field is read as its own type, and
+  // text is cleaned and cut here, before the charter is kept anywhere
   return {
     grammar: GRAMMAR_VERSION,
-    name: c.name,
-    purpose: c.purpose,
-    minFounders: c.founders,
-    maxMembers: c.max_members,
+    name: cleanText(c.name, INSTITUTION_LIMITS.nameChars),
+    purpose: cleanText(c.purpose, INSTITUTION_LIMITS.purposeChars),
+    minFounders: intOr(c.founders, 0),
+    maxMembers: intOr(c.max_members, 0),
     entry: lower(c.entry),
     bond: bondName === "none" || bondName === "" || bondQty <= 0 ? null : { item: itemId(bondName, "bond_item"), qty: bondQty },
     roles,
     decide: decide === "role" ? { rule: "role", role: intOr(c.decide_role, -1), quorum: intOr(c.quorum_permille, 0) } : { rule: decide, quorum: intOr(c.quorum_permille, 0) },
-    period: c.period_ticks,
+    period: intOr(c.period_ticks, 0),
     stores: structures,
     rules: rulesOf(c.rules, roleNames),
     days: intOr(c.days, 0),
@@ -576,7 +583,7 @@ function intentOf(a: WireAction, obs: Observation, charter: unknown): Intent {
     case "pact_accept":
       return { k: "pact_accept", pact: target("the offer's id") };
     default:
-      throw new Unreadable("unknown_intent", `"${String(a.do).slice(0, 24)}" is not an action`);
+      throw new Unreadable("unknown_intent", `"${cleanLabel(a.do, 24)}" is not an action`);
   }
 }
 

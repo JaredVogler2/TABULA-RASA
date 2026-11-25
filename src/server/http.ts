@@ -3,9 +3,10 @@ import "server-only";
 /**
  * What every owner endpoint does before it does anything else.
  *
- * Order matters and is the same everywhere: rate limit → same-origin → session → anti-forgery
- * token → body size and shape. A request that fails any step is answered with a plain refusal
- * and reaches nothing behind it — no database write, no ledger, no provider.
+ * Order matters and is the same everywhere: same-origin → session → anti-forgery token →
+ * session epoch → rate limit → body size and shape. A request that fails any step is answered
+ * with a plain refusal and reaches nothing behind it — no ledger, no provider. (Sign-in, which
+ * has no session yet, is counted before the passphrase is looked at.)
  *
  * Responses never echo configuration, secrets or internal error text. Errors are logged by
  * code only.
@@ -49,18 +50,99 @@ export function sameOrigin(request: Request): boolean {
   }
 }
 
-/** A key for rate limiting by client. Trusts the platform's forwarding header; falls back to one shared bucket. */
-export function clientKey(request: Request): string {
-  const fwd = request.headers.get("x-forwarded-for");
-  const ip = (fwd ? fwd.split(",")[0] : request.headers.get("x-real-ip")) ?? "";
-  const clean = ip.trim().slice(0, 64).replace(/[^0-9a-fA-F:.]/g, "");
-  return clean || "unknown";
+/**
+ * An address as a rate-limit key: an IPv4 address whole, an IPv6 address as its /64 network
+ * (one subscriber is handed a whole /64, so counting its 2^64 addresses one by one would
+ * count nothing), an IPv4 address written as IPv6 as the IPv4 address. Anything that is not
+ * an address is "".
+ */
+export function networkOf(raw: string): string {
+  const ip = raw.trim().toLowerCase().replace(/^\[|\]$/g, "");
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const asV4 = (text: string): string => {
+    const m = v4.exec(text);
+    return m && m.slice(1).every((part) => Number(part) <= 255) ? m.slice(1).map(Number).join(".") : "";
+  };
+  if (!ip.includes(":")) return asV4(ip);
+  if (ip.length > 45 || !/^[0-9a-f:.]+$/.test(ip) || (ip.match(/::/g) ?? []).length > 1) return "";
+  const mapped = /^(?:0{0,4}:){0,5}:?(?:ffff:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(ip);
+  if (mapped) return asV4(mapped[1] as string);
+  const [head = "", tail = ""] = ip.includes("::") ? ip.split("::") : [ip, ""];
+  const left = head ? head.split(":") : [];
+  const right = tail ? tail.split(":") : [];
+  if ([...left, ...right].some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return "";
+  if (ip.includes("::") ? left.length + right.length > 7 : left.length !== 8) return "";
+  const groups = [...left, ...new Array<string>(8 - left.length - right.length).fill("0"), ...right];
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.replace(/^0+(?=.)/, ""))
+    .join(":")}::/64`;
 }
 
 /**
- * Fixed-window counter shared by every instance. Returns whether this request is within the
- * limit. If the database cannot be reached the answer is no: an endpoint that cannot count
- * its callers does not serve them.
+ * A key for rate limiting by client.
+ *
+ * A request does not say where it came from; a header does, and a header is whatever the
+ * sender wrote unless something in front of the application overwrites it. Vercel overwrites
+ * `x-forwarded-for` and does not forward external addresses (vercel.com/docs/headers/request-headers),
+ * and `x-vercel-forwarded-for` carries the same value even behind a proxy of one's own — so on
+ * Vercel those are believed. Anywhere else the header is believed only if the deployment says
+ * a proxy that overwrites it stands in front (`TRUST_FORWARDED_FOR=true`). Otherwise every
+ * client shares one bucket: the limits then hold for everyone together, which is strict and
+ * cannot be talked round.
+ */
+export function clientKey(request: Request, env: Record<string, string | undefined> = process.env): string {
+  const onVercel = (env.VERCEL ?? "").trim() === "1";
+  if (!onVercel && (env.TRUST_FORWARDED_FOR ?? "").trim() !== "true") return "unknown";
+  const raw = (onVercel ? request.headers.get("x-vercel-forwarded-for") : null) ?? request.headers.get("x-forwarded-for") ?? "";
+  return networkOf(raw.split(",")[0] ?? "") || "unknown";
+}
+
+const buckets = new Map<string, { window: number; count: number }>();
+const BUCKET_LIMIT = 5000;
+
+/**
+ * A counter kept in this instance's memory, for what does not deserve a database write: a
+ * stranger's read of something public, and the first brake on a flood. It is not shared
+ * between instances and forgets when one is recycled, so it bounds what one instance will
+ * serve one network, not what the deployment will — the platform's firewall is the limit on
+ * volume. It holds a bounded number of keys and evicts the oldest.
+ */
+export function memoryLimit(key: string, limit: number, windowSec: number, nowMs: number = Date.now()): { ok: boolean; retryAfterSec: number } {
+  const window = Math.floor(nowMs / 1000 / windowSec);
+  const retryAfterSec = Math.max(1, (window + 1) * windowSec - Math.floor(nowMs / 1000));
+  let bucket = buckets.get(key);
+  if (!bucket || bucket.window !== window) {
+    buckets.delete(key);
+    if (buckets.size >= BUCKET_LIMIT) {
+      let drop = BUCKET_LIMIT / 10;
+      for (const old of buckets.keys()) {
+        if (drop-- <= 0) break;
+        buckets.delete(old);
+      }
+    }
+    bucket = { window, count: 0 };
+    buckets.set(key, bucket);
+  }
+  bucket.count++;
+  return { ok: bucket.count <= limit, retryAfterSec };
+}
+
+/** For tests: forget every in-memory counter. */
+export function forgetMemoryLimits(): void {
+  buckets.clear();
+  lastSweepMs = 0;
+}
+
+let lastSweepMs = 0;
+const SWEEP_EVERY_MS = 10 * 60_000;
+
+/**
+ * Fixed-window counter shared by every instance, for sign-in and for the owner's own actions.
+ * Returns whether this request is within the limit. If the database cannot be reached the
+ * answer is no: an endpoint that cannot count its callers does not serve them. Old windows
+ * are deleted at most once every ten minutes by each instance (by an index on the window),
+ * never once per request.
  */
 export async function rateLimit(db: Db, key: string, limit: number, windowSec: number, nowMs: number = Date.now()): Promise<{ ok: boolean; retryAfterSec: number }> {
   const windowStart = Math.floor(nowMs / 1000 / windowSec) * windowSec;
@@ -68,8 +150,10 @@ export async function rateLimit(db: Db, key: string, limit: number, windowSec: n
   try {
     const rows = await db.query("INSERT INTO rate_limits (key, window_start, count) VALUES ($1, $2::bigint, 1) ON CONFLICT (key, window_start) DO UPDATE SET count = rate_limits.count + 1 RETURNING count", [key.slice(0, 120), windowStart]);
     const count = Number(rows[0]?.count ?? limit + 1);
-    // old windows are swept occasionally, by whoever happens to open a new one
-    if (count === 1) await db.query("DELETE FROM rate_limits WHERE window_start < $1::bigint", [windowStart - 24 * 3600]).catch(() => undefined);
+    if (nowMs - lastSweepMs >= SWEEP_EVERY_MS) {
+      lastSweepMs = nowMs;
+      await db.query("DELETE FROM rate_limits WHERE window_start < $1::bigint", [Math.floor(nowMs / 1000) - 24 * 3600]).catch(() => undefined);
+    }
     return { ok: count <= limit, retryAfterSec };
   } catch {
     return { ok: false, retryAfterSec };
@@ -120,9 +204,13 @@ export async function readJson(request: Request, maxBytes = 16_384): Promise<unk
 
 export type Guarded = { ok: true; session: Session; secret: string } | { ok: false; response: Response };
 
-/** The owner's session, if this request carries a valid one. Reads nothing but headers. */
-export function ownerSession(request: Request, nowMs: number = Date.now()): { session: Session; secret: string } | null {
-  const secret = authSecret();
+/**
+ * The owner's session, if this request carries one that this site signed and that has not
+ * expired. Reads nothing but headers — so it cannot know whether the session has since been
+ * signed out: the gate in api.ts checks its epoch against the database before anything is done.
+ */
+export function ownerSession(request: Request, nowMs: number = Date.now(), env: Record<string, string | undefined> = process.env): { session: Session; secret: string } | null {
+  const secret = authSecret(env);
   if (!secret) return null;
   const cookie = readCookie(request.headers.get("cookie"), cookieName(isSecure(request)));
   const session = readSession(secret, cookie, nowMs);
@@ -133,9 +221,9 @@ export function ownerSession(request: Request, nowMs: number = Date.now()): { se
  * Gate for owner endpoints. `write` adds the same-origin and anti-forgery checks that every
  * state-changing request must pass.
  */
-export function requireOwner(request: Request, write: boolean, nowMs: number = Date.now()): Guarded {
+export function requireOwner(request: Request, write: boolean, nowMs: number = Date.now(), env: Record<string, string | undefined> = process.env): Guarded {
   if (write && !sameOrigin(request)) return { ok: false, response: refuse(403, "cross_origin") };
-  const owner = ownerSession(request, nowMs);
+  const owner = ownerSession(request, nowMs, env);
   if (!owner) return { ok: false, response: refuse(401, "not_signed_in") };
   if (write && !csrfMatches(owner.secret, owner.session, request.headers.get("x-csrf-token"))) return { ok: false, response: refuse(403, "bad_csrf_token") };
   return { ok: true, session: owner.session, secret: owner.secret };

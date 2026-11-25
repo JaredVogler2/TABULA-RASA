@@ -5,6 +5,21 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { TICKS_PER_DAY, makeConfig, restoreWorld, serializeWorld, worldDigest } from "@/engine";
+import type * as Engine from "@/engine";
+
+// The engine does not throw while a world is lived — which is why what the worker does if it
+// ever did has to be tested by making it: with `boom.on`, the worker's `step` throws.
+const boom = vi.hoisted(() => ({ on: false }));
+vi.mock("@/engine", async (importOriginal) => {
+  const real = await importOriginal<typeof Engine>();
+  return {
+    ...real,
+    step: (...args: Parameters<typeof real.step>) => {
+      if (boom.on) throw new Error("injected engine fault");
+      return real.step(...args);
+    },
+  };
+});
 import { AF, AGENT_STRIDE, type FromWorker, type Recording, type SavePayload, type ToWorker, type ViewFrame } from "./protocol";
 
 const out: FromWorker[] = [];
@@ -208,6 +223,8 @@ describe("worker: a saved world's past, lived again from its seed", () => {
     expect(ready.frame.history?.rebuildable).toBe(true);
     expect(ready.frame.history?.rebuildBlocked).toBe("");
     expect(ready.frame.forkTick).toBe(250);
+    // what happened before it was opened is, so far, only what the save says
+    expect(ready.frame.history?.provenance).toBe("opened");
   });
 
   it("rebuilding re-lives every day, forks the twin where it was forked, and is kept because it arrives at exactly the loaded world", () => {
@@ -222,6 +239,7 @@ describe("worker: a saved world's past, lived again from its seed", () => {
     expect(f.history?.keyTicks).toEqual([0, 192, 384, 505]);
     expect(f.history?.rebuildable).toBe(false);
     expect(f.history?.rebuilding).toBeNull();
+    expect(f.history?.provenance).toBe("relived");
     expect(f.tick).toBe(505);
     // the recorded causes of the rebuilt days can be followed again
     const withParent = r.events.find((e) => (e.p ?? []).length > 0);
@@ -246,6 +264,7 @@ describe("worker: a saved world's past, lived again from its seed", () => {
     const r = ask((requestId) => ({ type: "rebuild", requestId }), "rebuilt");
     expect(r.ok).toBe(false);
     expect(frame().history?.keyTicks).toEqual([505]);
+    expect(frame().history?.provenance).toBe("opened"); // it failed the check: it is still only a claim
   });
 
   it("a stored save that no longer matches its own hash is refused, and the world on screen stays", () => {
@@ -263,6 +282,36 @@ describe("worker: a saved world's past, lived again from its seed", () => {
     expect(frame().tick).toBe(before.tick);
     // the true text with its true hash is accepted
     expect(ask((requestId) => ({ type: "load", snapshot: saved.snapshot, control: saved.control, series: saved.series, controlSeries: saved.controlSeries, hash: saved.hash, requestId }), "ready").frame.tick).toBe(505);
+  });
+
+  it("a save kept packed is a fraction of its text, opens to the same world, and is refused if a byte of it changes", () => {
+    ask((requestId) => ({ type: "load", snapshot: saved.snapshot, control: saved.control, series: saved.series, controlSeries: saved.controlSeries, hash: saved.hash, requestId }), "ready");
+    const packed = ask((requestId) => ({ type: "save", packed: true, requestId }), "saved").payload;
+    expect(packed.snapshot).toBe("");
+    expect(packed.control).toBeNull();
+    expect(packed.hash).toBe(saved.hash);
+    expect(packed.textBytes).toBe(saved.snapshot.length + (saved.control as string).length);
+    const stored = (packed.packed?.snapshot.byteLength ?? 0) + (packed.packed?.control?.byteLength ?? 0);
+    expect(stored).toBeGreaterThan(1000);
+    expect(stored).toBeLessThan(packed.textBytes / 4);
+    // back in from the packed form alone: the same world, hash for hash, with its twin
+    stepTo(520);
+    const back = ask((requestId) => ({ type: "load", snapshot: "", control: null, packed: packed.packed, series: packed.series, controlSeries: packed.controlSeries, hash: packed.hash, requestId }), "ready");
+    expect(back.frame.tick).toBe(505);
+    expect(back.frame.forkTick).toBe(250);
+    expect(save().hash).toBe(saved.hash);
+    // one changed byte: refused as damaged, and the world on screen stays
+    const bytes = new Uint8Array(packed.packed?.snapshot ?? new Uint8Array(0));
+    const at = Math.floor(bytes.length / 2);
+    bytes[at] = (bytes[at] as number) ^ 0x55;
+    let code = "";
+    try {
+      ask((requestId) => ({ type: "load", snapshot: "", control: null, packed: { snapshot: bytes, control: null }, series: [], controlSeries: [], hash: packed.hash, requestId }), "ready");
+    } catch (err) {
+      code = (err as { code?: string }).code ?? "";
+    }
+    expect(code).toBe("corrupt");
+    expect(frame().tick).toBe(505);
   });
 
   it("a line that took new luck cannot be rebuilt from the seed alone, and says why", () => {
@@ -449,5 +498,74 @@ describe("worker: time is driven in many ways, the world in one", () => {
     send({ type: "pause" });
     // at two ticks a second, a second of running is a couple of ticks — not the twelve hundred the gap would be
     expect(b - a).toBeLessThanOrEqual(6);
+  });
+});
+
+describe("worker: when a world cannot be carried on", () => {
+  const config = makeConfig("first_light", 12, { population: 10 });
+
+  it("a world file that is well formed but cannot be lived is refused, and the world on hand stays", () => {
+    const fresh = ask((requestId) => ({ type: "init", config, requestId }), "ready");
+    expect(fresh.frame.history?.provenance).toBe("made"); // every tick of it will have been lived here
+    stepTo(200);
+    const exported = ask((requestId) => ({ type: "export", extras: {}, requestId }), "exported");
+    stepTo(260);
+    const before = save();
+    // the file is exactly what was exported: every hash and every field is in order. It is the living of it that fails.
+    boom.on = true;
+    let refusal: { code?: string; message?: string } = {};
+    try {
+      ask((requestId) => ({ type: "import", text: exported.text, requestId }), "ready");
+    } catch (err) {
+      refusal = err as { code?: string; message?: string };
+    } finally {
+      boom.on = false;
+    }
+    expect(refusal.code).toBe("corrupt");
+    expect(refusal.message).toMatch(/cannot be carried on/);
+    // nothing was swapped: the world on hand is the one that was there, and it goes on
+    expect(save().hash).toBe(before.hash);
+    expect(stepTo(300).tick).toBe(300);
+    // the same file, when the engine can live it, opens
+    const opened = ask((requestId) => ({ type: "import", text: exported.text, requestId }), "ready");
+    expect(opened.frame.tick).toBe(200);
+    // whole, well formed and able to run — and still only a claim about its own past until that is lived again
+    expect(opened.frame.history?.provenance).toBe("opened");
+    expect(ask((requestId) => ({ type: "rebuild", requestId }), "rebuilt").ok).toBe(true);
+    expect(frame().history?.provenance).toBe("relived");
+  });
+
+  it("if the engine throws while a world is being lived, time stops for good, the page is told in words, and a new world starts clean", () => {
+    ask((requestId) => ({ type: "init", config, requestId }), "ready");
+    stepTo(96);
+    send({ type: "speed", tps: 64 });
+    send({ type: "play" });
+    expect(frame().tick).toBeGreaterThan(96);
+    out.length = 0;
+    boom.on = true;
+    vi.advanceTimersByTime(400);
+    boom.on = false;
+    const faults = out.filter((m) => m.type === "error");
+    expect(faults).toHaveLength(1); // said once, not once a frame
+    const told = faults[0] as Extract<FromWorker, { type: "error" }>;
+    expect(told.requestId).toBe(-1);
+    expect(told.code).toBe("fault");
+    expect(told.message).toMatch(/^This world has stopped: .*injected engine fault.*Worlds you saved earlier are untouched\.$/);
+    // nothing more is asked of that world: no frame, no tick, whatever is pressed
+    out.length = 0;
+    send({ type: "play" });
+    send({ type: "step", ticks: 10 });
+    vi.advanceTimersByTime(2000);
+    expect(out.filter((m) => m.type === "frame" || m.type === "day")).toHaveLength(0);
+    // a single step that throws is a fault too, not a reply to nobody
+    ask((requestId) => ({ type: "init", config, requestId }), "ready");
+    out.length = 0;
+    boom.on = true;
+    send({ type: "step", ticks: 3 });
+    boom.on = false;
+    expect(out.filter((m) => m.type === "error" && m.code === "fault")).toHaveLength(1);
+    // and a new world is a new start
+    ask((requestId) => ({ type: "init", config, requestId }), "ready");
+    expect(stepTo(48).tick).toBe(48);
   });
 });

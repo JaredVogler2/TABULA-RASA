@@ -10,7 +10,7 @@ reason no criterion here is scored as verified with people.
 | Instrument | What it shows | Where the data comes from | Keys |
 |---|---|---|---|
 | Time bar | play / pause, one tick, six speeds, hour and day | the worker's clock | Space, `.`, 1–6 |
-| Chronicle | every logged event in plain sentences, filtered by kind or by the selected citizen, with the engine's recorded cause; click to go there | the engine's event ledger | C |
+| Chronicle | notable logged events in plain sentences, not the whole ledger: the worker forwards 44 of the engine's 60 event kinds and 38 of them have a line (routine acts such as gathering, eating, sleeping, single decisions and refused intents are left out); the page keeps the latest 600 lines and the panel lists the newest 220 that pass the filter; filtered by six groups of kinds or by the selected citizen, with the engine's recorded cause; click to go there | the engine's event ledger, through `UI_EVENTS` in `src/worker/sim.worker.ts` | C |
 | Inspector | a citizen's needs, load, plan, **what they set out to do and what came of it** (refusals in plain words), what they believe against what is true, whom they know, what they remember, temperament, skills | on-demand read of the citizen | click, F to follow |
 | What they know | the land the selected citizen has never seen is washed out, in the world and on the atlas | the citizen's own seen-tiles set | V |
 | Who they know | arcs to the people they have dealt with, warm for trust, cool for distrust | the citizen's own record of others | T |
@@ -55,7 +55,8 @@ reason no criterion here is scored as verified with people.
 - **Keyboard**: every panel opens and closes by key; Escape closes the top panel, then clears the selection;
   nothing traps focus (the E2E walks it). The 3D view is one labelled element; everything in it is reachable
   through the Chronicle, the atlas and the inspector rather than by aiming a pointer.
-- **Touch**: controls are at least 44 px; on a phone the journal and the sound switch move into the menu so
+- **Touch**: controls are at least 44 × 44 px (measured on every screen of the phone project by
+  `a11y.spec.ts`); on a phone the journal and the sound switch move into the menu so
   that the remaining tools keep that size; sheets rise from the bottom and never cover the recording banner
   (asserted).
 - **A layout bug that every test passed.** The atlas reached a 390-pixel screen as two columns, the almanac
@@ -75,6 +76,15 @@ reason no criterion here is scored as verified with people.
   nothing off screen at any of them; at one, 390 px, the status row still spilled by 22 px when the weather
   had a long name — see `docs/EVIDENCE.md`, phase 13), and `history.spec.ts` asserts the same at several widths
   on both projects.
+- **And a third, of the same family.** That "widest state" was not the widest. In phase 15 the script was taught
+  to write the longest labels the bar can ever be asked to show — a four-digit day, "Cold snap", a frost, five
+  hundred citizens, a fork on a four-digit day — and found the game's name squeezed at three laptop widths, the
+  tools two pixels off the screen at 1120 px, and the status row spilling on every phone. Fixed widths cannot
+  promise a fit for text they were not measured with, and they had to assume that the fork pill was there, so
+  an untouched world gave up words it had room for. The bar now measures itself (`src/ui/game/fit.ts`, D-045):
+  it shows as many words as fit, in a stated order of giving way, and on a phone the status row and the fork
+  pill shorten only as far as they must. The script measures 25 widths three ways — untouched, forked, and with
+  the longest labels — and also fails on a squeezed name or a pill pushed onto a row of its own.
 - **Motion and sound**: reduced motion (system setting or the menu) slows time-driven motion, stills the
   camera's easing and removes birds and fish rings; sound never starts on its own.
 - **Not colour alone**: chart lines are named and tabulated; agreement colours come with the agreement's name;

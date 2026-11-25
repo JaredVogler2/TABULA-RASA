@@ -1,0 +1,85 @@
+# The top bar at 25 window widths, three ways (scripts/topbar.mjs against the production build). 2026-11-25
+# One line per width: each part as x+width@y; whether the world's label is shown; which words the bar gave up
+# (hide) and how far the status row was squeezed; then anything wrong, or ok.
+# $ node scripts/topbar.mjs http://127.0.0.1:3210 <dir>
+
+— untouched —
+ 2560  brand:10+246@16  fork-controls:-  status-bar:1487+369@18  tools:1866+684@10  label:full  hide:[] squeeze:0  ok
+ 1920  brand:10+246@16  fork-controls:-  status-bar:847+369@18  tools:1226+684@10  label:full  hide:[] squeeze:0  ok
+ 1600  brand:10+246@16  fork-controls:-  status-bar:527+369@18  tools:906+684@10  label:full  hide:[] squeeze:0  ok
+ 1599  brand:10+246@16  fork-controls:-  status-bar:526+369@18  tools:905+684@10  label:full  hide:[] squeeze:0  ok
+ 1536  brand:10+246@16  fork-controls:-  status-bar:463+369@18  tools:842+684@10  label:full  hide:[] squeeze:0  ok
+ 1440  brand:10+246@16  fork-controls:-  status-bar:367+369@18  tools:746+684@10  label:full  hide:[] squeeze:0  ok
+ 1439  brand:10+246@16  fork-controls:-  status-bar:366+369@18  tools:745+684@10  label:full  hide:[] squeeze:0  ok
+ 1366  brand:10+246@16  fork-controls:-  status-bar:293+369@18  tools:672+684@10  label:full  hide:[] squeeze:0  ok
+ 1280  brand:10+246@16  fork-controls:-  status-bar:364+273@18  tools:647+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1279  brand:10+246@16  fork-controls:-  status-bar:363+273@18  tools:646+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1180  brand:10+244@16  fork-controls:-  status-bar:264+273@18  tools:547+623@10  label:truncated  hide:[optional] squeeze:0  ok
+ 1120  brand:10+131@16  fork-controls:-  status-bar:204+273@18  tools:487+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1119  brand:10+131@16  fork-controls:-  status-bar:203+273@18  tools:486+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1024  brand:10+246@16  fork-controls:-  status-bar:293+273@18  tools:576+438@10  label:full  hide:[optional twin tools] squeeze:0  ok
+  900  brand:10+131@16  fork-controls:-  status-bar:169+273@18  tools:452+438@10  label:hidden  hide:[optional twin tools fork label] squeeze:0  ok
+  881  brand:10+131@16  fork-controls:-  status-bar:10+861@74  tools:187+684@10  label:hidden  hide:[twin label] wrapped squeeze:0  ok
+  880  brand:10+127@17  fork-controls:-  status-bar:10+860@70  tools:432+438@10  label:hidden  hide:[] squeeze:0  ok
+  768  brand:10+127@17  fork-controls:-  status-bar:10+748@70  tools:320+438@10  label:hidden  hide:[] squeeze:0  ok
+  600  brand:10+127@17  fork-controls:-  status-bar:10+580@70  tools:152+438@10  label:hidden  hide:[] squeeze:0  ok
+  430  brand:10+127@10  fork-controls:-  status-bar:10+410@117  tools:78+342@57  label:hidden  hide:[] squeeze:0  ok
+  414  brand:10+127@10  fork-controls:-  status-bar:10+394@117  tools:62+342@57  label:hidden  hide:[] squeeze:0  ok
+  390  brand:10+127@10  fork-controls:-  status-bar:10+370@117  tools:38+342@57  label:hidden  hide:[] squeeze:0  ok
+  375  brand:10+127@10  fork-controls:-  status-bar:10+355@117  tools:23+342@57  label:hidden  hide:[] squeeze:1  ok
+  360  brand:10+127@10  fork-controls:-  status-bar:10+340@117  tools:10+342@57  label:hidden  hide:[] squeeze:1  ok
+  320  brand:10+127@10  fork-controls:-  status-bar:10+300@117  tools:26+284@57  label:hidden  hide:[] squeeze:1  ok
+— as played —
+ 2560  brand:10+246@16  fork-controls:266+239@15  status-bar:1487+369@18  tools:1866+684@10  label:full  hide:[] squeeze:0  ok
+ 1920  brand:10+246@16  fork-controls:266+239@15  status-bar:847+369@18  tools:1226+684@10  label:full  hide:[] squeeze:0  ok
+ 1600  brand:10+246@16  fork-controls:266+239@15  status-bar:527+369@18  tools:906+684@10  label:full  hide:[] squeeze:0  ok
+ 1599  brand:10+246@16  fork-controls:266+239@15  status-bar:526+369@18  tools:905+684@10  label:full  hide:[] squeeze:0  ok
+ 1536  brand:10+246@16  fork-controls:266+239@15  status-bar:620+273@18  tools:903+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1440  brand:10+246@16  fork-controls:266+239@15  status-bar:524+273@18  tools:807+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1439  brand:10+246@16  fork-controls:266+239@15  status-bar:523+273@18  tools:806+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1366  brand:10+216@16  fork-controls:236+204@15  status-bar:450+273@18  tools:733+623@10  label:truncated  hide:[optional twin] squeeze:0  ok
+ 1280  brand:10+131@16  fork-controls:151+138@15  status-bar:364+273@18  tools:647+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1279  brand:10+131@16  fork-controls:151+138@15  status-bar:363+273@18  tools:646+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1180  brand:10+215@16  fork-controls:235+204@15  status-bar:449+273@18  tools:732+438@10  label:truncated  hide:[optional twin tools] squeeze:0  ok
+ 1120  brand:10+221@16  fork-controls:241+138@15  status-bar:389+273@18  tools:672+438@10  label:truncated  hide:[optional twin tools fork] squeeze:0  ok
+ 1119  brand:10+220@16  fork-controls:240+138@15  status-bar:388+273@18  tools:671+438@10  label:truncated  hide:[optional twin tools fork] squeeze:0  ok
+ 1024  brand:10+131@16  fork-controls:151+204@15  status-bar:10+1004@74  tools:391+623@10  label:hidden  hide:[twin label compare] wrapped squeeze:0  ok
+  900  brand:10+131@16  fork-controls:151+204@15  status-bar:10+880@74  tools:452+438@10  label:hidden  hide:[twin label tools] wrapped squeeze:0  ok
+  881  brand:10+131@16  fork-controls:151+204@15  status-bar:10+861@74  tools:433+438@10  label:hidden  hide:[twin label tools] wrapped squeeze:0  ok
+  880  brand:10+127@17  fork-controls:183+204@10  status-bar:10+860@70  tools:432+438@10  label:hidden  hide:[] squeeze:0  ok
+  768  brand:10+127@17  fork-controls:554+204@10  status-bar:10+748@130  tools:320+438@70  label:hidden  hide:[] squeeze:0  ok
+  600  brand:10+127@17  fork-controls:386+204@10  status-bar:10+580@130  tools:152+438@70  label:hidden  hide:[] squeeze:0  ok
+  430  brand:10+127@17  fork-controls:216+204@10  status-bar:10+410@130  tools:78+342@70  label:hidden  hide:[] squeeze:0  ok
+  414  brand:10+127@17  fork-controls:200+204@10  status-bar:10+394@130  tools:62+342@70  label:hidden  hide:[] squeeze:0  ok
+  390  brand:10+127@17  fork-controls:176+204@10  status-bar:10+370@130  tools:38+342@70  label:hidden  hide:[] squeeze:0  ok
+  375  brand:10+127@17  fork-controls:161+204@10  status-bar:10+355@130  tools:23+342@70  label:hidden  hide:[] squeeze:1  ok
+  360  brand:10+127@17  fork-controls:146+204@10  status-bar:10+340@130  tools:10+342@70  label:hidden  hide:[] squeeze:1  ok
+  320  brand:10+127@17  fork-controls:172+138@10  status-bar:10+300@130  tools:26+284@70  label:hidden  hide:[] squeeze:1  ok
+— longest labels —
+  (the bar now reads: Day 1888Summer | Cold snap | -18° | 500/ 500 | Forked on day 1888)
+ 2560  brand:10+246@16  fork-controls:266+256@15  status-bar:1416+441@18  tools:1866+684@10  label:full  hide:[] squeeze:0  ok
+ 1920  brand:10+246@16  fork-controls:266+256@15  status-bar:776+441@18  tools:1226+684@10  label:full  hide:[] squeeze:0  ok
+ 1600  brand:10+246@16  fork-controls:266+256@15  status-bar:642+315@18  tools:967+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1599  brand:10+246@16  fork-controls:266+256@15  status-bar:641+315@18  tools:966+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1536  brand:10+246@16  fork-controls:266+256@15  status-bar:578+315@18  tools:903+623@10  label:full  hide:[optional] squeeze:0  ok
+ 1440  brand:10+232@16  fork-controls:252+220@15  status-bar:482+315@18  tools:807+623@10  label:truncated  hide:[optional twin] squeeze:0  ok
+ 1439  brand:10+231@16  fork-controls:251+220@15  status-bar:481+315@18  tools:806+623@10  label:truncated  hide:[optional twin] squeeze:0  ok
+ 1366  brand:10+223@16  fork-controls:243+154@15  status-bar:408+315@18  tools:733+623@10  label:truncated  hide:[optional twin fork] squeeze:0  ok
+ 1280  brand:10+131@16  fork-controls:151+154@15  status-bar:322+315@18  tools:647+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1279  brand:10+131@16  fork-controls:151+154@15  status-bar:321+315@18  tools:646+623@10  label:hidden  hide:[optional twin fork label] squeeze:0  ok
+ 1180  brand:10+222@16  fork-controls:242+154@15  status-bar:407+315@18  tools:732+438@10  label:truncated  hide:[optional twin tools fork] squeeze:0  ok
+ 1120  brand:10+131@16  fork-controls:151+154@15  status-bar:347+315@18  tools:672+438@10  label:hidden  hide:[optional twin tools fork label] squeeze:0  ok
+ 1119  brand:10+131@16  fork-controls:151+154@15  status-bar:346+315@18  tools:671+438@10  label:hidden  hide:[optional twin tools fork label] squeeze:0  ok
+ 1024  brand:10+131@16  fork-controls:151+220@15  status-bar:10+1004@74  tools:391+623@10  label:hidden  hide:[twin label compare] wrapped squeeze:0  ok
+  900  brand:10+131@16  fork-controls:151+220@15  status-bar:10+880@74  tools:452+438@10  label:hidden  hide:[twin label tools] wrapped squeeze:0  ok
+  881  brand:10+131@16  fork-controls:151+220@15  status-bar:10+861@74  tools:433+438@10  label:hidden  hide:[twin label tools] wrapped squeeze:0  ok
+  880  brand:10+127@17  fork-controls:175+220@10  status-bar:10+860@70  tools:432+438@10  label:hidden  hide:[] squeeze:0  ok
+  768  brand:10+127@17  fork-controls:538+220@10  status-bar:10+748@130  tools:320+438@70  label:hidden  hide:[] squeeze:0  ok
+  600  brand:10+127@17  fork-controls:370+220@10  status-bar:10+580@130  tools:152+438@70  label:hidden  hide:[] squeeze:0  ok
+  430  brand:10+127@17  fork-controls:200+220@10  status-bar:10+410@130  tools:78+342@70  label:hidden  hide:[] squeeze:1  ok
+  414  brand:10+127@17  fork-controls:184+220@10  status-bar:10+394@130  tools:62+342@70  label:hidden  hide:[] squeeze:1  ok
+  390  brand:10+127@17  fork-controls:160+220@10  status-bar:10+370@130  tools:38+342@70  label:hidden  hide:[] squeeze:1  ok
+  375  brand:10+127@17  fork-controls:145+220@10  status-bar:10+355@130  tools:23+342@70  label:hidden  hide:[] squeeze:1  ok
+  360  brand:10+127@17  fork-controls:196+154@10  status-bar:10+340@130  tools:10+342@70  label:hidden  hide:[fork] squeeze:1  ok
+  320  brand:10+127@17  fork-controls:156+154@10  status-bar:10+300@130  tools:26+284@70  label:hidden  hide:[] squeeze:2  ok
+no overlap, nothing off screen and nothing spilling at any of 25 widths: untouched, as played, or with the longest labels

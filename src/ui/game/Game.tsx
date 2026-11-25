@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { makeConfig, type WorldConfig } from "@/engine";
 import { cellConfig } from "@/lab/studies";
 import type { Quality } from "@/render/WorldRenderer";
 import { useGame } from "@/store/game";
@@ -15,13 +16,28 @@ import { Coach, RecordingBar, Timebar, Toast, TopBar, TwinBar } from "./Hud";
 import { HistoryPanel, RerunBar } from "./History";
 import { Inspector } from "./Inspector";
 import { JournalPanel } from "./Journal";
-import { AffordancesPanel, Chronicle, Interventions, MenuPanel } from "./Panels";
+import { AffordancesPanel, Chronicle, Fault, Interventions, MenuPanel } from "./Panels";
 import { Setup, Title } from "./Title";
 
 declare global {
   interface Window {
     /** Read-only handle for automated tests: what the renderer is doing, never a way to change the world. */
-    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null; soundLevel: () => number };
+    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null; soundLevel: () => number; perf: () => Promise<unknown> };
+  }
+}
+
+/** A world configuration from the address bar, or null if it is not a valid one (the engine's own validation decides). */
+function directConfig(params: URLSearchParams): WorldConfig | null {
+  try {
+    const overrides: Partial<WorldConfig> = {};
+    const population = Number(params.get("population"));
+    const size = Number(params.get("size"));
+    if (Number.isInteger(population) && population > 0) overrides.population = population;
+    if (Number.isInteger(size) && size > 0) overrides.size = size;
+    const seed = Number(params.get("seed") ?? "1");
+    return makeConfig((params.get("start") ?? "").slice(0, 40), Number.isInteger(seed) && seed >= 0 ? seed : 1, overrides);
+  } catch {
+    return null;
   }
 }
 
@@ -49,10 +65,13 @@ export function Game() {
     const params = new URLSearchParams(window.location.search);
     const recording = params.get("recording");
     const cell = params.get("study") ? cellConfig((params.get("study") ?? "").slice(0, 40), (params.get("condition") ?? "").slice(0, 40), Number(params.get("seed"))) : null;
+    // `?start=<scenario>&seed=…[&population=…&size=…]` opens a world directly (the performance probe's way in to larger populations)
+    const direct = params.get("start") ? directConfig(params) : null;
     if (recording) void controller.openRecording(recording.slice(0, 80));
     else if (cell) void controller.openStudyCell(cell.config, `${cell.study.title.split(" — ")[0]} · ${cell.condition.label} · seed ${cell.config.seed}`, cell.study.days);
+    else if (direct) void controller.newWorld(direct);
     else void controller.startVista();
-    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), soundLevel: () => controller.soundLevel() };
+    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), soundLevel: () => controller.soundLevel(), perf: () => controller.perf() };
     return () => {
       controller.detach();
       delete window.__tr;
@@ -66,6 +85,8 @@ export function Game() {
       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const state = useGame.getState();
+      // a world that has stopped takes no orders: the only way on is the button that says so
+      if (state.phase === "playing" && state.error) return;
       if (e.key === "Escape") {
         if (state.panel !== "none") controller.openPanel(state.panel);
         else if (state.selection) controller.select(null);
@@ -76,7 +97,9 @@ export function Game() {
       const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings" || state.panel === "atlas" || state.panel === "journal" || state.panel === "history";
       if (modal) return;
       const rig = controller.camera();
-      switch (e.key) {
+      // letters mean the same with Shift held or Caps Lock on
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      switch (key) {
         case " ":
           e.preventDefault();
           controller.toggle();
@@ -219,6 +242,7 @@ export function Game() {
         {playing && panel === "history" ? <HistoryPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
         {panel === "recordings" ? <RecordingsPanel /> : null}
+        {playing ? <Fault /> : null}
         <Toast />
       </div>
     </ControllerContext.Provider>

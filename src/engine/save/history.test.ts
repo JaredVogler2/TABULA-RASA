@@ -215,6 +215,29 @@ describe("history: export, import and integrity", () => {
     }
   });
 
+  it("a world edited by hand and repacked with a manifest of its own is whole, and still refused: its goods do not add up", () => {
+    const { tip } = lived();
+    // the forger gives someone three hundred rations and packs the result properly: every hash matches
+    const forged = restoreWorld(serializeWorld(tip));
+    const rich = forged.agents.find((a) => a.alive)!;
+    rich.inv[0] = (rich.inv[0] as number) + 300;
+    expect(() => openBundle(packBundle(forged, null))).toThrowError(/goods in this world do not add up/);
+    // the same done to the untouched twin
+    const twin = createWorld(tip.config);
+    advance(twin, tip.tick);
+    const forgedTwin = restoreWorld(serializeWorld(twin));
+    forgedTwin.agents.find((a) => a.alive)!.inv[1] = 999;
+    expect(() => openBundle(packBundle(tip, forgedTwin))).toThrowError(/goods in the untouched twin do not add up/);
+    // a forger who also cooks the books gets a file that opens — and a world whose past, lived
+    // again from its seed, does not arrive at it (the worker's tests show that check failing)
+    const cooked = restoreWorld(serializeWorld(tip));
+    const who = cooked.agents.find((a) => a.alive)!;
+    who.inv[0] = (who.inv[0] as number) + 300;
+    cooked.metrics.sources[0] = (cooked.metrics.sources[0] as number) + 300;
+    const opened = openBundle(packBundle(cooked, null));
+    expect(worldDigest(opened.world)).not.toBe(worldDigest(tip));
+  });
+
   it("refuses a twin from another world or another moment, a truncated file, an empty file and a file that is something else", () => {
     const { tip } = lived();
     const stranger = createWorld(makeConfig("first_light", 99, { population: 24 }));

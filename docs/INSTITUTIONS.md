@@ -11,7 +11,7 @@ exception is the labelled positive control (`scripted_control`), which is never 
 
 | | Examples | Effect |
 |---|---|---|
-| **Narrative** | name, purpose, role names | None. Stored, shown in quotation marks, never interpreted. |
+| **Narrative** | name, purpose, role names | None. Stored, shown in quotation marks, never interpreted. A role's name is reduced to a plain label when the charter is validated — ASCII letters, digits, `-` and `_`, at most 24 characters — because it is repeated inside the engine's own description of the rules, where a sentence would read as one of them (D-040). |
 | **Constitutive** | who may join and on what bond; roles; how members decide; which structures are controlled; lifetime | Fixed when people sign. An amendment cannot change them. |
 | **Regulative** | rules: *who* may / must / must not *do what* [*when*] [*or else*] | Enforced by the engine; replaceable by a motion that passes. |
 

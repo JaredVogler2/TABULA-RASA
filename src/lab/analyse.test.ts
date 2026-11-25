@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { analyse, confirmatoryRefusal, planFrom, seedClassOf, toCsv, toMarkdown, type Plan } from "./analyse";
+import { adjustFamily, analyse, confirmatoryRefusal, planFrom, seedClassOf, toCsv, toMarkdown, type Plan } from "./analyse";
+import { holm } from "./stats";
 import { METRIC_LABEL, STUDIES, type Contrast, type Metric, type RunResult, type Study } from "./studies";
 
 /** A study that exists only here: two conditions, and one contrast of each kind the registry can state. */
@@ -98,6 +99,30 @@ describe("study analysis: the registered rule, applied to the interval and to no
     const report = analyse(fixture([greater, second]), seeds, runs(0.02, 0.05), 4000);
     for (const c of report.contrasts) expect(c.pHolm).toBeGreaterThanOrEqual(c.p);
     expect(report.warnings.some((w) => w.includes("2 contrasts in this study"))).toBe(true);
+  });
+
+  it("across a batch, Holm is taken over the whole registered family at once, as the protocol registers it", () => {
+    // three studies with one or two contrasts each; one is exploratory and must stay out of the family
+    const noisy = (shift: number, wobble: number): ReturnType<typeof runs> => runs(shift, wobble);
+    const one = analyse({ ...fixture([greater]), id: "fixture" }, seeds, noisy(0.02, 0.06), 4000);
+    const two = analyse(fixture([greater, { ...greater, id: "r", metric: "welfare", kind: "ratio", predicts: "at-least", bound: 0.9 }]), seeds, noisy(0.01, 0.08), 4000);
+    const exploratory = analyse({ ...fixture([greater]), registered: false }, seeds, noisy(0.03, 0.05), 4000);
+    const before = [one, two, exploratory].map((r) => r.contrasts.map((c) => c.pHolm));
+    const size = adjustFamily([one, two, exploratory]);
+    // the family is the registered contrasts that have a p-value: the ratio has none, the exploratory study is not registered
+    expect(size).toBe(2);
+    const ps = [one.contrasts[0]!.p, two.contrasts[0]!.p];
+    const expected = holm(ps);
+    expect(one.contrasts[0]!.pHolm).toBe(expected[0]);
+    expect(two.contrasts[0]!.pHolm).toBe(expected[1]);
+    expect(Number.isNaN(two.contrasts[1]!.pHolm)).toBe(true);
+    // a wider family can only make an adjusted p larger
+    expect(one.contrasts[0]!.pHolm).toBeGreaterThanOrEqual(before[0]![0]!);
+    expect(two.contrasts[0]!.pHolm).toBeGreaterThanOrEqual(two.contrasts[0]!.p);
+    // the exploratory study is left as it was, and the registered ones say what their adjustment covers
+    expect(exploratory.contrasts[0]!.pHolm).toBe(before[2]![0]);
+    expect(one.warnings.some((w) => w.includes("whole registered family in this batch: 2 contrasts"))).toBe(true);
+    expect(two.warnings.some((w) => w.includes("account for this study's contrasts only"))).toBe(false);
   });
 });
 

@@ -35,10 +35,24 @@ export interface Scratch {
   bfsGen: number;
   /** Smallest non-zero movement cost on the map (heuristic scale). */
   minCost: number;
+  /**
+   * Searches for a route that are known to find none, per agent: the tile the search started
+   * from, the map knowledge it had (a copy of `mind.seen`), and up to NO_ROUTE_SLOTS goals
+   * (tile × 64 + nearness) it failed for with exactly those. See `findPath`: a search is a
+   * function of these and of terrain that never changes, so the same question need not be
+   * worked out twice. -1 means nothing is remembered for the agent.
+   */
+  noRouteFrom: Int32Array;
+  noRouteKeys: Int32Array;
+  noRouteCount: Uint8Array;
+  noRouteSeen: (Uint8Array | undefined)[];
   /** Per-tick processing order (agent ids). */
   order: number[];
   orderKeys: number[];
 }
+
+/** How many goals without a route are remembered per agent (the oldest gives way to the newest). */
+export const NO_ROUTE_SLOTS = 8;
 
 const cache = new WeakMap<WorldState, Scratch>();
 
@@ -77,6 +91,10 @@ export function scratchOf(world: WorldState): Scratch {
     bfsDist: new Int16Array(n),
     bfsGen: 0,
     minCost,
+    noRouteFrom: new Int32Array(Math.max(64, world.agents.length + 64)).fill(-1),
+    noRouteKeys: new Int32Array(Math.max(64, world.agents.length + 64) * NO_ROUTE_SLOTS),
+    noRouteCount: new Uint8Array(Math.max(64, world.agents.length + 64)),
+    noRouteSeen: [],
     order: [],
     orderKeys: [],
   };

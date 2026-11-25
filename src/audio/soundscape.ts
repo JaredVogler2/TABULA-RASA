@@ -107,6 +107,17 @@ export class Soundscape {
     }
   }
 
+  /**
+   * Stop making sound while nobody can be listening (the tab is hidden), and take it up again
+   * afterwards — only if it was on: this never starts sound that was not asked for.
+   */
+  hush(on: boolean): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.enabled) return;
+    if (on && ctx.state === "running") void ctx.suspend().catch(() => undefined);
+    else if (!on && ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+  }
+
   disable(): void {
     this.enabled = false;
     if (this.ctx && this.master) this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.08);

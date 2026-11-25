@@ -15,6 +15,7 @@ import type { DecisionRecord } from "../mind/external";
 import type { WorldConfig } from "../model/config";
 import { replayTape } from "../mind/external";
 import { applyIntervention } from "../sim/environment";
+import { auditGoods } from "../sim/inventory";
 import { scratchOf } from "../sim/scratch";
 import { step } from "../sim/step";
 import { TICKS_PER_DAY } from "../model/constants";
@@ -161,6 +162,10 @@ export function openBundle(text: string): OpenedBundle {
     throw new SnapshotError("corrupt", "the world in this file is not the one its manifest describes (content hash mismatch): it was damaged or altered");
   }
   const world = restoreWorld(b.snapshot);
+  // whoever alters a world can recompute its hash, but not as easily the books: every unit of
+  // every thing in a world the engine made is accounted for by a declared source and sink
+  const books = auditGoods(world);
+  if (books) throw new SnapshotError("corrupt", `the goods in this world do not add up (${books}): it was not left as the engine made it`);
   // the manifest must describe this very world, not merely carry a matching hash
   if (world.tick !== m.tick || world.config.seed !== m.seed || world.meta.configHash !== m.configHash || world.terrain.hash !== m.terrainHash || worldDigest(world) !== m.digest) {
     throw new SnapshotError("corrupt", "the manifest does not describe the world in this file");
@@ -171,6 +176,8 @@ export function openBundle(text: string): OpenedBundle {
     if (typeof b.control.snapshot !== "string" || snapshotHash(b.control.snapshot) !== b.control.sha256) throw new SnapshotError("corrupt", "the untouched twin in this file was damaged or altered (content hash mismatch)");
     control = restoreWorld(b.control.snapshot);
     controlSnapshot = b.control.snapshot;
+    const twinBooks = auditGoods(control);
+    if (twinBooks) throw new SnapshotError("corrupt", `the goods in the untouched twin do not add up (${twinBooks})`);
     if (control.meta.configHash !== world.meta.configHash || control.tick !== world.tick) throw new SnapshotError("corrupt", "the untouched twin in this file belongs to a different world or a different moment");
   }
   if (!Array.isArray(b.tape)) throw new SnapshotError("corrupt", "the file's tape of decisions is malformed");

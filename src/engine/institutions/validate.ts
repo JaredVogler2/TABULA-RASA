@@ -11,7 +11,7 @@
  * another rule, looping. What is checked here: every bound, every index, and that the
  * proposer has standing over each structure they want to place under common control.
  */
-import { cleanText } from "../core/text";
+import { cleanLabel, cleanText } from "../core/text";
 import { ITEM_COUNT, NODE_KINDS, StructureKind } from "../model/constants";
 import type { WorldState } from "../model/types";
 import { checkExpr } from "./expr";
@@ -68,7 +68,7 @@ function checkSanction(raw: unknown, path: string, bond: Charter["bond"], d: Dia
       }
       return { t: "forfeit", qty: raw.qty };
     default:
-      d.push({ path, code: "bad_sanction", message: `"${raw.t.slice(0, 24)}" is not a sanction the grammar has; an institution can note, keep a bond, suspend or expel — nothing else` });
+      d.push({ path, code: "bad_sanction", message: `"${cleanLabel(raw.t, 24)}" is not a sanction the grammar has; an institution can note, keep a bond, suspend or expel — nothing else` });
       return null;
   }
 }
@@ -90,7 +90,7 @@ function checkRule(world: WorldState, raw: unknown, path: string, roles: number,
     d.push({
       path: `${path}.r`,
       code: "not_expressible",
-      message: `"${raw.r.slice(0, 32)}" is not a rule form. The grammar has: ${RULE_FORMS.join(", ")}. Rules cannot take from people, punish beyond a posted bond, or act on non-members.`,
+      message: `"${cleanLabel(raw.r, 32)}" is not a rule form. The grammar has: ${RULE_FORMS.join(", ")}. Rules cannot take from people, punish beyond a posted bond, or act on non-members.`,
     });
     return null;
   }
@@ -203,7 +203,9 @@ export function validateCharter(world: WorldState, proposerId: number, raw: unkn
           bad(`roles[${i}]`, "bad_role", `a role needs a name, 1 to ${LIMITS.seats} seats, and to be filled by "founder" or by "vote"`);
           return;
         }
-        roles.push({ name: cleanText(r.name, LIMITS.nameChars) || `role ${i + 1}`, seats: r.seats, by: r.by });
+        // a role's name is written into the sentences that state the charter's rules, in everyone's
+        // observations: it is kept to a plain label so that it can never read as anything else
+        roles.push({ name: cleanLabel(r.name, LIMITS.roleChars) || `role ${i + 1}`, seats: r.seats, by: r.by });
       });
     }
   }

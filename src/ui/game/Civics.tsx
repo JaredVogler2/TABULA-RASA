@@ -6,6 +6,7 @@ import { dyeOf } from "@/render/dyes";
 import { useGame } from "@/store/game";
 import type { CharterView } from "@/worker/protocol";
 import { useController } from "./context";
+import { useSwipeDown } from "./swipe";
 import styles from "./game.module.css";
 import { structureName } from "./text";
 
@@ -123,12 +124,13 @@ export function CivicsPanel() {
   const view = useGame((s) => s.civics);
   const roster = useGame((s) => s.roster);
   const close = () => controller.openPanel("civics");
+  const swipe = useSwipeDown(close);
   const live = view?.charters.filter((c) => c.state === "active" || c.state === "proposed") ?? [];
   const past = view?.charters.filter((c) => c.state === "lapsed" || c.state === "ended") ?? [];
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
       <section className={`${styles.paper} ${styles.sheet} ${styles.sheetWide}`} role="dialog" aria-modal="true" aria-labelledby="civics-title" data-testid="civics">
-        <div className={styles.panelHead}>
+        <div className={styles.panelHead} {...swipe}>
           <div className={styles.panelTitle}>
             <div className={styles.kicker}>Agreements among citizens</div>
             <h2 id="civics-title">Charters</h2>

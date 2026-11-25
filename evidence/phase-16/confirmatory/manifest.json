@@ -1,0 +1,3608 @@
+{
+ "format": "tabula-rasa/study-bundle",
+ "version": 1,
+ "seedClass": "confirmatory",
+ "engine": "0.7.0",
+ "schema": 6,
+ "affordances": "2026.11-i",
+ "studies": [
+  {
+   "id": "h1-scarcity",
+   "title": "H1 — Scarcity and cooperation (inverted U)",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "r04",
+     "label": "richness 0.4",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 480,
+      "nodeDensity": 600
+     }
+    },
+    {
+     "id": "r07",
+     "label": "richness 0.7",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 840,
+      "nodeDensity": 1050
+     }
+    },
+    {
+     "id": "r13",
+     "label": "richness 1.3",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 1560,
+      "nodeDensity": 1950
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h1a",
+     "hypothesis": "H1",
+     "metric": "cooperation",
+     "a": "r07",
+     "b": "r13",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Cooperation is higher at richness 0.7 than at 1.3."
+    },
+    {
+     "id": "h1b",
+     "hypothesis": "H1",
+     "metric": "cooperation",
+     "a": "r07",
+     "b": "r04",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Cooperation is higher at richness 0.7 than at 0.4."
+    }
+   ],
+   "note": "Planner agents, institutions off. Falsified if either interval includes zero or has the opposite sign."
+  },
+  {
+   "id": "h2-mobility",
+   "title": "H2 — Mobility and specialization",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "m10",
+     "label": "movement cost 1.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "movementCost": 1000
+     }
+    },
+    {
+     "id": "m20",
+     "label": "movement cost 2.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "movementCost": 2000
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h2",
+     "hypothesis": "H2",
+     "metric": "specialization",
+     "a": "m20",
+     "b": "m10",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Doubling the cost of movement raises the specialization index."
+    }
+   ],
+   "note": "Falsified if the paired difference is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h3-communication",
+   "title": "H3 — Communication range and adoption",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "h2r",
+     "label": "hearing radius 2",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search",
+      "hearingRadius": 2
+     }
+    },
+    {
+     "id": "h9r",
+     "label": "hearing radius 9",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search",
+      "hearingRadius": 9
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h3",
+     "hypothesis": "H3",
+     "metric": "e2",
+     "a": "h9r",
+     "b": "h2r",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "More runs reach E2 when voices carry nine tiles than when they carry two."
+    }
+   ],
+   "note": "Institutions by grammar search. Falsified if the paired difference in the E2 indicator is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h4-diversity",
+   "title": "H4 — Diversity and resilience",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "d02",
+     "label": "diversity 0.2",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "diversity": 200,
+      "shocks": [
+       {
+        "kind": "blight",
+        "minDay": 15,
+        "maxDay": 15,
+        "days": 0,
+        "magnitude": 1000
+       }
+      ]
+     }
+    },
+    {
+     "id": "d10",
+     "label": "diversity 1.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "diversity": 1000,
+      "shocks": [
+       {
+        "kind": "blight",
+        "minDay": 15,
+        "maxDay": 15,
+        "days": 0,
+        "magnitude": 1000
+       }
+      ]
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h4",
+     "hypothesis": "H4",
+     "metric": "survival",
+     "a": "d10",
+     "b": "d02",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "After the same blight on day 16, more people survive where temperaments and skills vary more."
+    }
+   ],
+   "note": "Both conditions receive an identical blight on day 16. Falsified if the paired difference is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h5-cadence",
+   "title": "H5 — Cadence has diminishing returns",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "c12",
+     "label": "deliberate every 12 ticks",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "planEvery": 12
+     }
+    },
+    {
+     "id": "c48",
+     "label": "deliberate every 48 ticks",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "planEvery": 48
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h5a",
+     "hypothesis": "H5",
+     "metric": "welfare",
+     "a": "c48",
+     "b": "c12",
+     "kind": "ratio",
+     "predicts": "at-least",
+     "bound": 0.9,
+     "text": "Welfare at cadence 48 is at least 90% of welfare at cadence 12."
+    },
+    {
+     "id": "h5b",
+     "hypothesis": "H5",
+     "metric": "deliberations",
+     "a": "c48",
+     "b": "c12",
+     "kind": "ratio",
+     "predicts": "at-most",
+     "bound": 0.35,
+     "text": "…with at most 35% as many deliberations (the check that the treatment was applied)."
+    }
+   ],
+   "note": "The planner's clock is `planEvery`; between deliberations people act on reflex. Falsified if the lower 95% bound of the welfare ratio is below 0.90."
+  },
+  {
+   "id": "h6-institutions",
+   "title": "H6 — Do institutions have anything to do? (The Long Winter)",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "off",
+     "label": "institutions off",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off"
+     }
+    },
+    {
+     "id": "scripted",
+     "label": "scripted control",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "scripted_control"
+     }
+    },
+    {
+     "id": "search",
+     "label": "grammar search",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search"
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h6a",
+     "hypothesis": "H6a",
+     "metric": "survival",
+     "a": "scripted",
+     "b": "off",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Positive control: a charter written by the designers raises survival."
+    },
+    {
+     "id": "h6b",
+     "hypothesis": "H6b",
+     "metric": "survival",
+     "a": "search",
+     "b": "off",
+     "kind": "difference",
+     "predicts": "two-sided",
+     "bound": 0,
+     "text": "Institutions found by non-LLM search change survival (no prediction of sign)."
+    }
+   ],
+   "note": "H6a failing would mean institutional affordances are not materially useful in this world, and every E5 claim is moot."
+  }
+ ],
+ "seeds": [
+  9000,
+  9001,
+  9002,
+  9003,
+  9004,
+  9005,
+  9006,
+  9007,
+  9008,
+  9009,
+  9010,
+  9011,
+  9012,
+  9013,
+  9014,
+  9015,
+  9016,
+  9017,
+  9018,
+  9019,
+  9020,
+  9021,
+  9022,
+  9023,
+  9024,
+  9025,
+  9026,
+  9027,
+  9028,
+  9029,
+  9030,
+  9031
+ ],
+ "analysis": {
+  "resamples": 10000,
+  "seed": 20261125,
+  "interval": "95% percentile bootstrap over seeds",
+  "multiplicity": "Holm step-down across the registered family in this batch (7 contrasts with a p-value); verdicts are read from intervals, not from p-values"
+ },
+ "plan": [
+  {
+   "contrast": "h1a",
+   "metric": "cooperation",
+   "sdDiff": 0.012063547018462965,
+   "targetHalfWidth": 0.004222241456462037,
+   "seeds": 32,
+   "pilotHalfWidth": 0.005911029467123687
+  },
+  {
+   "contrast": "h1b",
+   "metric": "cooperation",
+   "sdDiff": 0.012256800833278915,
+   "targetHalfWidth": 0.0042898802916476195,
+   "seeds": 32,
+   "pilotHalfWidth": 0.006005722097099169
+  },
+  {
+   "contrast": "h2",
+   "metric": "specialization",
+   "sdDiff": 0.01713038236584345,
+   "targetHalfWidth": 0.005995633828045206,
+   "seeds": 32,
+   "pilotHalfWidth": 0.008393733185821997
+  },
+  {
+   "contrast": "h3",
+   "metric": "e2",
+   "sdDiff": 0.6191391873668903,
+   "targetHalfWidth": 0.2166987155784116,
+   "seeds": 32,
+   "pilotHalfWidth": 0.30337262955709
+  },
+  {
+   "contrast": "h4",
+   "metric": "survival",
+   "sdDiff": 0.008850612031567843,
+   "targetHalfWidth": 0.003097714211048745,
+   "seeds": 32,
+   "pilotHalfWidth": 0.004336720239959959
+  },
+  {
+   "contrast": "h6a",
+   "metric": "survival",
+   "sdDiff": 0.12261049438499681,
+   "targetHalfWidth": 0.042913673034748884,
+   "seeds": 32,
+   "pilotHalfWidth": 0.060078038754198974
+  },
+  {
+   "contrast": "h6b",
+   "metric": "survival",
+   "sdDiff": 0.12489328778334459,
+   "targetHalfWidth": 0.043712650724170604,
+   "seeds": 32,
+   "pilotHalfWidth": 0.0611965869742488
+  }
+ ],
+ "runs": 448,
+ "expectedRuns": 448,
+ "machine": {
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+  "cores": 4,
+  "node": "v22.23.5"
+ },
+ "cost": {
+  "apiCalls": 0,
+  "usd": 0
+ },
+ "hashes": [
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9000,
+   "sha256": "7e14e4433b54ac94d4515440640fdbb792c21e54c7e9357d46ae84e877906a76",
+   "digest": "b6eff1bd6ebf5d88"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9001,
+   "sha256": "94eae7990be0d91a00b543da612428f70e7dae518a7a953c2396777d087a28ba",
+   "digest": "e7bf24032b9c1e9b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9002,
+   "sha256": "dae3f269f6fa097646a93abfb39ecff708f55c22419b7e0cd8aa23e18ccb1cdc",
+   "digest": "8e6ceed172cd9d1b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9003,
+   "sha256": "827d8521de2f3c83e02cefd05380cf2e160a07e3978236e488dcbe5e3163e10b",
+   "digest": "e252f9e0c2e127d6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9004,
+   "sha256": "223ced2fb1587fcbcbbf4df0d430d1a035227f023fb79308815cfb30c72b3d7e",
+   "digest": "9e04bdaecb2629d0"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9005,
+   "sha256": "cf8ff69beceb5495f1c397fc3f2e42437b27c6c4da19400a4f18e6dc2d3f2523",
+   "digest": "cdae171d9f4f9965"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9006,
+   "sha256": "8a717da9a1be6e4f9f2e28f565e808054966baa569cec4e9de5338afc305796b",
+   "digest": "1d501dbd0f0d3ed2"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9007,
+   "sha256": "69073b70056d93b6dc6539e99ad3cc0e147000a8d7bc6cdd16081f9ae0c9a3d7",
+   "digest": "47410424311b0e24"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9008,
+   "sha256": "d6415510b491b48c761fceeb73f32154d5b6e08f1cfb6ef4bc60875c0028d57b",
+   "digest": "124505f64680cfa5"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9009,
+   "sha256": "18ae69c32d004c5bf6556419591ba73202b52b5db61af24e4e2a7f41e65bc742",
+   "digest": "bbdf7a3e2ac8fabf"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9010,
+   "sha256": "3114f0526a503e208b897e3c1fd533e5dadf445c59dd6acfee91921b74c04ce6",
+   "digest": "b451adbe2c1a20dd"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9011,
+   "sha256": "f314db45deb13ad1564d79170dcb15062cfaec48f52287c078e93c238a8d438d",
+   "digest": "36fc519b14ffba90"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9012,
+   "sha256": "948ce223afb3e505258f71f38137c4353c5041fab8a60859a201d71691e8093d",
+   "digest": "240f4876a28f232b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9013,
+   "sha256": "1fbfe36f17a805d5835df7f8e4b8ede39f9fec84daab68578b2133a5d48f1e27",
+   "digest": "4d509cd5043661c6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9014,
+   "sha256": "b464888f8c6a750b38e684913b6b2d3bc9ff55e47c1952eea32a5a15ce94fc43",
+   "digest": "474845e05cf2639a"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9015,
+   "sha256": "08632bfc2bb27f350005a6bea2e0be0906881d62854aa28462d3699c29478215",
+   "digest": "8e8b7f354f3c948c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9016,
+   "sha256": "2f4277495a7f8f41f1465e36c2080b4a9f55cdbf43a2f927a9b4f0797c28d668",
+   "digest": "74e3af867350717b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9017,
+   "sha256": "2852473f4fc872240cc8503f2ef0e72fcf406fef068a84e947ed823241fbf826",
+   "digest": "660bf86f59108464"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9018,
+   "sha256": "859c237e13dcf10b8bd0dbc819f9c94b08dcb85b1b9d63cd303eba6f89bcbadf",
+   "digest": "4a8320e6378a94c2"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9019,
+   "sha256": "3e65465832f4c535e97c614f61507f2784e97ddcc64e3c7eb5af1dca681670ef",
+   "digest": "8b7775abe30e255d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9020,
+   "sha256": "b7238563b99e719987a7c5338533194a586f2ed294d11e6d1f78335c980d33a3",
+   "digest": "9becca58bfd80b5b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9021,
+   "sha256": "af347b9d009fee7acbe2940386bfc82c6e19fd1690d7bf1d69b8e0f9fc252c2a",
+   "digest": "d508fff943f41a50"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9022,
+   "sha256": "25a79c68d9ee3b78e68c27144e62a262c6c5866f5de5fcce2a66ba3596f23ce2",
+   "digest": "ead4e17dc801a9ed"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9023,
+   "sha256": "e24c0b684e7479fb3ab50acfd5fde8c110db90f38743ddc9c00782a72e81b4ba",
+   "digest": "b7bcf2f8170afafa"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9024,
+   "sha256": "799edd778e79fd932bddb843d82d0cfea1d6fe10352d35958830e3f7a829d3f1",
+   "digest": "07aaefaa04ef5896"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9025,
+   "sha256": "32f6e70149e4ed5c5b227e671b809bb3c33598be76204a3d61e7db8d269a2c81",
+   "digest": "2173b60b126f9408"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9026,
+   "sha256": "058ed826ae2c691e78031c901d1e55705ac2c92b294ee3e621d0f08ae3a9c750",
+   "digest": "2ba0ca8f6ee9e8a3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9027,
+   "sha256": "b65e49efaab79a6d7b2a1849f26e668e0af34029dd04251c11a655c930da6f0c",
+   "digest": "08ef1004d344356c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9028,
+   "sha256": "47605289ce4dec890b878e8ba7571f3c1787cea5d5400814108b7f7363bd0dbf",
+   "digest": "372e269cce9bc45f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9029,
+   "sha256": "dc628474e3932cadf92fadf971ac4cf2fb36b37c50767ba622cdd22ac27c7ae6",
+   "digest": "8ac16aa2710ce1be"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9030,
+   "sha256": "66e66ffae8b0718b773cd6ab658057d6d083084555655d3ab14f612bb215922e",
+   "digest": "ef45be4c47d130f3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9031,
+   "sha256": "cff3d699a98b5514470fc8139b23dcd00662e8df58936631435ee10f59b7443e",
+   "digest": "4cc63b163f64a954"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9000,
+   "sha256": "3cfa7682ec83fa023ad13ae63b54028126516a7e24cf066426cb12089a4eb0ed",
+   "digest": "39da5e7c2daa2421"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9001,
+   "sha256": "ce3692b65249b94c0bcbcdd896df75f635c52b820d47db61bc657e76b40d0302",
+   "digest": "cb09b9454622ba85"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9002,
+   "sha256": "7bb4e1454a91cab067bfb09d2a49151c1f6baaf7472d7f9102ca7b54cc07913e",
+   "digest": "a54ce00d202406bb"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9003,
+   "sha256": "0c1258e70c06f5c48516747ca2abe972e46f9f03a4440bcf72b607cc1e1f54b5",
+   "digest": "23189f09253e636f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9004,
+   "sha256": "3679528c90129a3207bfddb4e709d0ba7e1875a1319b6780bd885f406acdcc66",
+   "digest": "cba08000cd161c93"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9005,
+   "sha256": "13d6190ebadc852de3efbabacab39de855c37b56ffedd1d89cb80af801773248",
+   "digest": "ed0e3dbb8f506054"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9006,
+   "sha256": "b8f0c60b4264acbf4726fff132dfe76f849b701e20982c219a72fbf6ef78273d",
+   "digest": "aa819833d602e6aa"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9007,
+   "sha256": "55d7c93471b18d9d717f8999d3b76466ad4196877d5e67ce39eda016c6bc7084",
+   "digest": "a428d9c9c40ad800"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9008,
+   "sha256": "57f3e61afe68a6eaa1e879c452d8ed844d43ac51aad07d6fd1ceaf02fb87c8f4",
+   "digest": "118f9ba9aca7d442"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9009,
+   "sha256": "32937cfa423ea5097f52d64ec8045c52de3488d97d7bfb1cc63c9c874dbfb057",
+   "digest": "21f9d450ce293d06"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9010,
+   "sha256": "9d5522c342f55fc92623bb9ed8a6718fe7302511ebe763c75de9da746339d712",
+   "digest": "11afb935b6bab88e"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9011,
+   "sha256": "48b5995193e9c9bda857aa830bb7ab1d071465528f715731d1a6f8cc80d07a70",
+   "digest": "607e8882925d3706"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9012,
+   "sha256": "e7128bb6341c0eb763871bdf2415dab577b184353afa2c6b827a60f2053250bf",
+   "digest": "b8adf53732fbd406"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9013,
+   "sha256": "03253b36a1b5ee761244186e75dd911c2a2031002699fcd8d2a061e9ab86b16a",
+   "digest": "be5b918f2c48396e"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9014,
+   "sha256": "80995ff74dd52d6d55b0d73bd9e33e3214f676c7feb080df13a2c42181815b3a",
+   "digest": "129ef8f0c231e93c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9015,
+   "sha256": "794536376caf744d13bb581e3677ed688b9c73e93ca9a5243a6350ecd54b1349",
+   "digest": "e1212853b0c2d4de"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9016,
+   "sha256": "472e42636903c3721fcd14786e9930a56aa0bfe295a8b6b64a41f65c72c3d38c",
+   "digest": "601212a951a39188"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9017,
+   "sha256": "c22ea13165e0f0891fbc3f183ca6abdd6ef2bfa44e65d41c99d87c0036f8e835",
+   "digest": "4cf276433af50bf7"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9018,
+   "sha256": "1f80e700810a59b2b881af70d098f3eca4bab549ce9232a333f3f9c2161bcd35",
+   "digest": "b0ebb6d18664620d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9019,
+   "sha256": "a6bdc04491a1cca321cc329c22bb4f53d02c164cfb49c2f99fc882f16a9d9349",
+   "digest": "36f1e0654fb0c1fa"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9020,
+   "sha256": "2639a83cff13b728ce47d877e362079836843599f6b59d4d3bd00b42385f5a69",
+   "digest": "a86fdeeceb66da66"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9021,
+   "sha256": "cbd94f13e4f7793a2d89a51f5beae3ccecd3c8f51652d60fb76b6f5245e157ed",
+   "digest": "8575137be7b1a779"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9022,
+   "sha256": "dd18ecf6b101a1183272c39178d8294646b8e1851367a80fb7a37a7ef5739e90",
+   "digest": "a9dca7ae8e2d3b5b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9023,
+   "sha256": "79b0b28459040da896074d57823c003f9eba62e4318b84f6b579e39b8b1403e8",
+   "digest": "b9f4cdaac850eeca"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9024,
+   "sha256": "f78b0ae3a12fe85a419f41d12d131ca7555a533e7a2cdb4718f2eb572a9f7843",
+   "digest": "cdd746919d800cad"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9025,
+   "sha256": "ebcf0d2f91c25578d859a9aa81ad6bf3bb5580bf9ba94dd29e430da53e3e75a3",
+   "digest": "c1699fb1888825c5"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9026,
+   "sha256": "c52eb45cce116d7a70e55182d1ff482719ad0027d0163766f96f6e40e9890c82",
+   "digest": "386d6f1a92c1deef"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9027,
+   "sha256": "6e5ed4d604bbee9085aac05efd3e65b30b8fb25d865266722b7df491cc226203",
+   "digest": "047c999e730c600b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9028,
+   "sha256": "7df80a3f7becd911309dcff4ef84b85e6960aabec3066335aaf272e0b8326b00",
+   "digest": "942fed56e95f7c4f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9029,
+   "sha256": "de08d476acbb0b7562707fec74db5486d46bc47c6107148eb5b06b1078530812",
+   "digest": "77362949f8569ab7"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9030,
+   "sha256": "f48cfef1f115c7bfd93c9743eaae7a2f5e990b740b7bcd00e8ae6796475016d0",
+   "digest": "993ffaf2c884e129"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9031,
+   "sha256": "3c3da26cf18203330c5db26b6e144a4cfaf1720b9e33f842c83740037a461a50",
+   "digest": "a4536fce09beb5cc"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9000,
+   "sha256": "a257c8b543881fc2721412dfd1ebc101d4b6240a9e231b996b34c9b03dfe970c",
+   "digest": "01bad436e9f6662b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9001,
+   "sha256": "e2515fd23a24dc0ebc84a8e9d8c77f1cd010a3e19c0a2c503b42adbf1e184ca7",
+   "digest": "73c6ee43fdb238b4"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9002,
+   "sha256": "f7c837670cb4f86ee3b113cad4b078e6822430c319b4cea82642c6e8645ca697",
+   "digest": "625ebeab21017da6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9003,
+   "sha256": "3f519964b7fcfe805e2dfce6364e88e8280397a328094b91578f11fc7214bc25",
+   "digest": "c05a3a5243db74a3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9004,
+   "sha256": "b8869e358416688e9b53934c195634d7e8d9efccf950cbfdd72806dbf46c9e42",
+   "digest": "63c3beab0b6a175d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9005,
+   "sha256": "c97f50814cbf76e5b9d4637c82daf8fa14846881cbc15a4168be3957cd68c189",
+   "digest": "0e31c88e83f6905f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9006,
+   "sha256": "44615684e6c41297024cd63992b175c8970a25979d303f391672fa390d71dce2",
+   "digest": "fa30c4a8bf38d1b0"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9007,
+   "sha256": "5066f9962832acf43b9d363023bcd780866bea17ea7d8629454a09534e7fb248",
+   "digest": "49364d4d6d929828"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9008,
+   "sha256": "cd90061e311897db3573c5101a28207763a5d13bc446e56a3aef4c92db97a40a",
+   "digest": "994b58ebcb2b874c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9009,
+   "sha256": "f5813758a2fb455ba5b9a8a2786a9f8a8862d6e580e55b0197f036d46b230cd8",
+   "digest": "72a02b1d7b348473"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9010,
+   "sha256": "47e7452546b56cb3cdb581ceb04605a18443e19340b337bee0f907c5439e8ddc",
+   "digest": "989ed7f4fb62b5d3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9011,
+   "sha256": "d147d1c6bae9121801603833e41108f7f00345864dae5bc49b4fee6f86f7e0e6",
+   "digest": "6febbee1ba61e579"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9012,
+   "sha256": "214f89369ec4d512accaba23211303b0ceea05a905dd59b0cd060b79fd6816c0",
+   "digest": "44e1af3e465fdf53"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9013,
+   "sha256": "650165d642507b94da2dc262d0f89ecdf2894a2dcb27fa4017ae341bab64a160",
+   "digest": "5efbb724693cf459"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9014,
+   "sha256": "547664033ca252b863d5f09ca85dee5f62a78da7a2267ccadc49e39d4ea7e3ff",
+   "digest": "0111d44135d090e6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9015,
+   "sha256": "52adfacba0f1da2a58d63bf7794973b63f3ccb9145423ec2c5dcead797207b50",
+   "digest": "37d7917abee1f510"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9016,
+   "sha256": "e682367e10424a16b4def69f7600b309a8316e7828bf517f3bf5a41b93ac8fa6",
+   "digest": "1651dde219540933"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9017,
+   "sha256": "f35ba5fefe8f517e401357f1577f39b42a3e4f36e6c192a386fefdb056ff10fa",
+   "digest": "7ffd8ce7b0b1cd0f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9018,
+   "sha256": "f5b8a5c236022f5b321984b2850cb7b3e08264c4b37885a081d78a0a48b50cf9",
+   "digest": "e7e6c79c3463c831"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9019,
+   "sha256": "e774a9d25bcb9fbfc6d93075495684031b602565eb8d3b7497f49a7828072b5e",
+   "digest": "66aecbfa27a1bb16"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9020,
+   "sha256": "7139f514100203b2748a1127bddeb16be2ab79ae18ec420f69eddb8c9705b22b",
+   "digest": "8b6d5972580bb0ce"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9021,
+   "sha256": "fca263878932fd2aabe76ebd5cf9942f40de2a0f94261ae2b1954e79849340f3",
+   "digest": "b5404f57cfb536e3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9022,
+   "sha256": "5c414a5c13290883f19c239ab44d44a0458e16df2157a3bf94c6c5976c72491c",
+   "digest": "1203761c71649252"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9023,
+   "sha256": "0d89caf2d2e83a69d67268b56d97af6a983f08f6ff76d01acc82ea84443a9425",
+   "digest": "f1d372615ee20a15"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9024,
+   "sha256": "2b0529ef1491a42248e2b61f244e884d7526a49c93680c6009cae1b5a553a8bc",
+   "digest": "9c01ac414964eafc"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9025,
+   "sha256": "7b656500ed8927c9c8d4fae1949aa1575a48441636999769dde8bcc2477794ad",
+   "digest": "bec83438139ef67d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9026,
+   "sha256": "e734d2e7b1a7e58be9d94536e88f66cb1ddae7d10f44c7923053e5e7a7f2e4c1",
+   "digest": "26e129d35af961f3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9027,
+   "sha256": "936e384d2b5f2789daa5cb0c21e2db857fe88401d9ed4ddd33025e1c5244d482",
+   "digest": "f263d2c62385d76e"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9028,
+   "sha256": "c89a3f9df1d51183906ded6a6e59732b5358cac864cbf0ac63b52a1513c5e467",
+   "digest": "24fb1dfcb15146bc"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9029,
+   "sha256": "341748da0ada726e5fdce73dd7b6f0ae9eafba84c585ba2224ee35d697193011",
+   "digest": "348bb3adad4f33c6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9030,
+   "sha256": "0d2e14e7dae4e36be504223895ec8b2447d8ba8ffe875e79ca4520c47783317c",
+   "digest": "c05874e8bc6ebe7c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9031,
+   "sha256": "4bfa963008c1d86c595f85f76a27f0da8d28e3c4700ca1e8d46a96ca3a18cef4",
+   "digest": "e20edd3d33c4b1c5"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9000,
+   "sha256": "3748ad5c4a9b20f44d76c74024b023b6c3a01b0ad71ef8467e2407bbe33dcfbf",
+   "digest": "cecbef0ad4d3cc29"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9001,
+   "sha256": "10e73b317855e50bff55421c41e5db986b36a715fa93395c85b45e4dd746565b",
+   "digest": "3836ea0c1a1af08f"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9002,
+   "sha256": "1578a4c69c360a5e29ded6678e02d025b51e56977229f6438594deb7d5d27042",
+   "digest": "ca1985e22307d9c0"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9003,
+   "sha256": "43f83ce08cb292905b393a4c24729520e615682617a905889cda8434c061eaa4",
+   "digest": "8e28a120f074ef67"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9004,
+   "sha256": "7f1f5b84946ca519629f5ca8ca7d45ce3e47a37af73415d0b3e6362670abe54f",
+   "digest": "fddb1315b4bf432b"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9005,
+   "sha256": "bbfae82363987e1b167770b0350b7280dd546360fe631832d6f76d4922adb8c9",
+   "digest": "eed226cf2001793c"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9006,
+   "sha256": "c8a040979deaaa3abd48bcd0fbb67c2e18d4856d8fcbfcc4ba3cdcdb16193b15",
+   "digest": "dd0811cb669b94b3"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9007,
+   "sha256": "c07e657a87412cb24793a58288567583b9f178bfc67fbab29341f0de0581b57a",
+   "digest": "101d957c8b132d1c"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9008,
+   "sha256": "af303ea5a2e34ecd7614e9e31d577a53c4c026a7ff8f38190c4487a5bc0b8a3d",
+   "digest": "7621731edfc9ffef"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9009,
+   "sha256": "b4e9d6f5d256dde0e524c9c33fc4b5f96b26cdda26081bf38a4ac927c1853b4e",
+   "digest": "751626ba4862ccd6"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9010,
+   "sha256": "1df470cd23da40e92497bd98dcf06ae4b13e9c65110d652d021163d232860a1e",
+   "digest": "ce187c787bd67d21"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9011,
+   "sha256": "25938d7a7183cb5ff58bcf5750515c50a9ba4292da315521c0c9243b81a830c4",
+   "digest": "3727ebe2ed89bf6c"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9012,
+   "sha256": "a132012b073ea0985361314bec4c36ba23105d6f908a35921256c846918b93ff",
+   "digest": "e1b3b25a130fba42"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9013,
+   "sha256": "0a0118b61219c635fd20d89de892b9a6523bc2a968f04885083a31cfbe1dba1e",
+   "digest": "1196a0dc53fbfc49"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9014,
+   "sha256": "9275ff13a3a1baee0ba58d3a34298c11e6f3bcc77aa6cf0f5d7500cfa1b5fa00",
+   "digest": "608d70523bfe0848"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9015,
+   "sha256": "e99a842fe39ffc1c2382c6b4967ff5bdc580da6bd5e049107bc5f0a2aef0daff",
+   "digest": "ee739b7aa4965550"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9016,
+   "sha256": "4dc149ec4c103c328828370be9320ae43034b0b5aa9df25364d69eaae2cf85b6",
+   "digest": "5b8000614b4658c8"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9017,
+   "sha256": "1c68c99926ff39ebba5d39fad749ae2833621f3534b151596d414aae8eb39dab",
+   "digest": "fcb873a0ce312b80"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9018,
+   "sha256": "23845e0e8b16bc8e61b485bdeb902529e9fa4e3c97f50edadce997454ed18635",
+   "digest": "38418eeb749d1989"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9019,
+   "sha256": "e0dd0c390c339bc3157edc17807f3bad0ae17a973c296c5e78fdcf09eada11ef",
+   "digest": "f50f47072a98a2a5"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9020,
+   "sha256": "8fa1d6036ed77e59552537a3e82555e87c8912023434735d720eb20262026da4",
+   "digest": "432855d18ddd73df"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9021,
+   "sha256": "85061aa53bbacdcf62d00aa8353b378f4ce26ae85c660a058d3d577adb0380ce",
+   "digest": "57189284ca0524b9"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9022,
+   "sha256": "8fdacf442db474340c0b5e6f61e751b3207d6d4b34852d62e008eb91a3b8e37c",
+   "digest": "448061f52f8d1ce1"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9023,
+   "sha256": "7e7a88ae2ec14140f18e04b81ade23a72eb0be1cac68ff4f126a54d430fa5561",
+   "digest": "ee7138fe1b5d0e32"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9024,
+   "sha256": "740d2cd214a78f1a70490450cbc1acad5066765e0830273d390ca780c4a22634",
+   "digest": "0983e44aa3652849"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9025,
+   "sha256": "6bd61ade7bb0ee6b1fe589a7a5f09359ee1cfb02c470c045c82e1649f33f2224",
+   "digest": "b28ee8c34899a320"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9026,
+   "sha256": "5362c3b762a482291b3f0c4002da6a65acb7df6bc1454611b9661e14bc2aec4f",
+   "digest": "d8d4c172d25f74ad"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9027,
+   "sha256": "b7d16c4ca68c65fe1b5e5cb070d3e842422e287d6fb08fb1556ceaa3cc6fbf40",
+   "digest": "121b4e58a439912f"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9028,
+   "sha256": "6aeea95f03096215968952a3b1b94e0bf037689f69c9446d6a929af76d289c7b",
+   "digest": "cdb486c749730719"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9029,
+   "sha256": "5e405e31d7bf65cf86464f08d02e6759916f48b9e1433b1836aa4f9d5d346151",
+   "digest": "68530f4dcf9b2592"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9030,
+   "sha256": "38f51af762e29ec048e190521db15950db0a936daad20ce7805ebc314d167f7b",
+   "digest": "8cc911b07b4b8a7d"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9031,
+   "sha256": "aa5ce7bb9ecd28f145fd180cdb3e0c1830e10f493c1be2b40e4c96d32677a67d",
+   "digest": "220bac1d86b33ddf"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9000,
+   "sha256": "01e31a075b4c004a60a9ea158a840e4aaa001c1bde218e93fa3dfb3e5660d0bf",
+   "digest": "ca66b7a9b4e59956"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9001,
+   "sha256": "17e88e602e0cfcfac8563cb57ffb67ac63975bc137c7802dfd517ed7ccda9643",
+   "digest": "2d49feb73e67f49a"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9002,
+   "sha256": "0699500a5b9f2bccecff89b45d1f2dd55d39165fe6ec8e11b65a69b613cea21b",
+   "digest": "2f9df84c26f6b10e"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9003,
+   "sha256": "f71e6298bd354c6e6188aa064c7820793e5686f6c8ba144397e3581411246646",
+   "digest": "faf00b695229fda7"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9004,
+   "sha256": "4548833b299390cf04b69d8e3677fd924c1a9f8ec324b068b1fc1b73e52b2be3",
+   "digest": "2c7f0ad95713bb3b"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9005,
+   "sha256": "08f5a6d0b3443522fd2b336a7ab97a81eef5f028e4eca3e4075d716cab497c53",
+   "digest": "408771f3597fb4cc"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9006,
+   "sha256": "b49d1abb2a9fd1f9b26909bf8f954c5db9fd2e42dbf8d56b58df5d339547b0ba",
+   "digest": "850c409f8bb2fe0c"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9007,
+   "sha256": "1ac192e0e9dbffd511d4df78e0d913ed1cfcaae403753e019ef0c56458a1ba6a",
+   "digest": "6f65cc84ba90b69d"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9008,
+   "sha256": "72ee4052f94eba398871398f433ee37ff43087fd782cc719fc2e2563a4919075",
+   "digest": "adb916aba835ba59"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9009,
+   "sha256": "ad3e48860cb6bf1375a295480ebe6227e2f76854c4b08ea7c5affe9d452e0891",
+   "digest": "bd5f41deb4d05483"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9010,
+   "sha256": "f00f3dc6bc4918a0d4d8e638cfbd2c775c16498aadef2a1263df1b45a22c2c7d",
+   "digest": "f7c65f23c1e61bec"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9011,
+   "sha256": "4e0d8556f825cfcc0c90a73811b8bf24d95d05585448a249d72cae7685a279c3",
+   "digest": "7bfbd3711bcea764"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9012,
+   "sha256": "992e65077b0874d73a1f9d15167eab9de35c9b7cf0c0259e885f1e4c31659365",
+   "digest": "3839b434fe35289e"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9013,
+   "sha256": "0fedb4816c8ba3c801a627b44acfebe8bc0e8b2dacae4467ac75bc7fabba3056",
+   "digest": "fdaacc9cdffd0d45"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9014,
+   "sha256": "3252237ab7a004779efce4d235ca5577485a277ea1e8e95c0e134ee6437284c6",
+   "digest": "4a81b6fc33b93cc8"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9015,
+   "sha256": "b68944cef6cfa05418e6713774cebdbafb0e5e84d1d7170b634fddeaa724bba8",
+   "digest": "0e3c55d9c33fae17"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9016,
+   "sha256": "a1c1ab92dcf9ab06a081eb5e0a70184f38c0c7bc0af1810f09163fa62a1c9d44",
+   "digest": "4942a026aa275425"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9017,
+   "sha256": "f8106486ab0999e98edd406e6ace151f6833d890db30631242e0423028082a61",
+   "digest": "20e5472e573ea998"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9018,
+   "sha256": "1b424cfe33f4bc94666d9e03278206aa6a738595b38713e4e5046bd464e687ec",
+   "digest": "04d71f7e5cdf3744"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9019,
+   "sha256": "02e438be62cac9352e76ce6fbae79c7592ac62b98e0aad6f3068b27d49080054",
+   "digest": "f31df43fb87055fa"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9020,
+   "sha256": "f4ce066728accbe536e5412d9cde754a3aa14563e5c788af9302ccacc452fe7a",
+   "digest": "6823c86ed195a160"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9021,
+   "sha256": "9f66fd3596aa21fa696240a66ffda8f90bcdcd60278d0f5c13146d8b30ba4804",
+   "digest": "c77c6368124c13aa"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9022,
+   "sha256": "5cbe27c6a6bd632a7994116df4d41f50779d895c82f218f7b081413460b1a19d",
+   "digest": "b8ffb032e141733b"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9023,
+   "sha256": "eaf320e8d3eed29d19224450830feaf01c479a61dcfe30df33e77edc0e157bef",
+   "digest": "412e88ffa5f13a29"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9024,
+   "sha256": "3f433060497f96806887695b695bd8d0d9aed3493f71adf875fe0efa8ad5a7e1",
+   "digest": "6749e4b251d1fd67"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9025,
+   "sha256": "b67760f6e6e3e30f2dda5acb0db17c6c8fad6e7e302dc3b9cfa0afeb6c5a5d9f",
+   "digest": "200939588cf19bfb"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9026,
+   "sha256": "2f033388c63036b3984d972235c8af9b21fd899bef4787caa23e9303ad43d952",
+   "digest": "10f4203be02c1691"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9027,
+   "sha256": "925bdb467b9a7fd21440d3f68812d79f78e73583b7fd4ec89784438eac34bd68",
+   "digest": "cac4930a1985ac21"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9028,
+   "sha256": "720cedc8efe7881bd0407a758473111241c23e925c5b5815b49b10d210bf442f",
+   "digest": "ae0e6e6c734db9e1"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9029,
+   "sha256": "638c3c1b77b01162249ba4e65cd90204d57edcc1ca30dfeb30494df16d6a2f7a",
+   "digest": "38122482f9e51ff9"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9030,
+   "sha256": "2f2364c483fa0da3564862a1cbfc43e963a2de27dab41b487ccb6f8b7628a074",
+   "digest": "44fdd06e71812e23"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9031,
+   "sha256": "d5abc057ee635d8bd5f6b147a51462a58b43ca7fb2d702a3182b3e48e0bcdbdb",
+   "digest": "5d1ea45717ff1e96"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9000,
+   "sha256": "a9fa68748b7abbb1bde26363f071797643c4cb65803d9d3817507bdbf6709102",
+   "digest": "38181fa656aea3b2"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9001,
+   "sha256": "28959af4752963167ce83e81d0220d1f97b429fa0c5e1ea77e6da8038169df22",
+   "digest": "7741ec0994beee01"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9002,
+   "sha256": "4c4a1a8717100629680e7cff5d65e1130b7a2c54248ed2717dcaa1e7b28faf4b",
+   "digest": "6a122a538d0a537a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9003,
+   "sha256": "a06e46298ea12dc8c7214542c4ade801888a964095e474e58ed8ab02e8246e14",
+   "digest": "126d10f76e5c5aa3"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9004,
+   "sha256": "e794b6cbd330ff30c43215b2365dfed778ddf59de3ec79bd1287a2109bf352db",
+   "digest": "057d1fb405df2245"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9005,
+   "sha256": "c3716c9a48de1e98f2bf9cf24ff611017c856a0fde9e414be7330b0444f70c07",
+   "digest": "a51f3169404bdf17"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9006,
+   "sha256": "328e76aab87bf60864f3c086e757d654d1ad72c89e355f5c469c532ed57520df",
+   "digest": "00f24e705a1715b6"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9007,
+   "sha256": "9af2a70b38caaf1e6fa3602d718c0afa698f6cbe97bf3014c865852615aed3c9",
+   "digest": "44d246853bdb0e55"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9008,
+   "sha256": "dd06cac846da76f63a862e4ed9938710eecd1c1a8cb72530c490d9e9da4cb57f",
+   "digest": "212bea9eef113873"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9009,
+   "sha256": "2eb9f8de89688b740bc2636dac6753ed8634b058a9c0e21a2377ed9a3a2dd0fe",
+   "digest": "32820d4286fb6f1e"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9010,
+   "sha256": "9e0ee0e23f7d08f0a07b71bb7883206c3ec4f76e41cf799be2b567c82bf12bc2",
+   "digest": "b41271047602914a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9011,
+   "sha256": "eccd3a4859f7db95f26422db4c0fb6a088c9370e209e298fdf8b72e215982e3b",
+   "digest": "cf54a94dab759930"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9012,
+   "sha256": "6bd872dfbb2a8380c704b79f7328dceaf5579f46c915d130468a2600984f8c12",
+   "digest": "672c74c0526e7b25"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9013,
+   "sha256": "884ac7f27c8bc6f272ebb814f8f066208a847fb54642c3f829ca4c6bbc2a9429",
+   "digest": "ebca93ea055a78d0"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9014,
+   "sha256": "9c675c6f7c55c8886a9c4aa1a667bd9c473c3dcb9147fe6cbf0722fceb53c08c",
+   "digest": "6d139ad51d1a5ae5"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9015,
+   "sha256": "e538488f67060a7ca8d86cb1adddbdc7e6bc492ed30cb2ceda60275e94e1e05d",
+   "digest": "15ae755f78a48604"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9016,
+   "sha256": "78e39fde2df756855c8cf5247422b6183be34176e919eb574deb198d7e79bdbb",
+   "digest": "d2fe859274c4c1ab"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9017,
+   "sha256": "4c051e3b0ac9f0e80a8f822874c460d189f02907afd3fbb90285456e8e02ae23",
+   "digest": "a74e370d5d1c7287"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9018,
+   "sha256": "69b4ded49bf9ad22bcbc9c07db74b4434243b79ce22c055cb877d9d3e840bfaf",
+   "digest": "f1ac98972e7c1071"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9019,
+   "sha256": "2fa98f3b3c87c6eff7f73ff9c0d98088a18ddd3c081ebe13294f0c8fbe4346e6",
+   "digest": "3b1f10ba7f13f01b"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9020,
+   "sha256": "c48c37000f2383a56586c5aae61d05b5768173799c9bb7e3cb73e2db06473d41",
+   "digest": "a02a5191606b4b9a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9021,
+   "sha256": "4f4d6a2a4fdc97b9eeaf6632a73add3c256c6aa7ac25f5a17638dc363d4efa60",
+   "digest": "001817fbd51e42c6"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9022,
+   "sha256": "d3f5e219e58b272163429836af85969933bd02ceeffb3f201945482a9a4e72df",
+   "digest": "1c454164ac87802d"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9023,
+   "sha256": "09959cba5d5f3f6b064d4c9fbec3ec4bb680c74189725f3d28d83d54c6e556f8",
+   "digest": "64cd49379ba8529c"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9024,
+   "sha256": "339260f137cdada6a25ecbdcb054a836a7acc8ba30b7c812dcd1b6412ac5253b",
+   "digest": "77d0e608b2194cfc"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9025,
+   "sha256": "71912c8d8f48e6bf97b9285587f82e24872f648e1ab61313fab54b045f5f3bae",
+   "digest": "692f713c78f8fdb6"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9026,
+   "sha256": "646baae6fa3ff93a3c10fc9b2b7a7e0d42594717a1c361bc711cc000825085b4",
+   "digest": "1e7ef7c71cc1f308"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9027,
+   "sha256": "93b030730206772baf196c17ca1773eb37eb2f19fab1e89baa822a33ace08524",
+   "digest": "a450bcc0c66c419d"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9028,
+   "sha256": "55f994be729a1868ef989abb2d718176e38c99902d299f9b341e1404f87b7e82",
+   "digest": "df7254d57aa3af1a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9029,
+   "sha256": "9338577f8ba3e63e96bd8e2cd4c07eec2c1b36c71f302a8b649f289e1331fb3a",
+   "digest": "688cbd8b06238a82"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9030,
+   "sha256": "6cf9d51201597ca0ce4d4e01d9248774959a7716e59affc58c619c6eb12161b3",
+   "digest": "8b796a924ed53c68"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9031,
+   "sha256": "a1ae27cb4b4dc3a96e604a46eb9e1250b54db52bfc83110e5d95ae6b20eb171a",
+   "digest": "4736ca849024c0b7"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9000,
+   "sha256": "799841081a78088d43bbfc86f4237fce27d26852049670c607add7d874bc6976",
+   "digest": "554161ebb1ce2728"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9001,
+   "sha256": "f08d35cb84c3bba7f17832b4be43bd0ea79e22b864f59b977e5d11605856661e",
+   "digest": "367b383f1bf2ca24"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9002,
+   "sha256": "74c09aa6cb5f03d16b6aa34375456e490a9904ef9b7ee020cde699bad1be482f",
+   "digest": "7be6857893d5f940"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9003,
+   "sha256": "be5e8bc0946960c57d552a3f572b6a73bd8d016a548288da22903f28f233b028",
+   "digest": "118663cc5e18343a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9004,
+   "sha256": "53c6ffc5627921b18d9adde009002488a5cd496be4bef765b952c4a91f2020db",
+   "digest": "b57514b1a5fe26a2"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9005,
+   "sha256": "286ce79a54d82981f6379f4874e162e28069f53be47a9b4d8345d46d8ae5e7f1",
+   "digest": "ef0bdd8001d25e74"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9006,
+   "sha256": "2d3df9b2956aa9d1df003e3af1a7d2cfa4c5283e638836a38c5eff98bb27acd0",
+   "digest": "01b63da4271092a3"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9007,
+   "sha256": "36bf09456a4dbce1a7fcfa9dde4e0eceda574ef1b8008ffe62e88a8f059243b3",
+   "digest": "80e480ce15fa55b5"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9008,
+   "sha256": "07af6d44dcaecd8b65667b9db77c4af0c1711a0cc4919455085eecf187fbbc12",
+   "digest": "0f7610fbfbc1178c"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9009,
+   "sha256": "92455f96224b8f5bea1a8fdbe7a21d06d92b2654626cd07f563141bd86adff54",
+   "digest": "35a9baeac79f98d8"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9010,
+   "sha256": "35708dc004fdcdf9a79cac46c0d6ee3338c1d684f63f33147407911b0795c316",
+   "digest": "2e93b259a6655559"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9011,
+   "sha256": "0556951ea0d016c8ccf9bf6357dbcd157ed6efd06159ce645c94442aa3502dc4",
+   "digest": "5f40706b620f53af"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9012,
+   "sha256": "24fc2fb9b53133aa7a47d9a52f9c07c907ef6f534c1d090ab219062a397bbc5b",
+   "digest": "7ad9373357890f0b"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9013,
+   "sha256": "ae35ca3127274bc5fe03758c07be678633f1627e4f9fdc12b4fa8e879e65876f",
+   "digest": "61de7a335c7db8c9"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9014,
+   "sha256": "096553c9887dad512c6821cb0dc3c643f4187ba106b87a749bc517a86623c4c6",
+   "digest": "207796734c072130"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9015,
+   "sha256": "c0a167464e47476c306747245dbb562c5093641a284d8d84fd2fa27d74f9fc90",
+   "digest": "d34564849e711881"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9016,
+   "sha256": "45a6a13c69f93048b406bfb7d0d4a276d8ac08dd770de321a0649b2b66461f50",
+   "digest": "4efd485a61c9faa7"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9017,
+   "sha256": "9d2915e155849e2889791465e145b4718eae49a0aa9837a25252fc00a5cd88bc",
+   "digest": "01e55a1deab10893"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9018,
+   "sha256": "26bb47269495b0715d32ab7689d75cb53447786dfab12d47c4848b6e69eddce4",
+   "digest": "8a4d3b856bbbf17d"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9019,
+   "sha256": "f1ced4e7c2f2e347929e0df401aeb7679b1c9aee204bcb95ffbc92b1bfcc98d4",
+   "digest": "b8fe00610a65ebbe"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9020,
+   "sha256": "13a74207a2b90ab9940af10fe762254e21122ae2815a5383721f980176487911",
+   "digest": "45a58bf68f8f7118"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9021,
+   "sha256": "3b5b2f911a5ab3621eb0b212695723e9eadf0ef04b6bca6f974fe184603adb23",
+   "digest": "1a1889d8d9605213"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9022,
+   "sha256": "49b1fe3125eb7de9b259ab3417bba538b960444c3aee60d53b92d7f9441178e4",
+   "digest": "121ca5b25fb6b7a4"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9023,
+   "sha256": "436f287e464e79a61860828235bfba6dc74f81143d87d8e9d337de9029b9541d",
+   "digest": "f78e656b5fe241a0"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9024,
+   "sha256": "245fe6448b94bce361c81084cf0459c485dc048f6bebe1441d6e26076d9d8b03",
+   "digest": "ea67d83db83fd6b0"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9025,
+   "sha256": "d9275acec55eed45a3778fa8105df5dcb8d9e7c1ec8ddce39b09e5cfdeb55ac4",
+   "digest": "48276a9c4b09add8"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9026,
+   "sha256": "63218a1b3da10be8b144da8365d7db9fb26c4593c74879d3ddab45e1c02b3683",
+   "digest": "56cf58cb44e2a87c"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9027,
+   "sha256": "a1343da58ee8cc3edfe9c2f58ae680c4f1914dd05871acb29c2f5f4c2336ff4a",
+   "digest": "04016d23149c1fe3"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9028,
+   "sha256": "4a0981c6ec039220152e8e67be595c01db285bf0d354e8b517b5942ab3168490",
+   "digest": "88b7c2503d57b81e"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9029,
+   "sha256": "f6589fae54b5165dab60c7ee628a3a83f062d669c81700401d4404541d3889bc",
+   "digest": "d083e4cd3956810a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9030,
+   "sha256": "b08ece296dc73c9bd939afeebeab4fd55e95fd3b520d0e6eb7eab8fed78e71d4",
+   "digest": "85e116ff0a9c9d15"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9031,
+   "sha256": "259364ae20136577dc368e59d78016f33bcaa19cee62edb138fe824171b622cb",
+   "digest": "300d14cd923050b0"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9000,
+   "sha256": "6368c44afe3a6be39b42687417803991b42edc61e3eec2a4255fe2ae677dd8d9",
+   "digest": "e262d1a007c2dce2"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9001,
+   "sha256": "0535f2d7e70228e71760cc8c991502106f9446af4282169abc12491e8efe85cf",
+   "digest": "588cdb1bf4b8738a"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9002,
+   "sha256": "3290f8ed24f722d7cbebe0ed7b7f59657bd1d7ea746d50321c797fe6a96b5df5",
+   "digest": "dca1711a4f6a9c8f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9003,
+   "sha256": "9aea8f151cbf67e42aebe080b6ee8ddd732a583d4baa91e17eb6dc723c7901b3",
+   "digest": "79e27e0bb60036d8"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9004,
+   "sha256": "3cac1ae7965da2f8648650fd7c3062904402cfbeb3998d002d19f3e076cb4b36",
+   "digest": "1ad8b641a8f3ae63"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9005,
+   "sha256": "b8e6376292e4e6365fa2599451efa8ffc5b6d125050fa410b8ab51824c2e4673",
+   "digest": "9e112537c4b7e46b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9006,
+   "sha256": "4d97154278808912fe28899cd3fbdf3dcc43142375e7eadefe4c822c9d74e8c6",
+   "digest": "414d059d62892991"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9007,
+   "sha256": "d61bf4b347d3dcbb94c01311be390d06543ba046c9ad499ebbd74820eb8cc738",
+   "digest": "04b23ddcbe445a6e"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9008,
+   "sha256": "e270908d540fb1ec18c9664eb1476a6c39ad50cc37f24b5f10f1154463f5162a",
+   "digest": "5689c9e51a6771b3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9009,
+   "sha256": "a149c62d0f692dea00954629b1d2e9751fbbd61c3baa2d7d438e6c9829ae9068",
+   "digest": "29f4a0f3d56d7cb2"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9010,
+   "sha256": "9f186352fae5702a4465819bce38d9ed8db3c858ecd8fabcd51088a93ac58897",
+   "digest": "bc05bfd93ef178a3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9011,
+   "sha256": "8df8ad772fc22895bc8d1f256086885441d4ade744f4cbf1af25b4fbc44ef15b",
+   "digest": "932ffa0f1224a8bd"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9012,
+   "sha256": "59e4ab6500106ab2f6d62fdeedb1f8a181dd73774ce30e61b4fcdec279563cd9",
+   "digest": "5407cc59f61b85b2"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9013,
+   "sha256": "4fa2a451920fa1828428b6f63804870b8fadf8bdf2d6c3cada476bc1d239cad5",
+   "digest": "9a98ac7e59544364"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9014,
+   "sha256": "efdabd838e2ccf314b6405713beef360c7c1b10988928fe372179d0ce7e1b80e",
+   "digest": "56bdf9c9bd49edb7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9015,
+   "sha256": "0fc7564a261a3df225a03269a180c76c3a0b89d23714c9e611c42cd82de41ba7",
+   "digest": "cd5ffcd32463fa6a"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9016,
+   "sha256": "92df22cc24188a813829a9d7eadbb4b7feeccdedb9334a41df38f9b5183f3113",
+   "digest": "e34d47b119d86616"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9017,
+   "sha256": "c5edf2cab18b22e2e09206cb685c98cb96dd612f1a027e329670e77da5f1a389",
+   "digest": "458c3b469f3bc863"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9018,
+   "sha256": "6f14edaf271f3d69a1d908a91fd407cfcf6ca389d2afb6dc7bc6c67b038ecfde",
+   "digest": "4ea8e63361bb2dfd"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9019,
+   "sha256": "04c39fe4672f5b7e55dbea9073a6d86507591e315af7bab9473193b24a01e9ca",
+   "digest": "1cfab5564583aaa0"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9020,
+   "sha256": "9da95a296914d1f70408ae9ad23d867a27cd6ab755e03ba66743cf1e8af56fc7",
+   "digest": "2018ca53946cf87b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9021,
+   "sha256": "586c39955b1ffc9090c0028154c4af0ea055780e451387efdb7dbb37d4ddf8c1",
+   "digest": "7b1ec287e1c42219"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9022,
+   "sha256": "868b79a6d51ba0d1eee68e2e794666de0d392100b75ce55efc128a9b164ed194",
+   "digest": "606b2cb662df78c1"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9023,
+   "sha256": "c0fdf01beda09cb6b1ed59bc273680c6cfa1825bd7e0d856d2c84a5e4952d534",
+   "digest": "178aed6cda7f4232"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9024,
+   "sha256": "dfbfc41fc26538e0e47ddcd860058e6f53f07e8b6bad1fdce32075fa8d80f50f",
+   "digest": "c3a8e3ab273eccfd"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9025,
+   "sha256": "4178ae0e3d347a5bec2deb0b871a3661c1f48c2cfb6722834df0567e47e7e2cc",
+   "digest": "6123b079dda84cdc"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9026,
+   "sha256": "15dfd6ff43996e2087393e455909911fd274e0cb2999609cb9d95dc264a77454",
+   "digest": "4febe2cf5ae0a33d"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9027,
+   "sha256": "8a37435ef2d93278d0d1bb872c23ee4772849712279d1003ccf5bf7767822f4e",
+   "digest": "71095282ce18d025"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9028,
+   "sha256": "05a7e44c03fcf07e4a3bc99fb21db33ce6f110850e6a3284e24daaf4bea8390d",
+   "digest": "8e91dd2a5c6f165c"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9029,
+   "sha256": "5273761c1f61112853bb83ea4ab856dd572c9b395029176284c6de0bcbbec67d",
+   "digest": "e565d370de203a28"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9030,
+   "sha256": "612f152efb1dfe8e3bf2893f3b8c5b2fdd4613c4dcea5551d4361915d9e888ee",
+   "digest": "6bf38eb53c7a8c9b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9031,
+   "sha256": "9622097c153a41b3a071ef480c460f1eb09300edb0b93f09241df2f1e39831a0",
+   "digest": "4ea52d9dcc98ffe9"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9000,
+   "sha256": "aeb80e1f02bcb2dc82adb3c21e5ed9783586dac78c8ef256a266326fbf1ec941",
+   "digest": "789b3166c65042b7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9001,
+   "sha256": "011fefe30b7141eb73f086d3c8328ff59af54db332fd9a2661cf5e280b37dcab",
+   "digest": "22f11c8782ca08a3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9002,
+   "sha256": "d2432fce3cbe2255f322de05e39bcb0297e58073e4ecb2d071c7fb2912ec5151",
+   "digest": "8cbceb1f412169f7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9003,
+   "sha256": "a7226df9cfeda488802f85f09f97d4f0e7ec8cd321441db86cc829e92d270a76",
+   "digest": "cdc37e3f8ee6a463"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9004,
+   "sha256": "e0f7851b05261f8c05b93863f75278a31dc9b0cde839baad0a1021d733b057c2",
+   "digest": "23ff579db95c7e10"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9005,
+   "sha256": "71fdd2e3430473cc0a32ce532641bf37da716024b7780d4c7401b45bfcd8e119",
+   "digest": "d2bf5dbb15bae655"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9006,
+   "sha256": "d75c24cf1a59bd4f449e1520487de50dcf9dde4abc33ced67037436b2b722451",
+   "digest": "2d0c95d79f45ceb9"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9007,
+   "sha256": "a9775d10fa59ee663e488d4a625598f51dd0e43cc9cfd70c762b7b7c59da92cf",
+   "digest": "f4ef3c922d8a1d2e"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9008,
+   "sha256": "bc931ed44e367cc6306fdcc68758a7b6fb8da6ecf84cafaa32ddd70809355dbb",
+   "digest": "d6e0d37de3cff0c3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9009,
+   "sha256": "94082f66f6b153dee1752c7811bd170be76ec8b0833c0b70b106baf2dc957d38",
+   "digest": "4ce23b9ecde2ec5e"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9010,
+   "sha256": "74e66cf23b9c1bc9a1f4bfea43518d3cd2cd8b5ea117ba58ec0be7d1aec22530",
+   "digest": "c9f74c473f169a39"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9011,
+   "sha256": "259eb632b75a75df5c9bd3d837feba0850ae854acf6e27e153dad1f00348a602",
+   "digest": "f55bf006f68196d8"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9012,
+   "sha256": "d7014b900084c32a13f397c29b1ac9c36d208013cf4428816744457e2a112fb4",
+   "digest": "13da1f5ff2702dd4"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9013,
+   "sha256": "ee8d314821faf96353504e66c3922b331eb30d60dcaa1f0fb805b94f8394a475",
+   "digest": "fe0b63480830051f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9014,
+   "sha256": "f044c7e2f8785262540403926fba3ccfe5dde96f92ea1dfe75cd58a052a1165a",
+   "digest": "d904732d8996748f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9015,
+   "sha256": "a1d9a4780b28f47f11ee754badc857c70b156443608946abd6a377552b7e66ae",
+   "digest": "3adc2cedda9e3d2b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9016,
+   "sha256": "3469942e5036cc6554f734d01ea9b5ff4d0ae9a59de048cc1904426e945d19ba",
+   "digest": "7d4dc5335f9f457f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9017,
+   "sha256": "dc61c365699a8480894a1a9523916309e339fad2fcff29630111c435a497bbd1",
+   "digest": "ecfc05af3e38aaf1"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9018,
+   "sha256": "5a6165894df81a8568684b158cb12862b70ba9ec91dc85b43a813d20c5c082ad",
+   "digest": "83f6f7593a6d2873"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9019,
+   "sha256": "7a1644b3860559b775bf15d5b11cc913b22b817fffafcc9c16f6bf355e66c8e8",
+   "digest": "91392d25c1b35633"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9020,
+   "sha256": "60e4941d1853080ddd1f17d6ab1b0cd5440073a13c3eb23f3bef51ff46fa9a9b",
+   "digest": "c88b5b7935430fc4"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9021,
+   "sha256": "70dd7c110b9a368082512c393287120e44f4bd121f7284a3e788789d96c5c44b",
+   "digest": "c2d4544bf9bdba13"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9022,
+   "sha256": "8419e4b961fbda154a74feecda83d02355cf9d7afca82fc2639dc8b4468cced0",
+   "digest": "eb6d7abc60b6041e"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9023,
+   "sha256": "2c1183c3d4beeefe38db8321b44c4781af619a811fbf49c6e1fbd3357ed43827",
+   "digest": "8e3552f2e3484385"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9024,
+   "sha256": "a7bdd96cafc78ce90d7a6f181660e5e7f6376d1bdd56d0d2862eccc496538c70",
+   "digest": "be6889e1e437f49f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9025,
+   "sha256": "7b3fa6501344793272d1991b6d9351bd60eb7cd6c982beab8ee1353d4c3001b7",
+   "digest": "30d266581913d096"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9026,
+   "sha256": "da5afa493abf90757ca77ca63c1f673ec158b613c7b51e1c3644fbda6b373d87",
+   "digest": "994177002c171191"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9027,
+   "sha256": "2c2dbde540d0205c77cb9e525abaf4ecb2c4234a11335832f693307a853dd744",
+   "digest": "83c370a448e82615"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9028,
+   "sha256": "ae51bb8a30e5420467a1e7a0a15a85dbbde17f1f185a72436fc3dce6739344b9",
+   "digest": "3c83db5803f36283"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9029,
+   "sha256": "2e159ea040bea7bc53f8b0c8c459195bff6eac0eb5fef7b763972bf1d1fe44fb",
+   "digest": "48fa2c6a6918db59"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9030,
+   "sha256": "20bc2102eea1779db8c2ac590461c752304e01281c4380d71b63a58c0ab4fac0",
+   "digest": "652d98f683ed935f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9031,
+   "sha256": "2e58dfdcfcdb64d407f0ee20e400d065679c581ad06aa1f799ae123965193fdc",
+   "digest": "7f192105514642b0"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9000,
+   "sha256": "92cb3d26c211aa1691f1eb366e9415de324d0483d9edb2e11581e0cd45ca9f32",
+   "digest": "7f4fb291a5f29e19"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9001,
+   "sha256": "71409aa54fc52ab8789a14c30fd6307c966f7735bf41a5d2fc00ee6ee58ce7f4",
+   "digest": "63a5bea8d03d361c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9002,
+   "sha256": "e1e1660dd830577950e8206fc98fd85bd40a3e17aea764670f244b343e3d854c",
+   "digest": "bb5554e5f3f448fa"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9003,
+   "sha256": "b3ad7b4049a8c250380e8239b39aec13878ce8b07f26770c8b54be73f89515dc",
+   "digest": "679ca200bdf9f421"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9004,
+   "sha256": "c993ac1d13a9bb2a29072f5f942c23ab2aa1012f33a6daa7c1d58e5acff7e283",
+   "digest": "3f2dd725b8952547"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9005,
+   "sha256": "20114c717aa6558ccc4580250ed2276f833a1abdadc2524f3ba909e74fb8162f",
+   "digest": "418427a65e13fadb"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9006,
+   "sha256": "c1128d112dab51fec9a728c3a96ee2b5e754692891174aa297ed0a4b5dbae6d5",
+   "digest": "761b4866e4294c96"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9007,
+   "sha256": "4b121b5431d5be7f12abcf19ec39ac945ed386af8f0c80d7186aceabca0081f8",
+   "digest": "8cec60928cd1f9c9"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9008,
+   "sha256": "ba2152f96a9ab9d0a17b19f47ae4db0cf04f8550887f18ee53914f6cb784e71e",
+   "digest": "77a8576cc58e2902"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9009,
+   "sha256": "d6fa9457ec8ab04f77faee81b4a23bd78fbe0c87f2d357b58075874a029d93c6",
+   "digest": "2f072f3ef6c08843"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9010,
+   "sha256": "1d414c49d9db6883f1e5b7192e8701141388545c7e91f1c2544a1b21f38c62ff",
+   "digest": "b83b17754f426180"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9011,
+   "sha256": "42c5fbf76974d57dd594703dc7b52b9e91842029862e03ab95cb8518d354e287",
+   "digest": "6a6f6b4ba99ed5cd"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9012,
+   "sha256": "f99beba937f2b51dd98162f0baee7944d438dd4daccfecd0619c8512f3505267",
+   "digest": "2bfe19cb5a45c4e3"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9013,
+   "sha256": "42e12587d3a838e05324f0f90f333fb9571fc564013facc04d3a9104ed4b4cae",
+   "digest": "341cac5a1843c99b"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9014,
+   "sha256": "a2ad1225c9660bbaf95b4c606c6dd7590ee0f186786cfccf93e3300a44c6a6bc",
+   "digest": "ef6d441da71ae5d8"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9015,
+   "sha256": "de748b85b0e796cf5ec277e646157a790ed637280c54ea6e767f1373baae5443",
+   "digest": "95cbe475415d0422"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9016,
+   "sha256": "b3fda7d751ed2e3fbbb4b465ebb4bd71111b68d273876ca87979447a5ffc854c",
+   "digest": "c6625bc68a10b7a1"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9017,
+   "sha256": "78bf955c1a843aa3d74f4622efc7e23f100de635bb17c4c3701b50a06dcff433",
+   "digest": "985e65a83438c437"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9018,
+   "sha256": "556761c43bab22d3d462b473fd154194c1c6aafe1bfc422ca8a1d5a4deef738f",
+   "digest": "161d69cf2ca199e3"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9019,
+   "sha256": "602ad1e6620a042c5aa316aacc496270de2fbd2b730f93d1327fc35ee206e3de",
+   "digest": "e194c195b9b58c2b"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9020,
+   "sha256": "ac1d824bd4d667d6826f96156d8acc52a2e6c2601a5c21a173b7267bc9edcb3f",
+   "digest": "98485dbfa30d1efa"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9021,
+   "sha256": "ff415e6405f8467ce5f8b85d2ab2091ed36395f6322deb663b146e99053a804c",
+   "digest": "3fe0c5e4f218cb7a"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9022,
+   "sha256": "b2500bb4def63b3615f06bb872dbb54857236b236b4a8df2eeaefbcd9f0a5624",
+   "digest": "237a24870e079f1b"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9023,
+   "sha256": "7a435b4e34e666ec8fd171903a8bbfdba5cba6a82c5cd0f1533456fecbf0eb48",
+   "digest": "401336c93cbc88aa"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9024,
+   "sha256": "0f64c62ec0de6115760dc6ec47ab43eb97ffba8eb93c21233276159860762636",
+   "digest": "436bc4d2fd611029"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9025,
+   "sha256": "01f4d928ccecc29b4e205cbc49638491b3a0ded96e0ab0ab55ac65fe45ace30e",
+   "digest": "c2c41c083443fee5"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9026,
+   "sha256": "bb127d7b4f73ca451f31cc4ff3e190da0355ee2a8996ef526f96aa0c31e2d9f8",
+   "digest": "9e27613960e250de"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9027,
+   "sha256": "932fb3821da084c8ad031e308a38c091015761f69fa967b603da12dc64b57139",
+   "digest": "2cd6e3e6320ae4aa"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9028,
+   "sha256": "04767c1f74a7b06e08cde96c5eb95aa52a1b127c0f64085f8264dd125de2554c",
+   "digest": "c54be4fc2b639ae4"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9029,
+   "sha256": "50652240309791fd38f8da6d54323d3983fe0b76a4216cc0dfba077445892134",
+   "digest": "5043910009c4d601"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9030,
+   "sha256": "3feefa7dbeadc1ab8a8f51c87ef0ebe45300b59011621d075c0981f82c84b7f0",
+   "digest": "80c3e5e39722374b"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9031,
+   "sha256": "239e39d8c1044ca50c1584cd2e0a3b29df97e2286cce887b5a07a2001bac9dc4",
+   "digest": "14b5dcedf739fccf"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9000,
+   "sha256": "49fa497dd3d9aa2d8d3fbac46052c7950e8cc8c6672e6d03a3b92cac8b55a058",
+   "digest": "65568e429f522e4d"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9001,
+   "sha256": "e31cd653483ccc978745949cca0ce3ca2454735ae3073255074ff2daaa8d9333",
+   "digest": "335f49882cae7759"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9002,
+   "sha256": "8ba4100f942864c390d4c413831ccca6fced3987cf43f0b5cd059b72cfa7824e",
+   "digest": "70a1d9837e144d4f"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9003,
+   "sha256": "322b2a0036e8a94411f02eeab0e4895e48c669b8b8403064d821b6176f114296",
+   "digest": "2c22db7af2cf1f16"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9004,
+   "sha256": "34c3bacdb3fbc076f8fa7196ced61741bf763c30baf3d11d9d47054cf7532897",
+   "digest": "179218331623119a"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9005,
+   "sha256": "485f1ee40dd2d4c9a86c400e25602d9152eb4de6aa3d6599baee9174a80cc972",
+   "digest": "554cd2ba5b1c455e"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9006,
+   "sha256": "77f1edc6a1218a070f405380098d0370d5f656e09b34a9e42b2b46c6a9d1cda4",
+   "digest": "33cefb2513b2f68f"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9007,
+   "sha256": "f68c1d499af2547586982b76cfa615db23f37c33cbc5a9c23a40287daf2e27a8",
+   "digest": "33abfe2bd9a90e5f"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9008,
+   "sha256": "e3899ff3589ecf3b14e1a213070c278625859139788877a0242e708622d0e37e",
+   "digest": "a86ed9b3ace518d5"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9009,
+   "sha256": "0f12c355059abdea4964a255bd4f92c909b99447bcac863ea100af746fc0fe00",
+   "digest": "878ba0d6571d59f8"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9010,
+   "sha256": "abb4760f7f2cb3cec16c954650b53f76944df902593b3e6e7402562cfc3cd140",
+   "digest": "396e2054ef4e3edb"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9011,
+   "sha256": "3ded26df9474d631f04759a100606183dc4f68b6ee665237c129797b860503e7",
+   "digest": "7b2e4c40ac7b4593"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9012,
+   "sha256": "5a9e1d17091f37e522104f13cd8cade06ad6568569d0d77d9651912757ac4cae",
+   "digest": "eb5f4340de6c3f56"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9013,
+   "sha256": "361472ede3c887ff61db4d14d5d1b5742c761db5a979c32b18d48137c720ddc0",
+   "digest": "9d8fbd627ebc0ef5"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9014,
+   "sha256": "7654e67a232df21b3c098f4bdb052a654eb53595f81b93fc14ce62ae050748fc",
+   "digest": "45d80de1b2a33e58"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9015,
+   "sha256": "f4f69f9d13e6e8620d93e25260675bd55b4f865be27855acc81a71ae9fc7d60d",
+   "digest": "73f83bf1728b1190"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9016,
+   "sha256": "abf236243cfc3c74ac9edf0727f834ac5b922001bed94ce2e3914e17b299074f",
+   "digest": "7c9de3d408713096"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9017,
+   "sha256": "b59e15984e8d73e7b4cedf64bf7717a45bfc8861cf37235e836e03d571d1fbe4",
+   "digest": "1af10f4142d5f17c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9018,
+   "sha256": "7b9a9781af076b4bbfc75d94c2341ee3ecf1d44e5b5f0844545c79fd1bb88065",
+   "digest": "2b640f12097c639d"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9019,
+   "sha256": "e1ca03b49f82adde2463a2fdb02fa09561ce27502ffae9211d5fb8271c3da2db",
+   "digest": "f27003436cdd34a0"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9020,
+   "sha256": "97bf65f945932182c3c586275d8a9ce818a47f9f8d4df570060acaea1d744a12",
+   "digest": "1f8696ee911f5ab5"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9021,
+   "sha256": "9f35ecfb63d61c9a6e3108a53f072f3868ab44a4a3c6136bec5ae6808e3299c5",
+   "digest": "70f14b61b08fa162"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9022,
+   "sha256": "5b3db52c4cf05e91db743d1e87d692cb10d1cae79a4037ed9fdc408a5dc820d6",
+   "digest": "a297e9299c256908"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9023,
+   "sha256": "452f624f818b4e1b8db34688ffd5195a1709eb7c7b0bfa5c51f44eeafe41e6be",
+   "digest": "0210b2caa8667939"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9024,
+   "sha256": "76e7b2289b2de567c97c4b3e91ba71ed0e9a6101fece9fdef77997d34a8d71ef",
+   "digest": "f85322083e7667ee"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9025,
+   "sha256": "17eb3bbdfa1ec7183d59daa150ac9d542d58d1ecd6e4eec2a6724de82fbc36c6",
+   "digest": "67ef5065490383e2"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9026,
+   "sha256": "fed26000ba7aa994f76c35d1f48fa8dcc027e93d133a11c031614fffa82a6fac",
+   "digest": "8a08357d98c08831"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9027,
+   "sha256": "8691ff3ab394b2c862d888ea7946668d52a12e6af5ae837d4d41082a173f8ca0",
+   "digest": "ad1d8688d8cbc6e9"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9028,
+   "sha256": "202797d404526c68be809697bbbf886e29a10049ebb99a5ee024f8eea8cf993e",
+   "digest": "b86bb82e8d2b42c4"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9029,
+   "sha256": "eea3c5f7c7088120fe5cf1cc4df68d0625daa023741a96e3b0a0596fa30c3c58",
+   "digest": "d18d3978bc98c0b8"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9030,
+   "sha256": "4aa57c5b68e33cf6341b74982062eba80b7031c8d1510fe831690d2f1bb20665",
+   "digest": "ff656d0b169833f3"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9031,
+   "sha256": "ec31b93c2d83d2bfc8f3ab66292548a0669eb786089ffbc62d6623c020371ce8",
+   "digest": "b4faa76a997e3aa0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9000,
+   "sha256": "9bb8addb90b69fbcd82d3ea2e2732ad371c7cdb8eae80ba3728ceae8d4704148",
+   "digest": "64157607efa1e432"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9001,
+   "sha256": "a108bb9b4b98f334502a38b0e1e2bf3b5c09a28fc4e4e41a94af69b25a8b4f39",
+   "digest": "81423dd3b0d61ded"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9002,
+   "sha256": "57365d84419c22fca16a00bf7b56006eca2a3ce747c032a280b849af170f384e",
+   "digest": "c0b37c8ca4e36158"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9003,
+   "sha256": "edc208ad462172b7d038f7286820c4f50f7b9f7ea815d16c5c7a45870d277497",
+   "digest": "e3079d9e996f5e69"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9004,
+   "sha256": "1f150dfa776c24ab599e6e22a7aa9709e2b3697d04801c075a960f44a5664719",
+   "digest": "23a104763662cf55"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9005,
+   "sha256": "23db4571168cd5ab934260dd9bce99333040e1172afb558d05262009d2cc9dac",
+   "digest": "e85b1e9977a8052c"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9006,
+   "sha256": "693c2b7f82e15555e7245f7ce6f3897cefcaa2103a4634d13feaf71da4f1b8be",
+   "digest": "25d043394d802439"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9007,
+   "sha256": "0f215716496348e0a9a3d39563c8313a7326b75f4eb56577f0ab5370c68406a1",
+   "digest": "b17e32970d7cff09"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9008,
+   "sha256": "b5da13f6fc9ccd6649ada9fb6d46cd5928a7922cd314a433e87b8f40c2e79389",
+   "digest": "4a9f062706b268e0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9009,
+   "sha256": "bb8aa21549336f9449f17718f35ffdf317a20eb75d28fb2000b7946cee965cdb",
+   "digest": "6d81302aa025c60c"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9010,
+   "sha256": "2afcb72bea466ba7d42024024cbfd8c453acaf678f74f77c0b456caef2f7e54d",
+   "digest": "8baada5763af783a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9011,
+   "sha256": "2769a7c40570a2b41c064529c82651b311affa3ed8b7cf0872ac93925d9d032a",
+   "digest": "69dc1c8af21b7e38"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9012,
+   "sha256": "583e298276f71986cae3d2353456699ee3809135b0ca076f15a66380a3ceaa47",
+   "digest": "4ebf859e2416cd01"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9013,
+   "sha256": "0d9619e9111f0698d3db55050dda685ee030cc738a28d428c1e623ef9bd4c008",
+   "digest": "c1ff51d6163cf706"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9014,
+   "sha256": "d0f622fe8f9744f5650b68ec9f1ed512d2d82e45a71a2f5a448db1ae1cc26708",
+   "digest": "d54bd12264fe8616"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9015,
+   "sha256": "d2b8e423a0660147d6e30f3a44904afc175db3a96d299f025d061b655b4eec35",
+   "digest": "317ecb597758e13c"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9016,
+   "sha256": "3ebc05c6e26ca67ecfe7ea08564bcaf10a17932efeea1e3b2ab1f1f454b95008",
+   "digest": "be3edfeb4b2b9295"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9017,
+   "sha256": "4fc832953200172eeb66abb00d76cf3289337e1c5266d13b24b4368db0459db0",
+   "digest": "e76cfc5d28270f17"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9018,
+   "sha256": "6f7d7a86222cb79a504ea137ea1b8526af522523a4e004b5f02a9fe7fa95b9b0",
+   "digest": "e990d5c524381564"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9019,
+   "sha256": "12e19df7e31483e62ebfe4c924904b05da61fd05442dc9dc261d4ff278846d04",
+   "digest": "405b6a17d3a8d7fe"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9020,
+   "sha256": "704c951147662cfa676db0d588e4cfbefc9e19addd953c988039046682524796",
+   "digest": "22671ffeed8a05cd"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9021,
+   "sha256": "0d42435b1ceed8d3f6c05127e6696151a097be79388eb8b609455f33f82a4667",
+   "digest": "caecf7190f93bcf2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9022,
+   "sha256": "f37a7ae63e31d654bad93e498577693f6f2b2fbe3b09ec93c3d454ec1ab0bd2c",
+   "digest": "db498449506391f2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9023,
+   "sha256": "22fe507013732e3b08d3591c80012144871d58ee7f8f6d3a6ca7a6f39e5fd773",
+   "digest": "7746ab91fc2a0ca0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9024,
+   "sha256": "f8807c598fcd805a526478af68a7e5c48e8670b7334bc319d38e5a05caac7c1b",
+   "digest": "75e694d79393b5ef"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9025,
+   "sha256": "6dcb7017ba58059806d80a0c769636dc73ea11f8719fb60ed09730c5c2e4f0db",
+   "digest": "f26670ad4205984d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9026,
+   "sha256": "928db5f5a93851639ece52efd230c8ded6a6b4d3500dde076539a51e3a89f75e",
+   "digest": "04f56ffae4dd538f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9027,
+   "sha256": "cb5b498a24528b4a8297f9f00e7b12c6d4c2c70c6dffbe9a5bef9f87363dae1d",
+   "digest": "12a3f7c97693b2c7"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9028,
+   "sha256": "db18e20620ebaed7c1c3503c4a5416961d69fcbd987caf09e9cea13904306343",
+   "digest": "d22634bd23e5b432"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9029,
+   "sha256": "53d241f0085acb72c711776247ff482f8f3b3ddfd93347407c546f0fe6db0090",
+   "digest": "f51194452a958119"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9030,
+   "sha256": "a6c6778002d5fc6477fa73abeba38488e547844172ec3d9f3f76ba313b47e7fd",
+   "digest": "397f1306ba51f7a1"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9031,
+   "sha256": "f4553eb92e21c52c6e1f23868a02e68bce82afcadae6d08dbf0a9e427a628c03",
+   "digest": "6dafb23903da6d46"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9000,
+   "sha256": "90551cad195442f53dea02a1bf3f0931b5f7086e1ebcfc5498c8699d617fe25c",
+   "digest": "690eca69e2140db0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9001,
+   "sha256": "b1fcbd3380bea94c217955fb2aacee4cc1c071411e53f57127ea8a420b37daaa",
+   "digest": "81fc6b93f070b220"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9002,
+   "sha256": "54e85a8e447ff4b0f5e3d9f137422fa66e769c57651f7cf2734c09ab4ce0c4e1",
+   "digest": "93f1afe3bfb90722"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9003,
+   "sha256": "4483bd100e3aca6f81e5cddf2eec66e33f22c340d6a8c447f1e39e6cfff9fb2d",
+   "digest": "f5b4f78973269b22"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9004,
+   "sha256": "6af8f52359ff45cd570bbc93558d8565193dc8fb3ecb4389cd47e419d5a0efde",
+   "digest": "61f58313e07afd3f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9005,
+   "sha256": "71b988073282dda82fbc77c5423725f1b6765322b19bb1c824d2bc33d41a2f5e",
+   "digest": "d5fd01dc8c3c2f50"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9006,
+   "sha256": "51a7b6e59b6a1b94015368890b08cc54a00dc8e806cb513cbc1aa46299d3e49c",
+   "digest": "ada945ad91a98ce6"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9007,
+   "sha256": "b59bb19c6cac787ee34c2a659392448483263c509119e7f66ec2650e60eff89a",
+   "digest": "13c91d671445430f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9008,
+   "sha256": "86ef0c8f5f14abc33e41389d00f3c7318368964be2cda5f39736d5f1fec47d9f",
+   "digest": "c4c5dead4b39f959"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9009,
+   "sha256": "a4cfbf483a8f81badcbdfbfb8fa165884c291e0081ebf84540e733e946a07c36",
+   "digest": "bcfd66f613af70d1"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9010,
+   "sha256": "c7c7db28ffb6ea3f546ba134dd4d86b0dcb51eaeb4d298b70e91e8698a82c59c",
+   "digest": "812b103a7365db21"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9011,
+   "sha256": "6587a2be7747b8a4453e0a9725d5f2d6b3a67763079ec5b00a1d3575ff4d7f6d",
+   "digest": "34f0205af3f763f5"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9012,
+   "sha256": "ae52d2c37a6f6887216a2d3e020899885d044270f415af34a0105612e7c01986",
+   "digest": "c05e2cf63f12fdef"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9013,
+   "sha256": "d1987648268c2a0fe4bf01511f5ab9ccd4e7bc2dc3bf1461d17e6e3f9afd9230",
+   "digest": "25e2ae81a2fba727"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9014,
+   "sha256": "28a55750d5e7b9a7c9bc7a8d0ecc9dde4e48bd91764e15e8baac478cb1a48827",
+   "digest": "cdb46ec579e51487"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9015,
+   "sha256": "2459fd4f2c933bdd7e1d88e2ff6514d92a3da5a4d786c8fc2d97def1c2c36de0",
+   "digest": "901186a342e1de0b"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9016,
+   "sha256": "d1cf6cc5bef327a3966b1bb18337b9a22027e530e5bffc6f81cc95c05414ff6e",
+   "digest": "7fa463505d876521"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9017,
+   "sha256": "1288f39a12e05632735dbf9089e7d3abf43a39239b3aff75c9e8452b51f34786",
+   "digest": "4fd618c263759b39"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9018,
+   "sha256": "fa520ca4d648baf4145ab5063abd4309c1215fc5afe446c603d0b8ea389dc3a0",
+   "digest": "64ee9ed8d50262d6"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9019,
+   "sha256": "061f51f6775738a5c15bb2fe05df4a947ea9d984e7254362ce8ab88ae667a0d1",
+   "digest": "e39f042f8b7005f3"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9020,
+   "sha256": "99b293354bf9c9377b10e44aaa8002e835864bf3882f2552df0c5e9c600adea7",
+   "digest": "850a3e9913c88711"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9021,
+   "sha256": "12af70250b2a62a2bf7328641ab562fa1e6a7dc8b691bfc0d454564ae0ba2e7c",
+   "digest": "e4aae538890097b2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9022,
+   "sha256": "b04b59fc2590bb4cd0c0cc5d82f7e547663215847f81fa250813b263c1946c94",
+   "digest": "db7ad9773eb0f77f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9023,
+   "sha256": "7aaa048f7a715453f1f9ed638353cc0602c0e66dd6f72a43595e1e37c72803be",
+   "digest": "6dee42e0ce854eb2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9024,
+   "sha256": "0ead52a57859c8860d110822b1d8b41da8e598b0f8ab57a7d5e7522b6ac61200",
+   "digest": "0df1722ad93d63b8"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9025,
+   "sha256": "48a464432bdbd27c21f1d9320fd62e7a05dc627eb46e47bd8e720a125af1f01e",
+   "digest": "fe640bba056e3795"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9026,
+   "sha256": "61086866e7d427e1f04cbe1b6485460b56dc1a3f77051781d634c4a527dd77ac",
+   "digest": "2af88df84a80970d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9027,
+   "sha256": "bc2884558539381c5164b50a8710ce41cf98a5d9ed3e27f4f46bf173c0307504",
+   "digest": "67fbd3206a6c9ff4"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9028,
+   "sha256": "9cb58c781e15db5ba3b85b7c1fe38e3f2811238e5a7397e95ef7790bb95cc5be",
+   "digest": "205376547ffb23fa"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9029,
+   "sha256": "20e6f3af4211b5a5108c77eaf48087f9e8e541cad80f72b6bdeab603b3951579",
+   "digest": "c8cd35528c526a9b"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9030,
+   "sha256": "2e3eb5aeb0976f358f946f5d0da392c1da845255924e4d2dd3f584e7225bd8a2",
+   "digest": "a3016f76333450fb"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9031,
+   "sha256": "315077a8d16f1a84842c32e5a478026cb9dc9d9c28962db33f6f2c812eda3569",
+   "digest": "4588e58abdaccddd"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9000,
+   "sha256": "cd980b40233e8a6941cd45fd3c22c1dc4344e51119c4c1dfe44b5a6adaa4268c",
+   "digest": "4e4f277b24bb4a19"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9001,
+   "sha256": "94d39950afedcc9acc63f63f13ad41cd8ba746136681eea9b99af0fc24409520",
+   "digest": "bb0ecbb2cf95a976"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9002,
+   "sha256": "db76294030090f6e206c26bf15b8be2f6186f83da412a033d20643749d03d1af",
+   "digest": "b8b9988acb6dcbf1"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9003,
+   "sha256": "e8ae9e6384af8492d2dfe71a3e399caec157de0d7067aaade05a8f55c687f5fb",
+   "digest": "4b16a86cd6181108"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9004,
+   "sha256": "dc9cd5628e31697a6fc5413ee45564eff3277242247d3ad46250f2536f2dd45b",
+   "digest": "7dcee1575d4edbcc"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9005,
+   "sha256": "a511d82fe564b8614bbd9ba7bdc0a973bdc299634b6424b2561809bca3d2f7be",
+   "digest": "f54a7f647baf7cfb"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9006,
+   "sha256": "7447b9c98ba75ba6d0d9b5a9becec1751c25f2ba65c75aab007b7c031d04e86f",
+   "digest": "58b5eb74d1d31147"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9007,
+   "sha256": "a35488db141739c22033de70925ee2ef01f0d018d4336dcef894444567189cdb",
+   "digest": "da9e70ac414dfac9"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9008,
+   "sha256": "65c9d839bbb2e7a58db72e43ac901876144ab1c009e3c18d1870fcabcb15f127",
+   "digest": "844a3826b1381e6d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9009,
+   "sha256": "4857262fb550d2887943fe1689e4fd838e35fec275fe746082ae66a6fa4c6ba9",
+   "digest": "fd7145233f81f1a1"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9010,
+   "sha256": "0491a9b09af75900a4418d3f34be452a1ebad5b33e145023c620db2289db8a18",
+   "digest": "bae5b176207405b9"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9011,
+   "sha256": "084dc67ec4cc794ff59fc56ba2afb910836fa7bd66e5733cdabd674aee9c16b1",
+   "digest": "318f7897b1db697e"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9012,
+   "sha256": "2887952e85ee373a6c5a1e7e584ec05de65b194deacbb33e361996e88bc45327",
+   "digest": "49c96728c3d74cb0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9013,
+   "sha256": "9ea073d81980daea58127f99722eb9d388eaabe74180ccb1bb32a18ad37c1a6e",
+   "digest": "4c287b08d5e5fe60"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9014,
+   "sha256": "44065f41c4315bf29615589ae0357f759b976e62f399264330f042ebeb70beb4",
+   "digest": "983af4b7e4341a62"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9015,
+   "sha256": "f318089da82fc00e42ea429819d413bf80c8e14b62cb2885b4fdb636a79b5e80",
+   "digest": "aaa7086ab79ad1b7"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9016,
+   "sha256": "aa11b0ecda7e785e7b64216fa1eeee15e161473934d744745ca6ad603d438c5a",
+   "digest": "f9ec4bc53d7d3f0e"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9017,
+   "sha256": "83a7bf65aae146a7c8cf8431a1936114183e1fd72912764c05e3df37c7ab292d",
+   "digest": "68af33eb814f46eb"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9018,
+   "sha256": "2c4211ef8406bbc0fcea08f3a8f73d46e6083e698b28ae1c1554927d8f0cce26",
+   "digest": "76dbf88344ddce20"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9019,
+   "sha256": "c5db32ef9edc852f9d032cd7f065ca94773d8fc6b1e651374730a4f4d0eeb8db",
+   "digest": "177e4ee5a208ee2a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9020,
+   "sha256": "ac51f5d3827a0184fd9cc4470c8f447fd9fc449eba26492d302b89af54d580b0",
+   "digest": "b993155766f5e7c8"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9021,
+   "sha256": "cd9997b452104641afb1f7ec45ea9d69b170bc9dc9907b73b27b31365f9919fa",
+   "digest": "10c8b62212f1d0ca"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9022,
+   "sha256": "bbab45adc964e592574fb73d8649e9d7da87f533333df0bdfc30bde32b29ff97",
+   "digest": "7f6bf337b2c7d27b"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9023,
+   "sha256": "9ddc3871b347b7fed6e3073546fce3d1fd4a2a4ac13eae968146b476118b2465",
+   "digest": "4356fea61a3783bf"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9024,
+   "sha256": "dd94d07f1b7c94191eeb90d75b402e030bb3559e05f695faf6d3fb6df490720d",
+   "digest": "b6a70c0b914c78c4"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9025,
+   "sha256": "a4c6dd4ad3f747e7a0cf62b878d8a55558385e08854033d8fb6b9cd84ec0e45c",
+   "digest": "3f228ac344006919"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9026,
+   "sha256": "887c341964ec53f6c12591df92fb8238d0f694eafd2ee5a0c9d60c52f9e105f5",
+   "digest": "ff147ea97be97d55"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9027,
+   "sha256": "73af4ea8f82e6e172a5a9a0435427d4a78d152eb43250cb64de7e9b814322f90",
+   "digest": "fc21982c6020652e"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9028,
+   "sha256": "58fcd98d6cbdf9b618cbee7d1649814e219c155936771dee2609f6a2c2d63f13",
+   "digest": "5d1b7055b7fcc55f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9029,
+   "sha256": "0b4e31646f261c9c3b7624c35623cff658527de3685f0150cf921cf2c86d55a3",
+   "digest": "c30dae5149a6f997"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9030,
+   "sha256": "8a724a0899f3335e3ad70b61103d76bc13c38d441e0bad95e4a010a731d08b52",
+   "digest": "1500976012e88117"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9031,
+   "sha256": "e9360b7a67f0bb8fcfc6158f2b0da0ebe4b30db1b774939a782ad984518c78ad",
+   "digest": "fb07c52a43d1ed98"
+  }
+ ]
+}

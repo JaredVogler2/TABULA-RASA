@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { useGame } from "@/store/game";
 import type { DaySample } from "@/worker/protocol";
 import { useController } from "./context";
+import { useSwipeDown } from "./swipe";
 import styles from "./game.module.css";
 
 /**
@@ -303,6 +304,7 @@ export function ComparePanel() {
   const roster = useGame((s) => s.roster);
   const [showTable, setShowTable] = useState(false);
   const close = () => controller.openPanel("compare");
+  const swipe = useSwipeDown(close);
   const t = view?.treated.summary;
   const c = view?.control.summary;
   const tS = treatedSeries.length ? treatedSeries : (view?.treated.series ?? []);
@@ -336,7 +338,7 @@ export function ComparePanel() {
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
       <section className={`${styles.paper} ${styles.sheet} ${styles.sheetWide}`} role="dialog" aria-modal="true" aria-labelledby="compare-title" data-testid="compare">
-        <div className={styles.panelHead}>
+        <div className={styles.panelHead} {...swipe}>
           <div className={styles.panelTitle}>
             <div className={styles.kicker}>{L.kicker}</div>
             <h2 id="compare-title">{L.title}</h2>

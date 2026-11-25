@@ -1,0 +1,55 @@
+{
+ "env": {
+  "date": "2026-11-25T16:42:46.520Z",
+  "node": "v22.23.5",
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+  "cores": 4,
+  "database": "PostgreSQL (TEST_DATABASE_URL), two pools on one schema"
+ },
+ "load": {
+  "requests": 20000,
+  "workers": 32,
+  "runs": 8,
+  "authorizedUsd": 40,
+  "dailyCapUsd": 30,
+  "runCapUsd": 6
+ },
+ "elapsedSeconds": 18.89,
+ "reservationsPerSecond": 1059,
+ "reserveMs": {
+  "p50": 25.25,
+  "p95": 37.06,
+  "p99": 105.01,
+  "max": 373.28
+ },
+ "settleMs": {
+  "p50": 30.14,
+  "p95": 168.15,
+  "p99": 226.54,
+  "max": 385.67
+ },
+ "outcomes": {
+  "reserved": 1580,
+  "settled": 1238,
+  "released": 200,
+  "unknown": 142,
+  "duplicateRefused": 94,
+  "settledTwice": 134
+ },
+ "refusals": {
+  "daily_cap": 18420
+ },
+ "books": {
+  "heldUsd": 5.78,
+  "ofWhichUnknownUsd": 5.78,
+  "settledUsd": 24.22,
+  "overageUsd": 0,
+  "remainingUsd": 10,
+  "killSwitch": false
+ },
+ "errors": [],
+ "errorCount": 0,
+ "ceilingBreachesSeenWhileRunning": 0,
+ "auditFailures": []
+}
+OK: 20000 reservations attempted by 32 workers through two pools; books balanced; no ceiling exceeded at any sampled moment; no errors.

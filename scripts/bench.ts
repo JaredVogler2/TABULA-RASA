@@ -1,7 +1,7 @@
 /**
  * Engine benchmarks (headless).
  *
- *   pnpm bench [-- --days 5] [--json evidence/phase-03/bench.json]
+ *   pnpm bench [-- --days 5] [--policy reflex|planner] [--only 50,100] [--json evidence/phase-03/bench.json]
  *
  * Measures world generation, simulation throughput, memory and snapshot cost for the
  * reference 50-agent world and for stress populations. Numbers are properties of the
@@ -10,6 +10,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { cpus, totalmem } from "node:os";
 import { dirname } from "node:path";
+import { gzipSync, strToU8 } from "fflate";
 import { ENGINE_VERSION, TICKS_PER_DAY, createWorld, makeConfig, restoreWorld, serializeWorld, snapshotHash, step, worldDigest, type SimEvent } from "../src/engine";
 
 function arg(name: string, fallback: string): string {
@@ -33,6 +34,9 @@ interface Row {
   aliveAtEnd: number;
   heapMb: number;
   snapshotKib: number;
+  /** The same snapshot gzip-compressed (level 4): how saves and stored moments are kept. */
+  packedKib: number;
+  packMs: number;
   serializeMs: number;
   restoreMs: number;
   hashMs: number;
@@ -77,6 +81,9 @@ function bench(population: number, size: number, days: number, policy: "reflex" 
   const text = serializeWorld(world);
   const serializeMs = performance.now() - t0;
   t0 = performance.now();
+  const packed = gzipSync(strToU8(text), { level: 4 });
+  const packMs = performance.now() - t0;
+  t0 = performance.now();
   snapshotHash(text);
   const hashMs = performance.now() - t0;
   t0 = performance.now();
@@ -102,6 +109,8 @@ function bench(population: number, size: number, days: number, policy: "reflex" 
     aliveAtEnd: world.agents.filter((a) => a.alive).length,
     heapMb: Math.round(heapMb * 10) / 10,
     snapshotKib: Math.round(text.length / 1024),
+    packedKib: Math.round(packed.byteLength / 1024),
+    packMs: Math.round(packMs * 10) / 10,
     serializeMs: Math.round(serializeMs * 10) / 10,
     restoreMs: Math.round(restoreMs * 10) / 10,
     hashMs: Math.round(hashMs * 10) / 10,
@@ -118,7 +127,9 @@ function main(): void {
     [250, 96],
     [500, 128],
   ];
-  const rows = plan.map(([population, size]) => bench(population, size, days, policy));
+  // `--only 50` measures one population (for profiling a single case)
+  const only = arg("only", "").split(",").filter(Boolean).map(Number);
+  const rows = plan.filter(([population]) => only.length === 0 || only.includes(population)).map(([population, size]) => bench(population, size, days, policy));
   const env = {
     date: new Date().toISOString(),
     engine: ENGINE_VERSION,
@@ -142,6 +153,8 @@ function main(): void {
       "alive end": r.aliveAtEnd,
       "heap MB": r.heapMb,
       "snapshot KiB": r.snapshotKib,
+      "packed KiB": r.packedKib,
+      "pack ms": r.packMs,
       "serialize ms": r.serializeMs,
       "restore ms": r.restoreMs,
       "sha256 ms": r.hashMs,

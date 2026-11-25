@@ -331,6 +331,9 @@ describe("private information remains private", () => {
     expect(far).toBeGreaterThan(12);
     b.mind.trust[a.id] = 800;
     c.mind.trust[a.id] = 100; // c does not believe a
+    // a has been there (a person can tell only of a place they know)
+    a.mind.nodeAmt[bush] = 9;
+    a.mind.nodeTick[bush] = world.tick;
     hold(a, [{ k: "say", to: -1, act: { t: "inform_node", node: bush, amount: 9, tick: world.tick } }, { k: "wait", ticks: 40 }]);
     advance(world, 3);
     expect(b.mind.nodeAmt[bush]).toBe(9);
@@ -488,6 +491,61 @@ describe("external decisions: proposals, not writes", () => {
     expect(record.k).toBe("decision");
     expect(record.d).toMatchObject({ src: "mock", layer: "external", n: DECISION_LIMITS.maxIntents });
     expect(world.metrics.decisionsBySource.mock).toBe(1);
+  });
+
+  it("keeps the intent and nothing that came along with it: stray fields, oversized payloads and unclean text never reach the plan or the record", () => {
+    const world = createWorld(makeConfig("first_light", 9, { population: 6, illness: 0, policy: "reflex", institutions: "open" }));
+    for (const a of world.agents) a.controller = "external";
+    advance(world, 30);
+    const out: SimEvent[] = [];
+    const a = world.agents[0]!;
+    const junk = { secret: "sk-ant-not-a-key", nested: { a: [1, 2, { b: "x".repeat(5000) }] } };
+    let deep: unknown = "x";
+    for (let i = 0; i < 11_900; i++) deep = [deep];
+    // as a model's answer would arrive: parsed from JSON, where "__proto__" is an ordinary key
+    const hostileCharter = JSON.parse(`{"name": "${"n".repeat(20_000)}", "purpose": "line one\\u2029line two", "__proto__": {"polluted": true}, "rules": [], "extra": ${JSON.stringify(junk)}}`) as unknown;
+    const given = submitDecision(
+      world,
+      0,
+      {
+        intents: [
+          { k: "wait", ticks: 3, ...junk },
+          { k: "say", to: -1, act: { t: "greet", payload: junk }, text: `hello\u2028there ${"y".repeat(900)}`, extra: junk },
+          { k: "propose", charter: { name: deep } },
+          { k: "propose", charter: hostileCharter },
+        ],
+      },
+      "live",
+      out,
+    );
+    expect(given.ok).toBe(true);
+    expect(given.rejected).toEqual([{ index: 2, reason: "too_large" }]);
+    expect(a.queue[0]).toEqual({ k: "wait", ticks: 3 });
+    expect(a.queue[1]).toEqual({ k: "say", to: -1, act: { t: "greet" }, text: a.queue[1]!.k === "say" ? a.queue[1]!.text : "" });
+    const said = a.queue[1] as { text: string };
+    expect(said.text.startsWith("hello there y")).toBe(true);
+    expect(said.text.length).toBeLessThanOrEqual(DECISION_LIMITS.maxTextChars);
+    const kept = (a.queue[2] as { k: string; charter: Record<string, unknown> }).charter;
+    expect(Object.keys(kept).sort()).toEqual(["name", "purpose", "rules"]); // nothing under a key the grammar does not use
+    expect((kept.name as string).length).toBe(240);
+    expect(kept.purpose).toBe("line one line two");
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    // the record a run is replayed and published from holds exactly the plan, and is small
+    const record = out.find((e) => e.id === given.event)!;
+    expect((record.d as { plan: Intent[] }).plan).toEqual(a.queue);
+    const tape = JSON.stringify(tapeFromEvents(out));
+    expect(tape.length).toBeLessThan(8_000);
+    expect(tape).not.toContain("sk-ant");
+    expect(tape).not.toMatch(/[\u2028\u2029]/);
+    // and the mind is told, on its page, that one proposal was too large to be one
+    expect(a.mind.feedback.map((f) => [f.k, f.r])).toContainEqual(["propose", "too_large"]);
+    // a decision replayed from that record is the same decision
+    const again = createWorld(makeConfig("first_light", 9, { population: 6, illness: 0, policy: "reflex", institutions: "open" }));
+    for (const x of again.agents) x.controller = "external";
+    advance(again, 30);
+    const outAgain: SimEvent[] = [];
+    replayTape(again, tapeFromEvents(out), 0, outAgain);
+    expect(again.agents[0]!.queue).toEqual(a.queue);
   });
 
   it("only externally controlled agents accept decisions, and the body's urgent needs come first", () => {

@@ -162,6 +162,15 @@ export function HistoryPanel() {
                     Some of these people were decided for from outside the engine, and those decisions are not in this world&apos;s own record. Its earlier days can be watched from its recording, not rebuilt here.
                   </p>
                 ) : null}
+                {history ? (
+                  <p className={styles.muted} data-testid="provenance" data-provenance={history.provenance}>
+                    {history.provenance === "made"
+                      ? "Every day of this world was lived here, from its seed."
+                      : history.provenance === "relived"
+                        ? "Checked: this world was opened from a save or a file, and its past, lived again from its seed with what was done to it done again, arrived at exactly this world."
+                        : "Not checked: this world was opened from a save or a file. That a file is whole shows only that it was not damaged — not how the world in it came to be. Living its past again from the seed is the check."}
+                  </p>
+                ) : null}
                 {pick === null ? (
                   <p className={styles.muted}>Choose a morning. The world is deterministic: from any stored moment it can be run forward again and will do exactly what it did, unless you change something.</p>
                 ) : (

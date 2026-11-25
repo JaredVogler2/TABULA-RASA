@@ -7,7 +7,7 @@
  */
 import { octile10 } from "../core/math";
 import type { Agent, WorldState } from "../model/types";
-import type { Scratch } from "./scratch";
+import { NO_ROUTE_SLOTS, type Scratch } from "./scratch";
 
 const DX8 = [1, 1, 0, -1, -1, -1, 0, 1];
 const DY8 = [0, 1, 1, 1, 0, -1, -1, -1];
@@ -62,6 +62,58 @@ function heapPop(sc: Scratch, size: number): number {
   return n;
 }
 
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/**
+ * Has this very search — this agent, from this tile, knowing exactly this much of the map, for
+ * this goal — already been made and found no route?
+ *
+ * A search is a function of where it starts, where it is going, what the agent has seen, and
+ * terrain that never changes. So when all of those are equal, bit for bit, to those of a search
+ * that exhausted every tile it could reach, the answer is the same and the work can be skipped.
+ * Nothing is inferred beyond that: a new tile seen, or a step taken, and the search is made
+ * again. (If terrain ever becomes something that can change during a run, what is remembered
+ * must be keyed on it as well, or dropped when it does.) (It matters in a famine: a starving planner asks for the same unreachable berry bush
+ * every tick, and each asking used to cross the whole island. Found by the 20-day benchmark;
+ * see docs/PERFORMANCE.md.)
+ */
+function knownNoRoute(sc: Scratch, agent: Agent, start: number, key: number): boolean {
+  const id = agent.id;
+  if (id >= sc.noRouteFrom.length || sc.noRouteFrom[id] !== start) return false;
+  const count = sc.noRouteCount[id] as number;
+  const held = count < NO_ROUTE_SLOTS ? count : NO_ROUTE_SLOTS;
+  let found = false;
+  for (let i = 0; i < held; i++) if (sc.noRouteKeys[id * NO_ROUTE_SLOTS + i] === key) found = true;
+  if (!found) return false;
+  const then = sc.noRouteSeen[id];
+  return then !== undefined && sameBytes(then, agent.mind.seen);
+}
+
+function rememberNoRoute(sc: Scratch, agent: Agent, start: number, key: number): void {
+  const id = agent.id;
+  if (id >= sc.noRouteFrom.length) return;
+  const seen = agent.mind.seen;
+  let then = sc.noRouteSeen[id];
+  if (sc.noRouteFrom[id] !== start || then === undefined || !sameBytes(then, seen)) {
+    // another place, or more of the map known: what was remembered is about a different question
+    if (then === undefined || then.length !== seen.length) {
+      then = new Uint8Array(seen.length);
+      sc.noRouteSeen[id] = then;
+    }
+    then.set(seen);
+    sc.noRouteFrom[id] = start;
+    sc.noRouteCount[id] = 0;
+  }
+  const count = sc.noRouteCount[id] as number;
+  sc.noRouteKeys[id * NO_ROUTE_SLOTS + (count % NO_ROUTE_SLOTS)] = key;
+  // the count only ever says how many slots are filled and which is the oldest: it wraps inside two rounds
+  sc.noRouteCount[id] = count + 1 >= 2 * NO_ROUTE_SLOTS ? NO_ROUTE_SLOTS : count + 1;
+}
+
 /**
  * A* from the agent's tile to any tile within `near` (Chebyshev) of (tx, ty).
  * Returns the route as tile indices with the NEXT step LAST (so callers can pop),
@@ -77,6 +129,9 @@ export function findPath(world: WorldState, sc: Scratch, agent: Agent, tx: numbe
   const dy0 = agent.y > ty ? agent.y - ty : ty - agent.y;
   if ((dx0 > dy0 ? dx0 : dy0) <= near) return [];
   if (near === 0 && knownCost(world, sc, seen, target) === 0) return null;
+  // (nearness is a handful of tiles at most; a search with a larger one is simply never remembered)
+  const memoKey = near >= 0 && near < 64 ? target * 64 + near : -1;
+  if (memoKey >= 0 && knownNoRoute(sc, agent, start, memoKey)) return null;
 
   const gen = ++sc.gen;
   const hScale = sc.minCost;
@@ -107,7 +162,7 @@ export function findPath(world: WorldState, sc: Scratch, agent: Agent, tx: numbe
       }
       return path;
     }
-    if (++expansions > n) break;
+    if (++expansions > n) return null;
     const gCur = sc.g[cur] as number;
     for (let d = 0; d < 8; d++) {
       const nx = cx + (DX8[d] as number);
@@ -131,6 +186,8 @@ export function findPath(world: WorldState, sc: Scratch, agent: Agent, tx: numbe
       size = heapPush(sc, size, (ng + octile10(nx, ny, tx, ty) * hScale) * 32768 + ni, ni);
     }
   }
+  // every tile that could be reached has been tried: with this knowledge, from here, there is no route
+  if (memoKey >= 0) rememberNoRoute(sc, agent, start, memoKey);
   return null;
 }
 

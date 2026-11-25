@@ -8,6 +8,7 @@
  */
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { ENGINE_VERSION, SCHEMA_VERSION } from "@/engine";
 import type { ContrastResult, Plan, StudyReport } from "@/lab/analyse";
 import { LIVE_DESIGNS, dollars, estimateLiveStudy, seedsWithin } from "@/lab/cost";
 import { METRIC_LABEL, type Metric } from "@/lab/studies";
@@ -30,6 +31,8 @@ interface Bundle {
 }
 
 interface Hashes {
+  engine?: string;
+  schema?: number;
   hashes: { study: string; condition: string; seed: number; sha256: string; digest: string }[];
   studies: { id: string; days: number }[];
 }
@@ -198,6 +201,9 @@ function Verify({ path }: { path: string }) {
   const cells = hashes?.hashes ?? [];
   const cell = cells[pick];
   if (!hashes || !cell) return null;
+  // a hash is only comparable with one made by the same engine writing the same snapshot format:
+  // a bundle from another version is still a record of what that version did, but this build cannot check it
+  const sameEngine = (hashes.engine ?? ENGINE_VERSION) === ENGINE_VERSION && (hashes.schema ?? SCHEMA_VERSION) === SCHEMA_VERSION;
   const run = (): void => {
     worker.current?.terminate();
     const w = new Worker(new URL("../../worker/lab.worker.ts", import.meta.url), { type: "module" });
@@ -229,7 +235,7 @@ function Verify({ path }: { path: string }) {
             ))}
           </select>
         </label>
-        <button type="button" className={styles.primary} onClick={run} disabled={state.status === "running"} data-testid="verify-run">
+        <button type="button" className={styles.primary} onClick={run} disabled={state.status === "running" || !sameEngine} data-testid="verify-run">
           {state.status === "running" ? "Running…" : "Run it here"}
         </button>
         <Link href={`/?study=${encodeURIComponent(cell.study)}&condition=${encodeURIComponent(cell.condition)}&seed=${cell.seed}`} className={styles.secondary} data-testid="verify-open">
@@ -237,6 +243,11 @@ function Verify({ path }: { path: string }) {
         </Link>
       </div>
       <p className={styles.mono}>published {cell.sha256}</p>
+      {sameEngine ? null : (
+        <p className={styles.result} data-tone="bad" role="note" data-testid="verify-other-engine">
+          This bundle was made by engine {hashes.engine ?? "?"} (snapshot format {hashes.schema ?? "?"}); this page runs engine {ENGINE_VERSION} (format {SCHEMA_VERSION}). A different engine is a different model, so re-running here would not be a check of these runs. To reproduce them, check out the commit that made the bundle.
+        </p>
+      )}
       {state.status === "done" && state.reply ? (
         <p className={styles.result} data-tone={same ? "good" : "bad"} role="status" data-testid="verify-result">
           {state.reply.ok ? (
