@@ -1,0 +1,39 @@
+The session, as its own record has it — extracted 2026-11-25
+
+Source: the coding session's local transcript (one JSON line per event) and those of the agents it delegated to.
+These files live on the session's machine, not in this repository. The numbers are what the transcript holds;
+they have not been compared with any bill, and what they cost is not known here.
+
+first event                      2026-11-25T02:34:58.763Z
+last event at extraction         2026-11-25T19:46:19.089Z
+elapsed                          17.2 hours
+pauses longer than ten minutes   3: 2026-11-25T12:51:18.624Z to 2026-11-25T13:01:19.153Z (10.0 min); 2026-11-25T14:51:34.626Z to 2026-11-25T15:01:34.976Z (10.0 min); 2026-11-25T15:31:25.680Z to 2026-11-25T15:41:26.076Z (10.0 min)
+
+main thread
+  model responses                1,976
+  tool calls                     2,176
+  output tokens                  3,486,444
+  input tokens, uncached         3,984
+  input tokens written to cache  6,197,712
+  input tokens read from cache   1,045,497,830
+
+delegated agents (7: two reviewers, research and search helpers)
+  model responses                742
+  tool calls                     1,051
+  output tokens                  1,029,661
+  input tokens, uncached         1,492
+  input tokens written to cache  4,885,234
+  input tokens read from cache   308,524,182
+
+messages typed by the owner (UTC)
+  02:34:58  the initial instruction
+  12:48:38  "Pull request errors 1 of 2"
+  13:41:33  "Proceed I used a usage fable 5.2 reset"
+  16:57:40  "Try again"
+  19:37     "Try again"
+other acts of the owner: merged pull request 1 at 07:25:44 and pull request 2 at about 13:42
+
+commands the session's own safety checks refused
+  07:29:08, 13:48:25  removing a stray file at the root of the container's filesystem (see docs/SCORECARD.md)
+  14:35:59            a command that would have run the live smoke script with its authorizing sentence supplied
+                      by the developer agent, in an environment with no key (see docs/SCORECARD.md)
