@@ -1,0 +1,30 @@
+# node scripts/topbar.mjs — the top bar in its widest state at 25 window widths, clean checkout of the phase 13–14 commit
+# 2026-11-25 · headless Chromium. Each line: width, then each part as left+width@top, the world label's state, and any problem.
+# Exit status 1: one width (390 px) where the status row's content was wider than the row. See docs/EVIDENCE.md, phase 13.
+
+ 2560  brand:10+246@16  fork-controls:266+239@15  status-bar:1464+392@18  tools:1866+684@10  label:full  ok
+ 1920  brand:10+246@16  fork-controls:266+239@15  status-bar:824+392@18  tools:1226+684@10  label:full  ok
+ 1600  brand:10+236@16  fork-controls:256+239@15  status-bar:504+392@18  tools:906+684@10  label:truncated  ok
+ 1599  brand:10+246@16  fork-controls:266+239@15  status-bar:683+273@18  tools:966+623@10  label:full  ok
+ 1536  brand:10+246@16  fork-controls:266+239@15  status-bar:620+273@18  tools:903+623@10  label:full  ok
+ 1440  brand:10+246@16  fork-controls:266+239@15  status-bar:524+273@18  tools:807+623@10  label:full  ok
+ 1439  brand:10+246@16  fork-controls:266+203@15  status-bar:523+273@18  tools:806+623@10  label:full  ok
+ 1366  brand:10+217@16  fork-controls:237+203@15  status-bar:450+273@18  tools:733+623@10  label:truncated  ok
+ 1280  brand:10+246@16  fork-controls:266+203@15  status-bar:549+273@18  tools:832+438@10  label:full  ok
+ 1279  brand:10+246@16  fork-controls:266+203@15  status-bar:548+273@18  tools:831+438@10  label:full  ok
+ 1180  brand:10+131@16  fork-controls:151+203@15  status-bar:449+273@18  tools:732+438@10  label:hidden  ok
+ 1120  brand:10+131@16  fork-controls:151+203@15  status-bar:389+273@18  tools:672+438@10  label:hidden  ok
+ 1119  brand:10+131@16  fork-controls:151+203@15  status-bar:10+1099@74  tools:671+438@10  label:hidden  ok
+ 1024  brand:10+131@16  fork-controls:151+203@15  status-bar:10+1004@74  tools:576+438@10  label:hidden  ok
+  900  brand:10+131@16  fork-controls:151+203@15  status-bar:10+880@74  tools:452+438@10  label:hidden  ok
+  881  brand:10+131@16  fork-controls:151+203@15  status-bar:10+861@74  tools:433+438@10  label:hidden  ok
+  880  brand:10+127@17  fork-controls:183+203@13  status-bar:10+860@70  tools:432+438@10  label:hidden  ok
+  768  brand:10+127@14  fork-controls:555+203@10  status-bar:10+748@124  tools:320+438@64  label:hidden  ok
+  600  brand:10+127@14  fork-controls:387+203@10  status-bar:10+580@124  tools:152+438@64  label:hidden  ok
+  430  brand:10+127@14  fork-controls:217+203@10  status-bar:10+410@124  tools:78+342@64  label:hidden  ok
+  414  brand:10+127@14  fork-controls:201+203@10  status-bar:10+394@124  tools:62+342@64  label:hidden  ok
+  390  brand:10+127@14  fork-controls:177+203@10  status-bar:10+370@124  tools:38+342@64  label:hidden  status-bar content 390>368
+  375  brand:10+127@14  fork-controls:162+203@10  status-bar:10+355@124  tools:23+342@64  label:hidden  ok
+  360  brand:10+127@14  fork-controls:147+203@10  status-bar:10+340@124  tools:10+342@64  label:hidden  ok
+  320  brand:10+127@14  fork-controls:173+137@10  status-bar:10+300@124  tools:26+284@64  label:hidden  ok
+1 widths with problems

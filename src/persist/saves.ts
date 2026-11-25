@@ -27,11 +27,23 @@ export interface SaveMeta {
   bytes: number;
 }
 
+/** One page of the observer's field journal, as kept with a save (see src/ui/game/journal.ts). */
+export interface SavedJournalEntry {
+  id: string;
+  tick: number;
+  text: string;
+  agents: number[];
+  x?: number;
+  y?: number;
+}
+
 export interface SaveRecord extends SaveMeta {
   snapshot: string;
   control: string | null;
   series: DaySample[];
   controlSeries: DaySample[];
+  /** What the observer had witnessed by then. Absent in saves made before the journal existed. */
+  journal?: SavedJournalEntry[];
 }
 
 function open(): Promise<IDBDatabase> {
@@ -77,8 +89,9 @@ function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequ
   );
 }
 
-export function toRecord(id: string, name: string, payload: SavePayload, savedAt: number): SaveRecord {
+export function toRecord(id: string, name: string, payload: SavePayload, savedAt: number, journal: SavedJournalEntry[] = []): SaveRecord {
   return {
+    journal,
     id,
     name,
     savedAt,

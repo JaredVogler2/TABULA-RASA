@@ -31,6 +31,7 @@ import {
 } from "../model/constants";
 import { Activity, type Agent, type Intent, type Structure, type WorldState } from "../model/types";
 import { droughtActive, hearingRadius, sightRadius } from "../world/climate";
+import { noteFeedback } from "../mind/feedback";
 import { believedDrinkable, remember, structureStateCode } from "../mind/knowledge";
 import { notePromiseMade, noteTaking, settleGift } from "../mind/social";
 import { gathered, institutionalIntent, storeAccess, supplied, withdrawLimit } from "../institutions/hooks";
@@ -83,6 +84,7 @@ function reject(world: WorldState, a: Agent, out: EventOut, intent: Intent, reas
   emit(world, out, "rejected", a.id, { r: reason, d: { k: kind }, p: parentsOf(a.mind.decisionEvent) });
   a.stats.rejected++;
   world.metrics.rejectedIntents++;
+  noteFeedback(world, a, kind, reason);
   if (a.act && a.act.k === "rest") wake(world, a, out);
   a.act = null;
   // a door that would not open is remembered, so that it is not tried again every hour

@@ -1,0 +1,34 @@
+# pnpm e2e — full suite, production build, clean checkout of the commit, PostgreSQL 16 (schema e2e)
+# 2026-11-25T09:09Z · headless Chromium (software WebGL) · desktop 1366x768 and phone emulation 390x844
+# TEST_DATABASE_URL set; LIVE_ENABLED=false on the server; no provider reachable. WebServer log lines removed.
+
+
+> tabula-rasa@0.1.0 e2e /tmp/claude-0/-home-user-TABULA-RASA/8acd06b1-6adc-5629-81f0-d4e4ae7e5445/scratchpad/verify
+> playwright test --trace off
+
+
+Running 20 tests using 1 worker
+
+  ✓   1 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (361ms)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (24ms)
+  ✓   3 [desktop] › tests/e2e/owner.spec.ts:71:1 › a visitor without a session learns nothing and can change nothing (354ms)
+  ✓   4 [desktop] › tests/e2e/owner.spec.ts:108:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.1s)
+  ✓   5 [desktop] › tests/e2e/owner.spec.ts:166:1 › authorizing spend takes the words, and the kill switch works from the console (595ms)
+  ✓   6 [desktop] › tests/e2e/owner.spec.ts:197:1 › a visitor replays the published run from its record, and every epoch matches (9.8s)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:222:1 › the bundled recording plays from the title screen and matches its record to the end (40.6s)
+  ✓   8 [desktop] › tests/e2e/play.spec.ts:58:1 › a new player can complete the whole loop offline (2.2m)
+  ✓   9 [desktop] › tests/e2e/play.spec.ts:187:1 › the keyboard alone can drive the game (18.3s)
+  ✓  10 [desktop] › tests/e2e/play.spec.ts:216:1 › charters are shown in plain words, with how they came about (1.1m)
+  ✓  11 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (265ms)
+  ✓  12 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (22ms)
+  ✓  13 [mobile] › tests/e2e/owner.spec.ts:71:1 › a visitor without a session learns nothing and can change nothing (116ms)
+  ✓  14 [mobile] › tests/e2e/owner.spec.ts:108:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.5s)
+  -  15 [mobile] › tests/e2e/owner.spec.ts:166:1 › authorizing spend takes the words, and the kill switch works from the console
+  ✓  16 [mobile] › tests/e2e/owner.spec.ts:197:1 › a visitor replays the published run from its record, and every epoch matches (9.8s)
+  ✓  17 [mobile] › tests/e2e/owner.spec.ts:222:1 › the bundled recording plays from the title screen and matches its record to the end (40.3s)
+  ✓  18 [mobile] › tests/e2e/play.spec.ts:58:1 › a new player can complete the whole loop offline (1.8m)
+  -  19 [mobile] › tests/e2e/play.spec.ts:187:1 › the keyboard alone can drive the game
+  -  20 [mobile] › tests/e2e/play.spec.ts:216:1 › charters are shown in plain words, with how they came about
+
+  3 skipped
+  17 passed (7.2m)

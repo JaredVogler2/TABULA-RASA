@@ -91,6 +91,8 @@ export function emptyMind(cfg: WorldConfig, terrain: Terrain, nodes: Nodes, trus
     coldRun: 0,
     droughtSeen: -1,
     nextDeliberation: 0,
+    note: "",
+    feedback: [],
   };
 }
 
@@ -153,8 +155,7 @@ export function createAgent(
     traits,
     phys,
     skills,
-    // in a mixed population who deliberates is drawn per person, independently of everything else about them
-    controller: cfg.policy === "planner" && (cfg.plannerShare >= 1000 || below(1000, cfg.seed, Stream.Policy, id, 1) < cfg.plannerShare) ? "planner" : "reflex",
+    controller: controllerFor(cfg, id),
     queue: [],
     act: null,
     path: [],
@@ -164,6 +165,16 @@ export function createAgent(
     mind,
     memberships: 0,
   };
+}
+
+/**
+ * Which layer decides for a person. In a mixed population both draws are made per person on
+ * their own keys, independently of everything else about them, so the same people are
+ * externally driven in every arm that shares a seed and an `externalShare`.
+ */
+export function controllerFor(cfg: WorldConfig, id: number): Agent["controller"] {
+  if (cfg.externalShare > 0 && (cfg.externalShare >= 1000 || below(1000, cfg.seed, Stream.Policy, id, 2) < cfg.externalShare)) return "external";
+  return cfg.policy === "planner" && (cfg.plannerShare >= 1000 || below(1000, cfg.seed, Stream.Policy, id, 1) < cfg.plannerShare) ? "planner" : "reflex";
 }
 
 /** Distance (in 4-connected walking steps over land) from every tile to drinkable water. */

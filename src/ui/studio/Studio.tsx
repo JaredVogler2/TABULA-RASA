@@ -6,13 +6,13 @@
  * how far to advance it, and where the camera stands.
  *
  *   /studio?scenario=first_light&seed=1&days=3&ticks=30&q=high&az=0.6&polar=0.9&dist=80
- *           &tx=30&ty=28&agent=4&play=1&speed=8&policy=reflex
+ *           &tx=30&ty=28&agent=4&play=1&speed=8&policy=reflex&inst=grammar_search
  */
 import { useEffect, useRef, useState } from "react";
-import { TICKS_PER_DAY, makeConfig, type PolicyKind } from "@/engine";
+import { TICKS_PER_DAY, makeConfig, type InstitutionMode, type PolicyKind } from "@/engine";
 import { WorldRenderer, type Quality } from "@/render/WorldRenderer";
 import { SimClient } from "@/store/simClient";
-import type { ViewFrame } from "@/worker/protocol";
+import { ACTION_CODES, AF, AGENT_STRIDE, type ViewFrame } from "@/worker/protocol";
 
 declare global {
   interface Window {
@@ -43,6 +43,8 @@ export function Studio() {
     const renderer = new WorldRenderer(canvas, overlayRef.current, { quality, reducedMotion: params.get("still") === "1", maxPixelRatio: num("pr", 2), adaptiveResolution: params.get("adaptive") === "1" });
     const client = new SimClient();
     let latest: ViewFrame | null = null;
+    // frames arrive in a callback: read the latest through a function so its type is not narrowed away
+    const current = (): ViewFrame | null => latest;
     let disposed = false;
     window.__studio = { ready: false, tick: 0, stats: () => renderer.stats(), budget: () => renderer.budget(), frame: () => latest };
 
@@ -56,6 +58,7 @@ export function Studio() {
       const config = makeConfig(params.get("scenario") ?? "first_light", num("seed", 1), {
         policy: (params.get("policy") as PolicyKind | null) ?? "planner",
         population: num("population", 50),
+        ...(params.get("inst") ? { institutions: params.get("inst") as InstitutionMode } : {}),
       });
       const ready = await client.init(config);
       if (disposed) return;
@@ -87,13 +90,49 @@ export function Studio() {
         rig.setView(num("az", 0.62), num("polar", 0.92), num("dist", Math.max(w, ready.world.h) * 1.95), true);
         if (tx >= 0 && ty >= 0) rig.setView(num("az", 0.62), num("polar", 0.86), num("dist", 40), true);
       }
-      const agent = num("agent", -1);
+      // `charter=1` looks at the seat of the first agreement in force, if any was ratified
+      if (params.get("charter") === "1") {
+        const civics = await client.civics();
+        const seat = civics?.charters.find((c) => c.state === "active");
+        setStatus(seat ? `charter ${seat.name} at ${seat.x},${seat.y}` : "no charter in force");
+        if (seat && rig) {
+          rig.focus(seat.x + 0.5 - ready.world.w / 2, seat.y + 0.5 - ready.world.h / 2);
+          rig.setView(num("az", 0.62), num("polar", 0.9), num("dist", 12), true);
+        }
+      }
+      let agent = num("agent", -1);
+      // `doing=gather_wood` frames the first living person performing that action, stepping on until someone is
+      const doing = ACTION_CODES.indexOf((params.get("doing") ?? "") as (typeof ACTION_CODES)[number]);
+      for (let tries = 0; doing >= 0 && agent < 0 && tries < TICKS_PER_DAY * 2 && !disposed; tries++) {
+        const f = current();
+        if (f) {
+          for (let i = num("skip", 0); i < f.agentCount; i++) {
+            if (f.agents[i * AGENT_STRIDE + AF.alive] === 1 && f.agents[i * AGENT_STRIDE + AF.action] === doing) {
+              agent = i;
+              break;
+            }
+          }
+        }
+        if (agent >= 0) break;
+        const want = (f?.tick ?? 0) + 1;
+        client.step(1);
+        await new Promise<void>((resolve) => {
+          const check = () => (disposed || (latest && latest.tick >= want) ? resolve() : setTimeout(check, 20));
+          check();
+        });
+      }
       if (agent >= 0) {
         // let one frame place the figures before focusing on one of them
         await new Promise((r) => setTimeout(r, 120));
         renderer.select({ type: "agent", id: agent });
         renderer.focusAgent(agent, num("dist", 16));
         renderer.camera()?.setView(num("az", 0.62), num("polar", 1.05), num("dist", 16));
+      }
+      // `know=1` and `ties=1` lay the selected citizen's knowledge and acquaintances over the world
+      if (agent >= 0 && (params.get("know") === "1" || params.get("ties") === "1")) {
+        const detail = await client.inspectAgent(agent);
+        if (detail && params.get("know") === "1") renderer.setKnowledge(detail.seen);
+        if (detail && params.get("ties") === "1") renderer.setTies(agent, detail.people);
       }
       if (params.get("play") === "1") {
         client.setSpeed(num("speed", 4));

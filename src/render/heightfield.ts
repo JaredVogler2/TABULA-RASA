@@ -99,6 +99,8 @@ export class HeightField {
   readonly fresh: Float32Array;
   /** 0..1 how strongly a sample belongs to a stream bed or pond. */
   readonly wetMask: Float32Array;
+  /** 0..1 how much of that is still water (a pond) rather than a running stream. */
+  readonly pond: Float32Array;
   /** 0..1 ambient occlusion estimate per sample (1 = open). */
   readonly occlusion: Float32Array;
   /** Distance to the shore in tiles for sea tiles (0 on land). */
@@ -223,6 +225,7 @@ export class HeightField {
     this.ground = new Float32Array(n);
     this.fresh = new Float32Array(n).fill(Number.NaN);
     this.wetMask = new Float32Array(n);
+    this.pond = new Float32Array(n);
     this.occlusion = new Float32Array(n).fill(1);
     const uncarved = new Float32Array(n);
 
@@ -267,6 +270,7 @@ export class HeightField {
           const m = ch.d >= width + 0.3 ? 0 : ch.d <= width - 0.14 ? 1 : 1 - (ch.d - (width - 0.14)) / 0.44;
           const smooth = m * m * (3 - 2 * m);
           this.wetMask[i] = smooth;
+          this.pond[i] = ch.pond * smooth;
           if (smooth > 0) {
             const depth = 0.24 + 0.3 * ch.pond;
             const surface = y - 0.07;
@@ -276,6 +280,35 @@ export class HeightField {
         }
         this.ground[i] = y;
       }
+    }
+
+    // One ring of samples beyond every bank carries a surface too (where the mask, and so the
+    // water's opacity, is zero): the visible edge is then the smooth contour of the mask and
+    // never the stair-step of the mesh.
+    {
+      const grown = this.fresh.slice();
+      for (let sy = 0; sy < this.sh; sy++) {
+        for (let sx = 0; sx < this.sw; sx++) {
+          const i = sy * this.sw + sx;
+          if (!Number.isNaN(this.fresh[i] as number)) continue;
+          let sum = 0;
+          let cnt = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const x = sx + dx;
+              const y = sy + dy;
+              if (x < 0 || y < 0 || x >= this.sw || y >= this.sh) continue;
+              const f = this.fresh[y * this.sw + x] as number;
+              if (!Number.isNaN(f)) {
+                sum += f;
+                cnt++;
+              }
+            }
+          }
+          if (cnt > 0) grown[i] = sum / cnt;
+        }
+      }
+      this.fresh.set(grown);
     }
 
     // ── ambient occlusion: how much lower a sample sits than its surroundings
@@ -327,6 +360,23 @@ export class HeightField {
   /** Elevation an agent or object stands at: the ground, never below the waterline. */
   standAt(worldX: number, worldZ: number): number {
     return Math.max(this.heightAt(worldX, worldZ), 0.02);
+  }
+
+  private sampleIndex(worldX: number, worldZ: number): number {
+    const ix = Math.max(0, Math.min(this.sw - 1, Math.round((worldX + this.w / 2) * SUBDIV)));
+    const iz = Math.max(0, Math.min(this.sh - 1, Math.round((worldZ + this.h / 2) * SUBDIV)));
+    return iz * this.sw + ix;
+  }
+
+  /** Elevation of the water surface at world coordinates: a stream or pond if one is there, the sea otherwise. */
+  waterAt(worldX: number, worldZ: number): number {
+    const i = this.sampleIndex(worldX, worldZ);
+    return (this.wetMask[i] as number) > 0.3 ? (this.fresh[i] as number) : 0;
+  }
+
+  /** 0..1 how far into a stream bed or pond a point lies (0 on dry ground, 1 in mid-channel). */
+  wetAt(worldX: number, worldZ: number): number {
+    return this.wetMask[this.sampleIndex(worldX, worldZ)] as number;
   }
 
   /** Unit surface normal at world coordinates. */

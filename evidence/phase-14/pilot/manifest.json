@@ -1,0 +1,1967 @@
+{
+ "format": "tabula-rasa/study-bundle",
+ "version": 1,
+ "seedClass": "pilot",
+ "engine": "0.6.0",
+ "schema": 5,
+ "affordances": "2026.11-h",
+ "studies": [
+  {
+   "id": "h1-scarcity",
+   "title": "H1 — Scarcity and cooperation (inverted U)",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "r04",
+     "label": "richness 0.4",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 480,
+      "nodeDensity": 600
+     }
+    },
+    {
+     "id": "r07",
+     "label": "richness 0.7",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 840,
+      "nodeDensity": 1050
+     }
+    },
+    {
+     "id": "r13",
+     "label": "richness 1.3",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "richness": 1560,
+      "nodeDensity": 1950
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h1a",
+     "hypothesis": "H1",
+     "metric": "cooperation",
+     "a": "r07",
+     "b": "r13",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Cooperation is higher at richness 0.7 than at 1.3."
+    },
+    {
+     "id": "h1b",
+     "hypothesis": "H1",
+     "metric": "cooperation",
+     "a": "r07",
+     "b": "r04",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Cooperation is higher at richness 0.7 than at 0.4."
+    }
+   ],
+   "note": "Planner agents, institutions off. Falsified if either interval includes zero or has the opposite sign."
+  },
+  {
+   "id": "h2-mobility",
+   "title": "H2 — Mobility and specialization",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "m10",
+     "label": "movement cost 1.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "movementCost": 1000
+     }
+    },
+    {
+     "id": "m20",
+     "label": "movement cost 2.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "movementCost": 2000
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h2",
+     "hypothesis": "H2",
+     "metric": "specialization",
+     "a": "m20",
+     "b": "m10",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Doubling the cost of movement raises the specialization index."
+    }
+   ],
+   "note": "Falsified if the paired difference is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h3-communication",
+   "title": "H3 — Communication range and adoption",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "h2r",
+     "label": "hearing radius 2",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search",
+      "hearingRadius": 2
+     }
+    },
+    {
+     "id": "h9r",
+     "label": "hearing radius 9",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search",
+      "hearingRadius": 9
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h3",
+     "hypothesis": "H3",
+     "metric": "e2",
+     "a": "h9r",
+     "b": "h2r",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "More runs reach E2 when voices carry nine tiles than when they carry two."
+    }
+   ],
+   "note": "Institutions by grammar search. Falsified if the paired difference in the E2 indicator is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h4-diversity",
+   "title": "H4 — Diversity and resilience",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "d02",
+     "label": "diversity 0.2",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "diversity": 200,
+      "shocks": [
+       {
+        "kind": "blight",
+        "minDay": 15,
+        "maxDay": 15,
+        "days": 0,
+        "magnitude": 1000
+       }
+      ]
+     }
+    },
+    {
+     "id": "d10",
+     "label": "diversity 1.0",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "diversity": 1000,
+      "shocks": [
+       {
+        "kind": "blight",
+        "minDay": 15,
+        "maxDay": 15,
+        "days": 0,
+        "magnitude": 1000
+       }
+      ]
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h4",
+     "hypothesis": "H4",
+     "metric": "survival",
+     "a": "d10",
+     "b": "d02",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "After the same blight on day 16, more people survive where temperaments and skills vary more."
+    }
+   ],
+   "note": "Both conditions receive an identical blight on day 16. Falsified if the paired difference is ≤ 0 or its interval includes zero."
+  },
+  {
+   "id": "h5-cadence",
+   "title": "H5 — Cadence has diminishing returns",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "c12",
+     "label": "deliberate every 12 ticks",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "planEvery": 12
+     }
+    },
+    {
+     "id": "c48",
+     "label": "deliberate every 48 ticks",
+     "scenario": "first_light",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off",
+      "planEvery": 48
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h5a",
+     "hypothesis": "H5",
+     "metric": "welfare",
+     "a": "c48",
+     "b": "c12",
+     "kind": "ratio",
+     "predicts": "at-least",
+     "bound": 0.9,
+     "text": "Welfare at cadence 48 is at least 90% of welfare at cadence 12."
+    },
+    {
+     "id": "h5b",
+     "hypothesis": "H5",
+     "metric": "deliberations",
+     "a": "c48",
+     "b": "c12",
+     "kind": "ratio",
+     "predicts": "at-most",
+     "bound": 0.35,
+     "text": "…with at most 35% as many deliberations (the check that the treatment was applied)."
+    }
+   ],
+   "note": "The planner's clock is `planEvery`; between deliberations people act on reflex. Falsified if the lower 95% bound of the welfare ratio is below 0.90."
+  },
+  {
+   "id": "h6-institutions",
+   "title": "H6 — Do institutions have anything to do? (The Long Winter)",
+   "registered": true,
+   "days": 40,
+   "conditions": [
+    {
+     "id": "off",
+     "label": "institutions off",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "off"
+     }
+    },
+    {
+     "id": "scripted",
+     "label": "scripted control",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "scripted_control"
+     }
+    },
+    {
+     "id": "search",
+     "label": "grammar search",
+     "scenario": "long_winter",
+     "overrides": {
+      "policy": "planner",
+      "plannerShare": 1000,
+      "externalShare": 0,
+      "institutions": "grammar_search"
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h6a",
+     "hypothesis": "H6a",
+     "metric": "survival",
+     "a": "scripted",
+     "b": "off",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "text": "Positive control: a charter written by the designers raises survival."
+    },
+    {
+     "id": "h6b",
+     "hypothesis": "H6b",
+     "metric": "survival",
+     "a": "search",
+     "b": "off",
+     "kind": "difference",
+     "predicts": "two-sided",
+     "bound": 0,
+     "text": "Institutions found by non-LLM search change survival (no prediction of sign)."
+    }
+   ],
+   "note": "H6a failing would mean institutional affordances are not materially useful in this world, and every E5 claim is moot."
+  }
+ ],
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16
+ ],
+ "analysis": {
+  "resamples": 10000,
+  "seed": 20261125,
+  "interval": "95% percentile bootstrap over seeds",
+  "multiplicity": "Holm across each study's contrasts"
+ },
+ "plan": null,
+ "runs": 224,
+ "expectedRuns": 224,
+ "machine": {
+  "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+  "cores": 4,
+  "node": "v22.23.5"
+ },
+ "cost": {
+  "apiCalls": 0,
+  "usd": 0
+ },
+ "hashes": [
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 1,
+   "sha256": "9d11e261fb99eab2b28d461c64e934472410e95bd292787c0112144191e5d581",
+   "digest": "996bbb69191014d8"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 2,
+   "sha256": "be3f262fd4d481f1b3b535012736fcfe7a1544fb983b769bb01175f668993d57",
+   "digest": "4f346a7c0112afd9"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 3,
+   "sha256": "5c47f03c4a518210bbfbbd8533c4b00700ed67c0843db2b578e950723d25e6a5",
+   "digest": "7658e260df9241ca"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 4,
+   "sha256": "d7794165a9cf7f1ad05807bc94c6c41a2c04c8320d5e00a23d7f924e29d384f8",
+   "digest": "f327aeb176932950"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 5,
+   "sha256": "6bb33fcb12ebcb49c8c258c5e3631c3c42dea15c22e648c7be630373aad42281",
+   "digest": "2eebfc3ea65e6c6c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 6,
+   "sha256": "514ab169ffbf6e558d502671c516a7105b79efbb08d5f28747cc7e1d3ba3381b",
+   "digest": "3ffe25c730060741"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 7,
+   "sha256": "6bfe5c47ba1618ebe1cd163d487d4ddb6a3333b21c74e83c66b731da1dbb9f8f",
+   "digest": "3659c467591ca669"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 8,
+   "sha256": "f248d2e73e9c4e1a4c02761954189c4a0a6112f951a72d0b424d46a220db855c",
+   "digest": "1fa77c1878bdb79f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 9,
+   "sha256": "89f6c1de274ee050c765802cda4f72e438e8d047c9f5d86f74d00f6435546814",
+   "digest": "0e90f64bbd98223b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 10,
+   "sha256": "66eadc4ef9fb8cb312efe5f0363fcb335c5408f9ee8bacc250323b629161b4be",
+   "digest": "ced02f369ce2a8f3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 11,
+   "sha256": "d83d99645ef91b023f87e1d357d12b5ebade6d736dade684c6fe98fda3eee708",
+   "digest": "1fa5d354ff1208e9"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 12,
+   "sha256": "58f1cde78f62eb6cb2f7f532cf4df440e7a908166c0c0134ef7e609e543152f1",
+   "digest": "fe94c0f733b95041"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 13,
+   "sha256": "d0c3bf71d636c47c0d5d8528d818283e100075a4d902cdfe9e62929b32828a4c",
+   "digest": "9395fa9aca8fe914"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 14,
+   "sha256": "5282d9a5af189e8472807fd0e3edfa13ed761ebe8b5cb8cc57f48ed4d80d0c3c",
+   "digest": "4e3473d783a0b898"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 15,
+   "sha256": "b752280758b78d7c7ea54a8bb8f940154aecc02681f8d833ccc0c0ddf61115f8",
+   "digest": "19bdd9a169d04b1b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r04",
+   "seed": 16,
+   "sha256": "fca06a29604fe555c3549985860ec9b173b878ea86972f1192472ecab78a12d8",
+   "digest": "c50afeadebb61d34"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 1,
+   "sha256": "c88a064ee88632509f14940c50dbadde180d945faad33bbbcef2a2a8d52ce943",
+   "digest": "c6b7a0cfc6089779"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 2,
+   "sha256": "89abc90ee261d307f31a8cc9a0d641218448a8202e2127b445606848a16de49e",
+   "digest": "439c3d8bb0bf5fd2"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 3,
+   "sha256": "24b59a75eb51721383a5784267d25e0db345c5c10f40836bbc25ab21fc36fa62",
+   "digest": "0c8516c718fd6714"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 4,
+   "sha256": "38b19cb75c76dca5c005e11ec93b89e8d8b732f9ae5a15ffbaea4d2ac310844d",
+   "digest": "7b7efa05f322be6d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 5,
+   "sha256": "bf127cebcafa1f2b1ebd1b417374499094da4b0489d3304f4966056fca6cd73e",
+   "digest": "adb6152a69b16394"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 6,
+   "sha256": "06bdf468945ea4a6760e561bbf86008d24c34bf441d74adf99cfe0e70341f34b",
+   "digest": "c7df476cb956fc7c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 7,
+   "sha256": "90243a4cf1ed9a323aeb39f3981d219cd7d85c7d30c94e575364c3fa87074bf1",
+   "digest": "653e1e75b169fd43"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 8,
+   "sha256": "c25f043c2d550dd39d7b73987202e8860fdb29d7fc1f183c2bbb9f89e082fbb2",
+   "digest": "82f831c0b0e9ff6c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 9,
+   "sha256": "98f9775e59478b665f5404d8575bd93c3e3018edb9045a140b8b342ad26718f8",
+   "digest": "f990c9de9a2cb7ca"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 10,
+   "sha256": "904cf6efad7a2f2f9477f194f4756009178e0b3dd94764f24c840eac1f277290",
+   "digest": "e15845792ed79336"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 11,
+   "sha256": "e4308c24f93ae44fd9fff6e830b6dd7e7d3dece79c6792c0cf557470d1eab04a",
+   "digest": "c79080266500837b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 12,
+   "sha256": "b84becbd855e457dbefd0b1e76042094d504b1b57f2750c0d0eaf69dd8fd6679",
+   "digest": "e62abf387f969391"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 13,
+   "sha256": "32160262bd129ac6649cd8fce92a59f9478f509f4e4439008ef2d39d09816204",
+   "digest": "e196482fee812193"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 14,
+   "sha256": "1d87950fb898202bcb80675fd739b205cfdbe0261e920f1c2b1352efd6aea542",
+   "digest": "e256a284a92150d3"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 15,
+   "sha256": "78d2fc693c4c107a07f5810aeaa333b5a95fc9090b9cb35e885068ab1e2cb655",
+   "digest": "c7e03e8b7d77eb72"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r07",
+   "seed": 16,
+   "sha256": "42f0455d47074a524bcab33d64410fc46c758fe1061407179b13ff2caab5f024",
+   "digest": "f9aba9366c087b30"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 1,
+   "sha256": "ae41184b2636dbe4a43026e68facb71aa4ddc4955eae60dbb7051966640a8d87",
+   "digest": "6c03dd641898f7bb"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 2,
+   "sha256": "41cd5cad21c8aa99f5cfc0e2e31ff8e8dd6621dedeb8f7eb6dbab1762eb513f0",
+   "digest": "86d39f15223ca22c"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 3,
+   "sha256": "280dbb86836f0252aeb1f45d14dfd3e6ade7b28e310638185e49a2ba119dac37",
+   "digest": "69c3cb5b2d8dbcf6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 4,
+   "sha256": "4836f20f8baa0f40d238e101b81c57bec9c6e49de45142238fc8024081aa7367",
+   "digest": "1bdebfe3508a3599"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 5,
+   "sha256": "d1a0d232ea19231806d369509045581f1d3ddf5acd8c65f39968ed2bff463227",
+   "digest": "2252ff3eebaddd4b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 6,
+   "sha256": "70a24ffc851584e0c67fd1fffa50d3c0f895b7c44002b9917ce1a69fb7499a2f",
+   "digest": "e40df4b668d113a6"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 7,
+   "sha256": "930ca428f9d4c0a048e7f5cc8b1dd9e87b39e4d2711f84b5b403ffa85a9a9b72",
+   "digest": "442519a6229f146b"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 8,
+   "sha256": "d70273513999e8cb4ccc12a3725219bbc2d2bb074b2f8c8950c1c1ac2a765732",
+   "digest": "41d436b26031155f"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 9,
+   "sha256": "04308a00f3049cf61702afa4313e7ca9a7fcd98584a834afd555c1096ccb6146",
+   "digest": "00527b2764a2b89d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 10,
+   "sha256": "4eb1b6f9e99b6f813a160289cd961b4948b5aeedafc151dbce12454c6268d4a8",
+   "digest": "6349eea43893aaa7"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 11,
+   "sha256": "dc5f72bc9c1c76da156bd82ca2035bf6c8fe1c510b2a2afe6ceaad2f940ff2cf",
+   "digest": "0442473927688369"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 12,
+   "sha256": "d1ae6e2d45de8c064b2828e80baffa45844a30e36855ae17e92f00aec0f94556",
+   "digest": "31e3dcc58054b709"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 13,
+   "sha256": "396f6db2d6f2ea7b478837744988662ba38d19c3f9b18bbba514f91fe376c0a0",
+   "digest": "b535fc9c128c6bfb"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 14,
+   "sha256": "689b7d39f9f1bd93c41cc085e0e4336935d36b90f10507f0ea29093442e6e801",
+   "digest": "2d8253d5357e025d"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 15,
+   "sha256": "9d47191e46fb48674c3515b76d3def1cb4d5f440db4c855ec0de0d8348fd7a59",
+   "digest": "f04c0537dd924893"
+  },
+  {
+   "study": "h1-scarcity",
+   "condition": "r13",
+   "seed": 16,
+   "sha256": "acf8742a0f5d033ea798e0ea6cfaf92cbe706f520508413ed60809faaa4e4397",
+   "digest": "cfdfc507101e9657"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 1,
+   "sha256": "f1c63c3306c89500d0c094dbf6d08f05084c612a78a57e93522ff9bee2d81615",
+   "digest": "d27235ad30ef826d"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 2,
+   "sha256": "c5042f7daed17231096f79e718083f37a4ece5eadee88e0bdb9f02a81d49704e",
+   "digest": "d812facd0bfc0548"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 3,
+   "sha256": "dd9e4905544354801e5fc3288028c1e406249563416ecde54ece3b3ba20eef0c",
+   "digest": "5793c0788567d9b5"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 4,
+   "sha256": "9a147b447647d5a28af93f52b128880eb8b43d97fb1a33721e14bb4fe04c1fa6",
+   "digest": "dada415edf42f8bb"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 5,
+   "sha256": "7ef5e5a861e92620369806585152d52dce15d5e8e8105e3d99a8506fa85cc2c3",
+   "digest": "069c8fc2143a3239"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 6,
+   "sha256": "055a458f07998d4dfe5765927a71aa82725bb8139e0b95c69b71c1daa1132220",
+   "digest": "d1c87edb78bbb6e6"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 7,
+   "sha256": "553c5352449d8b38e714c275b3f73fd77168671180ea91472dc09aec8c0ccc45",
+   "digest": "641c70d42cb4491a"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 8,
+   "sha256": "898260a53cc8c60c71462be9db5d15f5aac3ad34b0ee8a997dd6cb7c29f6466f",
+   "digest": "1afbef14905b3b29"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 9,
+   "sha256": "247013ab19a9f92b50a21d547df44b851fd3556cbaa01f968ae0ac1cacc56d19",
+   "digest": "2ef6e85ac3e52765"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 10,
+   "sha256": "1a244c78877f2fa77cb40f5b19c5e638f2394cfd39106099d4955c039b55f25c",
+   "digest": "4ad19b16093f18f7"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 11,
+   "sha256": "9c9a2c93bca45fe7125bb39117062340e713f089fe1c8b0cb638e657b1c4020b",
+   "digest": "ea258f55b8adac81"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 12,
+   "sha256": "05979ff287eb52427145699eb096a5ed22ff61ff193b8cfbf4c35300fc014914",
+   "digest": "5d7c36d9044e11ca"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 13,
+   "sha256": "90e1f37169a824a5ee84ca205420bd658b4ed89c61becad536e299fb4f5ba6a7",
+   "digest": "edac409449a391f9"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 14,
+   "sha256": "eb395485df4365591fb9b90e8ef30bba9dbd90ceb48ec7ead6f90936d3e551ef",
+   "digest": "29f34b1403c535cf"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 15,
+   "sha256": "f99b02bee401da998673d10bef03fdbe22e92d2dee69a9645ca18dd1bc8f0565",
+   "digest": "a19e88943541cb3e"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m10",
+   "seed": 16,
+   "sha256": "03f9fa8b92117f469409bc174fb37b9c84321d6080d6377456f22a979862421e",
+   "digest": "5c4024f28bcbc153"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 1,
+   "sha256": "046b95dd0546c1052c64a7e5870bc6334c6438c62465a20d0310dbc1a1d22e99",
+   "digest": "a4bbe3f564f89d40"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 2,
+   "sha256": "3687f37f72548e55de89f05b120745eb3ebe9cab7ccfcd4ff2087ea233db443b",
+   "digest": "d4af9e1e0a2da49b"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 3,
+   "sha256": "a3183014c82a0be3decd787e3eff51702ac6180c3b00828460f46b38bf916bc2",
+   "digest": "ae7f2802e190e4ec"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 4,
+   "sha256": "e8d97a7dfe7408dc40849d4e3bd900a6c5da592eea4f9d1825e54651cb275e1b",
+   "digest": "75ffe473d019b29c"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 5,
+   "sha256": "849f27cf684866f674300047ae37eeae6125db3652cfce47cf1db208fd353e8d",
+   "digest": "3383a0758405cefc"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 6,
+   "sha256": "7ee0c3afc12d95f0f54621e0d6052d5f3f46b8408ac73f10de2f014275ae1db0",
+   "digest": "3e1f3fb6af2cfbc1"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 7,
+   "sha256": "b14c31ece731e4e786498b9fc7777403599b03f3afb4c0b18d37b7d6a4760737",
+   "digest": "463103a59bf2a09d"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 8,
+   "sha256": "760d36c22eab503c42077f99f22a9731c467c31f68c02e7b63d059f5415847ae",
+   "digest": "17da3f6bc7a9cdf7"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 9,
+   "sha256": "77804c36d7dd3ed0f3587f2081f4f571f083b6c7acb0c6078e4f51a7933f6e78",
+   "digest": "1873822920194ac5"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 10,
+   "sha256": "3caf282d01003e1484708ecb75b50d77672c430027cb4c8af812f2047aaaeff0",
+   "digest": "c1a4bd91dafe44d5"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 11,
+   "sha256": "339917e68fc6442387f9781b0ed525f5a3b9fbd8a5518b8cff4248a103eac640",
+   "digest": "0be4e375e9556ede"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 12,
+   "sha256": "6e2455a5b174bb69816c72383db65347ecb616346b7c1f48df043975e0cfb261",
+   "digest": "d149aa2c26df4d02"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 13,
+   "sha256": "d342727c83b2454ce11d1d9cbaa5064b6e3e514ee364193dc3ec2fa30bc24133",
+   "digest": "e2b621d93a973829"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 14,
+   "sha256": "a3009d8249e9c1ef2bb9da6640fac5adfa0db3f800925444cd980726ca68e8de",
+   "digest": "0238cb44202a2c7a"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 15,
+   "sha256": "f2bd3cbc61fe96ca77d7166c9582436a112372c4d77310bbd3d1af9aff92cf6d",
+   "digest": "b742d0b2f8e86a23"
+  },
+  {
+   "study": "h2-mobility",
+   "condition": "m20",
+   "seed": 16,
+   "sha256": "b9c1573bbffe8263f7acdb4112733db1e1c2cc593ffd1f3639d50fbbd762f358",
+   "digest": "380d973777b5c062"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 1,
+   "sha256": "f7789fc15b6b2dbc5d83590f4b518532302bf24f091f70ccb24729d7ae833550",
+   "digest": "ee57fd408f93ae4a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 2,
+   "sha256": "95a7c9b3d32cd28a4f76828b6e042aa06ee039ff921476867b23aa6c1e88b940",
+   "digest": "a8f17935e1e2968e"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 3,
+   "sha256": "d25f076e24eef26a12fff22d5b042aaadc410633d73098b2a6e4f6e50a7afb3b",
+   "digest": "a2c338d5619d23d7"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 4,
+   "sha256": "482b11a39a949e004e7ad45f984af277e81eee63597cea2c5763593fa344b924",
+   "digest": "aceef5da08474dc9"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 5,
+   "sha256": "d29a0bcc5aef6a886b9aac5eeb5170fb2a8c948b3149118e67bf55bf292f9ec5",
+   "digest": "74c51edefcb5cdda"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 6,
+   "sha256": "a5d22473ded4c72858a1c57221a0909dd101e6a2ebfc2ac46305145aa479728c",
+   "digest": "c07e0943a1e26951"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 7,
+   "sha256": "881192770503888ef07b7a8b7cdfd68bc99080b5d67d8cc180b5fa36ac92ed7d",
+   "digest": "1fd787876c75b1cf"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 8,
+   "sha256": "d56b96701ffc419fb366a5f20666a5cc58c864a4c4e0131caf140dcc29ed7ec8",
+   "digest": "8c1c586d01e91c1a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 9,
+   "sha256": "fb118b4c0bb4c2226c02326ca27672c9e773eb74f83324a7677b081d5185376c",
+   "digest": "c10f378a21abd56b"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 10,
+   "sha256": "7f0b70fa8a56654764d112204be4aefa18427c7d02498aa6423e2cb386e3bf9e",
+   "digest": "a11514ab0592c479"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 11,
+   "sha256": "cfd218b67ca066b95adbd15b9825fe5aa6ffa3a2999b715948db3e8e9cafd9be",
+   "digest": "c5cfc7ef14462b9b"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 12,
+   "sha256": "9e16a49299ae4f78f20cedbacef02151864c46b4d3c6bce91ba1a3e86f7a04c6",
+   "digest": "be6adf50b4c4e945"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 13,
+   "sha256": "4909eff70693c2c566ce3611138aacc925f829377078cdc787eb76189c00116c",
+   "digest": "f413c16fde6b9f13"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 14,
+   "sha256": "3274441cc51d82e3e23cf6d8b3999ec392dad849d0248413caf4b9378f71b3a6",
+   "digest": "dfb00acb4e232728"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 15,
+   "sha256": "38756a69166549709d5c6385471e561100840a85c909d4d0d21646139aff8cbb",
+   "digest": "3faa7b7654e01196"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h2r",
+   "seed": 16,
+   "sha256": "83de1e8774903d36310659e91451b9beb08146a15193f0e17c0bb70e916702e5",
+   "digest": "d8dfb7583d5366ee"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 1,
+   "sha256": "9f310d9c117e0b40c76550d77ceb7c148dff5ef254dbde48756c25b311505e82",
+   "digest": "60684c6a12a5e8f3"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 2,
+   "sha256": "ed598431a734abc4f488fba041f466594a4abc70595c55c8f9ea5bb1a5a1de90",
+   "digest": "500cbe5c71e634b6"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 3,
+   "sha256": "4157a9cba03401c8e373102361085a9a61c4a44352dbe16cf9019fad906c38e0",
+   "digest": "e79ad507e7c70404"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 4,
+   "sha256": "d9f708ae6318e8b258a829b50e2c7b96ab0725380d7facb78a8bf2bd7afa5933",
+   "digest": "10ea90c64e584b3e"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 5,
+   "sha256": "18c42d5442904ef64ab9a11517543d97afaf715496236bf06eeddc187684c9ad",
+   "digest": "bb0ab7ef77d1368f"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 6,
+   "sha256": "ef0e3e7c44430c4e8c5d1862ad1951ac01c025eb1164c62a34e24df86b5118bd",
+   "digest": "7d09ad09933828b6"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 7,
+   "sha256": "983b14f27952a781a8764404d57d7696c215224d00905f77a4c8231f06148bf1",
+   "digest": "95f2e0b2cf47252b"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 8,
+   "sha256": "671837791bb69d47c8b349c104569ff66ea2bc031d5973a88b3d8fc215a67a04",
+   "digest": "c74a9765b2a41595"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 9,
+   "sha256": "5e302460b315d11091ea41de2e2d44e6f001ac2ed97eb15062363a9540b3190a",
+   "digest": "e8eb33502a96f19a"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 10,
+   "sha256": "7913f82704cc21dd573c540a48d33bec9317e2220653149839423493f51d6b54",
+   "digest": "dd17b6609fc87189"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 11,
+   "sha256": "711eb7af22c28d3819842d3c43282697e0f6958a95c1cbb5cbb268e01ab967c3",
+   "digest": "0981ace59e200f6e"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 12,
+   "sha256": "1135d6967859dd24345b3e1f576c96648a73bba446fab7c557ad1e4d05d86f69",
+   "digest": "2bb69380b30375bd"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 13,
+   "sha256": "e473b0a265479683b9020723a22eb68274dac3a914d6534d24c7dcf434a812bd",
+   "digest": "80743330fb62e245"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 14,
+   "sha256": "c83e896415a83451f3697e321a47fa5be11478d2fb7c4d06fe72c8392d0e5f8b",
+   "digest": "ee431afe1b07b3a5"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 15,
+   "sha256": "2866bb2e4b130165cc7fddd9beaf268d6635d10dcfeb57320b70933990b64175",
+   "digest": "a39f1949282fc719"
+  },
+  {
+   "study": "h3-communication",
+   "condition": "h9r",
+   "seed": 16,
+   "sha256": "9d1cee8f645be0224bb12800d36ebc460d68e976208a08261751693f562f728f",
+   "digest": "99dbbabf01ddb00f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 1,
+   "sha256": "7a53589d0ca8491bda9ce3b78fef9aca547a13c743bcf6c54dd9b0a96c35f54d",
+   "digest": "74e251fbc3a005ab"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 2,
+   "sha256": "28846974fdeeba6dd68e7ab1d703e40a20d33c44df275c948a9e2d5cd77a44d6",
+   "digest": "d714e7955e0d4adb"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 3,
+   "sha256": "99d97308baf7b81e935bc9fcc22e027e00beb970bcb615313d0578996b431172",
+   "digest": "4abf8189fd0c82e0"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 4,
+   "sha256": "00850697b696f12c9cca3e9daeb42d03139bd4ae643289c58dd9db5f6a81fde1",
+   "digest": "02a5597a99caf438"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 5,
+   "sha256": "04ef04c5728f62038dabb6db2d05c9cc8ba4ee68ccac1d0cf3277459db5ab6e2",
+   "digest": "b0221318edf84ab2"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 6,
+   "sha256": "92972e36fcc9af385ac7cff12eab5b910648508fb45274f4db2ac00dfdf9eeff",
+   "digest": "08a3666c3b1645f3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 7,
+   "sha256": "458c2bf65662c960c3c88d7b6477e997f09f77b68c6cef6fd2fe641077f1bfd5",
+   "digest": "4508984b551e1bab"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 8,
+   "sha256": "7a4f8502242966d6b7ac5c717d6df616d54421f8a6a24a2df8d6ee54f6a9f048",
+   "digest": "970e309f9647222b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 9,
+   "sha256": "a356ef40a3408374d6e39a63a7936b9657ff35b2164bdd3bdb1c0290a5f39612",
+   "digest": "867130d1eb818aa6"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 10,
+   "sha256": "5df37f12225854f45509a3ea5096d3194c65f21d74cb0171879b58d47818e6e2",
+   "digest": "1b3913419d01b082"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 11,
+   "sha256": "4cc7a2118092d7391b48f37cda3a085b89e9e97a48532557b1540535996b2893",
+   "digest": "350997f72389a4e7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 12,
+   "sha256": "c24cfd35a3ef769b45b6c2bd5a7e98a058390e21b3d0ea7a15ff3e6b5ff58783",
+   "digest": "5cde133166bc6a99"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 13,
+   "sha256": "f42b5b944e3e58c66024cb3e8591838ae4584011b47fefcf139988ad2b4bad30",
+   "digest": "39e839a835644aac"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 14,
+   "sha256": "3f600357e8a764d88ab7aa77ed80c57e684141238b0c6f3200112816ed0d9a7e",
+   "digest": "2de199af5e1c96b1"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 15,
+   "sha256": "befc8fc46496a51e47c455af598b172b399f722463e4819ba05dd7cecda1e1b8",
+   "digest": "c06c781a9fd5d03b"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d02",
+   "seed": 16,
+   "sha256": "7fdca69b09825ffc88ee7fb5e9b559d7f030cc6ea32a1eb675c78b4347e360a5",
+   "digest": "fdad538ec7604ef7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 1,
+   "sha256": "52c16f0c210f58948fd9659551005641ee48ccb53141cba9b19e1d823c69ea62",
+   "digest": "79f7bd189d1e26c7"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 2,
+   "sha256": "172a4bfd55d00b78f42e35bb3272fdc5e6c24a5a901b3920d455fbe4ce7e9da5",
+   "digest": "d7fa607f6df05ea5"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 3,
+   "sha256": "055272bd740dbabc0adcda0413557ff3030e47cb01c964fa9045784d99f4b9ee",
+   "digest": "1fb873e7d08305d0"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 4,
+   "sha256": "d3b0ae3919ac716a334bd3bf0a57ed58fd5a4acc002e95e9723d916e870a0ed6",
+   "digest": "2aaab0299639e727"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 5,
+   "sha256": "98f204b354bbac288db6f4f0fe734a985c47dc0dbf9be8ebc02da4da83991563",
+   "digest": "d86b51af85a4fa8e"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 6,
+   "sha256": "32047c84b3edb7c6f75720be67ababed0dbf8b7836a37e85d0f0d27964cebfec",
+   "digest": "4a1a12b4d677b460"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 7,
+   "sha256": "d20e2d9c2e0394ffad07cee53dfb202e2f8230fd71ec04c45e12eaa7b0368203",
+   "digest": "2f115119e2e60d54"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 8,
+   "sha256": "a42ccdf329ac455e034f2b1288e331e82262364f166034c948ad19bd53712ea3",
+   "digest": "55bc31507cbe4c13"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 9,
+   "sha256": "a060ff0a9a61f874cebc63f47301049faf8778f917c8a617d24ac8d915924c28",
+   "digest": "aa864dc2d5f8023f"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 10,
+   "sha256": "7c89991ddaedfff6f2058ba9b5286ae89fa64aef9b018b4d5cc7d769b9d1a3bd",
+   "digest": "e4e61f1d16d05fb3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 11,
+   "sha256": "83f8b19de8fe3a1f690561ec83d473ae0b891e5e96f785b8b75bfaa535991205",
+   "digest": "298d70757d6af9ac"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 12,
+   "sha256": "a56406b6bc7f27f2c64120c19a52f4830851eafb4270150afa0efee3e0babc54",
+   "digest": "dd1b065bab6913a3"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 13,
+   "sha256": "e1c351025a0836a112b71726eb82aa00d4f003a3825ba4dd8ab11ab8dab43ec2",
+   "digest": "cda1753db3570304"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 14,
+   "sha256": "a29a4c637aae6f93bf791b3fa96d9eb279ffd8f1fca6cd7ca41faaeadc946e29",
+   "digest": "21c75fc24b3c0027"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 15,
+   "sha256": "db5e59838e3e02db3f3ccd830ace5be3e1fa01b1627138bf9a88d2ec4ea59c58",
+   "digest": "03f35aa084d4d7ec"
+  },
+  {
+   "study": "h4-diversity",
+   "condition": "d10",
+   "seed": 16,
+   "sha256": "edc754e1fed63712abbb0e344dec100b32d6e1c51c65bcbf13221be1e567e5fd",
+   "digest": "ca1d0622ee5d6e1e"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 1,
+   "sha256": "af46d1b1b2f9bfd18976e18dea40ad0e6e02801928d5b11802dc12df14ae9e4a",
+   "digest": "22d9eab855c879bc"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 2,
+   "sha256": "896177455c313a0e342cf378f36d6f3db1e414bf6599d7fa964a4c072f5bbdcc",
+   "digest": "89d83e9f76633c79"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 3,
+   "sha256": "9344b2037f724962ebf6f6482937f6347cb8a8416140a1acfe4b4cd096815cdc",
+   "digest": "477ed401627b7f20"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 4,
+   "sha256": "68a41a6ee9c5f4f3417f4b49ac328b1aa152383f52e550ffcbd7f3d08df0b415",
+   "digest": "91d023ee340b5379"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 5,
+   "sha256": "d659caac855bdf1b3934008e15d03afee837559cb85a7857a55eaac2227b81af",
+   "digest": "ff32bb9ebaa6e2f3"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 6,
+   "sha256": "1dae93cb56f125b440b638ad815ab83deb73cfc2828ebb06d9e1585c9b037e78",
+   "digest": "51b66898232903e3"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 7,
+   "sha256": "6305a67589d0ebfdbdf9fce9dd44570a7d2294ad642c13724558dc1b70cd819c",
+   "digest": "1960e3a3052e77eb"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 8,
+   "sha256": "1723f7f6f355a7530cd243ca4ec42d012aa83b95573aef8e5cee7d34801696ca",
+   "digest": "40facad94586243c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 9,
+   "sha256": "76378fc4dd3e10b6211de0c15dd8064e3eb93b82351c367ecd4ff2f6879b298f",
+   "digest": "5997c3ac7fbe2c11"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 10,
+   "sha256": "d4c1ce6bb88fae88394828a22c312ad79d7f464219c1c0a3f9c6cb10958c69a2",
+   "digest": "0023cf91c2200cab"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 11,
+   "sha256": "019d3d8cd11c409931c6aea8a4d92c06f2a8da2e1794dec013a3452724c9578c",
+   "digest": "6b8677570033c44a"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 12,
+   "sha256": "4d7d00f5e848c9f548286cc0780dc51c6bdd77df215d7b783531a1be80e1c5f8",
+   "digest": "cbb7cc2b638813e6"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 13,
+   "sha256": "ceb674a9b9ce0ab7ee25af0c76d8b9f77f510e9956313c2861114963de54cf36",
+   "digest": "e5930777aa9fc244"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 14,
+   "sha256": "1c4b804bd01bdb2e2f62be85ccc757a6bcb2cc6df560ed69fe9563b0d087e140",
+   "digest": "051e6732d14cfb2a"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 15,
+   "sha256": "569557f9cd7fb59827337be9ee5a5086f0e0454235e55a73a8aac9322b54a7d3",
+   "digest": "6ded6e35fcf77fca"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c12",
+   "seed": 16,
+   "sha256": "bd2e180236b08a21e7846acf6ae011a8a8b83d0f276778902ad350c8e5e41b05",
+   "digest": "5b2e14c1a3f68b98"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 1,
+   "sha256": "08e5dbda252b8cd91b8fcd12b67111fe4555f56232f19bf1c6fce04ebc49814a",
+   "digest": "1ea3bded03fed46c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 2,
+   "sha256": "03bc590bd4771d05c3bb6589620dc50d31a17cff9329f67f26c95f79ede4863a",
+   "digest": "f7ad58fe87a785e2"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 3,
+   "sha256": "3f529883550c385a2da69123ee5fe17a949645c034c0fce09891e27ea978944a",
+   "digest": "8068578d352e3407"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 4,
+   "sha256": "bfe21a6503fec4b2769e7f5a56b00b04dfb4560f634324b74356db69930989c0",
+   "digest": "3e09a3d1df4d8038"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 5,
+   "sha256": "aa028fa646ed0da8ece2075cf98ba7f6ff3db07d37e1692fb5e77a12f3243c8e",
+   "digest": "7ebc2ebcb630ba48"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 6,
+   "sha256": "3522fc3224e863dead98d7e639863f53c4cf971eb22b4f4d6e1114b314b165b0",
+   "digest": "bfe1172310fb8168"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 7,
+   "sha256": "969b09853452a7d76c488624400ae5500a1e3fcf8ef8463ee0fb976cf5f9b804",
+   "digest": "52a5e068c69cbf14"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 8,
+   "sha256": "1588d7a805536975091d73fed1b171b984c7109f5992d23034096b6d1fd21102",
+   "digest": "d5443fea6851d6e4"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 9,
+   "sha256": "d5c24867bf991406e5b89711b8e4e08b1b00cbedc8b258aae0a341f91c11413f",
+   "digest": "adcb49ede89d5ec0"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 10,
+   "sha256": "27e1c4631e5de253fc2e0f81a93eb04ba26ec50f57295dce644139743028b55a",
+   "digest": "d6111fa689beeee5"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 11,
+   "sha256": "93f088f17a9fe2efa6f5d4cc63c7d6be049dffb2042f3aba8255cbdfd1569069",
+   "digest": "9e7536ec19773c94"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 12,
+   "sha256": "85c0834a5cf67f1bd2bcadfd2d373320c38527ea7623668d2d657e1c7a6f01e2",
+   "digest": "78f07b5c03c299c4"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 13,
+   "sha256": "6ffa7ebdc064046eb019fd4ae2786e3dbe06ff87057b02ef6aeb1db7adb5c22f",
+   "digest": "7ef0ec88dcadc610"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 14,
+   "sha256": "655b21153d6c951d968091e016fb28e3d18c14accb7645951a8dd36bd6870565",
+   "digest": "4377eebc5ab1da4c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 15,
+   "sha256": "290c824ab16848c471c007188d1cdd8459fe88b6a60bddbc678c8adb4e4d636f",
+   "digest": "cb765bea9ac1446c"
+  },
+  {
+   "study": "h5-cadence",
+   "condition": "c48",
+   "seed": 16,
+   "sha256": "9a19439557c51ec236e1604d826dc82242464543f68af71a5471a8d6d014ec2c",
+   "digest": "39fc8143d2818124"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 1,
+   "sha256": "af3f095f19ea7ce994535fd49d9beb15e0bc05e84944718075c7ec36ad7c7b33",
+   "digest": "02cea7912eaf1eaf"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 2,
+   "sha256": "17c0ae53acf3fe1bbbb4d548c98de19635017ea26973b99a5847aa3f49f669e5",
+   "digest": "6dc5608542cbb48d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 3,
+   "sha256": "11ba119979066ae2260e4c24e1d8e04607346f445a66dd33304052c2148ffac1",
+   "digest": "7d1668bf886b7f55"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 4,
+   "sha256": "42d6748863a5a726f9f99ce2fbdb7054aaee83b24d4625a691ddbaa45906b87c",
+   "digest": "7e34abb51ea2e95f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 5,
+   "sha256": "fd6d86f939b1333ae335edf291556a1517104520356277d0b8d5325e14945ba7",
+   "digest": "34a8e9feee7bad92"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 6,
+   "sha256": "f79aec226a963c60c4dcfbfc7dd99093003bac25a7fa96186d69281db69522b0",
+   "digest": "3e02017339d1d51e"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 7,
+   "sha256": "219cf27efe795f157847abc6fc44d154298d5254f27288f05fdf5ed0431593d7",
+   "digest": "6ad8cfc1a21bf137"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 8,
+   "sha256": "6303422260c8997c93f9cbfc0016233625612969879fe36aa3573fba620c8ee2",
+   "digest": "7c01183c35aa5fe6"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 9,
+   "sha256": "6127caf79a4788ecd1c1f3873cabf55cc46c2a4351cb1d7100442c243b780434",
+   "digest": "1b483d9c1a755997"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 10,
+   "sha256": "f86f84f96765d15582c86486b2b72edace53c9e8ba8978d1c7d6ac4450c43951",
+   "digest": "503b54ef548d99dc"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 11,
+   "sha256": "10a25be1ebc1c8ba800046824d9907e9b746a48836761af33fc6c2a00664220e",
+   "digest": "0fec795fdd485db3"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 12,
+   "sha256": "7a63900fe42b61a6f3240e271a7ced8f0cab0b0b965a894ae462ea0d3978e70a",
+   "digest": "410e87f78c91f228"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 13,
+   "sha256": "44cad46d4a1b246ef40b03e702fc2c0aa8517031746fb76db009b3dcaf3119ec",
+   "digest": "ad7595ed18be9789"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 14,
+   "sha256": "633607835d0f534b5ac621dcd14d3b54328c97e66c1137ac0bff5d9f9eb68a35",
+   "digest": "dd1f93bbd6cb5e70"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 15,
+   "sha256": "4de5a97bbd7343cea31906400f427620ae5a43c4938587e3bbee01540aff024d",
+   "digest": "9a250dbc72ced4c0"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "off",
+   "seed": 16,
+   "sha256": "e883a7a53eef63ef815294d98b528f1de7e44883f95841febd736305094840a3",
+   "digest": "98e1b5f156b44237"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 1,
+   "sha256": "c2c7a7d5336edfbdad9ff44521b33a31d0352d5e68c2cab7e1d1ae61a93cf9dd",
+   "digest": "7ddbe6dda2c1315a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 2,
+   "sha256": "fbede631a2946ae331d5fce38f33ca3aea6b3b83e5134c6952be7497748ba09c",
+   "digest": "4e9cdfd76818e31e"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 3,
+   "sha256": "c775097ca2ae67690351e30f879bcff2241e0ce187dc53f12d9148c62958e2f0",
+   "digest": "5146b03cb9df3463"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 4,
+   "sha256": "495b4f2058043b31887928a4a91aa5184b04a03fb1fb93107e6a2a3efca50578",
+   "digest": "133d603b318be9af"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 5,
+   "sha256": "ac6b8a158c025fe8c3f4ab08ff333d6d11a1a7d5f155d535b1f391961f21eb4b",
+   "digest": "3cedabde3ea68a21"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 6,
+   "sha256": "39af0642a665bf7ee881847d1d160d5a22bcbde77091b102ecf01ae7d3aff09a",
+   "digest": "8b03fb1d4f45033d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 7,
+   "sha256": "25f2adcad757630f9161a2ceff9d912d8b11b34e8a8589edad2300d4bf76f93c",
+   "digest": "660b227ca9d8c95b"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 8,
+   "sha256": "50f57ae7d5ee8795036d93c9c16bdb35b6c6b82c9d558173c6348b05447ccc80",
+   "digest": "98009859e1dde7d6"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 9,
+   "sha256": "335e7619008e4e8313af370fd616b9fd05ef4d607bace151bac1a0330975cc0d",
+   "digest": "88a91a58dce578cf"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 10,
+   "sha256": "fe84f3c820163a1f9e29019982bdbb71d5d66294a01ea2a16b3e580a73bc44b5",
+   "digest": "35b66bd1b6fca68c"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 11,
+   "sha256": "e6b2ab0753fc987cb0e0012cf9c54c64671b8767115dad90d7ee669eec2bd85f",
+   "digest": "a8e566eacc99fa04"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 12,
+   "sha256": "f18efa57f19811ef85ae5ecfcacc7d40cbddfb19eab996f78566cf748ffbe14e",
+   "digest": "a83350f1846fcbd5"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 13,
+   "sha256": "e71f1b3526577b079dd59e33c1fba74f282e1405a00586efd36c9b1b67e51154",
+   "digest": "181ecf31abe2ffd8"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 14,
+   "sha256": "d85e099d36df56adc182cac6913b47fdf94c36249727d5dc41d945bae6d3ea3a",
+   "digest": "f09df9adb53fa6fd"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 15,
+   "sha256": "4224ceae435e91438eb91e85cfc1377f708c8a9de611b1d801e541673192d5c8",
+   "digest": "096c735ce7c380d2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "scripted",
+   "seed": 16,
+   "sha256": "9f50107c3fc48044a70f1bee035a32720f3256c45015ab183a2e6cf0672fb59b",
+   "digest": "71e18b027b2c44ba"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 1,
+   "sha256": "8f78908ee39f062624c4a7cf7d1810f174ca761619061be4544a059128a2457d",
+   "digest": "6ce8f40e23eecb33"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 2,
+   "sha256": "07a1caf9ba075057fade16d76d1edb5dc268d0bfc46618f5d52b4e9f7f87a164",
+   "digest": "dc3028ff8abe3585"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 3,
+   "sha256": "6efb9823c19397ec975de3807fbe5e0bd8c6f28d866ad5559b9620eef830a1b3",
+   "digest": "0901d67e4aa5551b"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 4,
+   "sha256": "726fb6a53a2d125419348233a21742f0e9d35a3246b90891f018c1719467e4cb",
+   "digest": "d17676732b480c0a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 5,
+   "sha256": "b48f6fc9ea76d44e268f032080c3e7228c5dad6b269fa2c333b289e8451c4c99",
+   "digest": "7027e9b39244da2d"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 6,
+   "sha256": "009792a837f6fe4d70ec1edbf11d4c649db4fa7c9da68a743e00248578da9ba4",
+   "digest": "6b15e7a28168369f"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 7,
+   "sha256": "2ef60143e64c1bca9daaa363dddc53f520162b23203686f4f6c28103dd33a6df",
+   "digest": "9563c5837d47fc5a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 8,
+   "sha256": "726ae63c4a65815729cd1480be9f86216e579b4562f5b84eddb624325ee3a426",
+   "digest": "676a2166a9de0460"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 9,
+   "sha256": "558a0440c4d5c92c4a3dd702a35acd6eb4e72452857b7360174328a818998069",
+   "digest": "80c7bc092c1af4e9"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 10,
+   "sha256": "c153b12c6fbf94de0345d4c4b273150c080272ec962e2fd0f8cacaa2071db5ae",
+   "digest": "5d6ca99e1b9b7262"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 11,
+   "sha256": "0772d2357af539bf4638aa6403d26ba9f071961532b6f1c1280ae97973d42e74",
+   "digest": "77c6847951eaba99"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 12,
+   "sha256": "ff6d8a674e60064fc0bfef45933f19d844a5a6c34af0cf4b1b1b87e72e7961d7",
+   "digest": "05e8098df559c78a"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 13,
+   "sha256": "114a925cb428f860504e2010c57bd947708a49829182809c8aa29c2fcdbdf730",
+   "digest": "c5d2e05e84786beb"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 14,
+   "sha256": "812415fbe303229bd969b497d26a634f56590bfdfa4a2180985283d971ca9fb8",
+   "digest": "7daea71b17ad7df2"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 15,
+   "sha256": "1afa130b66e34bd4d51dfee20cd3ea6556e7de2554f14b0b015bc42e3bc7a2e9",
+   "digest": "4baade3b1166a2ce"
+  },
+  {
+   "study": "h6-institutions",
+   "condition": "search",
+   "seed": 16,
+   "sha256": "6129bb0d5a26f576d8ca791189c98f25f65901ebf14ab483b314b9a79b6f29b3",
+   "digest": "9e09b646e4878093"
+  }
+ ]
+}

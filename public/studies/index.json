@@ -1,0 +1,11 @@
+{
+  "bundles": [
+    {
+      "id": "pilot",
+      "title": "Pilot of the registered studies (development seeds 1–16)",
+      "seedClass": "pilot",
+      "date": "2026-11-25",
+      "path": "/studies/pilot"
+    }
+  ]
+}

@@ -2,16 +2,22 @@
 
 import {
   CloudRain,
+  FlaskConical,
   FolderOpen,
+  History as HistoryIcon,
   Info,
   Leaf,
+  Map as MapIcon,
   Megaphone,
+  NotebookPen,
   Save,
   Snowflake,
   Sprout,
   Sun,
   Trash2,
   UsersRound,
+  Volume2,
+  VolumeX,
   Waves,
   X,
 } from "lucide-react";
@@ -23,7 +29,7 @@ import { useController } from "./context";
 import styles from "./game.module.css";
 import { clock, type ChronicleGroup } from "./text";
 
-function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
   return (
     <div className={styles.panelHead}>
       <div className={styles.panelTitle}>
@@ -55,6 +61,7 @@ export function Chronicle() {
   const roster = useGame((s) => s.roster);
   const [filter, setFilter] = useState<"all" | ChronicleGroup>("all");
   const [onlySelected, setOnlySelected] = useState(false);
+  const [traced, setTraced] = useState<{ id: number; lines: string[] } | null>(null);
   const selectedAgent = selection?.type === "agent" ? selection.id : -1;
 
   const shown = useMemo(() => {
@@ -98,6 +105,26 @@ export function Chronicle() {
                       {cause ? <span className={styles.cause}>Recorded cause: {cause.text}</span> : null}
                     </span>
                   </button>
+                  {e.parents.length ? (
+                    <button
+                      type="button"
+                      className={styles.whyButton}
+                      aria-expanded={traced?.id === e.id}
+                      onClick={() => {
+                        if (traced?.id === e.id) setTraced(null);
+                        else void controller.trace(e).then((lines) => setTraced({ id: e.id, lines }));
+                      }}
+                      data-testid={`why-${e.id}`}
+                    >
+                      {traced?.id === e.id ? "Hide what led to this" : "What led to this?"}
+                    </button>
+                  ) : null}
+                  {traced?.id === e.id ? (
+                    <ol className={styles.trace} data-testid="trace">
+                      {traced.lines.length ? traced.lines.map((line, i) => <li key={i}>{line}</li>) : <li>The engine recorded causes for this, but they are older than it keeps.</li>}
+                      <li className={styles.traceNote}>These are links the engine recorded when it happened — who decided what, and what that led to. They are not inferences, and they are not the whole story.</li>
+                    </ol>
+                  ) : null}
                 </li>
               );
             })}
@@ -187,6 +214,8 @@ export function MenuPanel() {
   const saves = useGame((s) => s.saves);
   const settings = useGame((s) => s.settings);
   const world = useGame((s) => s.world);
+  const replay = useGame((s) => s.hud?.replay ?? null);
+  const soundOn = useGame((s) => s.soundOn);
   const close = () => controller.openPanel("menu");
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
@@ -194,14 +223,33 @@ export function MenuPanel() {
         <PanelHead kicker="This world" title="Menu" onClose={close} testId="menu" />
         <div className={styles.panelBody}>
           <div className={styles.actions} style={{ marginTop: 0 }}>
-            <button type="button" className={styles.button} data-variant="primary" onClick={() => void controller.save()} data-testid="save-game">
-              <Save aria-hidden />
-              Save this world
+            {replay ? null : (
+              <button type="button" className={styles.button} data-variant="primary" onClick={() => void controller.save()} data-testid="save-game">
+                <Save aria-hidden />
+                Save this world
+              </button>
+            )}
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("journal")} data-testid="menu-journal">
+              <NotebookPen aria-hidden />
+              Field journal
+            </button>
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("atlas")} data-testid="menu-atlas">
+              <MapIcon aria-hidden />
+              Atlas
+            </button>
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("history")} data-testid="menu-history">
+              <HistoryIcon aria-hidden />
+              History
             </button>
             <button type="button" className={styles.button} onClick={() => controller.openPanel("affordances")} data-testid="open-affordances">
               <Info aria-hidden />
               What was designed
             </button>
+            {/* a new tab, so that the world being watched is still there afterwards */}
+            <a className={styles.button} href="/lab" target="_blank" rel="noopener" data-testid="menu-lab">
+              <FlaskConical aria-hidden />
+              Laboratory
+            </a>
             <button type="button" className={styles.button} onClick={() => void controller.toTitle()} data-testid="to-title">
               Leave to title
             </button>
@@ -262,10 +310,42 @@ export function MenuPanel() {
           </div>
 
           <div className={styles.section}>
+            <div className={styles.sectionTitle}>
+              Sound <span>made in your browser from the weather, the hour and what you are looking at</span>
+            </div>
+            <div className={styles.formRow}>
+              <button type="button" className={styles.button} aria-pressed={soundOn} onClick={() => void controller.setSound(!soundOn)} data-testid="setting-sound">
+                {soundOn ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+                {soundOn ? "Sound is on" : "Turn sound on"}
+              </button>
+            </div>
+            <div className={styles.sliders}>
+              {(
+                [
+                  ["master", "Overall"],
+                  ["ambience", "Weather and wildlife"],
+                  ["music", "Music"],
+                  ["cues", "Event tones"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className={styles.slider}>
+                  <span>{label}</span>
+                  <input type="range" min={0} max={100} step={5} value={Math.round(settings.levels[key] * 100)} onChange={(e) => controller.setSoundLevels({ [key]: Number(e.target.value) / 100 })} data-testid={`level-${key}`} />
+                  <output className="tnum">{Math.round(settings.levels[key] * 100)}</output>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.sectionTitle}>About this run</div>
             <p className={styles.muted}>
               Engine {ENGINE_VERSION} · affordances {AFFORDANCE_VERSION}
-              {world ? ` · world ${world.terrainHash.slice(0, 12)} · config ${world.configHash.slice(0, 12)}` : ""}. Every citizen here is driven by a deterministic BASELINE policy, not a language model. No data leaves this device.{" "}
+              {world ? ` · world ${world.terrainHash.slice(0, 12)} · config ${world.configHash.slice(0, 12)}` : ""}.{" "}
+              {replay
+                ? `This is a recording (${replay.provider === "anthropic" ? `language model ${replay.model}` : replay.provider === "mock" ? "MOCK minds, a deterministic test double" : "baseline minds"}): ${replay.decisions} decisions made when it was recorded are replayed here, and nobody is consulted now.`
+                : "Every citizen here is driven by a deterministic BASELINE policy, not a language model."}{" "}
+              No data leaves this device.{" "}
               <Link href="/diagnostics">System check</Link>
             </p>
           </div>
@@ -285,7 +365,8 @@ export function AffordancesPanel() {
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
       <section className={`${styles.paper} ${styles.sheet} ${styles.sheetWide}`} role="dialog" aria-modal="true" aria-labelledby="affordances-title" data-testid="affordances">
         <PanelHead kicker={`Registry ${AFFORDANCE_VERSION}`} title="What was designed" onClose={close} testId="affordances" />
-        <div className={styles.panelBody}>
+        {/* a long page of text with nothing in it to tab to: the page itself takes focus so the keyboard can scroll it */}
+        <div className={styles.panelBody} tabIndex={0} role="region" aria-label="Everything the designers supplied">
           <p className={styles.lede}>Everything the designers supplied. Whatever these citizens come to do, they do inside this space; they did not invent the space.</p>
           {order.map((cat) => {
             const entries = AFFORDANCES.filter((a) => a.category === cat);

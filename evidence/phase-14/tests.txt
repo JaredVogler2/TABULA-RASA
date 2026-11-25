@@ -1,0 +1,9 @@
+# Phase 14 — the laboratory's unit tests, from the same clean-checkout run as evidence/phase-13/tests.txt
+
+ ✓ src/lab/analyse.test.ts (12 tests) 218ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 2980ms
+ ✓ src/lab/cost.test.ts (8 tests) 325ms
+ ✓ src/lab/stats.test.ts (13 tests) 152ms
+ ✓ src/engine/mind/clock.test.ts (5 tests) 868ms
+ Test Files  27 passed (27)
+      Tests  371 passed | 1 skipped (372)

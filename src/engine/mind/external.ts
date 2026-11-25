@@ -7,19 +7,27 @@
  * intent is validated again by the engine when it is executed. Nothing in a decision can
  * write world state directly.
  *
- * Every accepted decision is written to the ledger with its source (mock, live, replay) and
- * the intents themselves, so a run driven by a model can be replayed later from the ledger
- * alone, at no cost, and must reproduce the same world.
+ * Every submitted decision is written to the ledger with its source (mock, live, replay),
+ * the intents that were accepted and a note of what was refused, so a run driven by a model
+ * can be replayed later from the ledger alone, at no cost, and must reproduce the same world.
  */
 import { cleanText } from "../core/text";
-import type { Agent, DecisionSource, Intent, SimEvent, WorldState } from "../model/types";
+import type { Agent, DecisionSource, Feedback, Intent, SimEvent, WorldState } from "../model/types";
 import { interrupt } from "../sim/actions";
-import type { EventOut } from "../sim/events";
+import { emit, type EventOut } from "../sim/events";
 import { checkIntent } from "../sim/intents";
 import { scratchOf } from "../sim/scratch";
 import { adopt } from "./decide";
+import { FEEDBACK_LIMITS, feedbackEntry } from "./feedback";
 import { DECISION_LIMITS, buildObservation, maskAllows, type Observation } from "./observe";
 import { urgentNeed } from "./reflex";
+
+/** What a mind said was wrong with part of its own output before it reached the engine (e.g. an unreadable formula). */
+export interface Dropped {
+  action: string;
+  reason: string;
+  detail?: string;
+}
 
 export interface ExternalDecision {
   intents: Intent[];
@@ -27,6 +35,10 @@ export interface ExternalDecision {
   goal?: string;
   /** A short declared reason. This is what the mind chooses to state, not a transcript of its reasoning. */
   rationale?: string;
+  /** A short private note to its future self (replaces the previous one; empty clears it). */
+  note?: string;
+  /** Parts of the mind's answer that the adapter could not turn into intents, to be fed back to it. */
+  dropped?: Dropped[];
 }
 
 export interface DecisionOutcome {
@@ -43,10 +55,20 @@ export interface DecisionOutcome {
 export interface DecisionRecord {
   tick: number;
   agent: number;
+  /** The intents that were accepted (empty if the whole decision was refused). */
   intents: Intent[];
   goal: string;
   rationale: string;
+  /** The kind of mind that made the decision when it was recorded. */
+  source?: "mock" | "live";
+  /** The note the mind left itself (absent if it left none). */
+  note?: string;
+  /** What was refused when the decision was first submitted. */
+  dropped?: Dropped[];
 }
+
+/** More intents than this in one decision and it is refused outright, unread. */
+const MAX_INTENTS_READ = 24;
 
 /** Externally driven agents that are awake, not in distress, and due to deliberate. */
 export function dueForDecision(world: WorldState): number[] {
@@ -66,43 +88,53 @@ export function observe(world: WorldState, agentId: number): Observation | null 
   return buildObservation(world, scratchOf(world), a);
 }
 
+function cleanDropped(tick: number, raw: unknown): Feedback[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Feedback[] = [];
+  for (const x of raw.slice(0, FEEDBACK_LIMITS.entries)) {
+    if (!x || typeof x !== "object") continue;
+    const d = x as Record<string, unknown>;
+    out.push(feedbackEntry(tick, d.action, d.reason, d.detail));
+  }
+  return out;
+}
+
+const asDropped = (f: Feedback): Dropped => ({ action: f.k, reason: f.r, ...(f.d ? { detail: f.d } : {}) });
+
 /**
  * Offer a decision to the world on behalf of an agent. Returns what was accepted and what
- * was refused, with reasons. A decision with no acceptable intent changes nothing (the
- * agent carries on under its fallback) but still pushes back the next deliberation.
+ * was refused, with reasons. A decision with no acceptable intent leaves the agent's current
+ * plan alone (it carries on, or falls back to reflex) but is still recorded, still pushes
+ * back the next deliberation, and still tells the mind what was refused.
  */
-export function submitDecision(world: WorldState, agentId: number, decision: unknown, source: DecisionSource, out: EventOut): DecisionOutcome {
+export function submitDecision(world: WorldState, agentId: number, decision: unknown, source: DecisionSource, out: EventOut, author?: "mock" | "live"): DecisionOutcome {
   const fail = (error: string): DecisionOutcome => ({ ok: false, error, accepted: [], rejected: [], event: -1 });
   const a: Agent | undefined = world.agents[agentId];
   if (!a || !a.alive) return fail("no_such_agent");
   if (a.controller !== "external") return fail("not_external");
   if (source !== "mock" && source !== "live" && source !== "replay") return fail("bad_source");
+  const by = source === "replay" ? author : undefined;
   a.mind.nextDeliberation = world.tick + world.config.cadence;
-  if (!decision || typeof decision !== "object") return fail("malformed");
-  const d = decision as Record<string, unknown>;
-  if (!Array.isArray(d.intents)) return fail("malformed");
-  if (d.intents.length === 0) return fail("empty");
+
+  const d = decision && typeof decision === "object" ? (decision as Record<string, unknown>) : null;
+  const wellFormed = d !== null && Array.isArray(d.intents) && d.intents.length <= MAX_INTENTS_READ;
+  const raw: unknown[] = wellFormed ? (d.intents as unknown[]) : [];
+  const feedback = cleanDropped(world.tick, d?.dropped);
+  if (!wellFormed) feedback.push(feedbackEntry(world.tick, "decision", "malformed"));
 
   const obs = buildObservation(world, scratchOf(world), a);
   const accepted: Intent[] = [];
   const rejected: { index: number; reason: string }[] = [];
-  for (let i = 0; i < d.intents.length; i++) {
-    if (accepted.length >= DECISION_LIMITS.maxIntents) {
-      rejected.push({ index: i, reason: "too_many" });
+  for (let i = 0; i < raw.length; i++) {
+    const item: unknown = raw[i];
+    let reason: string | null = accepted.length >= DECISION_LIMITS.maxIntents ? "too_many" : checkIntent(world, item);
+    if (!reason) reason = maskAllows(obs, item as Intent);
+    if (reason) {
+      rejected.push({ index: i, reason });
+      feedback.push(feedbackEntry(world.tick, item && typeof item === "object" ? (item as { k?: unknown }).k : "action", reason));
       continue;
     }
-    const raw: unknown = d.intents[i];
-    const structural = checkIntent(world, raw);
-    if (structural) {
-      rejected.push({ index: i, reason: structural });
-      continue;
-    }
-    const intent = raw as Intent;
-    const masked = maskAllows(obs, intent);
-    if (masked) {
-      rejected.push({ index: i, reason: masked });
-      continue;
-    }
+    const intent = item as Intent;
     if (intent.k === "say" && intent.text !== undefined) {
       const text = cleanText(intent.text, DECISION_LIMITS.maxTextChars);
       accepted.push(text ? { ...intent, text } : { k: "say", to: intent.to, act: intent.act });
@@ -110,12 +142,24 @@ export function submitDecision(world: WorldState, agentId: number, decision: unk
       accepted.push(intent);
     }
   }
-  if (accepted.length === 0) return { ok: false, error: "nothing_acceptable", accepted, rejected, event: -1 };
+  while (feedback.length > FEEDBACK_LIMITS.entries) feedback.pop();
+  a.mind.feedback = feedback;
+  // a decision that carries a note replaces the old one; a decision without one leaves it be
+  const note = d && d.note !== undefined ? cleanText(d.note, DECISION_LIMITS.maxNoteChars) : undefined;
+  if (note !== undefined) a.mind.note = note;
+  const extras = { ...(note !== undefined ? { note } : {}), ...(feedback.length ? { dropped: feedback.map(asDropped) } : {}) };
 
-  const goal = cleanText(d.goal, DECISION_LIMITS.maxGoalChars).replace(/[^a-z0-9_ -]/gi, "") || "own_plan";
-  const rationale = cleanText(d.rationale, DECISION_LIMITS.maxRationaleChars);
+  if (accepted.length === 0) {
+    // nothing to adopt: the refusal itself is the record
+    world.metrics.decisionsBySource.refused = (world.metrics.decisionsBySource.refused ?? 0) + 1;
+    const event = emit(world, out, "decision", a.id, { r: "refused", d: { src: source, ...(by ? { of: by } : {}), layer: "external", why: "", n: 0, plan: [], ...extras } });
+    return { ok: false, error: !wellFormed ? "malformed" : raw.length === 0 ? "empty" : "nothing_acceptable", accepted, rejected, event };
+  }
+
+  const goal = cleanText(d?.goal, DECISION_LIMITS.maxGoalChars).replace(/[^a-z0-9_ -]/gi, "") || "own_plan";
+  const rationale = cleanText(d?.rationale, DECISION_LIMITS.maxRationaleChars);
   interrupt(world, a, out);
-  adopt(world, a, out, { intents: accepted, goal, why: rationale }, source, "external");
+  adopt(world, a, out, { intents: accepted, goal, why: rationale }, source, "external", [], by, extras);
   return { ok: true, accepted, rejected, event: a.mind.decisionEvent };
 }
 
@@ -124,23 +168,44 @@ export function tapeFromEvents(events: readonly SimEvent[]): DecisionRecord[] {
   const tape: DecisionRecord[] = [];
   for (const e of events) {
     if (e.k !== "decision" || !e.d) continue;
-    const d = e.d as { layer?: string; plan?: Intent[]; why?: string };
+    const d = e.d as { layer?: string; plan?: Intent[]; why?: string; src?: string; of?: string; note?: string; dropped?: Dropped[] };
     if (d.layer !== "external" || !Array.isArray(d.plan)) continue;
-    tape.push({ tick: e.t, agent: e.a, intents: d.plan, goal: e.r ?? "own_plan", rationale: d.why ?? "" });
+    const by = d.src === "replay" ? d.of : d.src;
+    tape.push({
+      tick: e.t,
+      agent: e.a,
+      intents: d.plan,
+      goal: e.r ?? "own_plan",
+      rationale: d.why ?? "",
+      ...(by === "mock" || by === "live" ? { source: by } : {}),
+      ...(typeof d.note === "string" ? { note: d.note } : {}),
+      ...(Array.isArray(d.dropped) && d.dropped.length ? { dropped: d.dropped } : {}),
+    });
   }
   return tape;
 }
 
+/** Re-submit one recorded decision. No mind is consulted: this is replay. */
+export function replayRecord(world: WorldState, r: DecisionRecord, out: EventOut): DecisionOutcome {
+  return submitDecision(
+    world,
+    r.agent,
+    { intents: r.intents, goal: r.goal, rationale: r.rationale, ...(r.note !== undefined ? { note: r.note } : {}), ...(r.dropped ? { dropped: r.dropped } : {}) },
+    "replay",
+    out,
+    r.source,
+  );
+}
+
 /**
  * Re-submit the tape's decisions for the current tick (call before `step`). Returns the
- * index of the next unread record. No mind is consulted: this is replay.
+ * index of the next unread record.
  */
 export function replayTape(world: WorldState, tape: readonly DecisionRecord[], from: number, out: EventOut): number {
   let i = from;
   while (i < tape.length && (tape[i] as DecisionRecord).tick < world.tick) i++;
   while (i < tape.length && (tape[i] as DecisionRecord).tick === world.tick) {
-    const r = tape[i] as DecisionRecord;
-    submitDecision(world, r.agent, { intents: r.intents, goal: r.goal, rationale: r.rationale }, "replay", out);
+    replayRecord(world, tape[i] as DecisionRecord, out);
     i++;
   }
   return i;

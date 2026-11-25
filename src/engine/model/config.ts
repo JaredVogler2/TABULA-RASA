@@ -70,7 +70,20 @@ export interface WorldConfig {
   policy: PolicyKind;
   /** Permille of agents that deliberate when `policy` is "planner"; the rest are reflex-only (for mixed-population studies). */
   plannerShare: number;
-  cadence: number; // ticks between strategic deliberations for planner agents
+  /**
+   * Permille of agents whose deliberate decisions come from outside the engine (a language
+   * model, a mock, or a recorded tape). Who they are is drawn per person by seed. Between
+   * decisions, and whenever a decision is missing or refused, they act on the reflex layer,
+   * labelled as fallback. 0 = a baseline world.
+   */
+  externalShare: number;
+  cadence: number; // ticks between strategic deliberations (the least interval between two decisions by one mind)
+  /**
+   * Ticks a baseline planner waits between two deliberations; in between it acts on reflex.
+   * 0 (the reference setting) means it deliberates whenever its plan runs out. This is the
+   * registered "cognitive cadence" factor for the planner (protocol §3, deviation 2026-11-25).
+   */
+  planEvery: number;
 
   // affordance switches
   institutions: InstitutionMode;
@@ -114,7 +127,9 @@ export const DEFAULT_CONFIG: WorldConfig = {
   memoryCapacity: 48,
   policy: "planner",
   plannerShare: 1000,
+  externalShare: 0,
   cadence: 24,
+  planEvery: 0,
   institutions: "grammar_search",
   escrow: true,
   lockableStores: true,
@@ -256,9 +271,13 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   intInRange("learningRate", cfg.learningRate, 0, 4000);
   intInRange("memoryCapacity", cfg.memoryCapacity, 4, 256);
   intInRange("cadence", cfg.cadence, 1, 960);
+  // configurations written before the planner had a clock (recordings, stored runs) mean "no clock"
+  if ((cfg as { planEvery?: number }).planEvery === undefined) cfg.planEvery = 0;
+  intInRange("planEvery", cfg.planEvery, 0, 960);
   if (cfg.spawn !== "dispersed" && cfg.spawn !== "clustered") throw new Error("config.spawn invalid");
   if (cfg.policy !== "reflex" && cfg.policy !== "planner") throw new Error("config.policy invalid");
   intInRange("plannerShare", cfg.plannerShare, 0, 1000);
+  intInRange("externalShare", cfg.externalShare, 0, 1000);
   if (!["off", "grammar_search", "scripted_control", "open"].includes(cfg.institutions)) {
     throw new Error("config.institutions invalid");
   }

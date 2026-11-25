@@ -1,13 +1,13 @@
 "use client";
 
-import { Bed, Drumstick, Droplet, Flame, HeartPulse, LocateFixed, X } from "lucide-react";
+import { Bed, Drumstick, Droplet, Eye, Flame, HeartPulse, LocateFixed, Waypoints, X } from "lucide-react";
 import { BIOMES, ITEMS, NODE_KINDS, PHYS, SKILLS, TRAITS, needBand } from "@/engine";
 import { NODE_LABEL } from "@/worker/describe";
 import { useGame } from "@/store/game";
 import type { AgentDetail, TileDetail } from "@/worker/protocol";
 import { useController } from "./context";
 import styles from "./game.module.css";
-import { MEMORY_TEXT, goalSentence, itemName, structureName, tickLabel } from "./text";
+import { MEMORY_TEXT, goalSentence, itemName, outcomeLine, structureName, tickLabel, type OutcomeLine } from "./text";
 
 const BAND_WORD = ["", "uneasy", "suffering", "critical"];
 
@@ -34,12 +34,34 @@ function ago(now: number, then: number): string {
   return `${(d / 96).toFixed(1)} d ago`;
 }
 
+/**
+ * Who decided what this citizen is doing, said exactly. A mock is never called a model, a
+ * replayed decision is said to be recorded, and reflex behaviour under an outside mind is
+ * said to be reflex.
+ */
+export function mindSentence(controller: string, source: string, recorded: boolean): string {
+  if (controller !== "external") return "Decided by the built-in BASELINE policy (not a language model).";
+  const when = recorded ? "Recorded decision" : "Decided";
+  if (source === "live") return `${when} by a language model; validated by the engine.`;
+  if (source === "mock") return `${when} by a MOCK mind (a deterministic test double, not a language model); validated by the engine.`;
+  if (source === "replay") return "Recorded decision of an outside mind, replayed; validated by the engine.";
+  return "Acting on reflex until its mind is next consulted (labelled FALLBACK; not a language model).";
+}
+
 function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
   const controller = useController();
   const following = useGame((s) => s.following);
+  const overlay = useGame((s) => s.overlay);
+  const tiles = useGame((s) => (s.world ? s.world.w * s.world.h : 0));
   const roster = useGame((s) => s.roster);
+  const recorded = useGame((s) => !!s.hud?.replay);
   const name = (id: number) => roster[id]?.name ?? "someone";
   const carried = detail.inv.map((q, i) => ({ q, i })).filter((x) => x.q > 0);
+  const world = useGame((s) => s.world);
+  const outcomes = detail.recent
+    .map((e) => outcomeLine(e, world, roster))
+    .filter((o): o is OutcomeLine => o !== null)
+    .slice(0, 8);
   return (
     <>
       <div className={styles.panelHead}>
@@ -62,17 +84,38 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
           </p>
         )}
         <p className={styles.muted} style={{ marginTop: 6 }}>
-          {detail.controller === "external" ? "Decided by a language model; validated by the engine." : "Decided by the built-in BASELINE policy (not a language model)."}
+          <span data-testid="inspector-mind">{mindSentence(detail.controller, detail.source, recorded)}</span>
           {detail.ill > 0 ? " Currently ill." : ""}
         </p>
+        {detail.controller === "external" && detail.note ? (
+          <p className={styles.muted} style={{ marginTop: 6 }} data-testid="inspector-note">
+            Its note to itself: “{detail.note}”
+          </p>
+        ) : null}
 
         {detail.alive ? (
-          <div className={styles.actions}>
-            <button type="button" className={styles.button} aria-pressed={following} onClick={() => controller.follow(!following)} data-testid="follow">
-              <LocateFixed aria-hidden />
-              {following ? "Following" : "Follow"}
-            </button>
-          </div>
+          <>
+            <div className={styles.actions}>
+              <button type="button" className={styles.button} aria-pressed={following} onClick={() => controller.follow(!following)} data-testid="follow" title="Keep the camera on this citizen (F)">
+                <LocateFixed aria-hidden />
+                {following ? "Following" : "Follow"}
+              </button>
+              <button type="button" className={styles.button} aria-pressed={overlay.knowledge} onClick={() => controller.setOverlay({ knowledge: !overlay.knowledge })} data-testid="overlay-knowledge" title="Wash out the land this citizen has never seen (V)">
+                <Eye aria-hidden />
+                What they know
+              </button>
+              <button type="button" className={styles.button} aria-pressed={overlay.ties} onClick={() => controller.setOverlay({ ties: !overlay.ties })} data-testid="overlay-ties" title="Draw arcs to the people this citizen has dealt with (T)">
+                <Waypoints aria-hidden />
+                Who they know
+              </button>
+            </div>
+            {overlay.knowledge || overlay.ties ? (
+              <p className={styles.muted} style={{ marginTop: 8 }} data-testid="overlay-legend">
+                {overlay.knowledge ? `Land shown pale is land ${detail.name} has never seen: ${detail.seenTiles.toLocaleString()} of ${tiles.toLocaleString()} tiles are known to them. You see all of it; they do not. ` : ""}
+                {overlay.ties ? (detail.people.length ? `Arcs lead to the ${detail.people.length} ${detail.people.length === 1 ? "person" : "people"} ${detail.name} has dealt with most: warm where they trust, cool where they do not.` : `${detail.name} has dealt with nobody yet, so there are no arcs to draw.`) : ""}
+              </p>
+            ) : null}
+          </>
         ) : null}
 
         <div className={styles.section}>
@@ -116,6 +159,22 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
                 <li key={i} className={styles.row}>
                   <span>{q.text}</span>
                   <span className={styles.rowMeta}>{i === 0 ? "now" : `then`}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
+
+        {outcomes.length ? (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>
+              Intended, and what came of it <span>newest first</span>
+            </div>
+            <ol className={styles.outcomes} data-testid="outcomes">
+              {outcomes.map((o) => (
+                <li key={o.id} className={styles.outcome} data-tone={o.tone}>
+                  <time>{ago(now, o.tick)}</time>
+                  <span>{o.text}</span>
                 </li>
               ))}
             </ol>

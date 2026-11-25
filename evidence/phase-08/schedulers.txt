@@ -1,0 +1,23 @@
+
+Activation policies on the same worlds — mock minds, 50 people, 6 days, 8 slots per 6-hour epoch, seeds 1,2,3,4
+(means over seeds; mock minds are a test double: outcomes here say nothing about a model)
+
+policy | calls | slots used | calls/person/day | Gini of calls | largest share | never asked | time on own plan | intents ok / refused | alive | agreements
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+round_robin | 179 | 93% | 0.60 | 0.15 | 3% | 0.0 | 8% | 190 / 0 | 50.0 | 4.0
+event | 170 | 88% | 0.57 | 0.19 | 4% | 0.0 | 7% | 180 / 0 | 50.0 | 3.8
+voi | 153 | 80% | 0.51 | 0.19 | 4% | 0.0 | 7% | 163 / 0 | 50.0 | 3.8
+
+First-named reason for each consultation (all seeds):
+  round_robin  turn 633, starved 82
+  event        new_face 333, plan_done 254, overheard 58, need_slipping 14, starved 10, agreement_news 10
+  voi          plan_done 298, new_face 240, overheard 44, need_slipping 14, waited 9, agreement_news 8
+
+What the ledger would have reserved for these calls (worst case per call: every input byte a token at the cache-write price, all 2000 output tokens, 10% regional margin; no cache hit assumed). Prices verified 2026-11-25. This is an upper bound, not an estimate of spend; nothing was called.
+policy | mean input bound / call (tokens) | claude-fable-5-2 | claude-opus-5-5 | claude-sonnet-5-5 | claude-haiku-5-5
+--- | --- | --- | --- | --- | ---
+round_robin | 18769 | $56.57 ($0.316/call) | $28.28 ($0.158/call) | $14.14 ($0.079/call) | $0.71 ($0.0040/call)
+event | 18834 | $53.84 ($0.317/call) | $26.92 ($0.159/call) | $13.46 ($0.079/call) | $0.67 ($0.0040/call)
+voi | 18812 | $48.57 ($0.317/call) | $24.29 ($0.158/call) | $12.14 ($0.079/call) | $0.61 ($0.0040/call)
+
+wrote evidence/phase-08/schedulers.json

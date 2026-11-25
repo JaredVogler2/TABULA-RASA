@@ -29,16 +29,22 @@ src/
     institutions/ rule grammar (AST), validator, interpreter, lifecycle, grammar search
     metrics/     outcome measures defined in EXPERIMENT_PROTOCOL.md
     save/        snapshots, migrations, integrity
-  providers/     Decision-provider contract shared by client and server: observation builder,
-                 prompt templates, response schema, Mock / Replay / Baseline providers (no secrets)
-  lab/           study definitions, batch runner (environment-agnostic), statistics
+  providers/     Everything about minds outside the engine that needs no secret, shared by client,
+                 server and scripts: the answer schema and its translation (wire), the prompt (prompt),
+                 the provider contract and the Mock / Replay / Baseline providers, schedulers, the
+                 epoch runner (run), the dated price table and cost arithmetic (prices)
+  lab/           the registered studies as data, the cell runner, statistics, analysis and reports,
+                 and the ceiling on what a live study could cost
   render/        three.js world renderer (no React)
   audio/         procedural sound
-  worker/        Web Workers: simulation host, lab batch host, self-test
-  persist/       IndexedDB saves, ledgers, export/import
+  worker/        Web Workers: simulation host (the world, its twin, its history), the laboratory's
+                 re-run-one-cell check, self-test
+  persist/       IndexedDB saves
   store/         UI stores and the worker client
   ui/            React components
-  server/        SERVER ONLY: live Anthropic provider, pricing, budget ledger, auth, orchestration, db
+  server/        SERVER ONLY: environment (env), database and embedded migrations (db), budget ledger,
+                 owner auth and the request gate (auth, http), live Anthropic provider (anthropic),
+                 run store and stepping (runs), the owner API as functions (api)
   app/           Next.js routes; app/api/* are the only server entry points
 scripts/         headless simulation, benchmarks, studies, scans, migrations
 tests/           e2e (Playwright), unit suites that span modules
@@ -104,36 +110,43 @@ passes through the same validation, arbitration and application code.
 | Node (scripts, Vitest) | Headless runs, benchmarks, studies, property tests | Same engine build. |
 | Server route handlers | Owner-authorized live runs | Server-authoritative world; see §7. |
 
-## 7. Live runs on a serverless platform (D-009)
+## 7. Server-side runs (D-009, as built: D-026)
 
-- The **server** holds the authoritative world for a live run as a compressed snapshot row plus an append-only
-  decision log, both in PostgreSQL. The client never sends world state or prompt text; it sends
-  `(runId, epoch, idempotencyKey)`.
-- A **decision epoch** is advanced by bounded, resumable HTTP steps. Each step takes a database lease on the run,
-  loads the snapshot (optimistic version check), builds observations for the scheduled agents, **reserves budget
-  atomically before each dispatch**, calls the provider with bounded concurrency, validates and stores each
-  decision as it completes, and returns before the platform's duration limit. When every scheduled agent has a
-  stored decision the engine advances to the next epoch and the new snapshot and hash are committed.
-- Steps are idempotent: every dispatch has a deterministic reservation id `(run, epoch, agent, attempt)`.
-  A repeated or re-ordered request can never dispatch or charge twice. Unknown outcomes keep their reservation.
-- **Cancellation** and the **kill switch** are database flags checked before every dispatch.
-- The browser replays a live run by fetching the decision log and applying it to its own engine replica, and
-  verifies the server's state hash each epoch. Replay never calls the provider.
-- No long-lived process, no in-memory budget, no world in request bodies. Platform limits that bound step size are
-  recorded in `docs/research/vercel-platform.md`.
+- The **server** holds the authoritative world of a run as one compressed snapshot (the world at the first tick
+  of the next epoch) plus, for every committed epoch, its tape of decisions and its state digest — all in
+  PostgreSQL. A client never sends world state, prompt text, a model name or a key: it sends a run id.
+- A **step** advances a run by at most one decision epoch and is safe to repeat at any time, from anywhere. It
+  takes a database lease, rebuilds the world from the snapshot (and checks it against the stored digest),
+  re-plans the epoch — the plan is a pure function of the world and the scheduler's state, so it is the same
+  plan every time — asks only the minds that have no stored answer, and, when every mind in the plan has a
+  final answer, offers the answers to the world in agent-id order, advances it, and commits snapshot, tape,
+  digest and scheduler state in one transaction guarded by the epoch number and the lease.
+- For a paid provider every attempt is **reserved in the ledger before it is sent**, under the deterministic id
+  `run:epoch:agent:attempt`, and settled, released or marked unknown the moment its fate is known (D-021). A
+  repeated or concurrent step can therefore never send or charge the same attempt twice.
+- A budget refusal (kill switch, run cap, daily cap, total) **pauses** the run with its epoch still open; an
+  error no retry can fix **fails** it; a cancelled run is final. Nothing is asked of anyone in any of those states.
+- A **recording** is a run's configuration, tape and digests. The browser rebuilds the world from those in its
+  own worker, consulting no mind, and checks every epoch's digest. A visitor can fetch the recording of a
+  published run; one mock recording is bundled as a static file.
+- No resident process, no in-memory budget, no workflow or queue service. The platform limits that bound a
+  step's duration are in `docs/research/vercel-platform.md` (the step route asks for 300 seconds).
 
 ## 8. Persistence
 
 | Data | Free play | Live run |
 |---|---|---|
-| Snapshots (content-addressed) | IndexedDB, one per simulated day + on save | PostgreSQL row per epoch (latest + checkpoints) |
-| Event ledger | IndexedDB chunks (append-only) | Derivable by replay; decision log is authoritative |
+| Snapshots (content-addressed) | IndexedDB: one per named save and one autosave (every second day), each stored with its SHA-256 and refused on load if it no longer matches. In the worker's memory only: gzip keyframes of the line being lived (the start and every second morning, at most 24) and the last state of each line set aside | PostgreSQL: the latest only (gzip); earlier states are rebuilt by replaying the tape |
+| Event ledger | In memory: the most recent 40,000 events (about six weeks of the reference world), with causal parents; downloadable as JSON Lines. Earlier events are not stored: they are produced again by re-living the world from its seed | Derivable by replay; decision log is authoritative |
 | Decision log | In-engine for baseline policies; recorded for verification | PostgreSQL, append-only, with request hash, model, prompt version, usage |
-| Branch tree | IndexedDB (`parent`, `forkTick`, intervention provenance, RNG epoch) | Same schema, server side |
+| Branch tree | In the worker's memory for the session: parent, fork tick, same or new luck, interventions, content hash of each line set aside. Every world carries its own branch record (and travels with it in saves and files); lines set aside do **not** survive a reload unless saved or exported | A server run has one line |
+| A world as a file | A bundle: state, twin, and a manifest (seed, configuration and hash, versions, branch, interventions, SHA-256); verified on import (D-033) | A recording: configuration, decision tape, state digest per epoch |
 | Budget ledger | n/a | PostgreSQL, integer microdollars, transactional |
 
 Schema versions are embedded in every artifact; `src/engine/save/migrate.ts` upgrades old saves and refuses
-unknown future versions.
+unknown future versions. As first written (phase 02) this table promised daily snapshots, an event ledger and a
+branch tree in IndexedDB; what was built instead, and why, is D-033: the engine's determinism makes a world's
+past cheaper to re-live than to store.
 
 ## 9. Failure modes designed for
 
@@ -145,7 +158,7 @@ unknown future versions.
 | Malformed or unsafe model output | Rejected, logged with reason; the agent falls back to its labelled reflex policy. |
 | Function killed mid-epoch | Lease expires; the next step resumes from stored decisions without re-dispatching completed ones. |
 | Tab closed / phone suspended | The worker stops; saves are transactional, so the last committed day is intact. |
-| Two tabs on one save | A save carries a writer lease; the second tab opens read-only. |
+| Two tabs | Each tab has its own worker and its own world; named saves have unique ids and never collide. The autosave slot is shared: the last tab to autosave replaces it whole (a save is one transaction, never a mixture). No lease is taken — an earlier version of this document said one was; see phase 15. |
 | Corrupted or tampered import | Hash and schema checks fail and the import is refused with a specific reason. |
 | Unknown model or stale price table | Live mode refuses to start. |
 

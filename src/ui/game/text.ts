@@ -50,6 +50,9 @@ export function structureName(kind: number | undefined): string {
 
 const CAUSES: Record<string, string> = { hunger: "hunger", thirst: "thirst", cold: "cold", exhaustion: "exhaustion", unknown: "unknown causes" };
 
+/** What each kind of change to the world's conditions is called in a list. */
+export const SHOCK_NAMES: Record<string, string> = { drought: "drought", cold_snap: "cold snap", blight: "blight", rain: "long rain", bounty: "bounty", windfall: "windfall", newcomers: "newcomers", hush: "hush" };
+
 const SHOCKS: Record<string, string> = {
   drought: "A drought set in: streams shrink to pools and bushes stop bearing",
   cold_snap: "A cold snap arrived",
@@ -232,6 +235,83 @@ export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: St
     default:
       return null;
   }
+}
+
+/** Why the engine refused an intent, in plain words (the engine's reason codes are in sim/actions.ts). */
+const REFUSAL: Record<string, string> = {
+  no_target: "there was nothing there to do it to",
+  target_missing: "what it was aimed at was gone",
+  target_unknown: "they did not know of any such thing",
+  no_item: "they did not have what it takes",
+  no_materials: "the materials were not to hand",
+  no_capacity: "they could not carry any more",
+  no_fire: "there was no lit fire",
+  fire_full: "the fire had all the wood it could take",
+  contested: "someone else got there first",
+  nothing_to_gather: "it had been picked clean",
+  nothing_here: "there was nothing there to take",
+  not_permitted: "the rules of the place did not allow it",
+  not_food: "it is not something one can eat",
+  not_fresh: "the water there is not fresh",
+  infertile: "nothing would grow there",
+  occupied: "the ground was already taken",
+  bad_tile: "it cannot be done on that ground",
+  too_far: "it was out of reach",
+  unreachable: "there was no way to get there",
+  unknown_recipe: "nobody knows how to make that",
+  bad_quantity: "the amount made no sense",
+  disabled: "that is not possible in this world",
+};
+
+const INTENT_VERB: Record<string, string> = {
+  gather: "gather",
+  eat: "eat",
+  drink: "drink",
+  fill: "fill a pot",
+  rest: "rest",
+  goto: "go somewhere",
+  build: "build",
+  supply: "bring materials",
+  work: "work on a building",
+  refuel: "feed a fire",
+  craft: "make something",
+  give: "give something",
+  say: "say something",
+  take: "pick something up",
+  drop: "put something down",
+  plant: "plant",
+  harvest: "harvest",
+  deposit: "put something in a store",
+  withdraw: "take something from a store",
+  propose: "propose an agreement",
+  endorse: "sign an agreement",
+  offer: "offer an exchange",
+  accept: "accept an exchange",
+};
+
+const SOURCE_LABEL: Record<string, string> = { reflex: "reflex", planner: "plan", fallback: "reflex", mock: "MOCK mind", live: "language model", replay: "recorded mind", search: "plan" };
+
+/** One line of a citizen's recent record: what they set out to do, or what came of it. */
+export interface OutcomeLine {
+  id: number;
+  tick: number;
+  tone: "intent" | "refused" | "done";
+  text: string;
+}
+
+export function outcomeLine(e: SimEvent, world: StaticWorldView | null, roster: StaticAgentView[]): OutcomeLine | null {
+  if (e.k === "decision") {
+    const d = e.d as { src?: string; why?: string; n?: number } | undefined;
+    if (e.r === "refused") return { id: e.id, tick: e.t, tone: "refused", text: "A decision came back that the engine could not accept at all; nothing was adopted." };
+    const by = SOURCE_LABEL[d?.src ?? ""] ?? "plan";
+    return { id: e.id, tick: e.t, tone: "intent", text: `Set out — ${goalSentence(e.r ?? "", d?.why ?? "")} (${by}, ${d?.n ?? 0} ${d?.n === 1 ? "step" : "steps"})` };
+  }
+  if (e.k === "rejected") {
+    const kind = String((e.d as { k?: unknown } | undefined)?.k ?? "");
+    return { id: e.id, tick: e.t, tone: "refused", text: `Tried to ${INTENT_VERB[kind] ?? kind.replace(/_/g, " ")}, but ${REFUSAL[e.r ?? ""] ?? String(e.r ?? "it could not be done").replace(/_/g, " ")}.` };
+  }
+  const line = chronicle(e, world, roster);
+  return line ? { id: e.id, tick: e.t, tone: "done", text: line.text } : null;
 }
 
 /** Sentence for an agent's recorded goal code and reason code. */

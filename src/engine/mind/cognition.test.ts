@@ -453,9 +453,27 @@ describe("external decisions: proposals, not writes", () => {
     expect(refused.error).toBe("nothing_acceptable");
     expect(refused.rejected.map((r) => r.index)).toEqual([0, 1, 2, 3]);
     expect(refused.rejected[1]!.reason).toBe("unknown_place");
-    // a refused decision changes nothing but the time of the next deliberation
-    const after = serializeWorld(world);
-    expect(after.replace(/"nextDeliberation":\d+/g, "")).toBe(before.replace(/"nextDeliberation":\d+/g, ""));
+    // A refused decision leaves the world, the body, the beliefs and the plan exactly as they
+    // were. What it does change is bookkeeping: when this mind may next deliberate, the record
+    // of the refusal, and what the mind will be told was refused.
+    const bookkeeping = (text: string) =>
+      text
+        .replace(/"nextDeliberation":\d+/g, "")
+        .replace(/"feedback":\[[^\]]*\]/g, "")
+        .replace(/"nextEvent":\d+/, "")
+        .replace(/"decisionsBySource":\{[^}]*\}/, "");
+    expect(bookkeeping(serializeWorld(world))).toBe(bookkeeping(before));
+    expect(a.mind.feedback.map((f) => [f.k, f.r])).toEqual([
+      ["teleport", "unknown_intent"],
+      ["gather", "unknown_place"],
+      ["give", refused.rejected[2]!.reason],
+      ["eat", "malformed"],
+    ]);
+    const refusal = out.find((e) => e.id === refused.event)!;
+    expect(refusal).toMatchObject({ k: "decision", r: "refused", d: { src: "mock", layer: "external", n: 0, plan: [] } });
+    expect(world.metrics.decisionsBySource.refused).toBe(3); // the null, the empty and this one
+    // and the mind is shown it, in its next observation
+    expect(observe(world, 0)!.feedback.map((f) => f.reason)).toContain("unknown_place");
 
     const many: Intent[] = Array.from({ length: 9 }, () => ({ k: "wait", ticks: 2 }) as Intent);
     const capped = submitDecision(world, 0, { intents: many, goal: "<b>rest</b>‮", rationale: `x${"\u0007y".repeat(400)}` }, "mock", out);

@@ -27,6 +27,11 @@ export const SOIL = c("#7a5c3c");
 export const PATH = c("#b59a6c");
 export const SNOW = c("#eef2f4");
 
+/** Damp earth on a bank, the gravel of a stream bed, and still fresh water where it is deep. */
+export const WET_SOIL = c("#665539");
+export const STREAM_BED = c("#56655a");
+export const FRESH_DEEP = c("#175f5e");
+
 export const WATER_SHALLOW = c("#7fd6cf");
 export const WATER_MID = c("#2f9aa3");
 export const WATER_DEEP = c("#0f4f63");
@@ -136,6 +141,15 @@ export function makeLightState(): LightState {
 }
 
 /** Deterministic per-entity random in [0,1). */
+/**
+ * How worn a tile looks for a given count of recent footfalls, 0..1. The engine makes a tile
+ * cheaper to cross from 24 footfalls: that is where this passes three quarters and the ground
+ * is drawn as a beaten track. Lighter use only dulls and flattens the turf.
+ */
+export function wearOf(traffic: number): number {
+  return 1 - Math.exp(-traffic / 16);
+}
+
 export function rand01(id: number, salt: number): number {
   let h = Math.imul(id + 1, 374761393) ^ Math.imul(salt + 7, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);

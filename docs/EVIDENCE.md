@@ -125,6 +125,145 @@ agents do all of that. No benefit of any institution to survival or well-being h
 | Exchange: two agents value the same item differently by need; two planners with complementary surpluses on bare land strike and execute a pact unprompted, with the conservation audit clean every tick | `institutions.test.ts` › exchange among baseline agents | same | pass | That exchange is common in full worlds: it is not (next row). |
 | Society measures on development seeds | `pnpm exec tsx scripts/civics.ts --scenario first_light --seeds 1-6 --days 40 --modes off,grammar_search` | `evidence/phase-10/society-first-light-40d.txt` | hundreds of offers per run, a handful executed; cooperation a few per 1,000 agent-days | Any effect of exchange on outcomes. |
 
+## Phase 06 — Claude API and structured decisions (2026-11-25)
+
+**No request has been sent to the provider.** Everything below was run without a key.
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Formulas written as text are read into the rule grammar's tree with the usual precedence; anything else is refused with a position; writing a tree out and reading it back gives the same tree (800 cases); no text makes the reader throw (1,500 cases) | `pnpm test` (`formula.test.ts`) | `evidence/phase-06/tests.txt` | pass | — |
+| Both answer schemas satisfy every documented structured-output limit, and the linter goes red on each of eleven planted violations | same (`wire.test.ts` › the answer schema…) | same | pass | **That the provider's grammar compiler accepts the schema.** Needs a live call. |
+| Every intent kind survives the wire unchanged (400 cases); 360 charters drawn from the grammar-search distribution survive unchanged, as proposals and as amendments; unreadable actions are dropped with reasons and the rest stands; a charter with one unreadable rule is dropped whole and the reason says where | same | same | pass | — |
+| Fuzz: 300 hostile answers never make the reader throw, and whatever it returns can be offered to the world with the conservation audit clean | same | same | pass | Real model output. |
+| Prices: the published example is reproduced to the microdollar; an unknown model has no price; a broken usage report is not priced; no usage inside the bound costs more than was reserved (3,000 cases, four models); the table goes stale after 45 days | same (› prices and reservations) | same | pass | That the provider's bill equals its usage report. |
+| The rules text states the role, the limits of action, that speech is data and that the unknown is unknown; names no institution, gives no advice; a world without the agreement affordance is told nothing about agreements; it is the same text for everyone in a run | `prompt.test.ts` | same | pass | **Whether the wording primes a real model anyway.** That is an experiment (minimal vs rich context), not a test. |
+| Hostile speech cannot add a line, a heading or an action to a page; a mind that obeys every hostile instruction has each forbidden act refused and recorded, nothing changes hands, no agreement is founded, the audit stays clean | same (› hostile speech) | same | pass | **That a real model resists the fixtures.** Shown instead: obeying them achieves nothing. |
+| The live adapter sends exactly six fields (model, max_tokens, system, messages, output_config, inference_geo), none the model rejects; reads only text blocks; keeps no reasoning; prices the usage report first; classifies 25 failure shapes by what they mean for the money | `anthropic.test.ts` | same | pass | — |
+| Through the **real SDK** with the network replaced by canned responses: one POST to `https://api.anthropic.com/v1/messages`, key in `Authorization: Bearer`, `anthropic-version: 2026-10-21`, no beta header; error responses arrive as typed errors and are sent exactly once; a timeout or lost connection is an unknown outcome and is not re-sent | same (› through the real SDK) | same | pass | The real server's behaviour. |
+| The only test that can make a paid request is skipped, by name, and reports "NOT authorized" | `live.integration.test.ts` | same (lines marked ↓ and "NOT authorized") | skipped by design | Everything about live behaviour. |
+| What a model is told is published verbatim and cannot drift from the code | `pnpm gen:prompts --check` (in `pnpm check` and CI) | `docs/PROMPTS.md` | up to date | — |
+
+## Phase 07 — budget ledger and security (2026-11-25)
+
+Database for the concurrency entries: PostgreSQL 16.15, local, through `pg` pools (two pools standing in for
+two server instances). Everything else: PGlite in memory.
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| The ledger starts closed: nothing authorized, kill switch on; releasing the switch authorizes nothing; a budget without a daily allowance is still closed | `TEST_DATABASE_URL=… pnpm test` (`ledger.test.ts`) | `evidence/phase-07/tests.txt` | pass | — |
+| **100 concurrent requests from two instances cannot hold more than was authorized** (exactly 20 of 100 five-cent holds granted against one dollar); the same for a run's cap and the day's cap | same (› under real concurrency) | same | pass | Other database engines; network partitions. |
+| **Duplicates and re-ordering cannot double charge**: 100 concurrent copies of one request are granted once, 50 concurrent settlements of it charge once; settle-after-release and release-after-settle change nothing | same | same | pass | — |
+| **Unknown outcomes do not free funds**: the money stays held against every ceiling until the owner decides, and can be settled for at most what was held; a reservation whose process died is shown as unknown, never given back | same | same | pass | — |
+| **The kill switch works**: thrown mid-burst it lets nothing further through; in-flight settlements are not disturbed | same | same | pass | — |
+| A request that costs more than was held is recorded as overage and stops everything; the database itself refuses an overspend written by wrong code | same | same | pass | — |
+| Property: after any sequence of 5–40 random operations the books balance and every granted hold was inside every ceiling in force | same | same | pass (60 sequences) | — |
+| Passphrase hashing (scrypt), session signing and expiry, the anti-forgery token, cookie attributes, origin judgement behind a proxy, body limits, rate limiting that refuses when it cannot count, live mode off unless all eight conditions hold | `auth.test.ts` | same | pass | A second factor: there is none. |
+| **Unauthenticated requests never call a provider**: eight write endpoints × six kinds of forged request change nothing and never construct a provider; an expired session is no session; strangers see no unpublished run | `api.test.ts` | same | pass | — |
+| Spending needs an authorized amount, a released switch and a run approved in words; a run is refused on another model than the one it was approved for; the owner can reconcile an unknown request | same | same | pass | — |
+| No secret appears in any response, audit entry or server log line across the whole API suite; the database being down answers 503 without the error text | same | same | pass | Logs of a real deployment. |
+| The scans go red on planted leaks (seven credential shapes, env files, template values, secret-named public variables, server markers in a bundle, a live secret value) | `tests/unit/scans.test.ts` | same | pass | — |
+| The repository and the client bundle are clean | `pnpm scan:secrets`, `pnpm build && pnpm scan:bundle` | same (end of file) | pass: 261 tracked files; 139 client-facing files | — |
+| The owner console against the real server: wrong passphrase refused; nothing can be spent as shipped; authorizing takes the typed phrase and does not release the switch | `TEST_DATABASE_URL=… pnpm e2e` (`owner.spec.ts`) | `evidence/phase-07/e2e-run.txt`, `evidence/phase-07/e2e/` | pass (desktop and phone emulation) | A physical phone; a real deployment behind a real proxy. |
+
+## Phase 08 — orchestration (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| **Fifty minds decide independently** over three days under each of the three schedulers, each on its own page; every living person is in the trace every epoch with a reason; the same run twice gives the same digests | `pnpm test` (`run.test.ts`) | `evidence/phase-08/tests.txt` | pass | Model-driven minds. These are mock minds. |
+| **Deterministic replay**: the tape alone, consulting no mind, reproduces every epoch's digest; a tampered tape is caught at the epoch where it was changed; replay through the provider interface keeps each agreement's recorded author | same | same | pass | — |
+| Fairness: with six slots for fifty minds nobody exceeds the daily cap, everyone alive is consulted, nobody holds 8% of consultations; being talked at buys no more than the cap | same (› rationing deliberation fairly) | same | pass | — |
+| **Cancellation and resume under injected errors**: a failure that may clear is tried once more, an unknown outcome never; an interrupted epoch resumes asking nobody twice and ends in the same world as an uninterrupted one; a deadline and a refusal before the call both leave minds for later | same (› when calls fail…) | same | pass | — |
+| Server-side runs: a mock run advances by repeatable steps and its stored record replays; a paid run (stand-in provider) reserves before every call and settles each once; the kill switch stops it mid-epoch and it later finishes without asking anyone twice; it stops at its cap; an orphaned reservation is found and held; a stale lease is no obstacle and a held one turns a second stepper away; a tampered snapshot is refused | `TEST_DATABASE_URL=… pnpm test` (`runs.test.ts`) | same | pass | — |
+| Two instances racing through a five-epoch paid run on PostgreSQL commit every epoch once and pay for every call once | same (› two instances stepping at once) | same | pass | — |
+| A multi-epoch mock run through the real server and browser: created, advanced to the end, published; a visitor with no session replays it and every epoch matches the record; the bundled 24-epoch recording matches to the end; the inspector says either "Recorded decision by a MOCK mind (a deterministic test double, not a language model)" or, between decisions, "Acting on reflex until its mind is next consulted" — never "a language model" | `pnpm e2e` (`owner.spec.ts`) | `evidence/phase-07/e2e-run.txt`, `evidence/phase-07/e2e/` | pass (desktop and phone emulation) | — |
+| The three policies on the same worlds (seeds 1–4, 50 people, six days, mock minds) | `pnpm schedulers -- --seeds 1-4 --days 6 --slots 8 --out evidence/phase-08/schedulers.json` | `evidence/phase-08/schedulers.txt`, `.json` | 8 slots per epoch: 179 / 170 / 153 calls (round-robin / event / voi), Gini of calls 0.15–0.19, nobody never asked, **7–8% of time on own plan**; upper bound on what would have been held: $49–57 on Fable 5.2, $0.61–0.71 on Haiku 5.5 | **Decision quality under each policy** (needs a model: phase 17). Mock plans are one or two actions long; a model's may be longer. |
+
+**Stated plainly.** The machinery for model-driven minds is built and tested without a model. Nothing here is
+evidence about what a model would do, what it would cost, or whether anything would emerge.
+
+## Phase 11 — art direction (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Five screenshot-led critique passes were made, each from a capture of the running product | `node scripts/shots.mjs …` against `next start` | `evidence/phase-11/cycles/` (captures of each pass, reduced), `docs/ART_BIBLE.md` § Phase 11 passes | done | Any judgement but the builder's. |
+| Final state at the vista, close up, at work, at dusk, at night, in winter, on a phone in both orientations and on the low preset | `SHOTS_FORMAT=jpeg node scripts/shots.mjs evidence/phase-11/shots …` | `evidence/phase-11/shots/*.jpg`, `evidence/phase-11/shots.txt` (draw calls, triangles, frame intervals per shot) | captured | How it looks or runs on a GPU or a phone: the renderer here is software. |
+| People stand beside what they work on, carry a load shaped by what it is, and show a tool only if they own one | captures `forager`, `woodcutter`, `fisher`, `builder`; the frame carries `tools` and `partner` per person from the engine's inventory and intent | same | seen in the captures (the fisher owns no spear and is drawn without one) | Every action in every pose; walking gait under load. |
+| A person hidden by scenery is still findable, and a visible person is drawn clean | captures `cycles/3-silhouette-smear.jpg` → `cycles/4-silhouette-clean.jpg` | same | fixed between passes 8 and 9 (D-027) | A GPU's stencil behaviour. |
+| A ratified agreement leaves a post, cords and pennants; a proposal leaves nothing | capture `charter` (Long Winter, scripted control, day 15) | `evidence/phase-11/shots/charter.jpg` | seen | Agreements written by anyone but the designers' control: none has been captured. |
+| Worn ground follows real traffic and the engine's own threshold | traffic measured on the reference world (seed 1): at most 17, 32 and 33 footfalls on any tile by days 6, 22 and 40; tiles past the old tint's half-way point: none | recorded here; mapping in `src/render/palette.ts` (`wearOf`) | recalibrated (D-032) | A striking image: in this world only a handful of tiles reach the threshold, and `paths.jpg` shows little. |
+| Sound is produced only after it is asked for, follows the controls and stops | `pnpm e2e` (`observer.spec.ts`): level exactly 0 before; above 0.0005 RMS after; below 0.0002 with the overall slider at zero | `evidence/phase-12/e2e-run.txt` | pass, desktop and phone emulation | What it sounds like. Nobody has listened to it. |
+
+**Stated plainly.** The rubric in `docs/ART_BIBLE.md` is the builder's own scoring of the builder's own
+captures. Performance scores 1 of 4 because the only numbers are from a software renderer.
+
+## Phase 12 — observer UX (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Sound, the outcomes list, both knowledge views, the atlas, the almanac with its table and the field journal work from live state with real clicks and taps | `pnpm e2e` (`observer.spec.ts`) | `evidence/phase-12/e2e-run.txt`, `evidence/phase-12/e2e/{desktop,mobile}/30…32.jpg` | pass on desktop 1366×768 and 390×844 phone emulation | Comprehension by a person. |
+| Every instrument has a key; the menu is reachable and operable from the keyboard | `pnpm e2e` (`play.spec.ts` › the keyboard alone can drive the game) | same | pass (desktop) | Screen-reader use. |
+| No serious or critical machine-detectable accessibility violation on thirteen screens and panels | `pnpm e2e` (`a11y.spec.ts`, axe-core 4.x, WCAG 2.0/2.1 A and AA) | `evidence/phase-12/a11y-desktop.json`, `a11y-mobile.json` | pass after one fix (a scrollable page that could not take keyboard focus) | What a machine cannot detect. About five hundred text nodes could not be contrast-checked by the scanner (textured and translucent surfaces). |
+| Text contrast meets 4.5:1 on every surface, with the glass composited over snow and over night | `pnpm test` (`tests/unit/contrast.test.ts`) | `evidence/phase-12/tests.txt` | pass after two fixes (muted text on glass over snow was 3.4:1; the warning red on the darkest paper was 4.48:1) | Contrast inside the 3D scene. |
+| A sheet never covers the recording banner on a phone | `pnpm e2e` (`owner.spec.ts`, bounding-box assertion) | `evidence/phase-12/e2e-run.txt` | pass | — |
+| On a phone the atlas is one column and nothing in it runs off the screen | `pnpm e2e` (`observer.spec.ts`, bounding boxes of the map and the seven charts against the viewport); `pnpm test` (`tests/unit/css-order.test.ts`) | `evidence/phase-12/e2e-run.txt`, `evidence/phase-12/tests.txt`, `evidence/phase-12/e2e/mobile/32-atlas.jpg` | pass after one fix. The first full run **passed with the layout broken**: the phone screenshot showed the almanac as a second column cut off at the right edge, because the one-column rule was written above the rule it was meant to override. Found by looking at the capture, not by a test; the assertion and a stylesheet check that fails on any such dead override were added with the fix | Other layouts that only an eye would catch. |
+
+**Not done, and said so in `docs/OBSERVER_UX.md`:** no first-time player, no screen reader, no physical
+device, no ears. Scrubbing a live world back in time belongs to phase 13.
+
+## Phase 13 — history, branches, files, the twin (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Re-running a stretch of a world from an earlier state, with the observer's interventions re-applied at their ticks, ends byte-identical to the original (from a snapshot and from tick 0); leaving one out does not | `pnpm test` (`src/engine/save/history.test.ts`) | `evidence/phase-13/tests.txt` | pass | Worlds with model-driven minds (their replay is the recording path, phase 08). |
+| A branch is its parent at the fork and for as long as nothing is done to it; what is done to one never reaches the other; two branches share nothing writable; new luck diverges | same | same | pass | — |
+| A world file opens to the same world and twin; one altered character, an edited manifest, a foreign twin, a truncated or empty file are each refused | same | same | pass | Files from other engine versions beyond the migrations that exist. |
+| The same guarantees through the worker's message protocol, with no browser: moments kept, exact re-run verified on arrival and refusing interventions meanwhile, new line and return to the old one hash for hash, twin on screen at the same tick with nothing done to it | `pnpm test` (`src/worker/sim.worker.test.ts`) | same | pass | The renderer. |
+| A saved world's past is lived again from its seed and kept only because it arrives at exactly the loaded world and twin; a save whose intervention record was edited fails the check and nothing is kept; a stored save that no longer matches its hash is refused; a line that took new luck says why it cannot be rebuilt | same | same | pass | Saves from before this version carry no lineage: only the first line and same-luck branches can be rebuilt. |
+| The event ledger is consecutive from the first event, never runs backwards, and every recorded cause precedes its effect; a loaded world's ledger says it is partial until its past is rebuilt | same | same | pass | Events older than the 40,000 kept in memory. |
+| However time is driven — single steps, long steps, play at any speed and frame rate, pauses, a long suspension — the world at a given tick is the same world | same | same | pass (hash equal at tick 1,100) | Real browser timer throttling; this test drives a fake clock. |
+| A recording of outside minds gets a twin of the same seed with the engine's planner, and the comparison is named for what it is | same | same | pass, with the bundled **mock** recording | **A live recording: none exists.** |
+| All of it in the browser, with real clicks and taps: twin on screen and back; five days watched again, arriving exactly; a new line; a return; Compare with differences and event counts; save → reload → the past lived again → a re-run from a rebuilt morning arriving exactly; export; ledger download; a tampered file refused and the true one opened; a recorded cause | `pnpm e2e` (`tests/e2e/history.spec.ts`) | `evidence/phase-13/e2e-run.txt`, `evidence/phase-13/e2e/{desktop,mobile}/39…45.jpg` | pass on desktop 1366×768 and 390×844 phone emulation | Comprehension by a person. |
+| The top bar's parts never overlap, leave the screen or spill, from 2560 to 320 px, in its widest state | `node scripts/topbar.mjs <url> <dir>`; assertions in `history.spec.ts` | `evidence/phase-13/topbar.txt`, `evidence/phase-13/topbar-*.jpg` | **24 of 25 widths** on the clean checkout, after a rebuild of the bar (see `docs/OBSERVER_UX.md`: the fork badge had been half hidden at 1366 px since phase 04). No part overlaps another or leaves the screen at any width. At 390 px the status row's content was 22 px wider than the row: it scrolls sideways there, so nothing is lost, but that is not the intent. An earlier run of the same code passed all 25 — the weather's name happened to be shorter. The script measured whatever the weather was; it did not force the widest text. Both are corrected in the next commit | Browsers other than Chromium; text scaled by the user; the widest labels (until the next commit). |
+| A CI failure on the previous commit was a browser fault, not a product fault, and is handled at its cause | GitHub Actions runs 45602910761 (passed) and 45602902159 (failed) on the same commit, `8683652`: the failing run stopped at `page.screenshot: Protocol error (Page.captureScreenshot): Unable to capture screenshot` on the plain sign-in page | `tests/e2e/capture.ts` | every capture now goes through one helper that tries again and records the retry, and still fails the test if the screen can never be captured; no test or assertion was skipped or loosened. The browser suites now run as two parallel jobs, so that neither project starves the other's renderer | Whether it recurs: it has been seen once. |
+| No serious or critical machine-detectable accessibility violation on seventeen states, now including History, Compare, the twin on screen and the Laboratory | `pnpm e2e` (`a11y.spec.ts`) | `evidence/phase-13/a11y-desktop.json`, `a11y-mobile.json` | pass | What a machine cannot detect. |
+
+**Stated plainly.** "Offline and live recorded histories compare" is shown with a mock recording, because no
+live recording exists. Lines set aside live in the page's memory and are lost on reload unless saved or
+exported. There is no continuous scrubber: one can return to the start and to every second morning.
+
+## Phase 14 — the laboratory (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Every statistic has a fixture with a known answer: mean, SD, quantiles, paired differences, d_z, Cliff's δ, Holm (worked example), precision planning, difference in differences, Gini; the bootstrap is deterministic, narrows with n, and covers a known mean about as often as it claims | `pnpm test` (`src/lab/stats.test.ts`) | `evidence/phase-14/tests.txt` | pass | Coverage for distributions unlike the fixture's. |
+| The registered rule is applied to the interval and to nothing else: each kind of prediction on synthetic runs with known answers; fewer than eight paired seeds get no verdict; missing cells are listed and never silently paired; a pilot's table never states a verdict; the registry's thresholds are the protocol's | `pnpm test` (`src/lab/analyse.test.ts`) | `evidence/phase-14/tests.txt` | pass | — |
+| A confirmatory batch is the planned one or it is not run: the planned size, the first holdout seeds in order | same; enforced in `scripts/study.ts` | same | pass | The batch itself: **not run yet.** |
+| The society measures the studies report are computed correctly | `pnpm test` (`src/engine/metrics/society.test.ts`, phase 10) | `evidence/phase-10/` | pass | — |
+| 224 real offline runs across all 14 registered conditions on 16 development seeds, none missing, each with the SHA-256 of its final state | `pnpm study -- --study all --seeds 1-16 --out evidence/phase-14/pilot` (two shards) | `evidence/phase-14/pilot/` (`runs.*.jsonl`, `runs.csv`, `report.md`, `report.json`, `manifest.json`, `plan.json`) | done; engine 0.6.0 | **Anything about the hypotheses: these are development seeds.** |
+| Any run can be reproduced to the hash | `pnpm study -- --verify 12 --study all --seeds 1-16 --out evidence/phase-14/pilot` | `evidence/phase-14/verify.txt` | 12 of 12 reproduced | Other machines and runtimes (the browser check below is one other runtime). |
+| The same in a reader's browser, from the page | `pnpm e2e` (`tests/e2e/lab.spec.ts`): a published cell re-run in a worker, hash compared | `evidence/phase-13/e2e-run.txt` (one run for both phases), `evidence/phase-14/e2e/{desktop,mobile}/50…52.jpg` | reproduced on both projects | Browsers other than Chromium. |
+| The page says what the bundle is (a pilot that tests nothing), shows every contrast with the registered rule's reading marked as hypothetical, the sizing table, the raw files, and opens a cell as a world | same | same | pass | Whether a reader draws only the conclusions the page allows. |
+| The planner's clock is off by default, binds when set, and old snapshots and configurations open as having none | `pnpm test` (`src/engine/mind/clock.test.ts`) | `evidence/phase-14/tests.txt` | pass | — |
+| A live study's cost ceiling is the scheduler's call limit times the server's per-call bound, scales exactly with conditions and seeds, prices the largest outside-minded group, refuses an unpriced model, and sizes a design to a budget | `pnpm test` (`src/lab/cost.test.ts`) | same | pass | **What a call really costs: none has been made.** The ceilings assume no cache hit. |
+
+### What the pilot showed (development seeds 1–16; sizing only, no hypothesis tested)
+
+| Contrast | Paired estimate [95% interval] | What the registered rule would read |
+|---|---|---|
+| H1a cooperation, richness 0.7 − 1.3 | 0.0161 [0.0104, 0.0218] | supported |
+| H1b cooperation, richness 0.7 − 0.4 | 0.0113 [0.0054, 0.0171] | supported |
+| H2 specialization, movement cost 2.0 − 1.0 | 0.063 [0.055, 0.071] | supported |
+| H3 reached E2, hearing radius 9 − 2 | 0.13 [−0.19, 0.44] | falsified (interval includes zero) |
+| H4 survival after the blight, diversity 1.0 − 0.2 | −0.001 [−0.005, 0.003] | falsified — and uninformative: almost nobody dies in either condition |
+| H5a welfare ratio, cadence 48 / 12 | 1.050 [1.025, 1.066] | supported |
+| H5b deliberations ratio, cadence 48 / 12 | 0.483 [0.477, 0.488] | not supported: the manipulation is weaker than registered |
+| H6a survival, scripted control − off (The Long Winter) | −0.058 [−0.114, 0.000] | **falsified: the positive control does not help** |
+| H6b survival, grammar search − off | −0.041 [−0.101, 0.016] | reported (no prediction) |
+
+Sizing from these spreads: 32 holdout seeds per contrast, 448 runs (`plan.json`). **Nothing has been run on
+holdout seeds.** The confirmatory batch waits for the engine to be frozen (D-037). Not built: a wizard for
+starting studies in the browser, a hypothesis-suggesting agent, any live study.
+
 ## Research inputs
 
 | Input | File | Status |

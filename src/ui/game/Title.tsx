@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, FolderOpen, Info, Shuffle, X } from "lucide-react";
+import { ArrowRight, Film, FlaskConical, FolderOpen, Info, Shuffle, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { SCENARIOS, makeConfig, seedFromString, type InstitutionMode, type PolicyKind } from "@/engine";
 import { AUTOSAVE_ID } from "@/persist/saves";
@@ -32,6 +33,14 @@ export function Title() {
               Continue {latest.id === AUTOSAVE_ID ? "autosave" : "last save"} · day {latest.day + 1}
             </button>
           ) : null}
+          <button type="button" className={styles.ghost} onClick={() => set({ panel: "recordings" })} data-testid="title-recordings">
+            <Film aria-hidden />
+            Recordings
+          </button>
+          <Link href="/lab" className={styles.ghost} data-testid="title-lab">
+            <FlaskConical aria-hidden />
+            Laboratory
+          </Link>
           <button type="button" className={styles.ghost} onClick={() => controller.openPanel("affordances")} data-testid="title-affordances">
             <Info aria-hidden />
             What was designed

@@ -1,0 +1,41 @@
+# pnpm e2e — full suite, production build, clean checkout of the phase 11–12 commit, PostgreSQL 16 (schema e2e)
+# 2026-11-25T11:16Z · headless Chromium (software WebGL) · desktop 1366x768 and phone emulation 390x844
+# TEST_DATABASE_URL set; LIVE_ENABLED=false on the server; no provider reachable. WebServer log lines removed.
+# Skipped by design: on the phone project, the keyboard test, the charters test and the spend-authorization test (each runs once, on desktop).
+# This is the second full run. The first (same tree before a nine-line stylesheet fix) also passed 21 of 21 — with the atlas
+# laid out wrongly on the phone, which no assertion then measured. See docs/EVIDENCE.md, phase 12.
+
+
+> tabula-rasa@0.1.0 e2e /tmp/claude-0/-home-user-TABULA-RASA/8acd06b1-6adc-5629-81f0-d4e4ae7e5445/scratchpad/verify
+> playwright test --trace off
+
+
+Running 24 tests using 1 worker
+
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:32:1 › no serious or critical accessibility violations on any screen or panel (2.8m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (537ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (22ms)
+  ✓   4 [desktop] › tests/e2e/observer.spec.ts:49:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.1m)
+  ✓   5 [desktop] › tests/e2e/owner.spec.ts:71:1 › a visitor without a session learns nothing and can change nothing (326ms)
+  ✓   6 [desktop] › tests/e2e/owner.spec.ts:108:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.3s)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:166:1 › authorizing spend takes the words, and the kill switch works from the console (618ms)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:197:1 › a visitor replays the published run from its record, and every epoch matches (10.9s)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:222:1 › the bundled recording plays from the title screen and matches its record to the end (48.9s)
+  ✓  10 [desktop] › tests/e2e/play.spec.ts:58:1 › a new player can complete the whole loop offline (2.7m)
+  ✓  11 [desktop] › tests/e2e/play.spec.ts:187:1 › the keyboard alone can drive the game (27.4s)
+  ✓  12 [desktop] › tests/e2e/play.spec.ts:234:1 › charters are shown in plain words, with how they came about (1.4m)
+  ✓  13 [mobile] › tests/e2e/a11y.spec.ts:32:1 › no serious or critical accessibility violations on any screen or panel (2.6m)
+  ✓  14 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (484ms)
+  ✓  15 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (25ms)
+  ✓  16 [mobile] › tests/e2e/observer.spec.ts:49:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.4m)
+  ✓  17 [mobile] › tests/e2e/owner.spec.ts:71:1 › a visitor without a session learns nothing and can change nothing (148ms)
+  ✓  18 [mobile] › tests/e2e/owner.spec.ts:108:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.5s)
+  -  19 [mobile] › tests/e2e/owner.spec.ts:166:1 › authorizing spend takes the words, and the kill switch works from the console
+  ✓  20 [mobile] › tests/e2e/owner.spec.ts:197:1 › a visitor replays the published run from its record, and every epoch matches (10.8s)
+  ✓  21 [mobile] › tests/e2e/owner.spec.ts:222:1 › the bundled recording plays from the title screen and matches its record to the end (47.3s)
+  ✓  22 [mobile] › tests/e2e/play.spec.ts:58:1 › a new player can complete the whole loop offline (2.0m)
+  -  23 [mobile] › tests/e2e/play.spec.ts:187:1 › the keyboard alone can drive the game
+  -  24 [mobile] › tests/e2e/play.spec.ts:234:1 › charters are shown in plain words, with how they came about
+
+  3 skipped
+  21 passed (18.5m)

@@ -1,0 +1,109 @@
+# Phases 11–12 — pnpm check in a clean checkout of the commit (lint, typecheck, unit and property tests, generated-file checks, secret scan, build, bundle scan)
+# 2026-11-25 · TEST_DATABASE_URL=postgres://…/tabula_test (PostgreSQL 16). The one skipped test is the live smoke test, which prints NOT authorized.
+
+ RUN  v5.1.1 <checkout>
+
+ ✓ src/engine/institutions/institutions.test.ts (33 tests) 7336ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (2)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1658ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1550ms
+     ✓ a proposer only puts forward what it would itself sign 433ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 1990ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 8813ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1356ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 511ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 791ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 554ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 411ms
+     ✓ re-keying the branch gives an independent stochastic continuation 486ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 656ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 1087ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1014ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 8832ms
+   ✓ external decisions: proposals, not writes (4)
+     ✓ replay uses the recorded intents and reproduces the same world without consulting any mind 418ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 4556ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 2305ms
+ ✓ src/server/api.test.ts (10 tests) 5156ms
+   ✓ the owner API (10)
+     ✓ signs the owner in with the passphrase, and slows down anyone guessing it 695ms
+     ✓ no request without the owner's session, origin and token changes anything or reaches a provider 300ms
+     ✓ runs a mock society end to end through the API, and the published record can be verified by anyone 558ms
+     ✓ spends nothing until the owner authorizes an amount, releases the switch and approves a run in words 592ms
+     ✓ lets the owner settle the fate of a request whose outcome is unknown 347ms
+ ✓ src/server/runs.test.ts (14 tests) 7945ms
+   ✓ server-side runs (in memory) (13)
+     ✓ a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world 1001ms
+     ✓ a paid run reserves before every call, settles what each cost, and never exceeds what was previewed 838ms
+     ✓ refuses to create a paid run without approval that covers it 326ms
+     ✓ the kill switch stops a paid run mid-epoch; lifting it lets the run finish; nothing is asked twice 1089ms
+     ✓ a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice 396ms
+     ✓ an error no retry can fix fails the run at once and says why 399ms
+   ✓ server-side runs with two instances stepping at once (PostgreSQL server) (1)
+     ✓ two instances racing through a paid run commit every epoch once and pay for every call once 918ms
+ ✓ src/providers/wire.test.ts (16 tests) 897ms
+   ✓ answers are read into intents, deterministically (8)
+     ✓ every charter the grammar search can draw survives the wire unchanged 589ms
+ ✓ src/server/ledger.test.ts (19 tests) 7560ms
+   ✓ the budget ledger (PostgreSQL semantics, in memory) (12)
+     ✓ property: after any sequence of operations the books balance and no ceiling is exceeded 745ms
+   ✓ the budget ledger under real concurrency (PostgreSQL server) (5)
+     ✓ holds, settlements, releases and refusals interleaved from two instances leave the books exact 623ms
+   ✓ database plumbing (2)
+     ✓ migrations are applied once, in order, and are recorded 1433ms
+     ✓ a transaction that throws leaves nothing behind 1581ms
+ ✓ src/providers/prompt.test.ts (13 tests) 624ms
+ ✓ src/server/anthropic.test.ts (10 tests) 822ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 4293ms
+   ✓ the tracker agrees with the engine's own counters on a real run (1)
+     ✓ gifts, exchanges, proposals and agent-days match; every institution's rung is at most what its record allows 2772ms
+   ✓ a scarcity shock shows in the measures (1)
+     ✓ a drought leaves the commons poorer than in the untouched twin that shares its luck 1123ms
+ ✓ src/server/auth.test.ts (13 tests) 5507ms
+   ✓ the owner's passphrase (2)
+     ✓ is stored as a salted scrypt hash that only the passphrase opens 691ms
+   ✓ rate limiting, shared through the database (2)
+     ✓ refuses when it cannot count 1834ms
+ ✓ src/engine/core/core.test.ts (19 tests) 117ms
+ ✓ src/engine/institutions/formula.test.ts (6 tests) 160ms
+ ✓ src/server/live.integration.test.ts (2 tests | 1 skipped) 3ms
+ ✓ tests/unit/css-order.test.ts (3 tests) 25ms
+ ✓ src/providers/run.test.ts (17 tests) 8031ms
+   ✓ a society of fifty minds outside the engine (mock provider, no cost) (6)
+     ✓ round_robin: fifty people decide independently over three days, and the record replays to the same world 1499ms
+     ✓ event: fifty people decide independently over three days, and the record replays to the same world 890ms
+     ✓ voi: fifty people decide independently over three days, and the record replays to the same world 893ms
+     ✓ the record of a run is enough to run it again through the provider interface, asking nothing of the mock 517ms
+     ✓ mock minds that write and sign agreements leave them attributed to the mock, in the run and in its replay 1126ms
+     ✓ a baseline arm runs through the same harness and is exactly the engine's own world 477ms
+   ✓ rationing deliberation fairly (6)
+     ✓ round_robin: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 525ms
+     ✓ event: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 492ms
+     ✓ voi: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 509ms
+     ✓ the three policies spend differently on the same world: round-robin fills every slot, the others ask only when there is cause 643ms
+ ✓ tests/unit/scans.test.ts (5 tests) 9ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 603ms
+   ✓ state-derived measures (4)
+     ✓ summaries stay within their defined ranges on a real run 366ms
+ ✓ tests/unit/contrast.test.ts (10 tests) 4ms
+ ✓ src/engine/world/world.test.ts (28 tests) 1961ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 25ms
+
+ Test Files  21 passed (21)
+      Tests  303 passed | 1 skipped (304)
+   Start at  10:56:42
+   Duration  25.24s (tests 94%, import 3%, transform 3%)
+
+docs/AFFORDANCES.md is up to date.
+src/server/migrations.generated.ts is up to date.
+docs/PROMPTS.md is up to date.
+scan:secrets passed: 276 tracked text files, 9 credential patterns, no env files tracked, template values empty, no secret-named public variables.
+✓ Compiled successfully in 6.5s
+scan:bundle passed: 139 client-facing files (1901 KB of text), 13 server-only markers, 4 credential shapes, 1 live secret value(s) checked.

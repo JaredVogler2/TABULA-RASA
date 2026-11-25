@@ -1,8 +1,7 @@
 # Art bible
 
-Version 1 (phase 04, first art pass). Phase 11 extends this document with the full rubric, the institution
-artifacts and the sound direction. Everything here describes what the product draws from live simulation
-state; nothing in the repository is a painted mock-up.
+Version 2 (phase 11, second art pass; version 1 was phase 04). Everything here describes what the product
+draws and plays from live simulation state; nothing in the repository is a painted mock-up or a recording.
 
 ## The idea
 
@@ -37,12 +36,16 @@ Scene colours are authored in sRGB and converted to linear in shaders; tonemappi
 | Shore sand | `#d6c292` | |
 | Soil and worn path | `#7a5c3c`, `#b59a6c` | slab sides, traffic tint |
 | Sea | `#7fd6cf` shallow → `#2f9aa3` → `#0f4f63` deep; foam `#f2fbf8` | by distance from shore |
+| Fresh water | clear `#7fd6cf` over the gravel at the edge → `#175f5e` in mid-channel | streams streak along their fall; ponds lie still |
+| Banks and beds | damp earth `#665539`, gravel `#56655a`, pebbles `#9c9684` | where the channel mask says water meets land |
+| Cloth of agreements | `#b4533c` `#3f6a8c` `#c98a2b` `#5a7d4b` `#8c5a86` `#2f6e6a` `#c26d4a` `#6b7fb0` | one per institution: pennants, cords, the Charters panel, the atlas |
+| A person hidden by scenery | ember `#f6c57e` at 13–33% | the faint shape of D-027 |
 | Canopy by season | `#5c8f3f` spring, `#3a7232` summer, `#c47a2c` autumn, `#6f6b52` winter | plus per-tree hue jitter |
 | Conifer by season | `#35633d`, `#285235`, `#31593a`, `#2f4f44` | |
 | Sun | `#fff1dc` day, `#ffb066` golden hour | |
 | Ember (the one warm accent) | `#eba94f` | fire, the play button, selection ring |
 
-Interface tokens live in `src/app/globals.css`: forest glass `rgba(14, 24, 19, 0.72)` over the scene for
+Interface tokens live in `src/app/globals.css`: forest glass `rgba(14, 24, 19, 0.8)` over the scene for
 transient controls; parchment `#f5ecd8` sheets for reading; ink `#0b130f`–`#2a4535`; text on paper `#2a2318`;
 one accent (ember). Chart series are fixed and validated with the palette checker — treated `#bf6a1d`,
 control `#1b84a8` on parchment.
@@ -68,19 +71,59 @@ after dark.
 - Flora: faceted, slightly irregular lumps — three broadleaf silhouettes (round, tall, wide), a three-tier
   conifer, low bushes with separate berries, reeds, root rosettes, grass tufts. Flat shading on purpose: the
   facets are the "carved model" signature.
-- Citizens: eight instanced parts (body, head, hair, two arms, two legs, carried load); posed per action.
-- Structures: timber and stone primitives with visible stock (sacks at a store, sprouts on a plot).
+- Citizens: a tunic with a belt and hem in a darker shade of its own cloth, head, hair, sleeved arms, legs.
+  A straw hat is part of who a person is (three in ten, fixed by id). Everything else they wear is state:
+  an **axe**, a **spear** or a **basket** is drawn only for someone who owns one — in the hand while it is
+  being used, on the back otherwise — and what they carry is shaped by what it mostly is: logs, a rock, fish,
+  or a sack in the colour of its contents, in the basket if they have one and in their arms if not.
+- Structures: timber and stone primitives with visible stock (sacks at a store, sprouts on a plot). The
+  shelter is a thatched A-frame: three overlapping courses a side, a dark ridge, crossed gable poles, an open
+  front in shadow.
+- Agreements (D-031): where an institution was ratified stands a post with a cap stone, one cord tied round
+  it for each person who holds to it, and a pennant in the institution's colour; the same pennant flies beside
+  each store it governs. When the institution ends the post is left leaning, bare. A proposal draws nothing.
 
 Every count on screen is a count in the engine: trees thin out as wood stock falls, berries vanish one by one,
-piles appear where goods were dropped, worn tiles are those actually walked.
+piles appear where goods were dropped, cords on a post are members, smoke rises only from fires that are lit,
+fish rise only over waters that still hold fish, and worn ground is ground that was walked (a beaten track is
+a tile past the engine's own threshold for easier going; D-032).
 
 ## Animation
 
 Interpolation runs between simulation ticks and never feeds back. Walk (leg swing, bob), gather (bend and
-reach), carry (load on the back), eat/drink (hand to mouth), rest/sleep (seated, lying), build/work (hammer
-swing), speak (a short bubble). Foliage and grass sway with weather. Reduced motion slows time-driven motion
-to 35% and wind to 25%, disables auto-orbit and the selection pulse, and makes camera moves snap instead of
-ease.
+reach), fell (a slow raise and a quick strike), fish (poised, then a lunge), carry (arms round the load),
+eat/drink (hand to mouth), rest/sleep (lying), build/work (hammer swing), speak (a gesture and a short bubble).
+
+- **Beside, not inside.** Someone working on a thing stands next to it and faces it: at the edge of a tree's
+  crown, beside the bush, at the wall of what they are building, at the water's edge to fish; each person
+  from a side of their own, so two workers do not merge.
+- **Facing each other.** Someone speaking or giving turns toward the person concerned.
+- **Hands.** A load is set down for work that needs the hands and taken up again afterwards.
+- **Ambient life.** Smoke rises and leans downwind from lit fires. Rings spread on fishing water in
+  proportion to its stock. A few birds circle by day and leave the sky at dusk and in a storm; they are
+  scenery and say nothing about state. Pennants flutter.
+
+Foliage and grass sway with weather. Reduced motion slows time-driven motion to 35% and wind to 25%, removes
+birds and fish rings, disables auto-orbit and the selection pulse, and makes camera moves snap instead of ease.
+
+## Sound
+
+Synthesized in the browser, silent until asked for (D-028); no audio file exists in the repository.
+
+| Layer | Made from | Follows |
+|---|---|---|
+| Wind | band-passed noise with a wandering centre | weather; louder with the whole island in view |
+| Surf | low-passed noise with a slow swell | how near the camera's focus is to the sea |
+| Rain, thunder | high-passed noise; brown-noise bursts | rain and storm; thunder only in a storm |
+| Birds | short swept sine notes, panned | daylight, less in rain and winter |
+| Crickets | two pulsed high tones | night, warm seasons, not in rain |
+| Fire | low roar and scheduled crackles | a lit fire near what the camera looks at |
+| Pad | three detuned triangle voices on pentatonic clusters, brighter by day | time of day; pauses with the clock |
+| Tones | three-partial bells | agreements ratified and ended, deaths, arrivals, buildings, seasons, your interventions |
+
+The palette is deliberately plain — air, water, fire, a few birds, one soft instrument — for the same reason
+the picture is: the island is the subject. **Nobody has listened to it** (this environment has no audio
+output); the tests show only that signal is produced, follows the controls and stops when told.
 
 ## Light
 
@@ -98,12 +141,13 @@ Icons are Lucide line icons, always paired with a text label or an accessible na
 
 | Preset | What changes | Measured budget (First Light, `scripts/shots.mjs`) |
 |---|---|---|
-| High | 4× terrain mesh, full canopies, sun shadows 2048², bloom, tilt-shift, 4× MSAA, pixel ratio ≤ 2 | 1,081k triangles per frame incl. the shadow pass, 58 draw calls (seed 1) |
-| Medium | as high without bloom, shadows 1024², 2× MSAA, pixel ratio ≤ 1.5 | 1,054k triangles, 45 draw calls (seed 1) |
-| Low | 2× terrain mesh, simplified canopies/bushes/rocks, no shadows or post chain, cheaper terrain and water shaders, pixel ratio ≤ 1 | 256k triangles, 30 draw calls (seed 1); was 550k before the rebuild |
+| High | 4× terrain mesh, full canopies, sun shadows 2048², bloom, tilt-shift, 4× MSAA, pixel ratio ≤ 2 | 1.65 million triangles per frame incl. the shadow pass, 84 draw calls at the vista (seed 1, day 3) |
+| Medium | as high without bloom, shadows 1024², 2× MSAA, pixel ratio ≤ 1.5 | 1.62 million triangles, 71 draw calls |
+| Low | 2× terrain mesh, simplified canopies/bushes/rocks, no shadows or post chain, cheaper terrain and water shaders, pixel ratio ≤ 1 | 0.41 million triangles, 52 draw calls |
 
-The table was measured before the ecology was retuned (D-014). The reference island now carries about one and
-a half times as many trees, bushes and reeds; re-measured figures are in `evidence/phase-05/render-budget.txt`.
+Measured after phase 11 (`evidence/phase-11/shots.txt`). In phase 04, before the ecology was retuned to carry
+about one and a half times the flora (D-014), the same three presets drew 1.08, 1.05 and 0.26 million triangles
+in 58, 45 and 30 calls.
 
 All presets lower their internal resolution in 20% steps (to 60% at most) when frames stay above 42 ms for
 three seconds. Presets and resolution change drawing only; the simulation cannot observe them.
@@ -121,39 +165,63 @@ recapture. Images for the final state are in `evidence/phase-04/shots/`.
 | 4 | (after) Moon and night ambient raised, night exposure, water lit by the same ambient, table dims with the room | Title attract-mode captured at night with rain |
 | 5 | (after) Attract mode starts on an early-summer morning and runs slowly; phone timebar gets its own clock row so all six speeds fit; coach mark moves out of the sheet's way; low preset rebuilt at half the triangles | Listed under "Known weaknesses" |
 
-## First rubric scores (self-assessed from the captures, S02 scale 0–4)
+### Phase 11 passes
 
-| Criterion | Score | Basis |
+Captures of every pass are kept, reduced, in `evidence/phase-11/cycles/`; the final state is in
+`evidence/phase-11/shots/`. The phase-04 stills (`evidence/phase-04/shots/`) are the "before".
+
+| Pass | Seen in the capture | Change made next |
 |---|---|---|
-| Terrain and vegetation detail | 3 | `vista.jpg`, `closeup.jpg`: strata, shallows, crags, three canopy forms; streams are still flat ribbons |
-| Citizen animation | 2 | Poses per action exist and follow state; silhouettes are simple and gathering figures intersect the bush |
-| Lighting and materials | 3 | `dusk.jpg`, `night.jpg`: sun/moon cycle, shadows, readable night |
-| Camera and composition | 3 | Default framing leaves title space; follow and focus ease |
-| State readability | 2 | Depletion and piles visible; no path wear overlay toggle, no knowledge or network overlays yet (phase 12) |
-| Layout and typography | 3 | `e2e/desktop/*`, `e2e/mobile/*` |
-| Mobile interaction | 2 | Verified in 390×844 emulation with taps only; no physical device |
-| Visual originality | 3 | Cut-away slab on a plinth with tilt-shift; all assets procedural |
-| Performance | 1 | Only software-rendered numbers exist (below); no GPU or device measurement |
-| Accessibility | 2 | Keyboard-only path tested; reduced motion; table view for charts; no screen-reader audit yet |
+| 6 | `1-closeup-…`, `1-midday-…`: fresh water was a milky, uniform pale blue over sand-coloured beds; clay banks were single slabs that overhung stream banks like floating discs; smoke stacked into a pale vertical bar; shelters read as flat tan planks from above. Hats, by contrast, made people findable across the island. | Fresh water coloured by depth over dark gravel, with damp earth on the banks and streaks along the current; clay as low lumps set into the ground; smoke puffs that wander, spread and lean downwind; the shelter rebuilt as a thatched A-frame with courses, ridge, gable poles and a dark open front. |
+| 7 | `2-woodcutter-hidden.jpg`, `2-stream-stair-steps.jpg`: a woodcutter beside the trunk was invisible under the crown, a builder behind a shelter likewise; stream edges and mouths ended in the stair-steps of the water mesh; the lake was marbled by "current" streaks. The forager with a basket of berries, standing beside the bush, read exactly as intended. | Work stance moved to the crown's edge and toward the middle of the tile; one more ring of water samples beyond every bank so the visible edge is the mask's contour; ponds flagged as still water; pebbles on the banks; sleeves and a belt on the figures; a first version of the faint shape for hidden people. |
+| 8 | `3-silhouette-smear.jpg`, `3-midday-loud-silhouettes.jpg`: the faint shapes worked for hidden people but also smeared over visible ones wherever a belt, hem or hat overlapped the body, and at the vista they were near-white and louder than the people in plain sight. | Stencil-gated silhouettes (D-027) in ember; opacity tied to how close the camera is. |
+| 9 | `4-silhouette-clean.jpg`, `4-midday.jpg`, and the first charter capture: visible people clean, hidden people hinted; the lake a calm teal; a ratified charter's post, cords and pennant legible beside its store in the snow. Worn paths still could not be found at day 22. | Traffic was measured (never above about 33 on a tile in 40 days) and the wear mapping recalibrated to the engine's own threshold, with grass trodden down on worn tiles (D-032). |
+| 10 | `shots/knowledge.jpg`: the first knowledge view washed unknown land to a dark slab, heaviest over the sea. | The wash became a pale parchment tone scaled to the light of the hour, so that it reads as unmapped paper by day and does not glow at night. |
 
-Nothing scores 4: that level requires verification on real hardware and with people, which has not happened.
+## Rubric (S02 scale: 0 absent · 1 placeholder · 2 functional · 3 polished · 4 exceptional and verified)
+
+Scored by the builder from the captures named, after phase 11. A score of 4 needs verification on real
+hardware and with people; none has happened, so nothing scores 4.
+
+| Criterion | Phase 04 | Now | What the score rests on | What holds it down |
+|---|---|---|---|---|
+| Terrain and vegetation detail | 3 | 3 | `shots/vista.jpg`, `closeup.jpg`, `winter.jpg`: strata, luminous shallows, crags, snow line, three canopy forms with seasonal colour, streams with gravel beds, damp banks and pebbles | Trees are still faceted lumps; no undergrowth variety beyond grass, reeds and rosettes |
+| Citizen animation | 2 | 3 | `forager.jpg`, `woodcutter.jpg`, `fisher.jpg`, `builder.jpg`: people stand beside their work and face it; tools and loads are drawn from what they own and carry | Figures are pawn-like; no hands, no walk variation by load or age; speech is a bubble |
+| Lighting and materials | 3 | 3 | `dusk.jpg`, `night.jpg`: low warm sun and long shadows, readable moonlit night with pools of firelight and smoke | No ambient occlusion pass on high; materials are flat-shaded colour only |
+| Camera and composition | 3 | 3 | `vista.jpg`; follow and focus ease; the slab on its plinth in a dark room | No cinematic presets; a low camera can put a ridge between you and a citizen (the faint shape of D-027 mitigates it) |
+| State readability | 2 | 3 | `knowledge.jpg` (what one citizen knows, and whom), `charter.jpg` (a ratified agreement's post, cords and pennants), stock visible on trees, bushes, stores and plots; hidden people findable | Worn paths are honest but rare (few tiles reach the engine's threshold in a year); belief errors are listed, not drawn |
+| Layout and typography | 3 | 3 | `evidence/phase-12/e2e/*`: atlas, almanac, journal, inspector on parchment; one accent | — |
+| Mobile interaction | 2 | 2 | `phone.jpg`, `phone_landscape.jpg`, phone E2E flows with taps | Emulation only; no physical device |
+| Visual originality | 3 | 3 | cut-away diorama, tilt-shift, pennants and cords for agreements, parchment wash for the unknown; all assets procedural | — |
+| Performance | 1 | 1 | only software-rendered numbers exist (below) | No GPU, no device, no frame-rate claim |
+| Accessibility | 2 | 3 | axe scan of thirteen states on desktop and phone with no serious violation after one fix; contrast computed from tokens with two fixes; keys for every instrument; reduced motion | No screen-reader session; colour-vision check only for charts |
 
 ## Performance, as measured
 
-Headless Chromium here renders WebGL on the CPU (SwiftShader). Median interval between frames reaching the
-screen: low preset 310–370 ms at 1366×768 (about 3 per second; it was 510–600 ms before the triangle count was
-halved); high preset 1.28 s at 1366×768 and 1.8–1.9 s at 1920×1080. These numbers say nothing about a device
-with a GPU; they are recorded so that nobody mistakes them for one. The 60 fps desktop / 30 fps phone targets
-are **unverified**.
+Headless Chromium here renders WebGL on the CPU (SwiftShader). These numbers say nothing about a device with
+a GPU; they are recorded so that nobody mistakes them for one. **The 60 fps desktop / 30 fps phone targets are
+unverified.**
 
-## Known weaknesses carried to phase 11
+| Preset | Viewport | Draw calls | Triangles per frame (incl. shadow pass) | Source |
+|---|---|---|---|---|
+| High | 1920×1080 | 84–86 at the vista, 92–102 close in with people and agreements in view | 1.65–1.73 million | `evidence/phase-11/shots.txt` |
+| Medium | 390×844 and 844×390 (phone emulation, pixel ratio capped at 2) | 71 | 1.62 million | same |
+| Low | 1366×768 | 52 | 0.41 million | same |
 
-- Citizens stand inside the bush or tree they are harvesting; they should stand beside it and face it.
-- Streams are flat ribbons without banks; ponds lack shoreline detail.
-- Citizens need more character: clothing variation, tools in hand, a visible carried load by item type.
-- No ambient life (birds, fish rises, smoke drift), no sound.
-- Path wear exists as a ground tint but is subtle; trails should become clearly visible where traffic is heavy.
-- Structures are placeholders for the grammar of built form that institutions will need (phase 09/11).
+Phase 11 added about 28 draw calls to the high preset (props, loads, smoke, rings, birds, posts, pennants,
+silhouettes, ties) and under 1% to its triangles; the reference island carries about one and a half times the
+flora it had in phase 04 (D-014), which is where the rise from 1.08 to 1.65 million triangles came from.
+Frame intervals on the software renderer were 1.3–4 s on high while other jobs shared the machine; they are
+not a measurement of anything a player would see.
+
+## Known weaknesses after phase 11
+
+- Citizens are still pawns: no hands, no gait that changes with load, age or illness beyond a lean.
+- A beaten path needs more concentrated traffic than these people produce; trails remain faint in most worlds.
+- Belief errors (a bush believed full that is bare) are not drawn in the world.
+- No whole-society view of ties; arcs are for one citizen at a time.
+- Sound has never been heard by anyone (D-028).
+- Nothing has been seen on a GPU or a phone.
 
 ## Sources and licensing
 
