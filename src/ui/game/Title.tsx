@@ -2,7 +2,7 @@
 
 import { ArrowRight, FolderOpen, Info, Shuffle, X } from "lucide-react";
 import { useState } from "react";
-import { SCENARIOS, makeConfig, seedFromString, type PolicyKind } from "@/engine";
+import { SCENARIOS, makeConfig, seedFromString, type InstitutionMode, type PolicyKind } from "@/engine";
 import { AUTOSAVE_ID } from "@/persist/saves";
 import { useGame } from "@/store/game";
 import { useController } from "./context";
@@ -58,6 +58,7 @@ export function Setup() {
   const [scenario, setScenario] = useState("first_light");
   const [seedText, setSeedText] = useState("1");
   const [policy, setPolicy] = useState<PolicyKind>("planner");
+  const [institutions, setInstitutions] = useState<InstitutionMode>("grammar_search");
   const chosen = SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0]!;
   const seed = parseSeed(seedText);
 
@@ -108,6 +109,16 @@ export function Setup() {
                 </select>
               </label>
             </div>
+            <div className={styles.formRow} style={{ marginTop: 10 }}>
+              <label className={styles.field} style={{ flex: "1 1 320px" }}>
+                Agreements
+                <select className={styles.select} value={institutions} onChange={(e) => setInstitutions(e.target.value as InstitutionMode)} data-testid="institutions-select">
+                  <option value="grammar_search">Citizens may propose charters (baseline minds: by searching the rule grammar)</option>
+                  <option value="off">None: no charters, no pacts</option>
+                  <option value="scripted_control">Scripted control: one designer-written charter is offered (not emergence)</option>
+                </select>
+              </label>
+            </div>
             <p className={styles.muted} style={{ marginTop: 8 }}>
               This world will use seed <b className="tnum">{seed}</b>. Both kinds of mind are deterministic programs labelled BASELINE — neither is a language model, and neither is told to form any group or rule.
             </p>
@@ -123,7 +134,7 @@ export function Setup() {
           <button type="button" className={styles.button} onClick={() => set({ phase: "title" })}>
             Back
           </button>
-          <button type="button" className={styles.button} data-variant="ember" onClick={() => void controller.newWorld(makeConfig(scenario, seed, { policy }))} data-testid="create-world">
+          <button type="button" className={styles.button} data-variant="ember" onClick={() => void controller.newWorld(makeConfig(scenario, seed, { policy, institutions }))} data-testid="create-world">
             Create this world
             <ArrowRight aria-hidden />
           </button>

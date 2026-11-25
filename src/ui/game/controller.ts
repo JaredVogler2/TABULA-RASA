@@ -137,9 +137,13 @@ export class GameController {
           playing: frame.playing,
           tps: frame.tps,
           treated: frame.treated,
+          civic: frame.civic,
         },
       };
       if (frame.roster) patch.roster = frame.roster;
+      // keep the Charters panel current while it is open
+      const before = state.hud?.civic;
+      if (state.panel === "civics" && (!before || before.proposals !== frame.civic.proposals || before.institutions !== frame.civic.institutions || frame.tick % 24 === 0)) void this.refreshCivics();
       if (this.pendingChronicle.length) {
         const merged = [...state.chronicle, ...this.pendingChronicle];
         patch.chronicle = merged.length > CHRONICLE_CAP ? merged.slice(merged.length - CHRONICLE_CAP) : merged;
@@ -204,6 +208,7 @@ export class GameController {
         playing: false,
         tps: 0,
         treated: ready.frame.treated,
+        civic: ready.frame.civic,
       },
       chronicle: [],
       series: ready.series,
@@ -233,7 +238,8 @@ export class GameController {
     this.client.step(14);
     this.client.setSpeed(1.5);
     this.client.play();
-    useGame.getState().set({ phase: "title" });
+    // the visitor may already have pressed Begin while the island was being shaped: do not pull them back
+    if (useGame.getState().phase !== "setup") useGame.getState().set({ phase: "title" });
   }
 
   async newWorld(config: WorldConfig): Promise<void> {
@@ -349,6 +355,11 @@ export class GameController {
     if (view) this.advanceTutorial(4);
   }
 
+  async refreshCivics(): Promise<void> {
+    if (!this.client) return;
+    useGame.getState().set({ civics: await this.client.civics() });
+  }
+
   // ───────────────────────── panels, settings, tutorial
 
   openPanel(panel: Panel): void {
@@ -356,6 +367,7 @@ export class GameController {
     const next = state.panel === panel ? "none" : panel;
     state.set({ panel: next });
     if (next === "compare") void this.refreshCompare();
+    if (next === "civics") void this.refreshCivics();
     if (next === "saves" || next === "menu") void this.refreshSaves();
     if (next === "chronicle") this.advanceTutorial(2);
   }

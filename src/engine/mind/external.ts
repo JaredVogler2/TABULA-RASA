@@ -11,6 +11,7 @@
  * the intents themselves, so a run driven by a model can be replayed later from the ledger
  * alone, at no cost, and must reproduce the same world.
  */
+import { cleanText } from "../core/text";
 import type { Agent, DecisionSource, Intent, SimEvent, WorldState } from "../model/types";
 import { interrupt } from "../sim/actions";
 import type { EventOut } from "../sim/events";
@@ -45,22 +46,6 @@ export interface DecisionRecord {
   intents: Intent[];
   goal: string;
   rationale: string;
-}
-
-/** Strip control characters and bound the length of text that will be stored and shown. */
-export function cleanText(value: unknown, max: number): string {
-  if (typeof value !== "string") return "";
-  let out = "";
-  for (const ch of value) {
-    const code = ch.codePointAt(0) ?? 0;
-    if (code < 32 || code === 127 || (code >= 0x200b && code <= 0x200f) || (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069)) {
-      out += " ";
-    } else {
-      out += ch;
-    }
-    if (out.length >= max) break;
-  }
-  return out.trim().slice(0, max);
 }
 
 /** Externally driven agents that are awake, not in distress, and due to deliberate. */
@@ -160,3 +145,5 @@ export function replayTape(world: WorldState, tape: readonly DecisionRecord[], f
   }
   return i;
 }
+
+export { cleanText };

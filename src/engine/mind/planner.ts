@@ -51,6 +51,7 @@ import { FOOD_NODE_KINDS, bestKnownNode, recall } from "./knowledge";
 import type { Plan } from "./reflex";
 import { visibleAgents, visiblePiles, type SeenAgent } from "./senses";
 import { sensesCold } from "./social";
+import { civicBusiness, civicDuty, civicLeisure, drawRation } from "./civic";
 
 /** Slots of `mind.cool` (ticks until which a kind of act is held back). */
 export const COOL = { inform: 0, ask: 1, give: 2, gossip: 3, promise: 4, explore: 5, backoff: 6, rehome: 7 } as const;
@@ -738,7 +739,8 @@ function talk(c: Ctx): Plan | null {
 function withdrawFood(c: Ctx, hungry: boolean): Plan | null {
   const { a, world } = c;
   if (c.foodE >= (hungry ? 200 : DAILY_ENERGY * 0.6)) return null;
-  const st = known(c, StructureKind.store, hungry ? 14 : 6, a.x, a.y, (k) => k.state >= 2 && k.bound < 0);
+  const refusedAt = (id: number): boolean => c.m.mem.some((x) => x.kind === "refused" && x.ref === id && c.tick - x.tick < 2 * TICKS_PER_DAY);
+  const st = known(c, StructureKind.store, hungry ? 14 : 6, a.x, a.y, (k) => k.state >= 2 && !refusedAt(k.id));
   if (!st) return null;
   const mine = world.structures[st.id]?.contributors.includes(a.id) ?? false;
   // the conforming leave a store they had no hand in until they are truly starving
@@ -810,7 +812,7 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
   // off the ground, and ask.
   const dim = world.climate.light < 420;
   if (a.hydration < 430 || a.energy < 540 || a.warmth < 470 || a.rest < 270 || (night && a.rest < 830) || (dim && a.rest < 520)) {
-    if (a.energy < 540 && a.hydration >= 170 && a.warmth >= 210) return withdrawFood(c, true) ?? scavenge(c) ?? ask(c);
+    if (a.energy < 540 && a.hydration >= 170 && a.warmth >= 210) return drawRation(world, a, true) ?? withdrawFood(c, true) ?? scavenge(c) ?? ask(c);
     return null;
   }
   // eating and drinking a little before it is urgent costs a moment and is left to the reflex layer
@@ -819,10 +821,10 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
 
   chooseHome(c);
 
-  const restock = withdrawFood(c, false);
+  const restock = drawRation(world, a, false) ?? withdrawFood(c, false);
   if (restock) return restock;
 
-  const duty = socialDuty(c) ?? pledge(c);
+  const duty = socialDuty(c) ?? civicDuty(world, sc, a) ?? civicBusiness(world, a, c.seen) ?? pledge(c);
   if (duty) return duty;
 
   const home = evening(c);
@@ -847,6 +849,9 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
   const floor = 13 - c.industry / 10;
   const chosen = best as Candidate | null;
   if (chosen && chosen.score >= floor) return chosen.plan;
+
+  const civic = civicLeisure(world, a);
+  if (civic) return civic;
 
   const said = talk(c);
   if (said) return said;

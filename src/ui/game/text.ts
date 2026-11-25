@@ -96,6 +96,17 @@ function speechText(act: Record<string, unknown> | undefined, world: StaticWorld
   }
 }
 
+const MOTION: Record<string, string> = {
+  amend: "change the rules",
+  admit: "admit a new member",
+  expel: "put a member out",
+  assign: "give someone a role",
+  grant: "grant a member something from the common stock",
+  bind: "place a structure under common control",
+  release: "release a structure",
+  dissolve: "dissolve the institution",
+};
+
 /** Turn a logged event into a Chronicle entry, or null if the Chronicle does not show that kind. */
 export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: StaticAgentView[]): ChronicleEntry | null {
   const name = (id: number) => roster[id]?.name ?? "Someone";
@@ -165,6 +176,51 @@ export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: St
       const s = SEASONS[e.q ?? 0] ?? "spring";
       return { ...base, group: "nature", weight: 3, text: `${s[0]!.toUpperCase()}${s.slice(1)} began.` };
     }
+    case "proposal": {
+      const d = e.d as { name?: string; origin?: string } | undefined;
+      const how = d?.origin === "scripted" ? " (a scripted control charter)" : d?.origin === "grammar_search" ? " (found by searching the rule grammar)" : d?.origin === "mock" ? " (MOCK)" : "";
+      return { ...base, ...place, group: "institutions", weight: 3, text: `${name(e.a)} proposed a charter, “${d?.name ?? "unnamed"}”${how}.` };
+    }
+    case "proposal_rejected":
+      return { ...base, group: "institutions", weight: 1, text: `${name(e.a)} proposed something the rule grammar cannot express (${String(e.r ?? "invalid").replace(/_/g, " ")}); nothing came of it.` };
+    case "endorse":
+      return { ...base, agents: [e.a, ...(e.b !== undefined ? [e.b] : [])], group: "institutions", weight: 1, text: `${name(e.a)} signed ${e.b !== undefined ? `${name(e.b)}'s` : "a"} charter.` };
+    case "ratified": {
+      const d = e.d as { name?: string; members?: number[] } | undefined;
+      return { ...base, ...place, agents: d?.members ?? base.agents, group: "institutions", weight: 3, text: `“${d?.name ?? "A charter"}” came into force with ${d?.members?.length ?? 0} founders.` };
+    }
+    case "lapsed":
+      return { ...base, group: "institutions", weight: 1, text: `${name(e.a)}'s charter lapsed for want of founders.` };
+    case "joined":
+      return (e.d as { founder?: boolean } | undefined)?.founder ? null : { ...base, group: "institutions", weight: 1, text: `${name(e.a)} joined an institution.` };
+    case "left":
+      return { ...base, group: "institutions", weight: 2, text: `${name(e.a)} left an institution and took back their bond.` };
+    case "expelled":
+      return { ...base, group: "institutions", weight: 2, text: `${name(e.a)} was put out of an institution.` };
+    case "motion": {
+      const d = e.d as { m?: string } | undefined;
+      return { ...base, group: "institutions", weight: 1, text: `${name(e.a)} moved to ${MOTION[d?.m ?? ""] ?? "change something"}.` };
+    }
+    case "motion_result": {
+      const d = e.d as { m?: string; yes?: number; no?: number } | undefined;
+      return { ...base, group: "institutions", weight: 2, text: `A motion to ${MOTION[d?.m ?? ""] ?? "change something"} ${e.r === "passed" ? "passed" : "failed"}, ${d?.yes ?? 0} for and ${d?.no ?? 0} against.` };
+    }
+    case "breach":
+      return { ...base, agents: [e.a, ...(e.b !== undefined ? [e.b] : [])], group: "institutions", weight: 2, text: e.b !== undefined ? `${name(e.b)} saw ${name(e.a)} break a rule they had both agreed to.` : `${name(e.a)} did not do what their charter required.` };
+    case "sanction":
+      return { ...base, group: "institutions", weight: 2, text: e.r === "forfeit" ? `${name(e.a)} forfeited ${e.q ?? 0} of their bond.` : e.r === "suspend" ? `${name(e.a)} was suspended from the common stock.` : `${name(e.a)} was put out for breaking the rules.` };
+    case "dissolved": {
+      const d = e.d as { name?: string } | undefined;
+      return { ...base, ...place, group: "institutions", weight: 3, text: `“${d?.name ?? "An institution"}” came to an end (${String(e.r ?? "").replace(/_/g, " ")}).` };
+    }
+    case "pact_done": {
+      const d = e.d as { gave?: number; gaveQty?: number; got?: number; gotQty?: number } | undefined;
+      return { ...base, ...place, agents: [e.a, ...(e.b !== undefined ? [e.b] : [])], group: "institutions", weight: 2, text: `${name(e.a)} gave ${name(e.b ?? -1)} ${d?.gaveQty ?? 0} ${itemName(d?.gave, d?.gaveQty)} for ${d?.gotQty ?? 0} ${itemName(d?.got, d?.gotQty)}.` };
+    }
+    case "promise_kept":
+      return { ...base, agents: [e.a, ...(e.b !== undefined ? [e.b] : [])], group: "people", weight: 2, text: `${name(e.a)} kept a promise to ${name(e.b ?? -1)}.` };
+    case "promise_broken":
+      return { ...base, agents: [e.a, ...(e.b !== undefined ? [e.b] : [])], group: "people", weight: 2, text: `${name(e.a)} broke a promise to ${name(e.b ?? -1)}.` };
     case "shock":
     case "intervention": {
       const d = e.d as { kind?: string; days?: number; x?: number; y?: number } | undefined;
@@ -225,6 +281,24 @@ export function goalSentence(goal: string, why: string): string {
     found_on_ground: "saw food lying on the ground",
     hungry_and_empty_handed: "is hungry, with nothing in hand and no food known",
     night_is_coming: "the light is failing",
+    undertook_to: "undertook to when they signed",
+    hungry_and_entitled: "is hungry and the charter allows it",
+    entitled: "the charter allows it",
+    seeking_founders: "it needs more signatures to come into force",
+    seeking_members: "it is open to new members",
+    not_worth_it: "rates its rules as not worth living under",
+    for: "judges it would be better off",
+    against: "judges it would be worse off",
+    was_taken_from: "someone took what they had put by",
+    has_gone_hungry: "has gone hungry",
+    found_places_bare: "keeps finding places stripped bare",
+    has_been_cold: "has been cold at night",
+    food_when_hungry: "it would feed them when hungry",
+    safe_keeping: "food keeps better behind a lock",
+    a_roof: "it offers a roof",
+    a_kept_fire: "it promises a fire that does not go out",
+    others_restraint: "others would hold back too",
+    nothing_in_it: "sees nothing against it",
     build_fire: "is cold and carries wood and stone",
     shelter: "is cold and knows a shelter",
     fetch_wood: "is cold and needs wood for a fire",
@@ -264,6 +338,15 @@ export function goalSentence(goal: string, why: string): string {
     ask: "Asking for food",
     go_home: "Heading home",
     own_plan: "Following a plan of their own",
+    vote: "Voting",
+    pay_dues: "Paying dues into the common stock",
+    draw_ration: "Drawing a ration",
+    sign: "Signing a charter",
+    announce: "Telling others about a charter",
+    propose: "Proposing a charter",
+    leave: "Leaving an institution",
+    feed_hearth: "Bringing wood to the common hearth",
+    build_together: "Working on a shared building",
   };
   const g = goals[goal] ?? goal.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
   const r = reasons[why];

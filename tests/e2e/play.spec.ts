@@ -212,3 +212,50 @@ test("the keyboard alone can drive the game", async ({ page }, testInfo) => {
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("interventions")).toHaveCount(0);
 });
+
+test("charters are shown in plain words, with how they came about", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "covered on desktop; the panel is the same sheet component");
+  test.setTimeout(420_000);
+  const errors: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+  page.on("pageerror", (err) => errors.push(String(err)));
+  await page.goto("/?q=low&pr=0.6");
+  await page.getByTestId("begin").click();
+  await page.getByTestId("scenario-first_light").click();
+  await page.getByTestId("seed-input").fill("1");
+  // the scripted control arm guarantees that a charter is offered, and must be labelled as not emergent
+  await page.getByTestId("institutions-select").selectOption("scripted_control");
+  await page.getByTestId("create-world").click();
+  await expect(page.getByTestId("world-label")).toBeVisible({ timeout: 60_000 });
+  await page.getByTestId("coach-skip").click();
+
+  // before anything has been proposed the panel says so
+  await page.getByTestId("open-civics").click();
+  await expect(page.getByTestId("civics")).toBeVisible();
+  await expect(page.getByTestId("civics-mode")).toContainText("cannot write charters");
+  await expect(page.getByTestId("civics-empty")).toBeVisible();
+  await page.getByTestId("civics-close").click();
+
+  await page.getByTestId("speed-5").click();
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("civics-count")).toBeVisible({ timeout: 300_000 });
+  await page.getByTestId("play-toggle").click();
+  await page.getByTestId("open-civics").click();
+  const charter = page.locator('[data-testid^="charter-"]').first();
+  await expect(charter).toBeVisible();
+  await expect(charter).toContainText(/larder/i); // "Common larder", or "Hearth and larder" where a fire stands by the store
+  await expect(charter).toContainText("Scripted control · not emergence");
+  await expect(charter).toContainText("must put 1 food into the common stock");
+  await expect(charter).toContainText("Anyone may leave at any time");
+  await shot(page, testInfo.project.name, "11-charters");
+  await page.getByTestId("civics-close").click();
+
+  // the Chronicle has a filter for agreements and shows the proposal with its origin
+  await page.getByTestId("open-chronicle").click();
+  await page.getByRole("button", { name: "Agreements" }).click();
+  await expect(page.getByTestId("chronicle-entries")).toContainText("a scripted control charter");
+  expect(errors, "console errors").toEqual([]);
+});
+

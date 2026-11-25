@@ -16,6 +16,8 @@ type Migration = (env: SnapshotEnvelope) => SnapshotEnvelope;
  *  1 → 2 (engine 0.2.0): minds gained the day's temperature accumulators and the cold-spell
  *        counter that seasonal foresight is built on (zero = has not yet sensed anything), and
  *        a per-node memory of the fullest each place has been seen.
+ *  2 → 3 (engine 0.3.0): minds record which charters and pact offers they know of and where
+ *        their current plan came from. No institution could exist before schema 3.
  */
 const MIGRATIONS: Record<number, Migration> = {
   1: (env) => {
@@ -34,6 +36,25 @@ const MIGRATIONS: Record<number, Migration> = {
       }
     }
     return { ...env, schema: 2 };
+  },
+  2: (env) => {
+    const state = env.state as unknown as { agents?: { mind?: Record<string, unknown> }[]; inst?: { institutions?: Record<string, unknown>[] } };
+    for (const a of state.agents ?? []) {
+      const m = a.mind;
+      if (!m) continue;
+      if (!Array.isArray(m.charters)) m.charters = [];
+      if (!Array.isArray(m.pacts)) m.pacts = [];
+      if (typeof m.src !== "string") m.src = "baseline";
+      if (Array.isArray(m.cool)) while (m.cool.length < 10) m.cool.push(0);
+    }
+    for (const s of (env.state as unknown as { structures?: Record<string, unknown>[] }).structures ?? []) {
+      // before builders were told apart from depositors, everyone on record counts as a builder
+      if (!Array.isArray(s.builders)) s.builders = Array.from(new Set([s.founder as number, ...((s.contributors as number[]) ?? [])]));
+      if (!Array.isArray(s.open)) s.open = (s.inv as number[]).map(() => 0);
+    }
+    const metrics = (env.state as unknown as { metrics?: Record<string, unknown> }).metrics;
+    if (metrics && typeof metrics.exchanges !== "number") metrics.exchanges = 0;
+    return { ...env, schema: 3 };
   },
 };
 

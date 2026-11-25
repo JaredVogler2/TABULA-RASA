@@ -1,0 +1,24 @@
+scenario=first_light days=40 overrides={}
+seed              mode  alive  welfare  commons  E1  E2  E3  E4  events
+   1               off     50     56.3     20.9   0   0   0   0  {}
+   1  scripted_control     50     56.5     21.3   9   1   1   0  {"proposal":9,"lapsed":8,"d:sign":8,"endorse":8,"ratified":1,"joined":6,"breach":9,"sanction":9,"obligation":14,"d:draw_ration":4}
+   1    grammar_search     50     56.3     20.9   2   0   0   0  {"d:propose":3,"proposal":2}
+   2               off     50     55.8     18.0   0   0   0   0  {}
+   2  scripted_control     50     55.9     17.3   6   1   1   1  {"proposal":6,"lapsed":5,"d:sign":9,"endorse":9,"ratified":1,"joined":10,"d:pay_dues":14,"d:draw_ration":8,"breach":2,"sanction":2,"obligation":13}
+   2    grammar_search     50     56.0     16.9   1   0   0   0  {"d:propose":1,"proposal":1,"lapsed":1}
+   3               off     50     55.9     16.2   0   0   0   0  {}
+   3  scripted_control     50     55.5     17.2   8   1   1   0  {"proposal":8,"lapsed":7,"d:sign":6,"endorse":6,"ratified":1,"joined":6,"obligation":32,"d:draw_ration":3,"breach":18,"sanction":18}
+   3    grammar_search     50     55.7     16.9   3   0   0   0  {"d:propose":3,"proposal":3,"lapsed":3,"d:sign":1,"endorse":1}
+   4               off     50     55.7     12.6   0   0   0   0  {}
+   4  scripted_control     50     55.8     14.9   7   1   1   1  {"proposal":7,"lapsed":6,"d:sign":12,"endorse":12,"ratified":1,"joined":12,"breach":50,"sanction":50,"obligation":36,"d:draw_ration":9}
+   4    grammar_search     50     55.8     10.7   1   0   0   0  {"d:propose":1,"proposal":1,"lapsed":1}
+   5               off     50     55.5     21.5   0   0   0   0  {}
+   5  scripted_control     50     55.7     21.4   8   1   1   0  {"proposal":8,"lapsed":7,"d:sign":3,"endorse":3,"ratified":1,"joined":4,"breach":17,"sanction":17,"obligation":5,"d:draw_ration":4}
+   5    grammar_search     50     55.5     21.7   2   0   0   0  {"d:propose":2,"proposal":2,"d:sign":1,"endorse":1}
+   6               off     50     55.3     19.3   0   0   0   0  {}
+   6  scripted_control     50     55.0     19.4   9   1   0   0  {"proposal":9,"lapsed":8,"d:sign":6,"endorse":6,"ratified":1,"joined":7}
+   6    grammar_search     50     55.3     19.2   2   0   0   0  {"d:propose":3,"proposal":2,"d:sign":1,"endorse":1}
+
+              off: mean alive 50.0, welfare 55.8%, runs reaching E2 0/6, E4 0/6
+ scripted_control: mean alive 50.0, welfare 55.7%, runs reaching E2 6/6, E4 2/6
+   grammar_search: mean alive 50.0, welfare 55.8%, runs reaching E2 0/6, E4 0/6

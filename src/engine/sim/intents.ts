@@ -55,7 +55,7 @@ export function checkSpeechAct(world: WorldState, act: unknown): string | null {
     case "request":
       return isInt(a.item, 0, ITEM_COUNT - 1) && isInt(a.qty, 1, MAX_QTY) ? null : "malformed";
     case "offer":
-      return isInt(a.give, 0, ITEM_COUNT - 1) && isInt(a.giveQty, 1, MAX_QTY) && isInt(a.want, 0, ITEM_COUNT - 1) && isInt(a.wantQty, 1, MAX_QTY)
+      return isInt(a.give, 0, ITEM_COUNT - 1) && isInt(a.giveQty, 1, MAX_QTY) && isInt(a.want, 0, ITEM_COUNT - 1) && isInt(a.wantQty, 1, MAX_QTY) && (a.pact === undefined || isInt(a.pact, 0, big))
         ? null
         : "malformed";
     case "accept":
@@ -129,7 +129,7 @@ export function checkIntent(world: WorldState, intent: unknown): string | null {
     case "leave":
       return isInt(i.institution, 0, big) ? null : "malformed";
     case "pact_offer":
-      return isInt(i.to, 0, world.agents.length - 1) &&
+      return isInt(i.to, -1, world.agents.length - 1) &&
         isInt(i.give, 0, ITEM_COUNT - 1) &&
         isInt(i.giveQty, 1, MAX_QTY) &&
         isInt(i.want, 0, ITEM_COUNT - 1) &&

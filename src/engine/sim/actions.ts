@@ -33,7 +33,7 @@ import { Activity, type Agent, type Intent, type Structure, type WorldState } fr
 import { droughtActive, hearingRadius, sightRadius } from "../world/climate";
 import { believedDrinkable, remember, structureStateCode } from "../mind/knowledge";
 import { notePromiseMade, noteTaking, settleGift } from "../mind/social";
-import { institutionalIntent, storeAccess } from "../institutions/hooks";
+import { gathered, institutionalIntent, storeAccess, supplied, withdrawLimit } from "../institutions/hooks";
 import { emit, parentsOf, type EventOut } from "./events";
 import { carriedWeight, carryCapacity, dropOnGround, emptyInv, roomFor, sink, source } from "./inventory";
 import { checkIntent } from "./intents";
@@ -85,6 +85,10 @@ function reject(world: WorldState, a: Agent, out: EventOut, intent: Intent, reas
   world.metrics.rejectedIntents++;
   if (a.act && a.act.k === "rest") wake(world, a, out);
   a.act = null;
+  // a door that would not open is remembered, so that it is not tried again every hour
+  if (reason === "not_permitted" && intent && intent.k === "withdraw") {
+    remember(world, a, "refused", { ref: intent.structure, salience: 420 });
+  }
   clearPlan(a);
   // a deliberate plan that the world refused is not immediately re-proposed (slot 6 = planner back-off)
   a.mind.cool[6] = world.tick + 5;
@@ -666,7 +670,8 @@ function completeStructure(world: WorldState, sc: Scratch, a: Agent, s: Structur
   sc.structDirty = true;
 }
 
-function contribute(s: Structure, agentId: number, amount: number): void {
+function contribute(s: Structure, agentId: number, amount: number, building = false): void {
+  if (building && !s.builders.includes(agentId)) s.builders.push(agentId);
   const k = s.contributors.indexOf(agentId);
   if (k >= 0) s.contributions[k] = (s.contributions[k] as number) + amount;
   else {
@@ -725,6 +730,7 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       }
       gainSkill(world, a, spec.skill, 1);
       const ev = emit(world, out, "gather", a.id, { n, i: spec.yields, q: y, p: parents });
+      if (y > 0) gathered(world, sc, a, n, y, out);
       if (y > 0 && avail - y === 0) emit(world, out, "depleted", a.id, { n, p: [ev] });
       a.mind.nodeAmt[n] = world.nodes.amount[n] as number;
       a.mind.nodeTick[n] = world.tick;
@@ -836,12 +842,14 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         founder: a.id,
         contributors: [],
         contributions: [],
+        builders: [a.id],
         missing,
         laborDone: 0,
         laborNeeded: spec.labor,
         complete: false,
         fuel: 0,
         inv: emptyInv(),
+        open: emptyInv(),
         ripeTick: -1,
         occupants: 0,
         bound: -1,
@@ -874,7 +882,8 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         a.inv[i] = (a.inv[i] as number) - q;
         sink(world, i, q);
         s.missing[i] = need - q;
-        contribute(s, a.id, q * ITEM_SPECS[i]!.worth);
+        contribute(s, a.id, q * ITEM_SPECS[i]!.worth, true);
+        supplied(world, a, s, q * ITEM_SPECS[i]!.worth);
         emit(world, out, "supply", a.id, { s: s.id, i, q, p: parents });
         moved = true;
       }
@@ -911,6 +920,7 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       sink(world, Item.wood, q);
       s.fuel += q * FIRE_TICKS_PER_WOOD;
       contribute(s, a.id, q * ITEM_SPECS[Item.wood]!.worth);
+      supplied(world, a, s, q * ITEM_SPECS[Item.wood]!.worth);
       emit(world, out, "refuel", a.id, { s: s.id, q, p: parents });
       popIntent(a);
       return;
@@ -1041,12 +1051,14 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         reject(world, a, out, intent, "no_target");
         return;
       }
-      const q = Math.min(Math.max(1, Math.floor(intent.qty)), s.inv[intent.item] as number, roomFor(a, intent.item));
-      if (q <= 0) {
+      const wanted = Math.min(Math.max(1, Math.floor(intent.qty)), s.inv[intent.item] as number, roomFor(a, intent.item));
+      if (wanted <= 0) {
         reject(world, a, out, intent, "contested");
         return;
       }
-      if (!storeAccess(world, a, s, "withdraw", intent.item, q)) {
+      // a controlled store opens only as far as its charter allows this person, this period
+      const q = Math.min(wanted, withdrawLimit(world, a, s, intent.item));
+      if (q <= 0 || !storeAccess(world, a, s, "withdraw", intent.item, q)) {
         reject(world, a, out, intent, "not_permitted");
         return;
       }
@@ -1128,7 +1140,8 @@ export function advance(world: WorldState, sc: Scratch, a: Agent, out: EventOut)
         if (chance(a.skills[Skill.build] as number, 2000, world.config.seed, Stream.Gather, world.tick, a.id, 9)) labour++;
         if (a.ill > 0 && world.tick % 2 === 0) labour = 0;
         s.laborDone += labour;
-        contribute(s, a.id, labour);
+        contribute(s, a.id, labour, true);
+        if (labour > 0) supplied(world, a, s, labour);
         if (s.laborDone >= s.laborNeeded) act.t = 0;
       } else {
         act.t = 0;

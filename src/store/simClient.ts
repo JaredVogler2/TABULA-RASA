@@ -5,6 +5,7 @@
 import type { WorldConfig } from "@/engine";
 import type {
   AgentDetail,
+  CivicsView,
   CompareView,
   DaySample,
   FromWorker,
@@ -130,6 +131,10 @@ export class SimClient {
 
   async inspectTile(x: number, y: number): Promise<TileDetail | null> {
     return (await this.request((requestId) => ({ type: "inspectTile", x, y, requestId }), "tile")).detail;
+  }
+
+  async civics(): Promise<CivicsView | null> {
+    return (await this.request((requestId) => ({ type: "civics", requestId }), "civics")).view;
   }
 
   async compare(): Promise<CompareView | null> {

@@ -6,10 +6,10 @@ import { create } from "zustand";
 import type { Pick, Quality } from "@/render/WorldRenderer";
 import type { ChronicleEntry } from "@/ui/game/text";
 import type { SaveMeta } from "@/persist/saves";
-import type { AgentDetail, CalendarView, ClimateView, CompareView, DaySample, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
+import type { AgentDetail, CalendarView, ClimateView, CivicsView, CompareView, DaySample, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
 
 export type Phase = "title" | "setup" | "loading" | "playing";
-export type Panel = "none" | "chronicle" | "interventions" | "compare" | "menu" | "affordances" | "saves" | "about";
+export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about";
 export type QualitySetting = "auto" | Quality;
 
 export interface HudState {
@@ -22,6 +22,7 @@ export interface HudState {
   playing: boolean;
   tps: number;
   treated: boolean;
+  civic: { proposals: number; institutions: number };
 }
 
 export interface Settings {
@@ -54,6 +55,7 @@ export interface GameState {
   controlSeries: DaySample[];
   forkDay: number;
   compare: CompareView | null;
+  civics: CivicsView | null;
   panel: Panel;
   saves: SaveMeta[];
   settings: Settings;
@@ -108,6 +110,7 @@ export const useGame = create<GameState>((set) => ({
   controlSeries: [],
   forkDay: -1,
   compare: null,
+  civics: null,
   panel: "none",
   saves: [],
   settings: { quality: "auto", reducedMotion: false, tutorialDone: false },

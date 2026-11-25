@@ -90,6 +90,27 @@ physical phone has run it. (4) There is no sound yet. (5) The Chronicle shows no
 a group, role, rule, vote or pact; nothing institutional exists in any baseline run (asserted). Whatever
 cooperation appears in these runs is thin: a few gifts per thousand person-days.
 
+## Phase 09 — institution grammar (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Formulas are bounded and total: saturating arithmetic, division by zero is zero, evaluation stops when fuel runs out; unknown facts and operations, oversized and self-referential trees are refused with a reason; validation returns a clean copy | `pnpm test` (`institutions.test.ts` › formulas) | `evidence/phase-09/tests.txt` | pass | — |
+| The validator refuses 19 kinds of malformed or inexpressible charter with specific codes and messages, creates nothing when it refuses, and rebuilds accepted charters canonically (key order and stray fields do not matter) | same (› the validator is the only door) | same | pass | — |
+| Fuzz: arbitrary JSON (300 runs × 5 embeddings) never throws and nothing outside the five rule forms is ever accepted | same (› fuzz) | same | pass | Adversarial model output (phase 16). |
+| Fuzz: 40 random valid charters, lived under by depositing and withdrawing members and a non-member, never break the conservation audit (checked every tick), never take more than a posted bond, and never let the outsider draw common stock | same | same | pass | Longer horizons; larger memberships. |
+| Privilege: no membership without a recorded act; cannot sign what one has not heard of; `off` refuses everything and nothing institutional ever exists; a lock needs every builder's consent and leaves prior contents open to all; outsiders cannot vote or move; late joiners do not vote on earlier motions; amendments cannot touch bond, entry or decision rule; exit is unconditional and returns the bond | same (› authority is bounded by consent) | same | pass | — |
+| Capability, from scripted test proposals only: escrowed exchange (atomic, expiring, refusing third parties); a common larder with dues, a hunger-tested ration, a lock and suspension; a shelter raised under obligation and usable by members only | same (› capability) | same | pass | **That anyone would invent these.** This is not evidence of emergence. |
+| Decision rules do what the charter says (majority, two thirds, unanimity, quorum, decision by a role); founder roles cannot be voted away; grants are spent when collected | same | same | pass | — |
+| Harvest limits are breached only when a fellow member is in sight | same | same | pass (breach with a witness, none without) | — |
+| A world with a living institution snapshots, restores and replays identically; the scripted control is labelled `scripted` and binds only signers | same | same | pass | — |
+| Every charter the grammar search can draw validates; a proposer only proposes what it would sign; in a planner world institutions arise only through validated proposals and individual consent, with origin recorded; a model-driven mind uses the same door and is recorded as `llm` | same (› grammar search and the civic mind) | same | pass | — |
+| The Charters panel shows rules in sentences generated from the charter, with origin "Scripted control · not emergence" | `pnpm e2e` (`charters are shown in plain words…`) | `evidence/phase-09/e2e-run.txt`, `evidence/phase-09/11-charters.jpg` | pass | A reader's comprehension. |
+| What institutions did on development seeds | `pnpm exec tsx scripts/civics.ts --scenario long_winter --seeds 1-6 --days 30` (and `first_light`, 40 days) | `evidence/phase-09/civics-*.txt` | Long Winter: adopted (≥ 3 founders) on 6/6 seeds under search, 4/6 under the control; mean alive 35.3 off · 35.5 search · 31.2 control. First Light: all 50 alive in every arm | **Any effect.** See next row. |
+| Six-seed differences of this size are not interpretable | isolation experiment (four arms) | `evidence/phase-09/isolation-experiment.txt` | a control charter nobody joined moved one seed by 13 survivors | — |
+
+**Stated plainly.** Institutions can be proposed, validated, signed, used, amended and dissolved, and baseline
+agents do all of that. No benefit of any institution to survival or well-being has been shown.
+
 ## Research inputs
 
 | Input | File | Status |

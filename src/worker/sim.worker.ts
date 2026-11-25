@@ -35,12 +35,15 @@ import {
   type Structure,
   type WorldState,
 } from "@/engine";
+import { describeMotion, describeRule, describeTerms } from "@/engine";
 import { describeIntent } from "./describe";
 import {
   ACTION_CODES,
   AF,
   AGENT_STRIDE,
   type AgentDetail,
+  type CharterView,
+  type CivicsView,
   type DaySample,
   type FromWorker,
   type PileView,
@@ -86,6 +89,53 @@ const UI_EVENTS = new Set<string>([
   "rule", "transfer", "breach", "sanction", "dissolved", "pact", "pact_done", "pact_void", "promise_kept", "promise_broken",
   "deposit", "withdraw",
 ]);
+
+function civicCounts(w: WorldState): { proposals: number; institutions: number } {
+  let proposals = 0;
+  let institutions = 0;
+  for (const p of w.inst.proposals) if (p.state === "open") proposals++;
+  for (const i of w.inst.institutions) if (i.ended < 0) institutions++;
+  return { proposals, institutions };
+}
+
+function civicsView(w: WorldState): CivicsView {
+  const name = (id: number) => w.agents[id]?.name ?? `#${id}`;
+  const charters: CharterView[] = [];
+  for (const p of w.inst.proposals) {
+    const inst = w.inst.institutions.find((x) => x.id === p.id);
+    const c = inst ? inst.charter : p.charter;
+    const storeIds = inst ? inst.stores : c.stores;
+    const stores = storeIds.map((id) => w.structures[id]).filter((s): s is NonNullable<typeof s> => !!s && !s.removed).map((s) => ({ id: s.id, kind: s.kind, x: s.x, y: s.y }));
+    const at = w.agents[p.proposer]!;
+    charters.push({
+      id: p.id,
+      state: inst ? (inst.ended >= 0 ? "ended" : "active") : p.state === "lapsed" ? "lapsed" : "proposed",
+      name: c.name,
+      purpose: c.purpose,
+      origin: p.origin,
+      proposer: p.proposer,
+      proposedTick: p.tick,
+      ratifiedTick: inst ? inst.ratified : -1,
+      endedTick: inst ? inst.ended : -1,
+      endedWhy: inst ? inst.endedWhy : "",
+      signers: inst ? inst.members.length : p.endorsers.length,
+      minFounders: c.minFounders,
+      members: inst
+        ? inst.members.map((m) => ({ id: m.id, bond: m.bond, breaches: m.breaches, suspended: w.tick < m.suspendedUntil, roles: c.roles.filter((_, r) => (m.roles & (1 << r)) !== 0).map((r) => r.name) }))
+        : p.endorsers.map((id) => ({ id, bond: c.bond?.qty ?? 0, breaches: 0, suspended: false, roles: [] })),
+      terms: describeTerms(c),
+      rules: c.rules.map((r) => describeRule(r, c)),
+      stores,
+      uses: inst ? inst.uses : 0,
+      usedBy: inst ? inst.members.filter((m) => m.uses > 0).length : 0,
+      x: inst ? inst.seatX : (stores[0]?.x ?? at.x),
+      y: inst ? inst.seatY : (stores[0]?.y ?? at.y),
+    });
+  }
+  charters.sort((a, b) => (a.state === "active" ? 0 : a.state === "proposed" ? 1 : 2) - (b.state === "active" ? 0 : b.state === "proposed" ? 1 : 2) || b.id - a.id);
+  const motions = w.inst.motions.filter((m) => m.state === "open").map((m) => ({ id: m.id, institution: m.institution, by: m.by, what: describeMotion(m.body, name), yes: m.yes.length, no: m.no.length, closesIn: m.closes - w.tick }));
+  return { mode: w.config.institutions, charters, motions, exchanges: w.metrics.exchanges, openOffers: w.inst.pacts.filter((p) => p.state === "open").length };
+}
 
 function post(msg: FromWorker, transfer: Transferable[] = []): void {
   ctx.postMessage(msg, transfer);
@@ -310,6 +360,7 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     agentCount: n,
     roster: sendRoster ? roster(w) : null,
     treated: w.interventions.some((i) => i.origin === "observer"),
+    civic: civicCounts(w),
   };
 }
 
@@ -588,6 +639,10 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       }
       case "inspectTile": {
         post({ type: "tile", requestId: msg.requestId, detail: world ? tileDetail(world, msg.x, msg.y) : null });
+        break;
+      }
+      case "civics": {
+        post({ type: "civics", requestId: msg.requestId, view: world ? civicsView(world) : null });
         break;
       }
       case "compare": {

@@ -15,6 +15,7 @@ import {
   StepForward,
   Sun,
   Thermometer,
+  ScrollText,
   Users,
 } from "lucide-react";
 import { SPEEDS, useGame } from "@/store/game";
@@ -37,6 +38,7 @@ export function TopBar() {
   const world = useGame((s) => s.world);
   const panel = useGame((s) => s.panel);
   const forkDay = useGame((s) => s.forkDay);
+  const civic = useGame((s) => s.hud?.civic);
   const unread = useGame((s) => s.chronicle.length > 0 && s.panel !== "chronicle");
   if (!hud || !world) return null;
   const scenario = scenarioById(world.config.scenario);
@@ -88,6 +90,16 @@ export function TopBar() {
         <button type="button" className={styles.iconButton} aria-pressed={panel === "interventions"} onClick={() => controller.openPanel("interventions")} data-testid="open-interventions" title="Change the world (I)">
           <Sparkles aria-hidden />
           <span>Intervene</span>
+        </button>
+        <button type="button" className={styles.iconButton} aria-pressed={panel === "civics"} onClick={() => controller.openPanel("civics")} data-testid="open-civics" title="Charters (G)">
+          <ScrollText aria-hidden />
+          <span>Charters</span>
+          {civic && civic.proposals + civic.institutions > 0 ? (
+            <b className={styles.count} data-testid="civics-count">
+              {civic.institutions}
+              {civic.proposals ? `+${civic.proposals}` : ""}
+            </b>
+          ) : null}
         </button>
         <button type="button" className={styles.iconButton} aria-pressed={panel === "compare"} onClick={() => controller.openPanel("compare")} disabled={forkDay < 0} data-testid="open-compare" title={forkDay < 0 ? "Compare becomes available after you intervene" : "Compare timelines (K)"}>
           <GitFork aria-hidden />

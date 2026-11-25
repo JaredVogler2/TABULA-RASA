@@ -217,6 +217,16 @@
   opacity: 0.38;
   cursor: default;
 }
+.count {
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(246, 197, 126, 0.18);
+  color: var(--ember-300);
+  font-size: 11.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
 .badge {
   position: absolute;
   top: 6px;
@@ -1345,4 +1355,83 @@
   .titleMark {
     font-size: clamp(40px, 9vw, 72px);
   }
+}
+
+/* ───────── charters ───────── */
+
+.charter {
+  border: 1px solid var(--rule-on-paper);
+  border-radius: var(--radius-l);
+  padding: 14px 16px 16px;
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.34);
+}
+.charter[data-state="lapsed"],
+.charter[data-state="ended"] {
+  opacity: 0.78;
+}
+.charterHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.charterHead h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+.charterHead .linkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.charterHead .linkButton svg {
+  width: 14px;
+  height: 14px;
+}
+.charterPurpose {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--text-on-paper-muted);
+  font-style: italic;
+}
+.ruleList {
+  margin: 6px 0 10px;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.termList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-on-paper-muted);
+}
+.chip[data-tone="good"] {
+  background: rgba(47, 106, 63, 0.14);
+  border-color: rgba(47, 106, 63, 0.4);
+  color: #24512f;
+}
+.chip[data-tone="caution"] {
+  background: rgba(217, 138, 43, 0.16);
+  border-color: rgba(217, 138, 43, 0.55);
+  color: #7a4a10;
+}
+button.chip {
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+}
+button.chip:hover {
+  background: rgba(255, 255, 255, 0.8);
 }

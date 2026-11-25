@@ -156,6 +156,42 @@ export interface ViewFrame {
   roster: StaticAgentView[] | null;
   /** True if this world has received an observer intervention. */
   treated: boolean;
+  /** Charters currently on offer and institutions currently active (for the HUD badge). */
+  civic: { proposals: number; institutions: number };
+}
+
+/** One charter (proposal or institution) as the observer sees it. Rule sentences are generated from the validated charter. */
+export interface CharterView {
+  id: number;
+  state: "proposed" | "active" | "lapsed" | "ended";
+  name: string;
+  purpose: string;
+  /** How it came to be proposed: "grammar_search" (baseline search), "llm", "mock" or "scripted" (designer control; never emergence). */
+  origin: string;
+  proposer: number;
+  proposedTick: number;
+  ratifiedTick: number;
+  endedTick: number;
+  endedWhy: string;
+  signers: number;
+  minFounders: number;
+  members: { id: number; bond: number; breaches: number; suspended: boolean; roles: string[] }[];
+  terms: string[];
+  rules: string[];
+  stores: { id: number; kind: number; x: number; y: number }[];
+  /** Rule-governed events so far, and how many members took part in them. */
+  uses: number;
+  usedBy: number;
+  x: number;
+  y: number;
+}
+
+export interface CivicsView {
+  mode: string;
+  charters: CharterView[];
+  motions: { id: number; institution: number; by: number; what: string; yes: number; no: number; closesIn: number }[];
+  exchanges: number;
+  openOffers: number;
 }
 
 export interface DaySample {
@@ -295,6 +331,7 @@ export type ToWorker =
   | { type: "inspectAgent"; id: number; requestId: number }
   | { type: "inspectTile"; x: number; y: number; requestId: number }
   | { type: "compare"; requestId: number }
+  | { type: "civics"; requestId: number }
   | { type: "save"; requestId: number }
   | { type: "frameRate"; hz: number }
   /** Ask for structures, piles, traffic and roster to be re-sent in the next frame (after a renderer rebuild). */
@@ -305,6 +342,7 @@ export type FromWorker =
   | { type: "frame"; frame: ViewFrame }
   | { type: "day"; sample: DaySample; control: DaySample | null }
   | { type: "agent"; requestId: number; detail: AgentDetail | null }
+  | { type: "civics"; requestId: number; view: CivicsView | null }
   | { type: "tile"; requestId: number; detail: TileDetail | null }
   | { type: "compare"; requestId: number; view: CompareView | null }
   | { type: "saved"; requestId: number; payload: SavePayload }

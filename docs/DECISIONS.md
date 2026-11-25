@@ -278,3 +278,50 @@ rollback. Read this file before modifying any contract it mentions.
   10 people, 12 memories) but not yet measured in tokens — that belongs to phase 06.
 - **Rollback.** None needed; baseline minds do not use it.
 
+## D-017 — Institution grammar v1 as built, and five places it departs from the sketch in D-006 (2026-11-25)
+
+- **Problem.** D-006 fixed the principles (constitutive / regulative / payoff parts; consent-bounded authority).
+  Building and running it exposed cases the sketch had not decided.
+- **Decision.** The grammar in `docs/INSTITUTIONS.md`. Departures and additions:
+  1. **No automatic transfers.** D-006 listed them; goods do not move at a distance in this world, so every
+     entitlement is a right to *withdraw in person*, and every obligation is something a member physically does.
+  2. **Bonds are posted at the moment of signing**, held while a proposal is open and returned if it lapses.
+     Collecting them at ratification let the proposer of the control charter fall out of its own institution.
+  3. **Builders, not depositors, must consent to a lock.** Counting everyone who had ever put food in a store
+     as a builder meant no communal store could ever be controlled.
+  4. **What is inside a store when it is locked stays open to everyone.** Otherwise a lock silently took food
+     that non-members had stored — expropriation, which D-006 forbids. Found by running the control arm.
+  5. **Harvest limits are breached only when another member sees it.** The engine is a perfect notary of
+     consent, deposits and votes, but not of what happens unobserved on the land. Monitoring costs effort,
+     as in the commons literature the grammar is modelled on.
+  6. **A hearth can be the object of a standing obligation** (`must_supply` to a campfire, optionally seasonal):
+     the one recurrent public good this world has.
+- **Evidence.** 31 tests: diagnostics for every refusal, fuzzing (arbitrary JSON never throws; random valid
+  charters lived under by acting members never break the conservation audit and never take more than a bond),
+  privilege tests (outsiders, late joiners, founder roles, amendments), capability demonstrations (exchange,
+  mutual aid, funded infrastructure), determinism and snapshot round-trip with a living institution.
+- **Affected tests.** Snapshot schema 3 with migration; `auditGoods` now counts custody, proposal bonds and pact escrow.
+- **Cost / risks.** The grammar is a strong prior over what institutions can be: five rule forms, three
+  sanctions, twelve public facts. Anything outside it is refused, with a reason, rather than approximated.
+- **Rollback.** `institutions: "off"` removes every institutional affordance; charters carry their grammar version.
+
+## D-018 — Grammar search, the judging rule, and an honest positive control (2026-11-25)
+
+- **Problem.** D-010 requires a non-LLM source of proposals that is not a set of templates, and the protocol
+  requires a positive control showing that institutions have something to do.
+- **Decision.** (1) `search.ts`: eight random draws from a documented distribution over the grammar; the
+  proposer keeps the one it rates best and proposes it only if it would sign it. (2) `judge.ts`: a single
+  hand-written estimate of the worth of living under a charter, used for signing, voting, dues and leaving.
+  (3) `scripted.ts`: a designer-written "Hearth and larder" charter, announced aloud by a store's builder,
+  labelled `scripted` on the proposal, the institution, the Chronicle and the Charters panel.
+- **Evidence (development seeds, not findings).** `evidence/phase-09/`: charters are proposed and ratified
+  under both treatments; no survival benefit is demonstrated; an isolation experiment shows single-seed
+  differences of up to 13 survivors from perturbations that involve no institution at all.
+- **What follows.** The Lab (phase 14) must estimate paired-difference variance in a pilot before sizing any
+  study. If H6a fails on holdout seeds, the protocol's consequence applies: institutional affordances are not
+  shown to be materially useful in this world and no E5 claim may be made until the ecology or the affordances
+  are redesigned and re-registered.
+- **Cost / risks.** The judging rule and the search distribution are designer priors; a different rule would
+  produce different uptake. Both are disclosed in the affordance registry and in the interface.
+- **Rollback.** `institutions: "off"`, or `"open"` with model-driven minds only.
+

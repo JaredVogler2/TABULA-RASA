@@ -9,6 +9,8 @@ import type { Scratch } from "../sim/scratch";
 import { planDecide } from "./planner";
 import { reflexDecide, urgentNeed, type Plan } from "./reflex";
 import { noteHeard } from "./social";
+import { learnCharter } from "../institutions/engine";
+import { learnPact } from "../institutions/pacts";
 
 export type DecisionLayer = "reflex" | "planner" | "external";
 
@@ -33,6 +35,7 @@ export function adopt(
   m.why = plan.why;
   m.urgentAt = urgentNeed(a);
   m.lastDecision = world.tick;
+  m.src = source;
   if (continuingIdle) return;
   a.stats.decisions++;
   world.metrics.decisionsBySource[source] = (world.metrics.decisionsBySource[source] ?? 0) + 1;
@@ -101,6 +104,12 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
       m.nodeTick[n] = Math.min(world.tick, Math.floor(u.act.tick));
       m.nodeSrc[n] = u.from;
     }
+  } else if (u.act.t === "announce" || u.act.t === "invite") {
+    // to hear of a charter is to know it exists; whether to believe in it is another matter
+    const id = u.act.t === "announce" ? u.act.proposal : u.act.institution;
+    if (world.inst.proposals.some((p) => p.id === id)) learnCharter(a, id);
+  } else if (u.act.t === "offer" && u.act.pact !== undefined) {
+    if (world.inst.pacts.some((p) => p.id === (u.act as { pact: number }).pact && p.state === "open")) learnPact(a, u.act.pact);
   } else if (u.act.t === "warn" && trust >= 350) {
     // "that place is bare": believed only if it is newer than what the hearer knows first-hand
     const n = u.act.node;

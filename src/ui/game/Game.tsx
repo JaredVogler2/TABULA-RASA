@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Quality } from "@/render/WorldRenderer";
 import { useGame } from "@/store/game";
+import { CivicsPanel } from "./Civics";
 import { ComparePanel } from "./Compare";
 import { ControllerContext } from "./context";
 import { GameController } from "./controller";
@@ -60,7 +61,7 @@ export function Game() {
         return;
       }
       if (state.phase !== "playing") return;
-      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "menu" || state.panel === "affordances";
+      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances";
       if (modal) return;
       const rig = controller.camera();
       switch (e.key) {
@@ -86,6 +87,10 @@ export function Game() {
         case "i":
         case "I":
           controller.openPanel("interventions");
+          break;
+        case "g":
+        case "G":
+          controller.openPanel("civics");
           break;
         case "k":
         case "K":
@@ -164,6 +169,7 @@ export function Game() {
 
         {playing && panel === "interventions" ? <Interventions /> : null}
         {playing && panel === "compare" ? <ComparePanel /> : null}
+        {playing && panel === "civics" ? <CivicsPanel /> : null}
         {playing && panel === "menu" ? <MenuPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
         <Toast />

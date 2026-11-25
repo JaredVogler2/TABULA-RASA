@@ -340,7 +340,7 @@ describe("invalid intents are rejected, never applied", () => {
     ["a non-existent structure", { k: "withdraw", structure: 5, item: Item.berry, qty: 1 }, "no_target"],
     ["an unknown verb", { k: "teleport", x: 1, y: 1 }, "unknown_intent"],
     ["a speech act the engine does not know", { k: "say", to: -1, act: { t: "command", text: "obey" } }, "unknown_speech_act"],
-    ["institutional acts while the substrate is not built", { k: "endorse", proposal: 0 }, "disabled"],
+    ["endorsing a charter nobody has told you about", { k: "endorse", proposal: 0 }, "unknown_charter"],
   ] as const)("%s", (_name, intent, reason) => {
     const { world, events, before } = tryIntent(intent as unknown as Intent);
     expect(reasonOf(events)).toBe(reason);

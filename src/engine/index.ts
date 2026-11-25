@@ -30,3 +30,18 @@ export { hasSeen } from "./sim/pathfind";
 export { SnapshotError, cloneWorld, forkWorld, restoreWorld, serializeWorld, snapshotHash, worldDigest } from "./save/snapshot";
 export { commonsHealthPermille, giniPermille, summarize } from "./metrics/accumulate";
 export type { Summary } from "./metrics/accumulate";
+
+// minds: the contract for external decision makers, and the baselines' own tools
+export { buildObservation, carriedFoodEnergy, maskAllows, DECISION_LIMITS, OBSERVATION_VERSION } from "./mind/observe";
+export type { ActionOption, Observation, ObservedCivics } from "./mind/observe";
+export { cleanText, dueForDecision, observe, replayTape, submitDecision, tapeFromEvents } from "./mind/external";
+export type { DecisionOutcome, DecisionRecord, ExternalDecision } from "./mind/external";
+export { mockDecision } from "./mind/mock";
+
+// institutions
+export { GRAMMAR_VERSION, LIMITS as INSTITUTION_LIMITS } from "./institutions/types";
+export type { Charter, Diagnostic, Expr, Institution, Motion, MotionBody, Origin, Pact, Proposal, Rule, Sanction } from "./institutions/types";
+export { validateCharter } from "./institutions/validate";
+export { describeMotion, describeRule, describeTerms } from "./institutions/describe";
+export { institutionById, proposalById } from "./institutions/engine";
+

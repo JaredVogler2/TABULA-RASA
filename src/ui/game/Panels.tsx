@@ -43,6 +43,7 @@ const FILTERS: { id: "all" | ChronicleGroup; label: string }[] = [
   { id: "all", label: "Everything" },
   { id: "people", label: "People" },
   { id: "making", label: "Making" },
+  { id: "institutions", label: "Agreements" },
   { id: "nature", label: "Nature" },
   { id: "observer", label: "Your hand" },
 ];

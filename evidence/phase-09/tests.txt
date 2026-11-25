@@ -1,0 +1,45 @@
+
+> tabula-rasa@0.1.0 test /home/user/TABULA-RASA
+> vitest run
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/engine/institutions/institutions.test.ts (31 tests) 6388ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (2)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1510ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1296ms
+     ✓ a proposer only puts forward what it would itself sign 403ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 1896ms
+ ✓ src/engine/world/world.test.ts (28 tests) 1519ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 8467ms
+   ✓ external decisions: proposals, not writes (4)
+     ✓ replay uses the recorded intents and reproduces the same world without consulting any mind 311ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 4321ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 2564ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 8651ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1089ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 397ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 876ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 453ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 385ms
+     ✓ re-keying the branch gives an independent stochastic continuation 456ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 679ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 1019ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1248ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 451ms
+ ✓ src/engine/core/core.test.ts (19 tests) 110ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 21ms
+
+ Test Files  7 passed (7)
+      Tests  155 passed (155)
+   Start at  06:43:49
+   Duration  9.02s (tests 98%, transform 1%, import 1%)
+

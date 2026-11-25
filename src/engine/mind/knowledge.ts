@@ -44,6 +44,11 @@ function noteStructure(a: Agent, s: Structure, tick: number): void {
   k.tick = tick;
   k.state = structureStateCode(s, tick);
   k.bound = s.bound;
+  // a structure under an institution's control carries its mark: to see it is to learn the charter exists
+  if (s.bound >= 0 && !a.mind.charters.includes(s.bound)) {
+    if (a.mind.charters.length >= 12) a.mind.charters.shift();
+    a.mind.charters.push(s.bound);
+  }
   if (s.complete) delete k.missing;
   else k.missing = s.missing.slice();
 }

@@ -50,7 +50,7 @@ export type SpeechAct =
   | { t: "inform_structure"; structure: number }
   | { t: "inform_agent"; about: number; claim: "gave" | "helped" | "took" | "kept" | "broke"; tick: number }
   | { t: "request"; item: number; qty: number }
-  | { t: "offer"; give: number; giveQty: number; want: number; wantQty: number }
+  | { t: "offer"; give: number; giveQty: number; want: number; wantQty: number; pact?: number }
   | { t: "accept"; ref: number }
   | { t: "decline"; ref: number }
   | { t: "promise"; item: number; qty: number; due: number }
@@ -214,6 +214,11 @@ export interface Mind {
   structs: KnownStructure[];
   mem: MemoryItem[];
   commitments: Commitment[];
+  /** Charters (proposals and institutions) and open pact offers this agent knows to exist, by id. */
+  charters: number[];
+  pacts: number[];
+  /** Where the plan now being followed came from. */
+  src: DecisionSource;
   inbox: Heard[];
   /** Current goal code and a compact rationale, shown in the inspector. */
   goal: string;
@@ -331,6 +336,8 @@ export interface Structure {
   /** Agents who supplied materials or labour, and how much (parallel arrays). */
   contributors: number[];
   contributions: number[];
+  /** Agents who put materials or labour into raising it (a subset of contributors: depositors are not builders). */
+  builders: number[];
   /** Materials still missing per item id (all zero when ready for labour). */
   missing: number[];
   laborDone: number;
@@ -340,6 +347,12 @@ export interface Structure {
   fuel: number;
   /** store: contents per item id. */
   inv: number[];
+  /**
+   * store under an institution's control: units per item id that were already inside when it
+   * was placed under control. They were put there by people who agreed to nothing, so they
+   * stay open to everyone until drawn down. All zero for a store nobody controls.
+   */
+  open: number[];
   /** plot: tick it becomes ripe (-1 if not planted / already harvested). */
   ripeTick: number;
   /** shelter: number of current occupants. */
@@ -519,6 +532,8 @@ export interface MetricsAcc {
   deathsByCause: Record<string, number>;
   proposals: number;
   ratified: number;
+  /** Pacts carried out (two-way exchanges). */
+  exchanges: number;
   rejectedIntents: number;
   utterances: number;
   decisionsBySource: Record<string, number>;

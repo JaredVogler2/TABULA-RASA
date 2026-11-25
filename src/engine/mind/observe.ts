@@ -37,6 +37,9 @@ import { pileAt, structureAt, type Scratch } from "../sim/scratch";
 import { believedDrinkable } from "./knowledge";
 import { visibleAgents, visiblePiles } from "./senses";
 import { sensesCold } from "./social";
+import { activeMemberships, institutionById, memberOf, proposalById } from "../institutions/engine";
+import { describeMotion, describeRule, describeTerms } from "../institutions/describe";
+import { duesOutstanding } from "../institutions/judge";
 
 export const OBSERVATION_VERSION = 1;
 
@@ -104,7 +107,21 @@ export type ActionOption =
   | { k: "give"; to: number[]; items: number[] }
   | { k: "drop"; items: number[] }
   | { k: "pickup"; items: number[] }
-  | { k: "say"; to: number[]; acts: SpeechAct["t"][] };
+  | { k: "say"; to: number[]; acts: SpeechAct["t"][] }
+  | { k: "propose" }
+  | { k: "endorse"; proposals: number[] }
+  | { k: "motion" | "leave"; institutions: number[] }
+  | { k: "vote"; motions: number[] }
+  | { k: "pact_offer"; to: number[]; items: number[] }
+  | { k: "pact_accept"; pacts: number[] };
+
+/** What this agent knows of agreements: charters it has heard of, its own standing, open votes and offers. */
+export interface ObservedCivics {
+  charters: { id: number; state: "proposed" | "active"; name: string; purpose: string; by: string; signed: number; member: boolean; terms: string[]; rules: string[] }[];
+  memberships: { id: number; name: string; bond: number; breaches: number; suspended: boolean; roles: string[]; foodDueThisPeriod: number }[];
+  motions: { id: number; institution: number; by: string; what: string; closesIn: number; voted: boolean }[];
+  offers: { id: number; from: string; gives: string; givesQty: number; wants: string; wantsQty: number; forMe: boolean }[];
+}
 
 export interface Observation {
   v: typeof OBSERVATION_VERSION;
@@ -147,6 +164,8 @@ export interface Observation {
   memories: { kind: string; age: number; who?: string; item?: string; qty?: number; ref?: number; toldBy?: string }[];
   heard: { from: number; name: string; direct: boolean; age: number; act: SpeechAct; text?: string }[];
   commitments: { direction: "i_owe" | "owed_to_me"; other: number; name: string; item: string; qty: number; dueIn: number }[];
+  /** Absent when the scenario has no institutional affordance. */
+  civics?: ObservedCivics;
   actions: ActionOption[];
   limits: typeof DECISION_LIMITS;
 }
@@ -295,6 +314,7 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
 
   const k = pileAt(world, sc, tile);
   const sidHere = structureAt(world, sc, tile);
+  const civics = buildCivics(world, a);
   const temp = world.climate.temp;
   return {
     v: OBSERVATION_VERSION,
@@ -336,12 +356,84 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
     memories,
     heard,
     commitments,
-    actions: actionMask(world, sc, a, people, nodes, structures, k),
+    ...(civics ? { civics } : {}),
+    actions: [...actionMask(world, sc, a, people, nodes, structures, k), ...civicMask(world, a, people, civics)],
     limits: DECISION_LIMITS,
   };
 }
 
-const SPEECH_ALWAYS: SpeechAct["t"][] = ["greet", "inform_node", "inform_structure", "inform_agent", "request", "offer", "promise", "warn", "accept", "decline", "free"];
+function buildCivics(world: WorldState, a: Agent): ObservedCivics | undefined {
+  if (world.config.institutions === "off") return undefined;
+  const name = (id: number) => world.agents[id]?.name ?? `#${id}`;
+  const charters: ObservedCivics["charters"] = [];
+  for (let i = a.mind.charters.length - 1; i >= 0 && charters.length < 4; i--) {
+    const id = a.mind.charters[i] as number;
+    const p = proposalById(world, id);
+    if (!p || p.state === "lapsed") continue;
+    const inst = p.state === "ratified" ? institutionById(world, id) : undefined;
+    if (p.state === "ratified" && (!inst || inst.ended >= 0)) continue;
+    const c = inst ? inst.charter : p.charter;
+    charters.push({
+      id,
+      state: inst ? "active" : "proposed",
+      name: c.name,
+      purpose: c.purpose,
+      by: name(p.proposer),
+      signed: inst ? inst.members.length : p.endorsers.length,
+      member: inst ? memberOf(inst, a.id) !== undefined : p.endorsers.includes(a.id),
+      terms: describeTerms(c),
+      rules: c.rules.map((r) => describeRule(r, c)),
+    });
+  }
+  const mine = activeMemberships(world, a.id);
+  const memberships = mine.map((inst) => {
+    const m = memberOf(inst, a.id)!;
+    let dep = 0;
+    for (const f of FOOD_ITEMS) dep += m.dep[f] as number;
+    return {
+      id: inst.id,
+      name: inst.charter.name,
+      bond: m.bond,
+      breaches: m.breaches,
+      suspended: world.tick < m.suspendedUntil,
+      roles: inst.charter.roles.filter((_, r) => (m.roles & (1 << r)) !== 0).map((r) => r.name),
+      foodDueThisPeriod: duesOutstanding(world, a, inst.charter, dep, inst.members.length),
+    };
+  });
+  const motions = world.inst.motions
+    .filter((mo) => mo.state === "open" && mine.some((x) => x.id === mo.institution))
+    .slice(0, 6)
+    .map((mo) => ({ id: mo.id, institution: mo.institution, by: name(mo.by), what: describeMotion(mo.body, name), closesIn: mo.closes - world.tick, voted: mo.yes.includes(a.id) || mo.no.includes(a.id) }));
+  const offers = a.mind.pacts
+    .map((id) => world.inst.pacts.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p && p.state === "open" && p.a !== a.id && (p.b < 0 || p.b === a.id))
+    .map((p) => ({ id: p.id, from: name(p.a), gives: ITEMS[p.give] as string, givesQty: p.giveQty, wants: ITEMS[p.want] as string, wantsQty: p.wantQty, forMe: p.b === a.id }));
+  return { charters, memberships, motions, offers };
+}
+
+function civicMask(world: WorldState, a: Agent, people: ObservedPerson[], civics: ObservedCivics | undefined): ActionOption[] {
+  if (!civics) return [];
+  const out: ActionOption[] = [];
+  const mode = world.config.institutions;
+  if (mode === "grammar_search" || mode === "open") out.push({ k: "propose" });
+  const signable = civics.charters.filter((c) => !c.member).map((c) => c.id);
+  if (signable.length) out.push({ k: "endorse", proposals: signable });
+  const mine = civics.memberships.map((m) => m.id);
+  if (mine.length) {
+    out.push({ k: "motion", institutions: mine });
+    out.push({ k: "leave", institutions: mine });
+  }
+  const votable = civics.motions.filter((m) => !m.voted).map((m) => m.id);
+  if (votable.length) out.push({ k: "vote", motions: votable });
+  const carried: number[] = [];
+  for (let i = 0; i < a.inv.length; i++) if ((a.inv[i] as number) > 0) carried.push(i);
+  if (carried.length) out.push({ k: "pact_offer", to: [-1, ...people.filter((p) => p.audible && !p.asleep).map((p) => p.id)], items: carried });
+  const takeable = civics.offers.filter((o) => (a.inv[ITEMS.indexOf(o.wants as (typeof ITEMS)[number])] as number) >= o.wantsQty).map((o) => o.id);
+  if (takeable.length) out.push({ k: "pact_accept", pacts: takeable });
+  return out;
+}
+
+const SPEECH_ALWAYS: SpeechAct["t"][] = ["greet", "inform_node", "inform_structure", "inform_agent", "request", "offer", "promise", "warn", "accept", "decline", "announce", "invite", "free"];
 
 /** The concrete options open to this agent now (the action mask). */
 function actionMask(world: WorldState, sc: Scratch, a: Agent, people: ObservedPerson[], nodes: ObservedNode[], structures: ObservedStructure[], pileHere: number): ActionOption[] {
@@ -445,6 +537,20 @@ export function maskAllows(obs: Observation, intent: Intent): string | null {
       if (!o.to.includes(intent.to)) return "not_in_earshot";
       return o.acts.includes(intent.act.t) ? null : "not_available";
     }
+    case "endorse":
+      return (opt as { proposals: number[] }).proposals.includes(intent.proposal) ? null : "unknown_charter";
+    case "motion":
+    case "leave":
+      return (opt as { institutions: number[] }).institutions.includes(intent.institution) ? null : "not_a_member";
+    case "vote":
+      return (opt as { motions: number[] }).motions.includes(intent.motion) ? null : "no_such_motion";
+    case "pact_offer": {
+      const o = opt as { to: number[]; items: number[] };
+      if (!o.to.includes(intent.to)) return "not_in_earshot";
+      return o.items.includes(intent.give) ? null : "not_carried";
+    }
+    case "pact_accept":
+      return (opt as { pacts: number[] }).pacts.includes(intent.pact) ? null : "unknown_offer";
     default:
       return null;
   }

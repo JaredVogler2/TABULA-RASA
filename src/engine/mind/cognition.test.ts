@@ -241,10 +241,17 @@ describe("distinct agents behave differently for documented reasons", () => {
     expect(plans[1]!.plan?.goal).not.toBe("tell");
   });
 
-  it("the planner never proposes an institution: its source contains no institutional intent", () => {
-    const src = readFileSync(new URL("./planner.ts", import.meta.url), "utf8");
+  it("no charter is hand-written into the baseline mind: its only source of a proposal is the grammar search", () => {
+    const planner = readFileSync(new URL("./planner.ts", import.meta.url), "utf8");
     for (const kind of ["propose", "endorse", "motion", "vote", "leave", "pact_offer", "pact_accept"]) {
-      expect(src.includes(`k: "${kind}"`), `planner emits ${kind}`).toBe(false);
+      expect(planner.includes(`k: "${kind}"`), `planner emits ${kind}`).toBe(false);
+    }
+    const civic = readFileSync(new URL("./civic.ts", import.meta.url), "utf8");
+    const proposals = civic.match(/k: "propose"[^}]*}/g) ?? [];
+    expect(proposals).toEqual(['k: "propose", charter: found.charter }']);
+    // and no rule form is spelled out anywhere in either file
+    for (const form of ["may_withdraw", "must_deposit", "must_supply", "must_not_gather", "may_shelter"]) {
+      expect(planner.includes(form) || civic.includes(form), form).toBe(false);
     }
   });
 });
@@ -542,7 +549,7 @@ describe("baseline competence", () => {
     const planners = { n: 0, alive: 0 };
     const reflexes = { n: 0, alive: 0 };
     for (const seed of [1, 2]) {
-      const world = createWorld(makeConfig("first_light", seed, { policy: "planner", plannerShare: 500, richness: 1000, regrowth: 1000, nodeDensity: 1000 }));
+      const world = createWorld(makeConfig("first_light", seed, { policy: "planner", plannerShare: 500, richness: 1000, regrowth: 1000, nodeDensity: 1000, institutions: "off" }));
       advance(world, 40 * TICKS_PER_DAY);
       for (const a of world.agents) {
         const bucket = a.controller === "planner" ? planners : reflexes;
@@ -558,14 +565,15 @@ describe("baseline competence", () => {
     expect(planners.alive / planners.n).toBeGreaterThan(reflexes.alive / reflexes.n + 0.2);
   }, 120_000);
 
-  it("on the reference island a society of planners comes through its first winter", () => {
-    const world = createWorld(makeConfig("first_light", 3, { policy: "planner" }));
+  it("on the reference island a society of planners comes through its first winter, and with institutions off none exists", () => {
+    const world = createWorld(makeConfig("first_light", 3, { policy: "planner", institutions: "off" }));
     const events = advance(world, 40 * TICKS_PER_DAY);
     expect(world.agents.filter((a) => a.alive).length).toBeGreaterThanOrEqual(45);
     const kinds = new Set(events.map((e) => e.k));
     // foresight shows up as things reflexes never do
     for (const k of ["built", "plant", "harvest", "deposit", "craft"]) expect(kinds.has(k as SimEvent["k"]), k).toBe(true);
-    for (const k of ["proposal", "ratified", "joined", "motion", "vote", "pact"]) expect(kinds.has(k as SimEvent["k"]), k).toBe(false);
+    for (const k of ["proposal", "ratified", "joined", "endorse", "motion", "vote", "pact"]) expect(kinds.has(k as SimEvent["k"]), k).toBe(false);
+    expect(world.inst).toEqual({ nextId: 1, proposals: [], institutions: [], motions: [], pacts: [] });
   }, 120_000);
 });
 

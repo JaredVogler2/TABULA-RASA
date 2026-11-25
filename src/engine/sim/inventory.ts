@@ -102,6 +102,16 @@ export function totalGoods(world: WorldState): number[] {
     if (s.removed) continue;
     for (let i = 0; i < ITEM_COUNT; i++) total[i] = (total[i] as number) + (s.inv[i] as number);
   }
+  // goods held by the notary: bonds in institutional custody and offers in pact escrow
+  for (const inst of world.inst.institutions) {
+    for (let i = 0; i < ITEM_COUNT; i++) total[i] = (total[i] as number) + (inst.custody[i] as number);
+  }
+  for (const p of world.inst.pacts) {
+    if (p.state === "open" && p.held > 0) total[p.give] = (total[p.give] as number) + p.held;
+  }
+  for (const p of world.inst.proposals) {
+    if (p.held > 0 && p.charter.bond) total[p.charter.bond.item] = (total[p.charter.bond.item] as number) + p.held;
+  }
   return total;
 }
 
