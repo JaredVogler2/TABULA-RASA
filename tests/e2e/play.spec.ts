@@ -155,6 +155,16 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await shot(page, project, "08-compare");
   await page.getByTestId("compare-close").click();
 
+  // ── the aim on the scenario's card is now counted in both worlds: the one touched and the one left alone
+  await page.getByTestId("open-atlas").click();
+  await expect(page.getByTestId("aim-text")).toHaveText("See four in five through the first winter.");
+  await expect(page.getByTestId("aim-yours-state")).toHaveText(/^(Open|Met on day \d+|Lost on day \d+)$/);
+  await expect(page.getByTestId("aim-twin")).toBeVisible();
+  await expect(page.getByTestId("aim-twin-state")).toHaveText(/^(Open|Met on day \d+|Lost on day \d+)$/);
+  await expect(page.getByTestId("aim-no-twin")).toHaveCount(0);
+  await shot(page, project, "08b-aim-in-both-worlds");
+  await page.getByTestId("atlas-close").click();
+
   // ── save, reload the page, continue exactly where we were
   const savedTick = await tick(page);
   await page.getByTestId("open-menu").click();
@@ -179,51 +189,144 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   expect(external, "requests to other origins").toEqual([]);
 });
 
-test("the keyboard alone can drive the game", async ({ page }, testInfo) => {
+/** Press Tab until the element with this test id has the focus. No pointer is involved. */
+async function tabTo(page: Page, testId: string, limit = 90): Promise<void> {
+  for (let i = 0; i < limit; i++) {
+    const at = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.testid ?? "");
+    if (at === testId) return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(`Tab never reached "${testId}"`);
+}
+
+test("the keyboard alone can drive the game: every key it reads, and never a pointer", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "keyboard path is a desktop concern");
+  test.setTimeout(420_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  const key = (k: string) => page.keyboard.press(k);
+  const pressed = (id: string) => page.getByTestId(id);
+  const where = async (agent: number): Promise<{ x: number; y: number }> => (await page.evaluate((a) => window.__tr?.screenOf(a) ?? null, agent)) ?? { x: Number.NaN, y: Number.NaN };
+
+  // from the title to a world: Tab and Enter only
   await page.goto("/?q=low&pr=0.6");
-  await page.getByTestId("begin").focus();
-  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("begin")).toBeVisible();
+  await tabTo(page, "begin");
+  await key("Enter");
   await expect(page.getByTestId("setup")).toBeVisible();
-  await page.getByTestId("create-world").focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByTestId("world-label")).toBeVisible({ timeout: 60_000 });
-  await page.getByTestId("coach-skip").click();
-  await page.getByTestId("world-canvas").focus();
-  await page.keyboard.press(".");
+  await tabTo(page, "create-world");
+  await key("Enter");
+  await expect(page.getByTestId("world-label")).toHaveText(/ · seed \d+$/, { timeout: 60_000 });
+  await tabTo(page, "coach-skip");
+  await key("Enter");
+  await expect(page.getByTestId("coach")).toHaveCount(0);
+
+  // time: one tick, each of the six speeds, play and pause
+  await key(".");
   await expect.poll(() => tick(page)).toBe(1);
-  await page.keyboard.press("5");
-  await page.keyboard.press(" ");
+  for (let n = 1; n <= 6; n++) {
+    await key(String(n));
+    await expect(pressed(`speed-${n - 1}`)).toHaveAttribute("aria-checked", "true");
+  }
+  await key("5");
+  await key(" ");
   await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "true");
-  await expect.poll(() => tick(page), { timeout: 60_000 }).toBeGreaterThan(20);
-  await page.keyboard.press(" ");
+  // far enough for the Chronicle to have something in it
+  await expect.poll(() => tick(page), { timeout: 120_000 }).toBeGreaterThan(60);
+  await key(" ");
   await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "false");
-  await page.keyboard.press("c");
+
+  // the view: every pan, turn and zoom key moves it (a citizen who is standing still is seen somewhere else)
+  for (const k of ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "a", "d", "w", "s", "q", "e", "+", "-", "=", "_"]) {
+    const before = await where(0);
+    expect(Number.isFinite(before.x), `citizen 0 has a place on screen before "${k}"`).toBe(true);
+    await key(k);
+    await expect
+      .poll(async () => {
+        const now = await where(0);
+        return Math.hypot(now.x - before.x, now.y - before.y);
+      }, { message: `"${k}" moves the view`, timeout: 10_000 })
+      .toBeGreaterThan(1);
+  }
+  // letters mean the same with Shift held
+  const beforeShift = await where(0);
+  await key("Shift+KeyA");
+  await expect.poll(async () => Math.hypot((await where(0)).x - beforeShift.x, (await where(0)).y - beforeShift.y), { timeout: 10_000 }).toBeGreaterThan(1);
+
+  // the Chronicle, and through it a citizen: an entry is a button, and pressing it goes there and selects who did it
+  await key("c");
   await expect(page.getByTestId("chronicle")).toBeVisible();
-  await page.keyboard.press("Escape");
+  let selected = false;
+  for (let i = 0; i < 120 && !selected; i++) {
+    await key("Tab");
+    const onEntry = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return !!el && !!el.closest('[data-testid="chronicle-entries"]') && el.title === "Go to where this happened";
+    });
+    if (!onEntry) continue;
+    await key("Enter");
+    selected = await page
+      .getByTestId("inspector-name")
+      .waitFor({ state: "visible", timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+  }
+  expect(selected, "a Chronicle entry, reached by Tab and pressed with Enter, selects a citizen").toBe(true);
+
+  // with someone selected: follow, what they know, whom they know — each on and off by its key
+  for (const [k, id] of [["f", "follow"], ["v", "overlay-knowledge"], ["t", "overlay-ties"]] as const) {
+    await key(k);
+    await expect(pressed(id), `"${k}" on`).toHaveAttribute("aria-pressed", "true");
+    await key(k);
+    await expect(pressed(id), `"${k}" off`).toHaveAttribute("aria-pressed", "false");
+  }
+  // Escape closes the open panel first, then lets go of the citizen
+  await key("Escape");
   await expect(page.getByTestId("chronicle")).toHaveCount(0);
-  await page.keyboard.press("i");
-  await expect(page.getByTestId("interventions")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByTestId("interventions")).toHaveCount(0);
-  // the instruments added in phase 12 have keys of their own
-  for (const [key, panel] of [["g", "civics"], ["l", "atlas"], ["j", "journal"]] as const) {
-    await page.keyboard.press(key);
-    await expect(page.getByTestId(panel)).toBeVisible();
-    await page.keyboard.press("Escape");
+  await expect(page.getByTestId("inspector")).toBeVisible();
+  await key("Escape");
+  await expect(page.getByTestId("inspector")).toHaveCount(0);
+
+  // every panel that has a key opens by it and closes with Escape
+  for (const [k, panel] of [["i", "interventions"], ["g", "civics"], ["l", "atlas"], ["h", "history"], ["j", "journal"], ["Shift+KeyG", "civics"]] as const) {
+    await key(k);
+    await expect(page.getByTestId(panel), `"${k}" opens ${panel}`).toBeVisible();
+    await key("Escape");
     await expect(page.getByTestId(panel)).toHaveCount(0);
   }
+
+  // Compare and the twin have no key until there is a fork; an intervention is a button like any other
+  await key("k");
+  await expect(page.getByTestId("compare")).toHaveCount(0);
+  await key("i");
+  await expect(page.getByTestId("interventions")).toBeVisible();
+  await tabTo(page, "intervene-rain");
+  await key("Enter");
+  await expect(page.getByTestId("forked-badge")).toBeVisible({ timeout: 30_000 });
+  if (await page.getByTestId("interventions").count()) await key("Escape");
+  await key("k");
+  await expect(page.getByTestId("compare")).toBeVisible();
+  await key("Escape");
+  await expect(page.getByTestId("compare")).toHaveCount(0);
+  await key("x");
+  await expect(pressed("view-twin")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("twin-badge")).toBeVisible();
+  await key("x");
+  await expect(pressed("view-twin")).toHaveAttribute("aria-pressed", "false");
+
   // sound by key: on, then off (nothing plays before the first press)
-  await page.keyboard.press("m");
-  await expect(page.getByTestId("toggle-sound")).toHaveAttribute("aria-pressed", "true");
-  await page.keyboard.press("m");
-  await expect(page.getByTestId("toggle-sound")).toHaveAttribute("aria-pressed", "false");
-  // the menu is reached by Tab and opened by Enter like any button
-  await page.getByTestId("open-menu").focus();
-  await page.keyboard.press("Enter");
+  await key("m");
+  await expect(pressed("toggle-sound")).toHaveAttribute("aria-pressed", "true");
+  await key("m");
+  await expect(pressed("toggle-sound")).toHaveAttribute("aria-pressed", "false");
+
+  // the menu has no key: it is reached by Tab and opened by Enter like any button
+  await tabTo(page, "open-menu");
+  await key("Enter");
   await expect(page.getByTestId("menu")).toBeVisible();
-  await page.keyboard.press("Escape");
+  await key("Escape");
   await expect(page.getByTestId("menu")).toHaveCount(0);
+  expect(errors, "page errors").toEqual([]);
 });
 
 test("charters are shown in plain words, with how they came about", async ({ page }, testInfo) => {
@@ -241,7 +344,7 @@ test("charters are shown in plain words, with how they came about", async ({ pag
   // the scripted control arm guarantees that a charter is offered, and must be labelled as not emergent
   await page.getByTestId("institutions-select").selectOption("scripted_control");
   await page.getByTestId("create-world").click();
-  await expect(page.getByTestId("world-label")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("world-label")).toHaveText(/ · seed \d+$/, { timeout: 60_000 });
   await page.getByTestId("coach-skip").click();
 
   // before anything has been proposed the panel says so

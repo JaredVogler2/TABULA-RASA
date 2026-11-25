@@ -1,0 +1,43 @@
+# Where the time goes: 250 people, planner minds, 20 days, engine as committed (with the memo).
+# node --cpu-prof --import tsx scripts/bench.ts -- --policy planner --days 20 --only 250 ; node scripts/cpuprofile-top.mjs <profile> 18
+total sampled 11203 ms over 10169 samples
+
+self time by function
+ 28.5%    3193 ms  perceive src/engine/mind/knowledge.ts:1
+  8.9%     992 ms  noteStructure src/engine/mind/knowledge.ts:1
+  6.9%     771 ms  findPath src/engine/sim/pathfind.ts:1
+  6.6%     735 ms  step src/engine/sim/step.ts:1
+  6.3%     704 ms  knownStructure src/engine/mind/knowledge.ts:1
+  4.7%     532 ms  (garbage collector) (native)
+  3.7%     418 ms  bestKnownNode src/engine/mind/knowledge.ts:1
+  2.5%     275 ms  canonicalJson src/engine/core/canonical.ts:1
+  2.3%     259 ms  write src/engine/core/canonical.ts:1
+  2.1%     233 ms  dflt node_modules/fflate/esm/index.mjs:643
+  1.7%     189 ms  parseCanonical src/engine/core/canonical.ts:1
+  1.6%     175 ms  ints src/engine/core/hash.ts:1
+  1.5%     169 ms  provision src/engine/mind/planner.ts:1
+  1.3%     148 ms  updateBody src/engine/sim/bodies.ts:1
+  1.0%     113 ms  sha256Hex src/engine/core/hash.ts:1
+  1.0%     107 ms  planDecide src/engine/mind/planner.ts:1
+  0.8%      91 ms  visibleAgents src/engine/mind/senses.ts:1
+  0.8%      87 ms  base64ToBytes src/engine/core/canonical.ts:1
+
+self time by file
+ 48.1%    5388 ms  src/engine/mind/knowledge.ts
+  8.4%     944 ms  src/engine/core/canonical.ts
+  7.7%     858 ms  src/engine/sim/pathfind.ts
+  6.8%     759 ms  src/engine/sim/step.ts
+  4.7%     532 ms  (garbage collector)
+  4.6%     518 ms  src/engine/mind/planner.ts
+  3.4%     380 ms  src/engine/core/hash.ts
+  2.7%     305 ms  node_modules/fflate/esm/index.mjs
+  1.8%     202 ms  src/engine/sim/bodies.ts
+  1.8%     201 ms  src/engine/sim/actions.ts
+  0.8%      94 ms  src/engine/mind/senses.ts
+  0.8%      92 ms  src/engine/mind/reflex.ts
+  0.7%      76 ms  src/engine/mind/decide.ts
+  0.6%      70 ms  src/engine/mind/civic.ts
+  0.6%      66 ms  src/engine/save/snapshot.ts
+  0.6%      64 ms  src/engine/core/rng.ts
+  0.5%      51 ms  set TextDecoder
+  0.4%      42 ms  src/engine/world/terrain.ts

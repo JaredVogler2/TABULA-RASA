@@ -13,15 +13,18 @@ It is **not** a city builder (the player never places buildings or issues orders
 (nothing an agent *says* happens unless the simulation engine validates and executes it), and **not** a claim
 about real human societies (see `EXPERIMENT_PROTOCOL.md` §8).
 
-One sentence for the title screen: *A living world. Fifty independent minds. No civilization blueprint.*
+One sentence for the title screen, as it stands there: *A living world. Fifty independent minds. No blueprint
+for what they should become.*
 
 ## 2. Design pillars
 
 1. **The engine is the only source of truth.** Agents — heuristic or Claude — emit *proposals*. A deterministic
    engine validates, arbitrates and applies them, and writes every consequence to an append-only ledger.
    A story told by a model is not a world event unless it was executed and logged.
-2. **Causality you can touch.** Every change the player makes creates a fork whose untouched twin keeps running,
-   so the consequence of an intervention is something you can *see*, with the limits of a single comparison stated.
+2. **Causality you can touch.** The first change the player makes forks the world: an untouched twin with the
+   same land, people, weather and luck keeps running beside it, and later changes go to the same changed world
+   (D-012). The consequence of intervening is something you can *see*, with the limits of a single comparison
+   stated.
 3. **A place worth looking at.** The world is a museum diorama come alive: sculpted land, luminous shallows,
    figures that visibly walk, forage, carry, build, speak and rest. Art is built with the first slice, not after.
 4. **Honest about what was designed.** Everything the designers supplied — every action, recipe, perception rule,
@@ -34,13 +37,19 @@ One sentence for the title screen: *A living world. Fifty independent minds. No 
 
 ### Observer mode (the game)
 Watch · inspect · pause · step · accelerate · follow a citizen · read the Chronicle · open the institution ledger ·
-intervene · rewind · fork · compare · take on an optional challenge · save and resume.
+intervene · rewind · fork · compare · read the field journal of what has been witnessed · save and resume. The
+"optional challenge" first listed here was not built as one: each scenario states an aim on its card and nothing
+checks or scores it; the journal took its place (D-030).
 
 ### Lab mode (the instrument)
-Register a study (hypotheses, independent and dependent variables, seed sets, run length) · run matched-seed
-batches headlessly in workers · inspect effect sizes with uncertainty · replay any individual run · export a
-reproducible bundle (manifest, per-run metrics, hashes). The Lab never contacts a paid service unless the owner has
-authorized a specific budget.
+As built (D-036): the registered studies are data in the repository (`src/lab/studies.ts`: conditions, measure
+and the rule that would falsify each hypothesis) · matched-seed batches are run headlessly in Node from the
+command line (`pnpm study`), not in the browser · the Laboratory page reads the resulting bundle and shows
+per-condition means and paired contrasts with 95% intervals and effect sizes · any single cell can be re-run in
+a browser worker and compared by hash, or opened as a world to watch · the bundle's files (a manifest with the
+hash of every run, the report, the per-run table) can be downloaded. A study cannot be registered or started
+from the browser. The Lab calls no paid service: live studies are not built, and the page shows only the most
+they could cost.
 
 ## 4. The first fifteen minutes
 
@@ -58,25 +67,35 @@ never blocks input.
 
 ## 5. Scenarios
 
-All scenarios are win-less sandboxes with **optional** objectives. No scenario prescribes how an objective should be
-met, and objectives are evaluated only from engine state.
+All scenarios are win-less sandboxes. Each states one **optional** aim on its card in the setup screen (the
+last column below) and prescribes nothing about how to meet it. No citizen is told of it and nothing is
+scored. Since phase 20 the aim is **counted**: the Atlas says, from the engine's own state, where it stands —
+open until its day of reckoning, then met or lost — and says the same of the untouched twin once the observer
+has made one (D-049; `src/worker/aims.ts`). Two of the aims were reworded then, because as first written they
+could not be met in any world measured. The field journal is a different thing and is still there: twenty-one
+questions, each answered by the first engine-logged event of its kind (D-030).
 
-| Scenario | Distinct conditions | Optional objective |
+| Scenario | Distinct conditions | Optional aim, and how it is counted |
 |---|---|---|
-| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks and the default. | See four in five through the first winter. |
-| **The Long Winter** | Starts in late summer; winter is longer and colder; food spoils. Roughly a season and a half to prepare. | Lose no one to cold or hunger before spring. |
-| **Thin Commons** | Food is concentrated in a few fishing lagoons and berry groves that collapse if over-harvested and recover slowly. | Keep every commons above its collapse threshold for a year while four in five survive. |
-| **Two Shores** | A strait with a single ford divides the island; stone and clay lie on one shore, timber and most food on the other. | Narrow the gap in well-being between the shores. |
-| **Dry Year** | An ordinary start, then a drought of unannounced timing: streams shrink to pools and bushes fail. | Keep four in five alive through the drought. |
+| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks and the default. | *See four in five through the first winter.* Of the fifty who began, those alive on the first morning of the following spring (day 41). |
+| **The Long Winter** | Starts in late summer; winter is longer and colder; food spoils. Roughly a season and a half to prepare. | *Bring three in five through to spring.* Those alive on the morning spring comes (day 29). |
+| **Thin Commons** | Food is concentrated in a few fishing lagoons and berry groves that collapse if over-harvested and recover slowly. | *See four in five through the year, on commons that can be stripped bare.* Those alive at the end of the first year; the commons' average fullness and emptiest morning are shown beside it. |
+| **Two Shores** | A strait with a single ford divides the island; stone and clay lie on one shore, timber and most food on the other. | *Narrow the gap in well-being between the shores.* A reading with no day of reckoning: well-being of those who began on each shore, the dead counted as nought. Whether it is narrow is for the twin to say. |
+| **Dry Year** | An ordinary start, then a drought of unannounced timing: streams shrink to pools and bushes fail. | *Keep four in five alive through the drought.* Those alive on the morning the drought ends; before it comes, the Atlas does not say when it will. |
 
-The first playable slice ships **First Light** and the resource-shock intervention; the others follow as the
-ecology deepens.
+All five scenarios and all eight interventions are in the product. (The first playable slice, phase 04,
+shipped First Light alone.) Two Shores divides its resources between its shores as the table says since engine
+0.7.0 (D-041); before that only the strait and the ford existed.
 
 ## 6. What the player may and may not do
 
-**May (environment and conditions):** trigger weather (rain, cold snap, drought), enrich or blight a resource,
-wash a windfall ashore, bring newcomers to the shore, dampen or widen how far voices carry, and — in the Lab — set
-starting conditions. Every intervention is recorded with observer provenance and marks its timeline as *treated*.
+**May (environment and conditions):** trigger weather (rain, cold snap, drought), enrich or blight wild resources
+across the island, wash a windfall ashore, bring newcomers to the shore, and dampen how far voices carry (Hush).
+Widening them was not built: an intervention can only lower the hearing radius (`hearingRadius` in
+`src/engine/world/climate.ts`; D-039). Starting conditions are set when a world is made — scenario, seed, kind of
+baseline mind and agreements on the setup screen — and, for the Lab, by the configuration overrides of each
+registered study (`src/lab/studies.ts`, D-036), not by a visitor to the Laboratory page. Every intervention is
+recorded with observer provenance and marks its timeline as *treated*.
 
 **May not:** set an agent's thoughts, force an action, edit an inventory, ratify or veto an institution, or
 "suggest" behaviour through hidden prompts. A separately labelled *Puppeteer* mode is explicitly out of scope for
@@ -89,18 +108,38 @@ running forks.
 
 | Action | Desktop | Phone (portrait and landscape) |
 |---|---|---|
-| Orbit / tilt | Right-drag or Alt-drag | Two-finger twist / two-finger vertical drag |
-| Pan | Left-drag, WASD / arrows | One-finger drag |
-| Zoom | Wheel, `+` `-` | Pinch |
+| Orbit / tilt | Right-drag or Alt-drag; `Q` and `E` turn the view (no key tilts it) | Two-finger twist / two-finger vertical drag |
+| Pan | Left-drag, `W` `A` `S` `D` / arrows | One-finger drag |
+| Zoom | Wheel; `+` or `=` in, `-` or `_` out | Pinch |
 | Select / inspect | Click | Tap |
 | Follow selected | `F` | Follow button in the bottom sheet |
+| What the selected citizen knows / whom they know | `V` / `T` | Buttons in the bottom sheet |
 | Play / pause | `Space` | Timebar button |
 | Step one tick | `.` | Step button |
-| Speed | `1`–`5` | Speed chip |
-| Chronicle / Ledger / Compare | `C` / `L` / `K` | Tabs in the bottom sheet |
+| Speed | `1`–`6` | Six speed buttons in the timebar |
+| Chronicle / Intervene / Charters (the institution ledger) / Compare | `C` / `I` / `G` / `K` (Compare once the world has a twin) | Buttons in the top bar |
+| Atlas and almanac / History / Field journal | `L` / `H` / `J` | Buttons in the top bar; in windows 560 px wide or less the journal is in the menu, and at 340 px or less History is too |
+| Look at the twin and back | `X` (once there is one) | Twin button in the top bar |
+| Sound on / off | `M` | Button in the top bar; in the menu at 560 px or less |
 | Close panel | `Esc` | Swipe down or close button |
 
-All interactive targets are at least 44 × 44 CSS px on touch devices. Every control is reachable by keyboard with
+The keys above are every key the game's own handler reads (`src/ui/game/Game.tsx`); the menu has no key. They
+act while a world is being played and no panel other than the Chronicle is open: with any other panel open only
+`Esc` is read. `Esc` closes the open panel, otherwise clears the selection, and on the setup screen goes back to
+the title. Keys are ignored while typing in a field and while Ctrl, Alt or ⌘ is held; letters mean the same
+with Shift held or Caps Lock on. Apart from that handler, a focused chart in
+Compare reads `←` and `→`. The swipe is `src/ui/game/swipe.ts`: with touch or a pen, in windows up to 880 px
+wide, a panel can be dragged down by its header to close it. Its rule for when letting go closes the panel is
+unit-tested (`swipe.test.ts`); the gesture itself has not been run in a browser test or on a physical device.
+
+On touch devices every pressable target is at least 44 × 44 CSS px. Links inside a sentence are exempt, as
+they are in the guideline. This is measured, not asserted: the phone project of `tests/e2e/a11y.spec.ts`
+measures every pressable thing on each of its seventeen screens, and the narrowest and the shortest it meets
+are both 44 px (`evidence/phase-16/a11y-mobile.json`). (This sentence was false until phase 15 — for the speed
+buttons, the fork badge, the banner buttons and, once everything was measured, six more kinds of control. On a
+phone the six speeds now have a row of their own under the clock: beside the play button they cannot be 44
+wide on a 390 px screen. The measurement is of that one screen size; a tablet gets the same rules by
+`pointer: coarse` but has not been measured.) Every control is reachable by keyboard with
 a visible focus ring; nothing depends on hover.
 
 ## 8. Accessibility, privacy and non-exploitative design
@@ -111,8 +150,11 @@ a visible focus ring; nothing depends on hover.
   conveyed by colour alone (icons, labels and patterns accompany colour).
 - **Audio:** off until the player's first gesture; separate ambience, music and cue sliders and a master mute.
 - **Privacy:** no accounts, analytics, advertising, trackers or third-party requests. Free play stores saves only
-  in the player's browser (IndexedDB) and can be exported or deleted from the menu. No real personal data is used
-  anywhere; citizens have invented names assembled from neutral syllables.
+  in the player's browser (IndexedDB). A save is deleted from the menu; a world is exported to a file, and a file
+  opened, from the History panel (D-033). Nothing about a player is sent to or kept by the server; citizens have
+  invented names assembled from neutral syllables. One thing is kept about one kind of visitor: whoever tries
+  to sign in at the owner's door has their network address (an IPv4 address, or the /64 of an IPv6 one) counted
+  for a day and written to the owner's audit log (`docs/DEPLOYMENT.md` § Privacy).
 - **No dark patterns:** no timers that punish leaving, no streaks, no currencies, no purchases, no artificial
   scarcity of play. Sessions have natural stopping points (dusk, season's end) and a clear pause.
 - **Depiction:** death from hunger, thirst or cold is a quiet state change (a figure lies down and a small cairn
@@ -124,19 +166,43 @@ a visible focus ring; nothing depends on hover.
 
 ```
 Title (live vista)
- ├─ Begin ─► Scenario & seed ─► World (Observer HUD)
- │                               ├─ Timebar: play / pause / step / speed / day–season clock / scrub history
- │                               ├─ Inspector: citizen · place · structure · institution · event
+ ├─ Begin ─► Scenario, seed, minds, agreements ─► World (Observer HUD)
+ │                               ├─ Timebar: play / pause / step / six speeds / clock of the day
+ │                               ├─ Top bar: day, season, weather, living · the fork and its twin · the panels below
+ │                               ├─ Inspector: a citizen · a place (its resource, structure, ground, what lies there)
  │                               ├─ Chronicle (filterable event feed with causal links)
- │                               ├─ Ledger (proposals, institutions, rules in force, membership)
- │                               ├─ Overlays: social network · resources · knowledge of selected citizen
- │                               ├─ Interventions ─► fork ─► Compare (treated vs control) ─► Debrief
- │                               └─ Menu: save · load · export · settings · affordances · about
- ├─ Continue (local saves)
- ├─ Lab ─► study wizard ─► batch run ─► results ─► replay a run / export bundle
- ├─ Recordings (curated, zero-cost replays of real runs; empty until such runs exist)
- └─ Owner console (authenticated) ─► budget · live runs · kill switch
+ │                               ├─ Charters, the institution ledger (proposals, institutions, rules in force, membership)
+ │                               ├─ Overlays for the selected citizen: what they know · whom they know (D-029)
+ │                               ├─ Atlas and almanac · Field journal (D-030)
+ │                               ├─ Interventions ─► fork ─► Compare (the changed world against its untouched twin, D-012)
+ │                               ├─ History: stored moments to watch again or leave from · world lines · files (D-033)
+ │                               └─ Menu: save · load · delete · settings · sound · affordances · about
+ ├─ Continue (the latest local save)
+ ├─ Laboratory ─► a study bundle written by `pnpm study` ─► results ─► re-run a cell / open it as a world / download (D-036)
+ ├─ Recordings (zero-cost replays checked against their record: one bundled MOCK recording, and runs the owner publishes)
+ └─ What was designed (the affordance registry)
+
+Owner console (`/owner`, authenticated; not linked from the title) ─► budget · live runs · kill switch
 ```
+
+This is the flow as built. The first version of this section also listed things that were not built, or were
+built differently:
+
+- **Scrubbing history from the timebar.** History returns to the start and to every second morning instead;
+  there is no continuous scrubber (D-033).
+- **A social-network overlay.** Built for one citizen at a time: arcs to the people the selected citizen has
+  dealt with (D-029). There is no view of the whole society's ties.
+- **A resources overlay.** Not built (D-039). A resource's stock is shown by the thing itself in the world and
+  by the inspector's place card; the almanac charts wild food and commons health.
+- **A Debrief after Compare.** Not built (D-039). Compare is the last step, and says that one pair of worlds is
+  an anecdote (D-012).
+- **A study wizard and batch runs in the browser.** Not built (D-036): studies are run from the command line and
+  read in the Laboratory.
+- **Export from the menu.** A world is exported, and a file opened, from the History panel (D-033).
+- **Institutions and events in the inspector.** Not built (D-039): they are read in the Charters panel and the
+  Chronicle, and the inspector shows a citizen or a place.
+- **Recordings of real model runs.** None exists: nothing has been spent. The one bundled recording is of mock
+  minds and is labelled MOCK wherever it appears (D-026).
 
 ## 10. Unresolved decisions (tracked; none blocks the vertical slice)
 
@@ -146,7 +212,7 @@ Title (live vista)
 | U2 | Should agents be able to take from one another's bodies (coercion)? | No. Unattended and unbound stores can be taken from; carried items cannot. Documented as a designer limitation. | Phase 16 review. |
 | U3 | Is engine-attested evidence for accusations too strong an affordance? | Evidence is checkable only when the accuser actually perceived the act. | Phase 09 fuzz + phase 14 treatment. |
 | U4 | Live model for runtime cognition | Owner-configured; Fable 5.2 preferred; never substituted silently. | Phase 17 (owner authorization). |
-| U5 | Public curated recordings | None exist until a real authorized run is recorded. | Phase 17. |
+| U5 | Public curated recordings | One recording of mock minds is bundled and labelled MOCK wherever it appears (D-026). No recording of a real model run exists until an authorized run is recorded. | Phase 17. |
 
 ## 11. Vertical-slice priority
 

@@ -1,0 +1,278 @@
+pnpm check on the working tree of the phase 15–16 commit — 2026-11-25
+Node v22.23.5, pnpm 10.28.0, PostgreSQL 16.15 (TEST_DATABASE_URL set, so the ten tests that need a real server ran).
+Exit code 0. What follows is the command's output, colours removed.
+
+
+> tabula-rasa@0.1.0 check /home/user/TABULA-RASA
+> pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm gen:migrations --check && pnpm gen:prompts --check && pnpm gen:licenses --check && pnpm scan:secrets && pnpm scan:history && pnpm build && pnpm scan:bundle
+
+
+> tabula-rasa@0.1.0 lint /home/user/TABULA-RASA
+> eslint
+
+
+> tabula-rasa@0.1.0 typecheck /home/user/TABULA-RASA
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> tabula-rasa@0.1.0 test /home/user/TABULA-RASA
+> vitest run
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/worker/sim.worker.test.ts (19 tests) 15498ms
+   ✓ worker: a world's own history (5)
+     ✓ keeps the start and every second morning as moments that can be returned to 711ms
+     ✓ an intervention forks an untouched twin at that tick, and the frame says so 882ms
+     ✓ an exact re-run does again what the observer did, when it was done, and arrives at the world that was left 1362ms
+     ✓ leaving from an earlier morning starts a new line without what was done later, and the old line can be returned to exactly 1091ms
+   ✓ worker: a saved world's past, lived again from its seed (6)
+     ✓ a loaded world has only its present in memory, and says its past can be rebuilt 1199ms
+     ✓ rebuilding re-lives every day, forks the twin where it was forked, and is kept because it arrives at exactly the loaded world 1499ms
+     ✓ a save whose record of interventions was edited does not survive the check, and nothing of the false past is kept 658ms
+     ✓ a save kept packed is a fraction of its text, opens to the same world, and is refused if a byte of it changes 678ms
+     ✓ a line that took new luck cannot be rebuilt from the seed alone, and says why 611ms
+   ✓ worker: a file out and back in (1)
+     ✓ an exported world opens to the same state, and an altered one is refused without changing anything 1169ms
+   ✓ worker: a recording beside the engine's own minds (1)
+     ✓ a recording with outside minds gets a twin of the same seed with the built-in planner, and the comparison is named for what it is 328ms
+   ✓ worker: the event ledger (2)
+     ✓ is the engine's own list of what happened: consecutive ids from the first event, time never running backwards, every recorded cause earlier than its effect 334ms
+     ✓ a loaded world's ledger says it is partial, until its past has been lived again 547ms
+   ✓ worker: time is driven in many ways, the world in one (2)
+     ✓ single steps, long steps, play at any speed, any frame rate and any pauses arrive at the same world at the same tick 3639ms
+ ✓ src/engine/mind/cognition.test.ts (26 tests) 7151ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 3704ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 2196ms
+ ✓ src/server/api.test.ts (14 tests) 25128ms
+   ✓ the owner API (14)
+     ✓ signs the owner in with the passphrase, and slows down anyone guessing it 2367ms
+     ✓ one address hammering sign-in cannot lock the owner out, and strangers together cannot keep the owner off a device they have used 15044ms
+     ✓ signing out ends every copy of the session, and nobody but the owner can do it 889ms
+     ✓ no request without the owner's session, origin and token changes anything or reaches a provider 417ms
+     ✓ runs a mock society end to end through the API, and the published record can be verified by anyone 762ms
+     ✓ spends nothing until the owner authorizes an amount, releases the switch and approves a run in words 726ms
+     ✓ the credential that spends cannot raise its own limit: the ceiling belongs to the deployment 408ms
+     ✓ a switch that money tripped is not released by a click, and what was overcharged counts from then on 458ms
+     ✓ lets the owner settle the fate of a request whose outcome is unknown 690ms
+     ✓ refuses bodies that are too large, not JSON, or not objects, and worlds outside the allowed knobs 413ms
+     ✓ fails closed when the database cannot be reached 390ms
+ ✓ src/server/runs.test.ts (20 tests) 8363ms
+   ✓ server-side runs (in memory) (19)
+     ✓ a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world 588ms
+     ✓ a paid run reserves before every call, settles what each cost, and never exceeds what was previewed 658ms
+     ✓ the kill switch stops a paid run mid-epoch; lifting it lets the run finish; nothing is asked twice 1005ms
+     ✓ a run that keeps paying for answers it cannot use is stopped after three, and an answer from the wrong model stops it at once 670ms
+     ✓ a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice 321ms
+     ✓ an error no retry can fix fails the run at once and says why 386ms
+   ✓ server-side runs with two instances stepping at once (PostgreSQL server) (1)
+     ✓ two instances racing through a paid run commit every epoch once and pay for every call once 720ms
+ ✓ src/engine/sim/sim.test.ts (43 tests) 7476ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 992ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 339ms
+   ✓ snapshots (5)
+     ✓ save → restore → continue equals an uninterrupted run 710ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 366ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 332ms
+     ✓ re-keying the branch gives an independent stochastic continuation 495ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 540ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 764ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1142ms
+ ✓ src/engine/save/validate.test.ts (3 tests) 37390ms
+   ✓ a stored world is checked before it is lived in (3)
+     ✓ everything the engine itself produces passes: every scenario, with interventions, agreements, offers and outside minds 12892ms
+     ✓ refuses a state that would drive the engine out of bounds or into an endless loop, and says where 1810ms
+     ✓ property: whatever passes can be lived in — a corrupted save is refused or runs, and never breaks the engine 22686ms
+ ✓ src/engine/sim/pathfind.test.ts (2 tests) 6408ms
+   ✓ the route finder's memory of failed searches (2)
+     ✓ answers every question exactly as a fresh search does, whatever was asked before and whatever has been learned, forgotten or walked since 408ms
+     ✓ a crowded island in famine arrives at the same world, to the last bit, with the memory and without it 5998ms
+ ✓ src/engine/institutions/institutions.test.ts (40 tests) 6776ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (3)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1272ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1247ms
+     ✓ a proposer only puts forward what it would itself sign 348ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 2251ms
+ ✓ src/server/auth.test.ts (20 tests) 5881ms
+   ✓ the owner's passphrase (3)
+     ✓ is stored as a salted scrypt hash that only the passphrase opens 1675ms
+     ✓ matches nothing when the hash is missing, malformed or absurd, and never throws 318ms
+   ✓ rate limiting, shared through the database (2)
+     ✓ refuses when it cannot count 1393ms
+ ✓ src/server/ledger.test.ts (23 tests) 8044ms
+   ✓ the budget ledger (PostgreSQL semantics, in memory) (16)
+     ✓ property: after any sequence of operations the books balance and no ceiling is exceeded 662ms
+   ✓ the budget ledger under real concurrency (PostgreSQL server) (5)
+     ✓ the same holds for a run's cap and for the day's cap 303ms
+     ✓ holds, settlements, releases and refusals interleaved from two instances leave the books exact 923ms
+   ✓ database plumbing (2)
+     ✓ migrations are applied once, in order, and are recorded 1577ms
+     ✓ a transaction that throws leaves nothing behind 1438ms
+ ✓ src/engine/save/history.test.ts (15 tests) 5846ms
+   ✓ history: re-running a stretch of a world line (5)
+     ✓ a replay from an earlier snapshot, with the logged interventions re-applied at their ticks, ends byte-identical to the original 526ms
+     ✓ a replay from the very beginning does too 405ms
+     ✓ shocks scheduled by the scenario are applied once, by the engine, never twice by the replay 788ms
+   ✓ history: branches (4)
+     ✓ a branch with new luck starts from the same moment and then goes its own way 547ms
+   ✓ history: export, import and integrity (6)
+     ✓ a bundle opens to the same world and the same twin, with a manifest that says what they are 539ms
+     ✓ a world edited by hand and repacked with a manifest of its own is whole, and still refused: its goods do not add up 698ms
+     ✓ refuses a twin from another world or another moment, a truncated file, an empty file and a file that is something else 633ms
+     ✓ two manifests say how the worlds they describe were made differently 380ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 3144ms
+   ✓ the tracker agrees with the engine's own counters on a real run (1)
+     ✓ gifts, exchanges, proposals and agent-days match; every institution's rung is at most what its record allows 1986ms
+   ✓ a scarcity shock shows in the measures (1)
+     ✓ a drought leaves the commons poorer than in the untouched twin that shares its luck 920ms
+ ✓ src/server/smoke.test.ts (6 tests) 3696ms
+   ✓ the live smoke test (canned responses: nothing is sent, nothing is spent) (6)
+     ✓ an authorized run asks three minds once each inside its amount, the books balance, and the switch is on again afterwards 305ms
+     ✓ the same words do nothing a second time: every run has its own number, and its own words 586ms
+     ✓ however a run ends, nothing is left able to spend 306ms
+ ✓ src/providers/run.test.ts (17 tests) 5926ms
+   ✓ a society of fifty minds outside the engine (mock provider, no cost) (6)
+     ✓ round_robin: fifty people decide independently over three days, and the record replays to the same world 1028ms
+     ✓ event: fifty people decide independently over three days, and the record replays to the same world 604ms
+     ✓ voi: fifty people decide independently over three days, and the record replays to the same world 514ms
+     ✓ mock minds that write and sign agreements leave them attributed to the mock, in the run and in its replay 950ms
+     ✓ a baseline arm runs through the same harness and is exactly the engine's own world 422ms
+   ✓ rationing deliberation fairly (6)
+     ✓ round_robin: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 462ms
+     ✓ event: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 445ms
+     ✓ voi: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 352ms
+     ✓ the three policies spend differently on the same world: round-robin fills every slot, the others ask only when there is cause 548ms
+ ✓ src/providers/wire.test.ts (17 tests) 1003ms
+   ✓ answers are read into intents, deterministically (9)
+     ✓ every charter the grammar search can draw survives the wire unchanged 702ms
+ ✓ src/engine/mind/clock.test.ts (5 tests) 1033ms
+   ✓ the planner's deliberation clock (config.planEvery) (5)
+     ✓ a longer interval means fewer deliberations: the treatment really is applied 414ms
+ ✓ tests/unit/recording.test.ts (3 tests) 666ms
+   ✓ the bundled recording is reproduced by this engine (3)
+     ✓ every epoch's digest is reached from the recorded decisions, with no mind consulted 536ms
+ ✓ src/server/anthropic.test.ts (14 tests) 821ms
+ ✓ src/engine/world/world.test.ts (32 tests) 3194ms
+   ✓ two shores (4)
+     ✓ what one shore lacks the other has: the island as a whole is not poorer in food or stone than an undivided one 538ms
+     ✓ which shore is the poor one depends on the seed, and a world with no split is exactly as it was 701ms
+ ✓ src/providers/prompt.test.ts (14 tests) 408ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 452ms
+ ✓ src/lab/cost.test.ts (8 tests) 363ms
+   ✓ laboratory cost estimator: ceilings that can be worked by hand (5)
+     ✓ when only some people are decided for from outside, the largest such group over the seeds is priced 324ms
+ ✓ src/lab/analyse.test.ts (13 tests) 245ms
+ ✓ src/engine/core/text.test.ts (7 tests) 141ms
+ ✓ src/engine/institutions/formula.test.ts (6 tests) 115ms
+ ✓ src/lab/stats.test.ts (13 tests) 161ms
+ ✓ src/engine/core/core.test.ts (19 tests) 130ms
+ ✓ src/engine/core/bounded.test.ts (6 tests) 73ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 26ms
+ ✓ tests/unit/css-order.test.ts (3 tests) 18ms
+ ✓ src/ui/game/fit.test.ts (3 tests) 5ms
+ ✓ tests/unit/scans.test.ts (8 tests) 12ms
+ ✓ tests/unit/contrast.test.ts (10 tests) 5ms
+ ✓ src/ui/game/toasts.test.ts (6 tests) 5ms
+ ✓ src/ui/game/swipe.test.ts (3 tests) 3ms
+ ✓ src/ui/game/quality.test.ts (3 tests) 3ms
+ ✓ src/server/db.test.ts (10 tests) 2012ms
+   ✓ the limits every transaction runs under (PostgreSQL) (4)
+     ✓ a statement that runs past its limit is cancelled, and the connection goes on working 323ms
+     ✓ a lock that is not given within its limit is not waited for any longer 342ms
+     ✓ a transaction left idle past its limit is ended by the server; its work is undone and its connection is not used again 1244ms
+
+ Test Files  37 passed (37)
+      Tests  470 passed (470)
+   Start at  19:38:15
+   Duration  55.65s (tests 98%, import 1%)
+
+
+> tabula-rasa@0.1.0 gen:affordances /home/user/TABULA-RASA
+> tsx scripts/gen-affordances.ts --check
+
+docs/AFFORDANCES.md is up to date.
+
+> tabula-rasa@0.1.0 gen:migrations /home/user/TABULA-RASA
+> tsx scripts/gen-migrations.ts --check
+
+src/server/migrations.generated.ts is up to date.
+
+> tabula-rasa@0.1.0 gen:prompts /home/user/TABULA-RASA
+> tsx scripts/gen-prompts.ts --check
+
+docs/PROMPTS.md is up to date.
+
+> tabula-rasa@0.1.0 gen:licenses /home/user/TABULA-RASA
+> tsx scripts/gen-licenses.ts --check
+
+docs/THIRD_PARTY.md and public/licenses.txt are up to date.
+
+> tabula-rasa@0.1.0 scan:secrets /home/user/TABULA-RASA
+> tsx scripts/scan-secrets.ts
+
+scan:secrets passed: 421 text files (tracked, and untracked but not ignored), 9 credential patterns, no env files, no archives, template values empty, no secret-named public variables.
+
+> tabula-rasa@0.1.0 scan:history /home/user/TABULA-RASA
+> tsx scripts/scan-secrets.ts --history
+
+scan:history passed: 152854 added lines across the diffs of every commit on every ref (15 diffs), 9 credential patterns, no env file, archive or secret-named public variable ever committed.
+
+> tabula-rasa@0.1.0 build /home/user/TABULA-RASA
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 24ms
+- Cache Components enabled
+- Partial Prefetching enabled
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1570ms
+  Running TypeScript ...
+  Finished TypeScript in 3.5s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/17) ...
+  Generating static pages using 3 workers (4/17) 
+  Generating static pages using 3 workers (8/17) 
+  Generating static pages using 3 workers (12/17) 
+✓ Generating static pages using 3 workers (17/17) in 454ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /api/health
+├ ƒ /api/owner/budget
+├ ƒ /api/owner/kill
+├ ƒ /api/owner/login
+├ ƒ /api/owner/logout
+├ ƒ /api/owner/reconcile
+├ ƒ /api/owner/status
+├ ƒ /api/recordings
+├ ƒ /api/runs
+├ ƒ /api/runs/[id]
+├ ƒ /api/runs/[id]/control
+├ ƒ /api/runs/[id]/step
+├ ƒ /api/runs/preview
+├ ○ /diagnostics
+├ ○ /lab
+├ ○ /owner
+└ ○ /studio
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> tabula-rasa@0.1.0 scan:bundle /home/user/TABULA-RASA
+> tsx scripts/scan-bundle.ts
+
+scan:bundle passed: 157 client-facing files (2158 KB of text), 13 server-only markers, 4 credential shapes, 1 live secret value(s) checked.

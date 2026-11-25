@@ -23,6 +23,8 @@ type Migration = (env: SnapshotEnvelope) => SnapshotEnvelope;
  *  4 → 5 (engine 0.6.0): configurations say whether baseline planners deliberate on a clock
  *        (every earlier world had none: 0), and the world counts planner consultations
  *        (not counted before: the count starts at zero from the moment of migration).
+ *  5 → 6 (engine 0.7.0): configurations say how unevenly the two shores of a strait are endowed
+ *        (every earlier world had them alike: 0; its nodes, which a snapshot stores, stay as they are).
  */
 const MIGRATIONS: Record<number, Migration> = {
   1: (env) => {
@@ -73,6 +75,11 @@ const MIGRATIONS: Record<number, Migration> = {
     if (state.config && typeof state.config.planEvery !== "number") state.config.planEvery = 0;
     if (state.metrics && typeof state.metrics.deliberations !== "number") state.metrics.deliberations = 0;
     return { ...env, schema: 5 };
+  },
+  5: (env) => {
+    const state = env.state as unknown as { config?: Record<string, unknown> };
+    if (state.config && typeof state.config.shoreSplit !== "number") state.config.shoreSplit = 0;
+    return { ...env, schema: 6 };
   },
 };
 

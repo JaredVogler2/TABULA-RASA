@@ -4,15 +4,26 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Current state (2026-11-25)
 
-- **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/2
-  (pull request 1, phases 01–05, 09 and 10, was merged to `main` by the owner on 2026-11-25).
-- **Phases:** 01–07, 09, 10, 14 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no device,
-  no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 17 BLOCKED (no spend
-  authorized) · **next: 15–16** (performance and scale; adversarial QA), then the confirmatory study batch.
+- **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
+  01–05, 09, 10) and 2 (phases 06–08, 11–14) were merged to `main` by the owner on 2026-11-25; phases 15–16
+  and the release preparation are in the pull request that follows them.
+- **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
+  device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
+  simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
+  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (prepared and rehearsed; **nothing is
+  deployed** until the owner says so) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
+  worked; what is left is the owner's: `docs/HANDOFF.md`.**
+- **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
+  batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
+  new confirmatory result from seeds 9000–9031: they are spent.
 - **Last verified commit:** see `git log -1`.
-- **Spend:** $0. No API key has ever been present. The application's authorized budget is zero and its kill
-  switch is on. **Nothing has been sent to the provider**: the request shape, the schema's acceptance and every
-  cost figure are unverified against the real API.
+- **Spend:** $0. No API key has ever been present. The application's authorized budget is zero, its ceiling
+  is zero and its kill switch is on. **Nothing has been sent to the provider**: the request shape, the
+  schema's acceptance and every cost figure are unverified against the real API. The smoke script's paid path
+  (`pnpm live:smoke -- --run`) has never been run.
+- **The developer agent never types the owner's authorizing words** — not "I authorize this spending", not
+  the smoke test's numbered sentence, not "I approve this run and its cap". Run `pnpm live:smoke` without
+  `--run` (it only reports) and nothing more.
 
 ## Verify the tree
 
@@ -21,49 +32,62 @@ pnpm install --frozen-lockfile
 # the ledger's concurrency tests and the owner console's E2E need a PostgreSQL server:
 #   service postgresql start   (role tabula / password tabula / database tabula_test, as in CI)
 export TEST_DATABASE_URL=postgres://tabula:tabula@localhost:5432/tabula_test
-pnpm check        # lint, typecheck, unit, generated-doc freshness (affordances, migrations, prompts), secret scan, build, bundle scan
-pnpm e2e          # Playwright, production build, desktop + phone emulation (about 35 minutes on a CPU renderer; --project=desktop for one)
+pnpm check        # lint, typecheck, unit, generated-file freshness (affordances, migrations, prompts, licences),
+                  # secret scans (files and history), build, bundle scan
+pnpm e2e          # Playwright, production build, desktop + phone emulation (about 40 minutes on a CPU renderer; --project=desktop for one)
 pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
-pnpm bench
 pnpm compare -- --seeds 1-4 --days 40                  # paired baselines, development seeds
 pnpm schedulers -- --seeds 1-4 --days 6 --slots 8      # activation policies on the same worlds, mock minds, no cost
 pnpm record -- --id mock-first-light --seed 7 --days 6 # re-record the bundled mock recording (verifies it replays)
 pnpm exec tsx scripts/mixed.ts --seeds 1-4 --days 40   # planners and reflex agents on one island
 pnpm exec tsx scripts/civics.ts --scenario long_winter --seeds 1-4 --days 30   # what institutions did, per mode
+pnpm exec tsx scripts/shores.ts --seeds 1-12 --days 80 # Two Shores, per shore
 # the laboratory (costs nothing; development seeds only unless --confirmatory --plan <file>)
 pnpm study -- --study all --seeds 1-16 --out /tmp/pilot                 # every registered condition; resumable, --shard i/N
-pnpm study -- --analyse --study all --seeds 1-16 --out evidence/phase-14/pilot   # report from finished runs only
-pnpm study -- --verify 12 --study all --seeds 1-16 --out evidence/phase-14/pilot # re-run cells, compare hashes
-# the top bar at 25 window widths (needs a running server, as for the stills)
-node scripts/topbar.mjs http://127.0.0.1:3210 /tmp/topbar
-# art stills (needs `pnpm build && pnpm exec next start -p 3210` in another shell)
-node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low
+pnpm study -- --analyse --study all --seeds 1-16 --out evidence/phase-16/pilot   # report from finished runs only
+pnpm study -- --verify 16 --study all --seeds 9000-9031 --confirmatory --plan evidence/phase-16/pilot/plan.json --out evidence/phase-16/confirmatory   # re-run cells of the batch, compare hashes (runs nothing new)
+# performance (docs/PERFORMANCE.md says what each number means and does not mean)
+pnpm bench -- --days 5 --policy planner                # headless engine at 50/100/250/500 people
+pnpm load                                              # the budget ledger under contention (needs TEST_DATABASE_URL)
+pnpm requests                                          # the server's own routes, timed (needs a build and TEST_DATABASE_URL)
+node scripts/perf.mjs http://127.0.0.1:3210 /tmp/perf  # in a browser (needs `pnpm build && pnpm exec next start -p 3210`)
+node scripts/topbar.mjs http://127.0.0.1:3210 /tmp/topbar   # the top bar at 25 widths, three ways
+node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low   # art stills
+# what is configured for live calls, and what is missing (makes no request, changes nothing)
+pnpm live:smoke
+# is a running site what a release should be? (a deployment's address, or a local `next start`; signs in nowhere)
+pnpm release:check -- http://127.0.0.1:3299 --fast
 ```
 
-Expected at this commit: 371 unit/property tests pass and 1 is skipped by design (the live smoke test, which
-prints "NOT authorized"); without `TEST_DATABASE_URL` eleven more are skipped by name. E2E: 25 passed, 3 skipped
-(desktop-only tests); it takes about 35 minutes for both projects on a CPU renderer, of which the history flow
-is seven minutes a project (CI runs the two projects as separate jobs). `replay IDENTICAL`.
+Expected at this commit: `pnpm check` exits 0 with 470 unit tests in 37 files (ten need PostgreSQL and are skipped
+without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout is made on this commit and recorded by the next one (the whole-suite log (next commit)). `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
 01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → 11 (partial) → 12 (partial) →
-**13** → 14 → 15 → 16 → 17 (blocked) → 18 → 19 → 20
+13 (partial) → 14 ✔ → 15 (partial) → 16 ✔ → 17 (blocked) → 18 (blocked: prepared) → 19 ✔ → 20 ✔
 
 ## Where things live
 
 - `src/engine/**` — pure deterministic simulation (no DOM, no time, no `Math.random`; lint-enforced).
 - `src/providers/**` — minds outside the engine, with no secrets: `wire.ts` (answer schema and translation),
-  `prompt.ts` (prompt p1), `mock.ts` / `replay.ts` (free providers), `schedule.ts`, `run.ts` (epoch runner),
+  `prompt.ts` (prompt p2), `mock.ts` / `replay.ts` (free providers), `schedule.ts`, `run.ts` (epoch runner),
   `prices.ts` (dated price table, microdollar arithmetic).
-- `src/server/**` — server only: `ledger.ts`, `auth.ts` + `http.ts` (the gate), `anthropic.ts` (live adapter),
-  `runs.ts` (lease, stored answers, commit), `api.ts` (the owner API as functions; routes in `src/app/api`
-  only forward). `db/migrations/*.sql` is the schema's source; run `pnpm gen:migrations` after changing it.
+- `src/server/**` — server only: `ledger.ts`, `auth.ts` + `http.ts` (the gate), `anthropic.ts` (live adapter
+  and the guard around its `fetch`), `runs.ts` (lease, stored answers, recovery of interrupted calls, commit),
+  `smoke.ts` (the live smoke test; `scripts/live-smoke.ts` is its only way in), `env.ts` (what live mode
+  needs, the ceiling), `api.ts` (the owner API as functions; routes in `src/app/api` only forward), `db.ts`
+  (PostgreSQL or PGlite; every transaction opens with its own limits, so it works through a pooler: D-047).
+  `db/migrations/*.sql` is the schema's source; run `pnpm gen:migrations` after changing it.
 - `src/worker/sim.worker.ts` — owns the world, its twin and its history (moments, lines set aside, re-runs,
   rebuilding a loaded world's past, files, the event ledger); posts view frames of either world; plays
   recordings and checks them against the record; `protocol.ts` is the only contract with the page.
-  `sim.worker.test.ts` drives it through that protocol with no browser.
+  `sim.worker.test.ts` drives it through that protocol with no browser. `aims.ts` reads how the scenario's
+  stated aim stands from the world's state (D-049): **a new scenario needs a case there, and
+  `scripts/aims.ts` run on development seeds before its aim is written on a card.**
 - `src/engine/save/history.ts` — manifests, bundles (export/import with integrity checks), replay from a state.
+  `src/engine/save/validate.ts` — every field of a restored world, checked (D-043): **a field added to the
+  engine's state must be added there too**.
 - `src/lab/**` — `studies.ts` (the registered hypotheses as data, `runCell`), `stats.ts`, `analyse.ts`
   (reports, verdict rules, sizing), `cost.ts` (ceilings for live designs); `scripts/study.ts` is the batch
   runner; `/lab` (`src/ui/lab/Lab.tsx`) reads `public/studies/**`.
@@ -72,6 +96,7 @@ is seven minutes a project (CI runs the two projects as separate jobs). `replay 
   `overlays.ts` (what a citizen knows; ties), `structures.ts` (buildings, agreements' posts and pennants).
 - `src/audio/soundscape.ts` — procedural sound; reads state, changes nothing; silent until asked for.
 - `src/ui/game/**` — React HUD and panels; `controller.ts` is the single place that talks to worker + renderer.
+  `fit.ts` (the top bar measures itself, D-045), `quality.ts` (which preset, and the fallback), `swipe.ts`.
   `Atlas.tsx` (map and almanac), `Journal.tsx` + `journal.ts` (field journal), `Inspector.tsx`,
   `History.tsx` (moments, world lines, files), `Compare.tsx`.
   `src/ui/owner/Console.tsx` — the owner console at `/owner`.
@@ -80,40 +105,49 @@ is seven minutes a project (CI runs the two projects as separate jobs). `replay 
 
 ## Next actions
 
-1. **What phases 11–12 could not do here** (needs the owner or a device): look at it on a real GPU and a real
-   phone and record frame rates; listen to the sound; have someone who did not build it play the first
-   fifteen minutes; try a screen reader. `docs/ART_BIBLE.md` § Known weaknesses and `docs/OBSERVER_UX.md` list
-   what else is open.
-2. **Phase 15** (performance and scale): profile before optimizing; benchmarks at 50/100/250/500 agents;
-   frame time, worker latency, memory, save size, draw calls; sparse belief snapshots; a guard for two tabs
-   sharing the autosave slot (`docs/ARCHITECTURE.md` §9 says plainly that none exists yet).
-3. **Phase 16** (adversarial QA): an independent pass over accounting, authority, isolation, budget, auth,
-   malformed provider output, and every claim in the docs against the code (two false claims were found in
-   `ARCHITECTURE.md` during phase 13 and corrected: look for more).
-4. **The confirmatory batch** (D-037): only after phases 15–16 stop changing the engine. Then, once:
-   `pnpm study -- --study all --seeds 9000-9031 --confirmatory --plan evidence/phase-14/pilot/plan.json --out evidence/phase-14/confirmatory`,
-   publish the bundle under `public/studies/` and report it as it comes out — the pilot suggests the positive
-   control (H6a) will fail. Do not tune anything toward it.
-5. **Phase 17 is blocked on the owner.** What is needed, in order, is in `docs/COST.md` § First live call. The
-   first authorized call should be the smoke test (`src/server/live.integration.test.ts`): it will show for the
-   first time whether the provider accepts the answer schema, and what a decision really costs.
-6. Engine notes:
+1. **Phase 18, release: ask the owner, then deploy.** Everything that does not deploy is done:
+   `docs/DEPLOYMENT.md` (levels, costs, variables, steps, checks, rollback, privacy), `pnpm release:check`, and
+   a rehearsal of it against the production build with no variable set (`evidence/phase-18/`). What remains
+   needs the owner's word: creating the Vercel project (a public site under their account) and, for the
+   console, a database (a billable integration even at $0). Once given: create the project from `main`, run
+   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`
+   and `PROGRESS.md`. Until then the phase is BLOCKED and nothing may say "deployed".
+2. **After the phases.** Recorded in `docs/HANDOFF.md` and not done, because each changes the engine's
+   behaviour (a new version, and for anything experimental a new registration on seeds 9032 and up): a
+   positive control that holds (D-044); planners that stop asking for the unreachable in a crowded famine
+   (D-046). Smaller, and safe on the frozen engine: a per-shore reading in Compare; a resources overlay; a
+   view of everyone's ties at once; a separate host for the owner's console (D-042).
+3. **Phase 17 is blocked on the owner.** What is needed, in order, is in `docs/COST.md` § First live call. The
+   first authorized act is the smoke test, and the words that authorize it are the owner's to type.
+4. **What could not be done here** (needs the owner or a device): look at it on a real GPU and a real phone
+   and record frame rates; listen to the sound; have someone who did not build it play the first fifteen
+   minutes; try a screen reader; try Firefox and Safari. `docs/QA_REPORT.md` § Not run is the list.
+5. Engine notes:
    - Model: `docs/ODD.md`; institutions: `docs/INSTITUTIONS.md`; baselines: `docs/COGNITION.md`; ecology: D-014;
      society measures: `src/engine/metrics/society.ts`. Never tune on holdout seeds (9000–9999).
-   - Snapshots at 500 agents are ~36 MiB (dense belief arrays): sparse encoding is a phase 15 item. Server-side
-     runs are limited to 120 people for that reason.
+   - The positive control failed on holdout seeds (D-044). A redesign of the control or of H4's shock is a
+     new registration on seeds 9032 and up, not a second look at the same ones.
+   - Snapshots at 500 agents are about 36 MiB as text and 2 MiB as stored (packed). Server-side runs are
+     limited to 120 people.
 
 ## Open questions for the owner (none of them blocks offline work)
 
+- **Whether to deploy**, and at which level (`docs/DEPLOYMENT.md` §1): the game alone needs nothing and costs
+  nothing on the Hobby plan, whose terms are "personal or non-commercial use"; the console needs a database.
 - **Which model?** `ANTHROPIC_MODEL` has no default. Per-call upper bounds are in `docs/COST.md`.
-- **A dollar ceiling for a smoke test** (suggested: $2), then separately for a pilot.
-- **A PostgreSQL database** for the owner console and server-side runs (a billable or free-tier resource the
-  owner must approve), and whether to deploy to Vercel at all (phase 18).
+- **A ceiling for the deployment** (`BUDGET_CEILING_USD`), **an amount for a smoke test** (at most $2), then
+  separately for a pilot.
+- **A licence for this repository.** `package.json` says `UNLICENSED`; `docs/THIRD_PARTY.md` lists what it
+  depends on.
+- **A separate host for the owner console** (`docs/SECURITY.md`, "One origin").
+- A stray file, `/nodes-old.ts`, was left at the root of the build container's filesystem by a mistyped
+  command in the phase-16 session (outside the repository; it is a copy of an old engine file). Removing it was
+  blocked by the session's safety check. It is harmless and does not exist in any clone.
 
 ## Blockers
 
 None for offline work. Live API work (phase 17) and the last item of phase 08 are blocked on explicit owner
-authorization of a dollar ceiling.
+authorization of a dollar ceiling. Deployment (phase 18) is blocked on the owner's approval.
 
 ## Conventions worth remembering
 
@@ -121,6 +155,11 @@ authorization of a dollar ceiling.
 - Development seeds are 1–999; holdout seeds 9000–9999 are reserved for confirmatory studies.
 - Bump `ENGINE_VERSION` when behaviour changes, `SCHEMA_VERSION` (with a migration) when saved shapes change,
   `AFFORDANCE_VERSION` (and the registry) when what agents can perceive or do changes.
-- `docs/AFFORDANCES.md` is generated: `pnpm gen:affordances`.
+- `docs/AFFORDANCES.md`, `docs/PROMPTS.md`, `docs/THIRD_PARTY.md` (with `public/licenses.txt`) and
+  `src/server/migrations.generated.ts` are generated: `pnpm gen:affordances`, `gen:prompts`, `gen:licenses`,
+  `gen:migrations`. CI fails if one is stale.
+- Nothing under `src/` may turn a string into markup or code (lint: `no-injection-sinks`).
+- A secret scan excuses no line: fixtures use short, obviously fake values, and tests assemble their examples
+  at run time.
 - Next.js conventions: read `node_modules/next/dist/docs/` — this is Next 16 (Turbopack, `proxy.ts`, async
   request APIs, Cache Components).

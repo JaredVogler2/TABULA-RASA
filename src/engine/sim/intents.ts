@@ -7,6 +7,7 @@
  * out-of-bounds indexing or oversized loops. Semantic checks (range, ownership,
  * permission, availability) remain with the handlers in actions.ts.
  */
+import { boundedCopy } from "../core/bounded";
 import { ITEM_COUNT, RECIPES, STRUCTURE_SPECS } from "../model/constants";
 import type { Intent, SpeechAct, WorldState } from "../model/types";
 
@@ -140,5 +141,103 @@ export function checkIntent(world: WorldState, intent: unknown): string | null {
       return isInt(i.pact, 0, big) ? null : "malformed";
     default:
       return "unknown_intent";
+  }
+}
+
+function plainSpeechAct(a: SpeechAct): SpeechAct {
+  switch (a.t) {
+    case "greet":
+    case "free":
+      return { t: a.t };
+    case "inform_node":
+      return { t: a.t, node: a.node, amount: a.amount, tick: a.tick };
+    case "inform_structure":
+      return { t: a.t, structure: a.structure };
+    case "inform_agent":
+      return { t: a.t, about: a.about, claim: a.claim, tick: a.tick };
+    case "request":
+      return { t: a.t, item: a.item, qty: a.qty };
+    case "offer":
+      return { t: a.t, give: a.give, giveQty: a.giveQty, want: a.want, wantQty: a.wantQty, ...(a.pact !== undefined ? { pact: a.pact } : {}) };
+    case "accept":
+    case "decline":
+      return { t: a.t, ref: a.ref };
+    case "promise":
+      return { t: a.t, item: a.item, qty: a.qty, due: a.due };
+    case "announce":
+      return { t: a.t, proposal: a.proposal };
+    case "invite":
+      return { t: a.t, institution: a.institution };
+    case "warn":
+      return { t: a.t, node: a.node };
+  }
+}
+
+/**
+ * An intent rebuilt from the fields it is defined to have, and nothing else.
+ *
+ * An intent that arrives from outside the engine is kept — in the agent's plan and in the
+ * decision record a run is replayed and published from — so what is kept must be exactly the
+ * intent: no stray field rides along with it. A charter or a motion is carried as a bounded
+ * plain copy (`boundedCopy`); the validator judges it when its turn comes. Returns null if
+ * such a payload is too deep or too large to be one.
+ *
+ * Call only with an intent that `checkIntent` has passed. Spoken text is left as it is: its
+ * length depends on who is speaking, and the caller cleans it.
+ */
+export function plainIntent(i: Intent): Intent | null {
+  switch (i.k) {
+    case "goto":
+      return { k: i.k, x: i.x, y: i.y, near: i.near };
+    case "explore":
+    case "drink":
+    case "fill":
+      return { k: i.k };
+    case "gather":
+      return { k: i.k, node: i.node, qty: i.qty };
+    case "eat":
+    case "drop":
+    case "pickup":
+      return { k: i.k, item: i.item, qty: i.qty };
+    case "rest":
+    case "wait":
+      return { k: i.k, ticks: i.ticks };
+    case "craft":
+      return { k: i.k, recipe: i.recipe };
+    case "build":
+      return { k: i.k, kind: i.kind, x: i.x, y: i.y };
+    case "supply":
+    case "deposit":
+    case "withdraw":
+      return { k: i.k, structure: i.structure, item: i.item, qty: i.qty };
+    case "work":
+      return { k: i.k, structure: i.structure, ticks: i.ticks };
+    case "refuel":
+      return { k: i.k, structure: i.structure, qty: i.qty };
+    case "harvest":
+    case "inspect":
+      return { k: i.k, structure: i.structure };
+    case "give":
+      return { k: i.k, to: i.to, item: i.item, qty: i.qty };
+    case "say":
+      return { k: i.k, to: i.to, act: plainSpeechAct(i.act), ...(i.text !== undefined ? { text: i.text } : {}) };
+    case "propose": {
+      const charter = boundedCopy(i.charter);
+      return charter.ok ? { k: i.k, charter: charter.value } : null;
+    }
+    case "endorse":
+      return { k: i.k, proposal: i.proposal };
+    case "motion": {
+      const motion = boundedCopy(i.motion);
+      return motion.ok ? { k: i.k, institution: i.institution, motion: motion.value } : null;
+    }
+    case "vote":
+      return { k: i.k, motion: i.motion, yes: i.yes };
+    case "leave":
+      return { k: i.k, institution: i.institution };
+    case "pact_offer":
+      return { k: i.k, to: i.to, give: i.give, giveQty: i.giveQty, want: i.want, wantQty: i.wantQty };
+    case "pact_accept":
+      return { k: i.k, pact: i.pact };
   }
 }

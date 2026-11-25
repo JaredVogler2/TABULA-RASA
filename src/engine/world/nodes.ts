@@ -55,12 +55,81 @@ const MINIMUMS: readonly (readonly [number, number])[] = [
   [NodeKind.fishing_water, 8],
 ];
 
+/**
+ * The two shores of a world with a strait: for every tile, 1 if it lies on shore A, 2 if on
+ * shore B, 0 if on neither (water, the ford, an islet). The shores are the two largest land
+ * regions. When the scenario endows them unevenly (`shoreSplit` > 0), A is the shore that is
+ * poor in timber and food and rich in stone and clay, and which side of the strait that is
+ * depends on the seed; otherwise A is simply the western one. A world with no second shore
+ * worth the name (under a twentieth of the land) has none.
+ */
+export function shoreSides(cfg: WorldConfig, terrain: Terrain): { side: Uint8Array; shores: boolean } {
+  const N = terrain.w * terrain.h;
+  const side = new Uint8Array(N);
+  const size = new Map<number, number>();
+  const sumX = new Map<number, number>();
+  for (let i = 0; i < N; i++) {
+    const r = terrain.region[i] as number;
+    if (r === 255) continue;
+    size.set(r, (size.get(r) ?? 0) + 1);
+    sumX.set(r, (sumX.get(r) ?? 0) + (i % terrain.w));
+  }
+  const largest = [...size.entries()].sort((p, q) => q[1] - p[1] || p[0] - q[0]);
+  const first = largest[0];
+  const second = largest[1];
+  if (!cfg.strait || !first || !second || second[1] * 20 < terrain.landCount) return { side, shores: false };
+  const meanX = (r: number): number => (sumX.get(r) as number) / (size.get(r) as number);
+  const west = meanX(first[0]) <= meanX(second[0]) ? first[0] : second[0];
+  const east = west === first[0] ? second[0] : first[0];
+  const westIsA = cfg.shoreSplit > 0 ? u32(cfg.seed, Stream.Nodes, 0, 90) % 2 === 0 : true;
+  const a = westIsA ? west : east;
+  const b = westIsA ? east : west;
+  for (let i = 0; i < N; i++) {
+    const r = terrain.region[i] as number;
+    if (r === a) side[i] = 1;
+    else if (r === b) side[i] = 2;
+  }
+  return { side, shores: true };
+}
+
+/**
+ * How a shore's endowment scales the chance of each kind of node, in permille of the usual
+ * chance, for a split of `s` permille.
+ *
+ * What one shore loses the other gains, so that the island as a whole holds about what an
+ * undivided island would: shore A has (1000 − ¾s) of the usual berries and roots and
+ * (1000 + s) of the usual stone and clay; shore B has the reverse. Timber is the exception:
+ * shore A keeps only (1000 − s) of its trees and shore B gains none, because a forest tile
+ * that is nearly always a tree leaves no room for the bushes that grow among them. Reeds and
+ * fishing water are the same on both.
+ *
+ * (A split that only took away — the first version of this — left the island a third short of
+ * food: on development seeds half the people on both shores starved in their second year.
+ * See scripts/shores.ts and D-041.)
+ */
+function shoreScale(side: number, kind: number, s: number): number {
+  const food = kind === NodeKind.berry_bush || kind === NodeKind.root_patch;
+  const mineral = kind === NodeKind.stone_outcrop || kind === NodeKind.clay_bank;
+  const part = Math.round((s * 3) / 4);
+  if (side === 1) {
+    if (kind === NodeKind.tree) return 1000 - s;
+    if (food) return 1000 - part;
+    if (mineral) return 1000 + s;
+  } else if (side === 2) {
+    if (food) return 1000 + part;
+    if (mineral) return 1000 - s;
+  }
+  return 1000;
+}
+
 export function placeNodes(cfg: WorldConfig, terrain: Terrain): Nodes {
   const { w: W, h: H } = terrain;
   const N = W * H;
   const seed = cfg.seed;
   const density = cfg.nodeDensity;
   const kindAt = new Int8Array(N).fill(-1);
+  const split = cfg.shoreSplit > 0 ? shoreSides(cfg, terrain) : null;
+  const sideOf = (i: number): number => (split && split.shores ? (split.side[i] as number) : 0);
 
   const isLand = (i: number) => terrain.water[i] !== Water.sea && terrain.water[i] !== Water.pond;
   const neighbours4 = (i: number, fn: (j: number) => void) => {
@@ -108,7 +177,9 @@ export function placeNodes(cfg: WorldConfig, terrain: Terrain): Nodes {
       let p = p0;
       if (bank && (kind === NodeKind.reed_bed || kind === NodeKind.clay_bank)) p = p * 3 + 60;
       if (edge && kind === NodeKind.berry_bush) p = p * 3;
-      cum += Math.round((p * density) / 1000);
+      const scale = split ? shoreScale(sideOf(i), kind, cfg.shoreSplit) : 1000;
+      // (with no split the arithmetic is exactly what it was: worlds without one are unchanged)
+      cum += scale === 1000 ? Math.round((p * density) / 1000) : Math.round((p * density * scale) / 1_000_000);
       if (roll < cum) {
         kindAt[i] = kind;
         break;
@@ -158,7 +229,7 @@ export function placeNodes(cfg: WorldConfig, terrain: Terrain): Nodes {
     amount: new Int16Array(count),
     atTile: new Int16Array(N).fill(-1),
   };
-  // in winter starts, bushes begin bare; otherwise renewables start between 60% and 100% full
+  // renewables start between 60% and 100% full; stone and clay, which do not grow back, start full
   let id = 0;
   for (let i = 0; i < N; i++) {
     const kind = kindAt[i] as number;

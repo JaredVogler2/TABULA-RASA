@@ -1,0 +1,26 @@
+{
+  "project": "desktop",
+  "rules": "axe-core, tags wcag2a wcag2aa wcag21a wcag21aa",
+  "screens": 17,
+  "violations": [],
+  "couldNotDecide": {
+    "title: color-contrast": 8,
+    "recordings: color-contrast": 14,
+    "setup: color-contrast": 39,
+    "world with first steps: color-contrast": 22,
+    "world: color-contrast": 20,
+    "chronicle: color-contrast": 46,
+    "interventions: color-contrast": 46,
+    "civics: color-contrast": 25,
+    "atlas: color-contrast": 81,
+    "menu: color-contrast": 53,
+    "history: color-contrast": 52,
+    "compare: aria-prohibited-attr": 1,
+    "compare: color-contrast": 88,
+    "the twin on screen: color-contrast": 22,
+    "journal: color-contrast": 19,
+    "what was designed: color-contrast": 48,
+    "inspector: color-contrast": 48,
+    "laboratory: color-contrast": 389
+  }
+}

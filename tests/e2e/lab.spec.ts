@@ -21,8 +21,21 @@ interface PublishedCell {
   sha256: string;
 }
 
-const manifest = JSON.parse(readFileSync(join(process.cwd(), "public/studies/pilot/manifest.json"), "utf8")) as { engine: string; runs: number; expectedRuns: number; seedClass: string; hashes: PublishedCell[] };
-const report = JSON.parse(readFileSync(join(process.cwd(), "public/studies/pilot/report.json"), "utf8")) as { reports: { study: string; contrasts: { id: string; verdict: string; interval: { estimate: number } }[] }[] };
+interface PublishedManifest {
+  engine: string;
+  runs: number;
+  expectedRuns: number;
+  seedClass: string;
+  hashes: PublishedCell[];
+}
+interface PublishedReport {
+  reports: { study: string; contrasts: { id: string; verdict: string; interval: { estimate: number } }[] }[];
+}
+const published = <T,>(bundle: string, file: string): T => JSON.parse(readFileSync(join(process.cwd(), "public/studies", bundle, file), "utf8")) as T;
+const manifest = published<PublishedManifest>("pilot", "manifest.json");
+const report = published<PublishedReport>("pilot", "report.json");
+const confirmed = published<PublishedManifest>("confirmatory", "manifest.json");
+const confirmedReport = published<PublishedReport>("confirmatory", "report.json");
 
 test("laboratory: a published bundle, read as what it is, and a run reproduced in this browser", async ({ page }, testInfo) => {
   test.setTimeout(300_000);
@@ -39,8 +52,34 @@ test("laboratory: a published bundle, read as what it is, and a run reproduced i
   await expect(page).toHaveURL(/\/lab$/);
   await expect(page.getByRole("heading", { level: 1, name: "Laboratory" })).toBeVisible();
 
-  // ── the bundle is named for what it is: a pilot is never dressed as a test
+  // ── the page opens on the confirmatory batch, named for what it is, with every verdict as the registered rule gave it
   const summary = page.getByTestId("bundle-summary");
+  await expect(summary).toContainText("Confirmatory: holdout seeds, used once, at a seed count fixed beforehand");
+  await expect(summary).toContainText(`Engine ${confirmed.engine}`);
+  await expect(summary).toContainText(`${confirmed.runs} of ${confirmed.expectedRuns} runs`);
+  await expect(summary).toContainText("no model consulted");
+  await expect(summary).toContainText("cost $0");
+  expect(confirmed.seedClass).toBe("confirmatory");
+  expect(confirmed.runs).toBe(confirmed.expectedRuns);
+  for (const r of confirmedReport.reports) {
+    const section = page.getByTestId(`study-${r.study}`);
+    await expect(section).toBeVisible();
+    await expect(section).toContainText("Confirmatory · holdout seeds");
+    for (const c of r.contrasts) {
+      const row = page.getByTestId(`contrast-${c.id}`);
+      await expect(row).toBeVisible();
+      await expect(row.locator("span").last()).toHaveText(c.verdict);
+    }
+  }
+  // the positive control failed on the holdout seeds, and the page says so in the place a success would have been
+  const failed = confirmedReport.reports.find((r) => r.study === "h6-institutions")?.contrasts.find((c) => c.id === "h6a");
+  expect(failed?.verdict).toBe("falsified");
+  await expect(page.getByTestId("contrast-h6a")).toContainText((failed as { interval: { estimate: number } }).interval.estimate.toFixed(3));
+  await expect(page.getByTestId("contrast-h6a").locator("span").last()).toHaveAttribute("data-tone", "bad");
+  await shot(page, project, "49-laboratory-confirmatory");
+
+  // ── the pilot that sized it is one choice away, and is never dressed as a test
+  await page.getByTestId("bundle-select").selectOption("pilot");
   await expect(summary).toContainText("Pilot: development seeds");
   await expect(summary).toContainText("they test nothing");
   await expect(summary).toContainText(`Engine ${manifest.engine}`);

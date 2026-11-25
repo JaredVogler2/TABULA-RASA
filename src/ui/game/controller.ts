@@ -11,7 +11,9 @@ import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings 
 import { SimClient } from "@/store/simClient";
 import { AF, AGENT_STRIDE, type CivicMark, type Recording, type StructureView, type ViewFrame } from "@/worker/protocol";
 import { JOURNAL, entryFrom, pageFor, type JournalEntry } from "./journal";
+import { autoQuality, simplerOf, simplified } from "./quality";
 import { chronicle, outcomeLine, tickLabel, type ChronicleEntry } from "./text";
+import { Toasts, type ToastKind } from "./toasts";
 
 const CHRONICLE_CAP = 600;
 
@@ -69,15 +71,6 @@ export async function fetchRecording(ref: string): Promise<Recording> {
   return (await res.json()) as Recording;
 }
 
-function autoQuality(): Quality {
-  if (typeof window === "undefined") return "medium";
-  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
-  const small = Math.min(window.innerWidth, window.innerHeight) < 600;
-  const cores = navigator.hardwareConcurrency ?? 4;
-  if (coarse || small) return "medium";
-  return cores >= 6 ? "high" : "medium";
-}
-
 export class GameController {
   private client: SimClient | null = null;
   private renderer: WorldRenderer | null = null;
@@ -87,10 +80,42 @@ export class GameController {
   private lastHud = 0;
   private lastInspect = 0;
   private lastAutosaveDay = -1;
+  /**
+   * Who writes the autosave. Two tabs each have a world of their own, and there is one
+   * autosave slot: without an owner, the last tab to reach a second morning would silently
+   * replace the other's. The browser's own lock decides, and frees itself when its tab closes.
+   */
+  private autosaveOwner: "unasked" | "asking" | "mine" | "other" = "unasked";
+  private releaseAutosave: (() => void) | null = null;
+  /** The tick of the last autosave written by this tab, so that hiding the tab does not write the same moment twice. */
+  private lastAutosaveTick = -1;
+  /** True while the tab is hidden and time was running when it went: time starts again when the tab is seen. */
+  private resumeOnVisible = false;
+  /**
+   * When nobody can be watching, time stops: a hidden tab's timers are throttled to a crawl
+   * anyway, and a phone may never bring the page back. Hiding is also the last moment a phone
+   * promises a page, so what there is gets kept.
+   */
+  private readonly onVisibility = (): void => {
+    if (typeof document === "undefined" || !this.client) return;
+    const state = useGame.getState();
+    if (document.visibilityState === "hidden") {
+      this.resumeOnVisible = this.latest?.playing === true;
+      if (this.resumeOnVisible) this.client.pause();
+      this.sound.hush(true);
+      if (state.phase === "playing" && !state.vista && !state.hud?.replay && this.latest && this.latest.tick > 0 && this.latest.tick !== this.lastAutosaveTick) void this.autosave();
+    } else {
+      this.sound.hush(false);
+      if (this.resumeOnVisible) {
+        this.resumeOnVisible = false;
+        this.client.play();
+      }
+    }
+  };
   private pendingChronicle: ChronicleEntry[] = [];
   private latest: ViewFrame | null = null;
   private inspecting = false;
-  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly toasts = new Toasts((message) => useGame.getState().set({ toast: message }));
   private qualityOverride: Quality | null = null;
   /** Bumped by every request for a new world; replies to superseded requests are dropped. */
   private generation = 0;
@@ -117,8 +142,25 @@ export class GameController {
     this.pixelRatioCap = cap;
   }
 
+  /** For this visit, the most an automatically chosen preset may be: lowered when the renderer could not keep up. */
+  private autoCeiling: Quality = "high";
+
   private quality(settings: Settings): Quality {
-    return this.qualityOverride ?? (settings.quality === "auto" ? autoQuality() : settings.quality);
+    return this.qualityOverride ?? (settings.quality === "auto" ? simplerOf(autoQuality(), this.autoCeiling) : settings.quality);
+  }
+
+  /**
+   * The renderer is at its lowest resolution and still slow. If the preset was chosen
+   * automatically, take the next simpler one, once per step, and say so. A preset the visitor
+   * chose is theirs: it is left alone. Nothing about the world changes either way.
+   */
+  private simplify(): void {
+    const settings = useGame.getState().settings;
+    const next = simplified(settings.quality, this.qualityOverride, this.quality(settings));
+    if (!next) return;
+    this.autoCeiling = next;
+    this.rebuildRenderer();
+    this.toast("The picture was simplified to keep it moving. Menu → Graphics chooses otherwise. Nothing in the world changed.");
   }
 
   attach(canvas: HTMLCanvasElement, overlay: HTMLElement, nameTag: HTMLElement): void {
@@ -129,11 +171,18 @@ export class GameController {
     useGame.getState().set({ settings });
     this.client = new SimClient();
     this.client.onFrame = (frame) => this.onFrame(frame);
-    this.client.onDay = (sample, control) => {
+    this.client.onDay = (sample, control, aim) => {
       const s = useGame.getState();
-      s.set({ series: [...s.series, sample], controlSeries: control ? [...s.controlSeries, control] : s.controlSeries });
+      const before = s.aim?.yours ?? null;
+      s.set({ series: [...s.series, sample], controlSeries: control ? [...s.controlSeries, control] : s.controlSeries, aim });
+      // the morning an aim is decided is said once, as a notice; the count is in the atlas
+      const now = aim.yours;
+      if (now && before && before.id === now.id && before.state === "open" && (now.state === "met" || now.state === "lost")) {
+        this.toast(`This world's aim was ${now.state} on day ${now.decidedDay ?? "?"}: ${now.text} The atlas has the count.`);
+      }
     };
     this.client.onError = (message) => useGame.getState().set({ error: message });
+    document.addEventListener("visibilitychange", this.onVisibility);
     void this.refreshSaves();
     // someone who chose sound on an earlier visit gets it back at their first gesture, never before one
     if (settings.sound) {
@@ -156,12 +205,17 @@ export class GameController {
 
   detach(): void {
     this.unwake();
+    if (typeof document !== "undefined") document.removeEventListener("visibilitychange", this.onVisibility);
+    this.resumeOnVisible = false;
+    this.releaseAutosave?.();
+    this.releaseAutosave = null;
+    this.autosaveOwner = "unasked";
     this.sound.dispose();
     this.client?.dispose();
     this.client = null;
     this.renderer?.dispose();
     this.renderer = null;
-    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toasts.clear();
   }
 
   // ───────────────────────── sound
@@ -224,6 +278,8 @@ export class GameController {
       onUserCamera: () => {
         if (useGame.getState().following) useGame.getState().set({ following: false });
       },
+      // deferred: the renderer must not be rebuilt from inside its own frame
+      onStruggle: () => setTimeout(() => this.simplify(), 0),
     });
     this.renderer.setNameTag(this.nameTag);
     return this.renderer;
@@ -315,10 +371,63 @@ export class GameController {
       this.lastInspect = now;
       void this.refreshInspector();
     }
-    // autosave every second simulated day while a real game is running (a recording is never saved)
-    if (!state.vista && !frame.replay && frame.playing && frame.cal.tickOfDay === 0 && frame.cal.day > 0 && frame.cal.day % 2 === 0 && frame.cal.day !== this.lastAutosaveDay) {
+    // autosave every second simulated day while a real game is running (a recording is never saved).
+    // The first frame seen on such a day does it: at high speeds several ticks pass between frames, and
+    // waiting for the frame that lands exactly on midnight would skip most of them.
+    if (!state.vista && !frame.replay && frame.playing && frame.cal.day > 0 && frame.cal.day % 2 === 0 && frame.cal.day !== this.lastAutosaveDay) {
       this.lastAutosaveDay = frame.cal.day;
-      void this.save(AUTOSAVE_ID, "Autosave", true);
+      void this.autosave();
+    }
+  }
+
+  /** Ask the browser for the autosave slot. Resolves to whether this tab holds it. */
+  private claimAutosave(): Promise<boolean> {
+    if (this.autosaveOwner === "mine") return Promise.resolve(true);
+    const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+    if (!locks) {
+      // a browser without the Web Locks API cannot coordinate tabs: it behaves as a single tab would
+      this.autosaveOwner = "mine";
+      return Promise.resolve(true);
+    }
+    this.autosaveOwner = "asking";
+    return new Promise<boolean>((resolve) => {
+      locks
+        .request("tabula-rasa:autosave", { ifAvailable: true }, (lock) => {
+          if (!lock) {
+            this.autosaveOwner = "other";
+            resolve(false);
+            return undefined;
+          }
+          this.autosaveOwner = "mine";
+          resolve(true);
+          // held for as long as this tab is on the game
+          return new Promise<void>((release) => {
+            this.releaseAutosave = release;
+          });
+        })
+        .catch(() => {
+          this.autosaveOwner = "mine";
+          resolve(true);
+        });
+    });
+  }
+
+  /** Write the autosave if this tab holds the slot; say so, once, if another tab does. */
+  private async autosave(): Promise<void> {
+    if (this.autosaveOwner === "asking") return;
+    // a world that stopped on a fault is never written over the last good autosave
+    if (useGame.getState().error) return;
+    const mine = await this.claimAutosave();
+    const state = useGame.getState();
+    if (mine) {
+      if (state.autosaveElsewhere) state.set({ autosaveElsewhere: false });
+      this.lastAutosaveTick = this.latest?.tick ?? -1;
+      await this.save(AUTOSAVE_ID, "Autosave", true);
+      return;
+    }
+    if (!state.autosaveElsewhere) {
+      state.set({ autosaveElsewhere: true });
+      this.toast("Another tab is keeping the autosave. This world is not autosaved here: save it from the menu to keep it.");
     }
   }
 
@@ -357,7 +466,7 @@ export class GameController {
     const def = JOURNAL.find((d) => d.id === entry.id);
     if (!def) return;
     state.set({ journal: [...state.journal, entry], journalUnread: state.panel === "journal" ? 0 : state.journalUnread + 1 });
-    this.toast(`Field journal · ${def.title}`);
+    this.toast(`Field journal · ${def.title}`, "news");
   }
 
   /** A path is beaten once some tile has been walked as often as the engine needs to make it easier going (24). */
@@ -417,7 +526,8 @@ export class GameController {
     renderer.pushFrame(ready.frame);
     renderer.start();
     this.pendingChronicle = [];
-    this.lastAutosaveDay = -1;
+    // the day a world is arrived at is not autosaved again: the next one is the next second morning
+    this.lastAutosaveDay = ready.frame.cal.day;
     this.structures = ready.frame.structures ?? [];
     this.marks = ready.frame.marks ?? [];
     this.traffic = ready.frame.traffic;
@@ -450,6 +560,7 @@ export class GameController {
       controlSeries: twin,
       // the worker knows when the twin left; nothing here is inferred from the lengths of lists
       forkDay: ready.frame.forkTick >= 0 ? Math.floor(ready.frame.forkTick / TICKS_PER_DAY) : -1,
+      aim: null,
       compare: null,
       selection: null,
       agentDetail: null,
@@ -460,6 +571,22 @@ export class GameController {
     });
     renderer.select(null);
     renderer.camera()?.setAutoOrbit(vista ? 0.035 : 0);
+    if (!vista) void this.refreshAim();
+  }
+
+  /**
+   * Ask how the scenario's stated aim stands: when a world arrives, when the atlas is opened and
+   * when the observer's hand has just made a twin. (Otherwise the worker says so each morning.)
+   */
+  private async refreshAim(): Promise<void> {
+    if (!this.client) return;
+    const epoch = this.epoch;
+    try {
+      const aim = await this.client.aim();
+      if (this.epoch === epoch) useGame.getState().set({ aim });
+    } catch {
+      // the worker was replaced while the question was in flight: the next world asks again
+    }
   }
 
   /** The attract-mode world behind the title: a real simulation, slowly turning. */
@@ -662,7 +789,8 @@ export class GameController {
       useGame.getState().set({ phase: "playing", panel: "none", tutorialStep: -1, journal: Array.isArray(journal) ? (journal as JournalEntry[]).filter((j) => j && typeof j.id === "string" && typeof j.tick === "number").slice(0, 64) : [] });
       this.setSpeed(useGame.getState().speed);
       const m = ready.imported?.manifest;
-      this.toast(m ? `Opened day ${m.day + 1} of seed ${m.seed}. Its contents match its manifest (${m.snapshot.sha256.slice(0, 12)}…).` : "Opened.");
+      // a matching hash shows the file is whole, nothing more: say that, and where the real check is
+      this.toast(m ? `Opened day ${m.day + 1} of seed ${m.seed}. The file is whole (${m.snapshot.sha256.slice(0, 12)}…); its past is unchecked until History has lived it again.` : "Opened.");
     } catch (err) {
       const code = (err as { code?: string }).code;
       this.toast(code === "corrupt" ? `Refused: ${err instanceof Error ? err.message : "the file is damaged"}.` : code === "schema" || code === "terrain_drift" ? "Refused: this file was made by an incompatible version." : `Refused: ${err instanceof Error ? err.message : "not a world file"}.`);
@@ -802,6 +930,40 @@ export class GameController {
     return this.renderer?.stats() ?? null;
   }
 
+  /**
+   * Measurements for the performance probe (`scripts/perf.mjs`): the worker's recent tick times
+   * and heap, how long a question to the worker takes to come back, how large a save is and
+   * how long it takes to make. Reads only.
+   */
+  async perf(): Promise<Record<string, unknown> | null> {
+    if (!this.client) return null;
+    const asked = performance.now();
+    const worker = await this.client.perf();
+    const roundTripMs = performance.now() - asked;
+    const inspectStarted = performance.now();
+    await this.client.inspectAgent(0);
+    const inspectMs = performance.now() - inspectStarted;
+    const saveStarted = performance.now();
+    const payload = await this.client.save();
+    const saveMs = performance.now() - saveStarted;
+    const packStarted = performance.now();
+    const packedPayload = await this.client.save(true);
+    const packMs = performance.now() - packStarted;
+    const memory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+    return {
+      worker,
+      roundTripMs: Math.round(roundTripMs * 10) / 10,
+      inspectMs: Math.round(inspectMs * 10) / 10,
+      // a save as text (how saves were stored before phase 15) and packed (how they are stored now), same world, same moment
+      saveMs: Math.round(saveMs),
+      saveKb: Math.round((payload.snapshot.length + (payload.control?.length ?? 0)) / 1024),
+      packedMs: Math.round(packMs),
+      packedKb: packedPayload.packed ? Math.round((packedPayload.packed.snapshot.byteLength + (packedPayload.packed.control?.byteLength ?? 0)) / 1024) : null,
+      pageHeapMb: memory ? Math.round((memory.usedJSHeapSize / 1048576) * 10) / 10 : null,
+      renderer: this.renderer?.stats() ?? null,
+    };
+  }
+
   screenOf(agent: number) {
     return this.renderer?.screenOf(agent) ?? null;
   }
@@ -831,6 +993,7 @@ export class GameController {
       const state = useGame.getState();
       state.set({ forkDay: state.forkDay >= 0 ? state.forkDay : Math.floor(result.forkTick / TICKS_PER_DAY), panel: "none" });
       this.toast("The timeline forked. The untouched world keeps running for comparison.");
+      void this.refreshAim();
       this.sound.cue("fork");
       this.advanceTutorial(3);
     } else {
@@ -862,6 +1025,7 @@ export class GameController {
     if (next === "chronicle") this.advanceTutorial(2);
     if (next === "journal") state.set({ journalUnread: 0 });
     if (next === "history") void this.refreshBranches();
+    if (next === "atlas") void this.refreshAim();
   }
 
   updateSettings(patch: Partial<Settings>): void {
@@ -887,10 +1051,9 @@ export class GameController {
     this.updateSettings({ tutorialDone: true });
   }
 
-  toast(message: string): void {
-    useGame.getState().set({ toast: message });
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => useGame.getState().set({ toast: null }), 5200);
+  /** Say something in passing. A notice keeps its place for its whole time; news (the journal) waits for it: see toasts.ts. */
+  toast(message: string, kind: ToastKind = "notice"): void {
+    this.toasts.say(message, kind);
   }
 
   // ───────────────────────── saves
@@ -906,7 +1069,7 @@ export class GameController {
   async save(id?: string, name?: string, quiet = false): Promise<void> {
     if (!this.client) return;
     try {
-      const payload = await this.client.save();
+      const payload = await this.client.save(true);
       const stamp = Date.now();
       const saveId = id ?? `save-${stamp}`;
       const label = name ?? `${payload.scenario.replace(/_/g, " ")} · seed ${payload.seed} · day ${payload.day + 1}`;
@@ -925,7 +1088,7 @@ export class GameController {
     try {
       const record = await getSave(id);
       if (!record) throw new Error("That save no longer exists.");
-      const ready = await this.client.load(record.snapshot, record.control, record.series, record.controlSeries, record.hash);
+      const ready = await this.client.load(record.snapshot, record.control, record.series, record.controlSeries, record.hash, record.packed ?? null);
       if (gen !== this.generation) return;
       await this.adopt(ready, false);
       useGame.getState().set({ phase: "playing", tutorialStep: -1, journal: record.journal ?? [], journalUnread: 0 });

@@ -42,6 +42,7 @@ export interface WorldConfig {
   landFraction: number; // permille of tiles that are land
   relief: number; // permille: ruggedness
   strait: boolean; // split the island with a strait and a single ford ("Two Shores")
+  shoreSplit: number; // permille: with a strait, how unevenly the two shores are endowed (0 = alike)
 
   // ecology
   richness: number; // permille: scales node capacities
@@ -103,6 +104,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   landFraction: 500,
   relief: 1000,
   strait: false,
+  shoreSplit: 0,
   // Reference ecology (D-014): tuned on development seeds so that an island feeds fifty
   // people with slack when its patches are left half full, and about two thirds of them
   // when every patch is picked bare. 1000 is the neutral multiplier of the underlying tables.
@@ -138,6 +140,11 @@ export const DEFAULT_CONFIG: WorldConfig = {
   shocks: [],
 };
 
+/**
+ * The one optional aim a scenario states on its card. It is a sentence for the observer: no
+ * citizen is told it and nothing in the engine reads it. How it stands is counted outside the
+ * engine, from the world's state (`src/worker/aims.ts`, D-049).
+ */
 export interface ScenarioObjective {
   id: string;
   text: string;
@@ -152,6 +159,15 @@ export interface ScenarioDef {
   overrides: Partial<WorldConfig>;
 }
 
+/**
+ * How unevenly Two Shores endows its halves (permille, see world/nodes.ts): at 800, one shore
+ * has a fifth of the trees and two fifths of the berries and roots it would otherwise have,
+ * the other a fifth of the stone and clay. Chosen on development seeds as the strongest split
+ * under which the baseline minds on the poorer shore still come through the year in most
+ * worlds (scripts/shores.ts; D-041).
+ */
+const SHORE_SPLIT = 800;
+
 export const SCENARIOS: readonly ScenarioDef[] = [
   {
     id: "first_light",
@@ -159,7 +175,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "Early spring on a temperate island.",
     description:
       "Fifty unrelated adults wake scattered across a green island with a year ahead of them. Food is within reach, water runs from the hills, and winter is three seasons away.",
-    objective: { id: "survive_80", text: "See four in five through the first winter." },
+    objective: { id: "winter_80", text: "See four in five through the first winter." },
     overrides: {},
   },
   {
@@ -168,7 +184,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "Late summer. The cold will come early and stay.",
     description:
       "The warm days are numbered. Winter here is long and hard, fresh food rots quickly, and there is roughly a season and a half to prepare.",
-    objective: { id: "survive_cold", text: "Lose no one to cold or hunger before spring." },
+    objective: { id: "spring_60", text: "Bring three in five through to spring." },
     overrides: {
       seasonDays: [8, 8, 8, 16],
       startDay: 12,
@@ -182,7 +198,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "A few rich groves and lagoons feed everyone — while they last.",
     description:
       "Food is concentrated in a handful of fishing waters and berry groves that collapse if they are stripped and recover only slowly.",
-    objective: { id: "commons_alive", text: "Keep every commons above its collapse threshold for a year while four in five survive." },
+    objective: { id: "year_80", text: "See four in five through the year, on commons that can be stripped bare." },
     overrides: {
       nodeDensity: 700,
       richness: 1800,
@@ -195,10 +211,11 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     title: "Two Shores",
     tagline: "One island, one ford, two unequal halves.",
     description:
-      "A strait divides the land. Stone and clay lie on one shore; timber and most food on the other. A single shallow ford joins them.",
-    objective: { id: "narrow_gap", text: "Narrow the gap in well-being between the shores." },
+      "A strait divides the land. Most of the stone and clay lie on one shore; most of the timber, berries and roots on the other. A single shallow ford joins them.",
+    objective: { id: "shores_gap", text: "Narrow the gap in well-being between the shores." },
     overrides: {
       strait: true,
+      shoreSplit: SHORE_SPLIT,
       landFraction: 540,
     },
   },
@@ -208,7 +225,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "An ordinary spring. Then the rain stops.",
     description:
       "Sometime before autumn a drought arrives without warning: streams shrink to scattered pools and the bushes stop bearing.",
-    objective: { id: "survive_drought", text: "Keep four in five alive through the drought." },
+    objective: { id: "drought_80", text: "Keep four in five alive through the drought." },
     overrides: {
       shocks: [{ kind: "drought", minDay: 9, maxDay: 18, days: 9, magnitude: 1000 }],
     },
@@ -249,6 +266,9 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   intInRange("seed", cfg.seed, 0, 0xffffffff);
   intInRange("size", cfg.size, 24, 128);
   intInRange("landFraction", cfg.landFraction, 200, 800);
+  // configurations written before the shores could differ (recordings, stored runs) mean "alike"
+  if ((cfg as { shoreSplit?: number }).shoreSplit === undefined) cfg.shoreSplit = 0;
+  intInRange("shoreSplit", cfg.shoreSplit, 0, 1000);
   intInRange("relief", cfg.relief, 200, 2000);
   intInRange("richness", cfg.richness, 100, 4000);
   intInRange("nodeDensity", cfg.nodeDensity, 100, 3000);

@@ -2,8 +2,15 @@
 
 How a citizen of TABULA RASA comes to act, what each kind of mind is allowed to know, and where the line
 between "designed" and "emergent" runs. Implemented in `src/engine/mind/`; tests in
-`src/engine/mind/cognition.test.ts`. Nothing in this document describes an institution: the baseline minds
-never propose one (the test suite checks the planner's source for institutional intents).
+`src/engine/mind/cognition.test.ts`. Nothing in this document describes an institution, and no charter is
+written into the baseline mind. Baseline planner agents can still propose one: under the `grammar_search`
+treatment (the default) and under `open`, the civic layer (`civic.ts`) lets an agent with a recurring trouble
+draw eight charters from the rule grammar and put forward the one it rates highest, if it would sign it itself
+(`institutions/search.ts`, `docs/INSTITUTIONS.md`). The test suite checks the source of both files:
+`planner.ts` emits no institutional intent, the only proposal in `civic.ts` is the search's result, and no rule
+form is spelled out in either. With institutions `off` no baseline agent proposes; under `scripted_control` the
+engine puts the designers' charter forward in a store-builder's name (`institutions/scripted.ts`) and the
+agents' own search is off.
 
 ## The chain
 
@@ -18,8 +25,12 @@ never propose one (the test suite checks the planner's source for institutional 
 | Intent → action | Structural gate, semantic validation, duration, completion — all by the engine | `sim/intents.ts`, `sim/actions.ts` |
 | Outcome | Events with causal parents; rejections carry a reason code | ledger |
 
-A belief is never overwritten by truth except through perception or testimony. Sleeping agents perceive and
-hear nothing.
+A belief is never overwritten by truth except through perception. Testimony carries belief, not truth: a
+speaker can tell only of a place, a structure, an agreement or an offer that they themselves know of (the
+engine refuses the speech otherwise: `unknown_place`, `unknown_structure`, `unknown_charter`, `unknown_offer`),
+and the hearer is given what the speaker believed — an amount and its age, the speaker's own record of a
+structure — never the state of the world (`knowledge.ts` `untold`, `decide.ts` `hear`; D-040). The parties to
+an agreement or an offer always count as knowing it. Sleeping agents perceive and hear nothing.
 
 ## Three layers, always labelled
 
@@ -78,10 +89,18 @@ speech out of earshot. Tests plant sentinel values in other agents and assert th
 
 `submitDecision(world, agent, decision, source)` accepts `{ intents, goal?, rationale? }`:
 
-- at most 6 intents; rationale ≤ 240 characters; free text in speech ≤ 160; control and bidirectional
-  characters stripped;
+- at most 6 intents; rationale ≤ 240 characters; free text in speech ≤ 160; control, invisible and
+  direction-override characters removed and whitespace collapsed (`core/text.ts`: an explicit list of code
+  points, so that every JavaScript engine cleans a text the same way);
+- every intent is rebuilt from the fields the engine knows (`plainIntent`), so nothing else a mind sends is
+  stored or replayed; what it may attach — a charter, a motion — is bounded in depth, in size and to the
+  grammar's own vocabulary of keys (`core/bounded.ts`), and a decision that exceeds the bounds is refused as
+  `too_large`;
 - each intent passes the structural gate (`checkIntent`) and the action mask; refused intents are reported with
-  a reason and dropped; a decision with nothing acceptable changes no world state;
+  a reason and dropped; a decision with nothing acceptable leaves the agent's body, beliefs and plan as they
+  were, but not the books: it is written to the ledger as a `decision` event with reason `refused` and counted
+  (`metrics.decisionsBySource.refused`), it puts off that mind's next deliberation by `cadence` ticks, and it
+  replaces the feedback — and the note, if one was sent — that the mind is shown next (D-022, item 5);
 - the accepted plan is queued through the same `adopt` path as a baseline plan and each intent is validated
   again when executed;
 - the ledger entry stores the intents themselves, so `tapeFromEvents` + `replayTape` reproduce the run with no

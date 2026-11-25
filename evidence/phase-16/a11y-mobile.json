@@ -1,0 +1,57 @@
+{
+  "project": "mobile",
+  "rules": "axe-core, tags wcag2a wcag2aa wcag21a wcag21aa",
+  "screens": 17,
+  "violations": [],
+  "couldNotDecide": {
+    "title: color-contrast": 8,
+    "recordings: color-contrast": 13,
+    "setup: color-contrast": 26,
+    "world with first steps: color-contrast": 18,
+    "world: color-contrast": 16,
+    "chronicle: color-contrast": 32,
+    "interventions: color-contrast": 29,
+    "civics: color-contrast": 21,
+    "atlas: color-contrast": 32,
+    "menu: color-contrast": 39,
+    "history: color-contrast": 36,
+    "compare: aria-prohibited-attr": 1,
+    "compare: color-contrast": 77,
+    "the twin on screen: color-contrast": 22,
+    "journal: color-contrast": 36,
+    "what was designed: color-contrast": 31,
+    "inspector: color-contrast": 36,
+    "laboratory: color-contrast": 390
+  },
+  "touchTargets": {
+    "rule": "at least 44 px tall and 44 px wide; links inside sentences exempt",
+    "measured": {
+      "title": 4,
+      "recordings": 2,
+      "setup": 7,
+      "world with first steps": 15,
+      "world": 14,
+      "chronicle": 26,
+      "interventions": 5,
+      "civics": 1,
+      "atlas": 1,
+      "menu": 14,
+      "history": 9,
+      "compare": 3,
+      "the twin on screen": 17,
+      "journal": 4,
+      "what was designed": 1,
+      "inspector": 21,
+      "laboratory": 6
+    },
+    "narrowest": {
+      "px": 44,
+      "what": "recordings-close (recordings)"
+    },
+    "shortest": {
+      "px": 44,
+      "what": "recordings-close (recordings)"
+    },
+    "tooSmall": []
+  }
+}

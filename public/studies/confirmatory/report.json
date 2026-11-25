@@ -1,0 +1,1944 @@
+{
+ "manifest": {
+  "format": "tabula-rasa/study-bundle",
+  "version": 1,
+  "seedClass": "confirmatory",
+  "engine": "0.7.0",
+  "schema": 6,
+  "affordances": "2026.11-i",
+  "studies": [
+   {
+    "id": "h1-scarcity",
+    "title": "H1 — Scarcity and cooperation (inverted U)",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "r04",
+      "label": "richness 0.4",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "richness": 480,
+       "nodeDensity": 600
+      }
+     },
+     {
+      "id": "r07",
+      "label": "richness 0.7",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "richness": 840,
+       "nodeDensity": 1050
+      }
+     },
+     {
+      "id": "r13",
+      "label": "richness 1.3",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "richness": 1560,
+       "nodeDensity": 1950
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h1a",
+      "hypothesis": "H1",
+      "metric": "cooperation",
+      "a": "r07",
+      "b": "r13",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "Cooperation is higher at richness 0.7 than at 1.3."
+     },
+     {
+      "id": "h1b",
+      "hypothesis": "H1",
+      "metric": "cooperation",
+      "a": "r07",
+      "b": "r04",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "Cooperation is higher at richness 0.7 than at 0.4."
+     }
+    ],
+    "note": "Planner agents, institutions off. Falsified if either interval includes zero or has the opposite sign."
+   },
+   {
+    "id": "h2-mobility",
+    "title": "H2 — Mobility and specialization",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "m10",
+      "label": "movement cost 1.0",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "movementCost": 1000
+      }
+     },
+     {
+      "id": "m20",
+      "label": "movement cost 2.0",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "movementCost": 2000
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h2",
+      "hypothesis": "H2",
+      "metric": "specialization",
+      "a": "m20",
+      "b": "m10",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "Doubling the cost of movement raises the specialization index."
+     }
+    ],
+    "note": "Falsified if the paired difference is ≤ 0 or its interval includes zero."
+   },
+   {
+    "id": "h3-communication",
+    "title": "H3 — Communication range and adoption",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "h2r",
+      "label": "hearing radius 2",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "grammar_search",
+       "hearingRadius": 2
+      }
+     },
+     {
+      "id": "h9r",
+      "label": "hearing radius 9",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "grammar_search",
+       "hearingRadius": 9
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h3",
+      "hypothesis": "H3",
+      "metric": "e2",
+      "a": "h9r",
+      "b": "h2r",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "More runs reach E2 when voices carry nine tiles than when they carry two."
+     }
+    ],
+    "note": "Institutions by grammar search. Falsified if the paired difference in the E2 indicator is ≤ 0 or its interval includes zero."
+   },
+   {
+    "id": "h4-diversity",
+    "title": "H4 — Diversity and resilience",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "d02",
+      "label": "diversity 0.2",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "diversity": 200,
+       "shocks": [
+        {
+         "kind": "blight",
+         "minDay": 15,
+         "maxDay": 15,
+         "days": 0,
+         "magnitude": 1000
+        }
+       ]
+      }
+     },
+     {
+      "id": "d10",
+      "label": "diversity 1.0",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "diversity": 1000,
+       "shocks": [
+        {
+         "kind": "blight",
+         "minDay": 15,
+         "maxDay": 15,
+         "days": 0,
+         "magnitude": 1000
+        }
+       ]
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h4",
+      "hypothesis": "H4",
+      "metric": "survival",
+      "a": "d10",
+      "b": "d02",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "After the same blight on day 16, more people survive where temperaments and skills vary more."
+     }
+    ],
+    "note": "Both conditions receive an identical blight on day 16. Falsified if the paired difference is ≤ 0 or its interval includes zero."
+   },
+   {
+    "id": "h5-cadence",
+    "title": "H5 — Cadence has diminishing returns",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "c12",
+      "label": "deliberate every 12 ticks",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "planEvery": 12
+      }
+     },
+     {
+      "id": "c48",
+      "label": "deliberate every 48 ticks",
+      "scenario": "first_light",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off",
+       "planEvery": 48
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h5a",
+      "hypothesis": "H5",
+      "metric": "welfare",
+      "a": "c48",
+      "b": "c12",
+      "kind": "ratio",
+      "predicts": "at-least",
+      "bound": 0.9,
+      "text": "Welfare at cadence 48 is at least 90% of welfare at cadence 12."
+     },
+     {
+      "id": "h5b",
+      "hypothesis": "H5",
+      "metric": "deliberations",
+      "a": "c48",
+      "b": "c12",
+      "kind": "ratio",
+      "predicts": "at-most",
+      "bound": 0.35,
+      "text": "…with at most 35% as many deliberations (the check that the treatment was applied)."
+     }
+    ],
+    "note": "The planner's clock is `planEvery`; between deliberations people act on reflex. Falsified if the lower 95% bound of the welfare ratio is below 0.90."
+   },
+   {
+    "id": "h6-institutions",
+    "title": "H6 — Do institutions have anything to do? (The Long Winter)",
+    "registered": true,
+    "days": 40,
+    "conditions": [
+     {
+      "id": "off",
+      "label": "institutions off",
+      "scenario": "long_winter",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "off"
+      }
+     },
+     {
+      "id": "scripted",
+      "label": "scripted control",
+      "scenario": "long_winter",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "scripted_control"
+      }
+     },
+     {
+      "id": "search",
+      "label": "grammar search",
+      "scenario": "long_winter",
+      "overrides": {
+       "policy": "planner",
+       "plannerShare": 1000,
+       "externalShare": 0,
+       "institutions": "grammar_search"
+      }
+     }
+    ],
+    "contrasts": [
+     {
+      "id": "h6a",
+      "hypothesis": "H6a",
+      "metric": "survival",
+      "a": "scripted",
+      "b": "off",
+      "kind": "difference",
+      "predicts": "greater",
+      "bound": 0,
+      "text": "Positive control: a charter written by the designers raises survival."
+     },
+     {
+      "id": "h6b",
+      "hypothesis": "H6b",
+      "metric": "survival",
+      "a": "search",
+      "b": "off",
+      "kind": "difference",
+      "predicts": "two-sided",
+      "bound": 0,
+      "text": "Institutions found by non-LLM search change survival (no prediction of sign)."
+     }
+    ],
+    "note": "H6a failing would mean institutional affordances are not materially useful in this world, and every E5 claim is moot."
+   }
+  ],
+  "seeds": [
+   9000,
+   9001,
+   9002,
+   9003,
+   9004,
+   9005,
+   9006,
+   9007,
+   9008,
+   9009,
+   9010,
+   9011,
+   9012,
+   9013,
+   9014,
+   9015,
+   9016,
+   9017,
+   9018,
+   9019,
+   9020,
+   9021,
+   9022,
+   9023,
+   9024,
+   9025,
+   9026,
+   9027,
+   9028,
+   9029,
+   9030,
+   9031
+  ],
+  "analysis": {
+   "resamples": 10000,
+   "seed": 20261125,
+   "interval": "95% percentile bootstrap over seeds",
+   "multiplicity": "Holm step-down across the registered family in this batch (7 contrasts with a p-value); verdicts are read from intervals, not from p-values"
+  },
+  "plan": [
+   {
+    "contrast": "h1a",
+    "metric": "cooperation",
+    "sdDiff": 0.012063547018462965,
+    "targetHalfWidth": 0.004222241456462037,
+    "seeds": 32,
+    "pilotHalfWidth": 0.005911029467123687
+   },
+   {
+    "contrast": "h1b",
+    "metric": "cooperation",
+    "sdDiff": 0.012256800833278915,
+    "targetHalfWidth": 0.0042898802916476195,
+    "seeds": 32,
+    "pilotHalfWidth": 0.006005722097099169
+   },
+   {
+    "contrast": "h2",
+    "metric": "specialization",
+    "sdDiff": 0.01713038236584345,
+    "targetHalfWidth": 0.005995633828045206,
+    "seeds": 32,
+    "pilotHalfWidth": 0.008393733185821997
+   },
+   {
+    "contrast": "h3",
+    "metric": "e2",
+    "sdDiff": 0.6191391873668903,
+    "targetHalfWidth": 0.2166987155784116,
+    "seeds": 32,
+    "pilotHalfWidth": 0.30337262955709
+   },
+   {
+    "contrast": "h4",
+    "metric": "survival",
+    "sdDiff": 0.008850612031567843,
+    "targetHalfWidth": 0.003097714211048745,
+    "seeds": 32,
+    "pilotHalfWidth": 0.004336720239959959
+   },
+   {
+    "contrast": "h6a",
+    "metric": "survival",
+    "sdDiff": 0.12261049438499681,
+    "targetHalfWidth": 0.042913673034748884,
+    "seeds": 32,
+    "pilotHalfWidth": 0.060078038754198974
+   },
+   {
+    "contrast": "h6b",
+    "metric": "survival",
+    "sdDiff": 0.12489328778334459,
+    "targetHalfWidth": 0.043712650724170604,
+    "seeds": 32,
+    "pilotHalfWidth": 0.0611965869742488
+   }
+  ],
+  "runs": 448,
+  "expectedRuns": 448,
+  "machine": {
+   "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+   "cores": 4,
+   "node": "v22.23.5"
+  },
+  "cost": {
+   "apiCalls": 0,
+   "usd": 0
+  }
+ },
+ "reports": [
+  {
+   "study": "h1-scarcity",
+   "title": "H1 — Scarcity and cooperation (inverted U)",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 96,
+   "expectedRuns": 96,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "r04",
+     "label": "richness 0.4",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.015625000000000003,
+       "lo": 0.01125,
+       "hi": 0.020625000000000004,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.11362500000000002,
+       "lo": 0.10896875,
+       "hi": 0.11840624999999999,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.006000000000000003,
+       "lo": 0.004562500000000001,
+       "hi": 0.007687500000000003,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.32846874999999986,
+       "lo": 0.31928124999999996,
+       "hi": 0.33771874999999996,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.17731249999999998,
+       "lo": 0.16190625,
+       "hi": 0.19450078125000003,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.015124999999999998,
+       "lo": 0.006905468750000006,
+       "hi": 0.024532031249999992,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 7077.34375,
+       "lo": 5027.36640625,
+       "hi": 9296.039843749999,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "r07",
+     "label": "richness 0.7",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.33562500000000006,
+       "lo": 0.23500000000000001,
+       "hi": 0.446875,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.42196875000000006,
+       "lo": 0.3981242187499999,
+       "hi": 0.44628124999999996,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.016906250000000005,
+       "lo": 0.013937500000000005,
+       "hi": 0.01987500000000001,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.014,
+       "lo": 0.00159375,
+       "hi": 0.03128125,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.24574999999999997,
+       "lo": 0.24109375000000005,
+       "hi": 0.25062500000000004,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.20365625000000004,
+       "lo": 0.19728046874999994,
+       "hi": 0.20987500000000003,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.024406249999999997,
+       "lo": 0.013625000000000002,
+       "hi": 0.036125,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 13267.40625,
+       "lo": 11044.589062500001,
+       "hi": 15644.845312499998,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "r13",
+     "label": "richness 1.3",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.9975,
+       "lo": 0.9950000000000001,
+       "hi": 0.999375,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.55578125,
+       "lo": 0.553625,
+       "hi": 0.5578125,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0018437500000000003,
+       "lo": 0.0015000000000000005,
+       "hi": 0.0022500000000000007,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.3155625,
+       "lo": 0.30928125,
+       "hi": 0.32212500000000005,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.18828125,
+       "lo": 0.18578124999999998,
+       "hi": 0.19081249999999997,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.26559375,
+       "lo": 0.25193750000000004,
+       "hi": 0.27903203125,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 10987.09375,
+       "lo": 10906.99453125,
+       "hi": 11067.56484375,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h1a",
+     "hypothesis": "H1",
+     "text": "Cooperation is higher at richness 0.7 than at 1.3.",
+     "metric": "cooperation",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "r07",
+     "b": "r13",
+     "n": 32,
+     "interval": {
+      "estimate": 0.015062500000000006,
+      "lo": 0.012187500000000006,
+      "hi": 0.01790625000000001,
+      "n": 32
+     },
+     "sdDiff": 0.008496441380309304,
+     "dz": 1.7728010264282754,
+     "cliffsDelta": 0.9931640625,
+     "p": 0.00009999000099990002,
+     "pHolm": 0.0006999300069993001,
+     "verdict": "supported",
+     "reading": "0.0151 [0.0122, 0.0179]: the whole interval lies above 0."
+    },
+    {
+     "id": "h1b",
+     "hypothesis": "H1",
+     "text": "Cooperation is higher at richness 0.7 than at 0.4.",
+     "metric": "cooperation",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "r07",
+     "b": "r04",
+     "n": 32,
+     "interval": {
+      "estimate": 0.010906250000000003,
+      "lo": 0.00790625,
+      "hi": 0.013781250000000005,
+      "n": 32
+     },
+     "sdDiff": 0.008667177145842775,
+     "dz": 1.2583393435348442,
+     "cliffsDelta": 0.7451171875,
+     "p": 0.00009999000099990002,
+     "pHolm": 0.0006999300069993001,
+     "verdict": "supported",
+     "reading": "0.0109 [0.0079, 0.0138]: the whole interval lies above 0."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  },
+  {
+   "study": "h2-mobility",
+   "title": "H2 — Mobility and specialization",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 64,
+   "expectedRuns": 64,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "m10",
+     "label": "movement cost 1.0",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.9937500000000001,
+       "lo": 0.9893750000000001,
+       "hi": 0.9975,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.5546875000000001,
+       "lo": 0.5519687500000001,
+       "hi": 0.5573437499999999,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0026562500000000006,
+       "lo": 0.0020937500000000006,
+       "hi": 0.0032500000000000016,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.07078125,
+       "lo": 0.0135,
+       "hi": 0.14890625000000002,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.28265625,
+       "lo": 0.27781249999999996,
+       "hi": 0.287625,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.19256250000000008,
+       "lo": 0.18984375000000003,
+       "hi": 0.19534375000000004,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.18009375,
+       "lo": 0.16756250000000006,
+       "hi": 0.19212578125000004,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 10892.65625,
+       "lo": 10806.52890625,
+       "hi": 10977.34453125,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "m20",
+     "label": "movement cost 2.0",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.9325000000000002,
+       "lo": 0.9143749999999999,
+       "hi": 0.9493750000000003,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.43671875000000004,
+       "lo": 0.43009375,
+       "hi": 0.44334453125000006,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.014375000000000008,
+       "lo": 0.012812500000000004,
+       "hi": 0.015906250000000007,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.0241875,
+       "lo": 0.0115625,
+       "hi": 0.037968749999999996,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.3389375,
+       "lo": 0.3339375,
+       "hi": 0.34415625,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.24937499999999999,
+       "lo": 0.24409374999999997,
+       "hi": 0.25468749999999996,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.2679375000000001,
+       "lo": 0.25446718749999997,
+       "hi": 0.2805625,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 8069.53125,
+       "lo": 7872.31171875,
+       "hi": 8341.90703125,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h2",
+     "hypothesis": "H2",
+     "text": "Doubling the cost of movement raises the specialization index.",
+     "metric": "specialization",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "m20",
+     "b": "m10",
+     "n": 32,
+     "interval": {
+      "estimate": 0.05628124999999999,
+      "lo": 0.05237421874999999,
+      "hi": 0.0603125,
+      "n": 32
+     },
+     "sdDiff": 0.011681897699901658,
+     "dz": 4.817817399691301,
+     "cliffsDelta": 0.998046875,
+     "p": 0.00009999000099990002,
+     "pHolm": 0.0006999300069993001,
+     "verdict": "supported",
+     "reading": "0.0563 [0.0524, 0.0603]: the whole interval lies above 0."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  },
+  {
+   "study": "h3-communication",
+   "title": "H3 — Communication range and adoption",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 64,
+   "expectedRuns": 64,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "h2r",
+     "label": "hearing radius 2",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.9975,
+       "lo": 0.9950000000000001,
+       "hi": 0.999375,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.5551250000000001,
+       "lo": 0.5528125000000002,
+       "hi": 0.55740625,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0037187500000000016,
+       "lo": 0.0030937500000000014,
+       "hi": 0.004375000000000002,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.575375,
+       "lo": 0.46836796875000003,
+       "hi": 0.6809687499999999,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.28246875000000005,
+       "lo": 0.2776562500000001,
+       "hi": 0.28737578125,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.19150000000000003,
+       "lo": 0.18903124999999998,
+       "hi": 0.19378125000000002,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.17768750000000003,
+       "lo": 0.16465625000000003,
+       "hi": 0.19003125,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0.25,
+       "lo": 0.09375,
+       "hi": 0.40625,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0.0625,
+       "lo": 0,
+       "hi": 0.15625,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 11216.9375,
+       "lo": 11140.74921875,
+       "hi": 11290.3765625,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "h9r",
+     "label": "hearing radius 9",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.998125,
+       "lo": 0.9950000000000001,
+       "hi": 1,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.5555625000000002,
+       "lo": 0.5532179687499998,
+       "hi": 0.5578749999999999,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0065000000000000014,
+       "lo": 0.005406250000000001,
+       "hi": 0.007812500000000003,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.78065625,
+       "lo": 0.7168085937499998,
+       "hi": 0.8375335937499999,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.28471875,
+       "lo": 0.27928125000000004,
+       "hi": 0.29050000000000004,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.19109375,
+       "lo": 0.18849921874999995,
+       "hi": 0.19371875,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.18615624999999997,
+       "lo": 0.17324921874999996,
+       "hi": 0.19825,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0.5625,
+       "lo": 0.375,
+       "hi": 0.71875,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0.09375,
+       "lo": 0,
+       "hi": 0.21875,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 11522.9375,
+       "lo": 11429.84375,
+       "hi": 11613.18828125,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h3",
+     "hypothesis": "H3",
+     "text": "More runs reach E2 when voices carry nine tiles than when they carry two.",
+     "metric": "e2",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "h9r",
+     "b": "h2r",
+     "n": 32,
+     "interval": {
+      "estimate": 0.3125,
+      "lo": 0.0625,
+      "hi": 0.53125,
+      "n": 32
+     },
+     "sdDiff": 0.6927039119836262,
+     "dz": 0.451130698980933,
+     "cliffsDelta": 0.3125,
+     "p": 0.014098590140985901,
+     "pHolm": 0.056394360563943605,
+     "verdict": "supported",
+     "reading": "0.3125 [0.0625, 0.5313]: the whole interval lies above 0."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  },
+  {
+   "study": "h4-diversity",
+   "title": "H4 — Diversity and resilience",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 64,
+   "expectedRuns": 64,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "d02",
+     "label": "diversity 0.2",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.999375,
+       "lo": 0.998125,
+       "hi": 1,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.55071875,
+       "lo": 0.5476875,
+       "hi": 0.5535937500000001,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0006562500000000001,
+       "lo": 0.00031250000000000006,
+       "hi": 0.0010625,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.01040625,
+       "lo": 0,
+       "hi": 0.031218750000000003,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.24990625000000002,
+       "lo": 0.24621875000000001,
+       "hi": 0.25343750000000004,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.18609375000000003,
+       "lo": 0.184,
+       "hi": 0.18828125000000004,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.17146875000000003,
+       "lo": 0.15887421875000002,
+       "hi": 0.18343749999999998,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 10998.8125,
+       "lo": 10901.05859375,
+       "hi": 11097.65703125,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "d10",
+     "label": "diversity 1.0",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.998125,
+       "lo": 0.9956250000000001,
+       "hi": 1,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.55171875,
+       "lo": 0.5490937499999999,
+       "hi": 0.5541562499999999,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.003781250000000001,
+       "lo": 0.0028750000000000013,
+       "hi": 0.004781250000000002,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.119625,
+       "lo": 0.044250000000000005,
+       "hi": 0.20853281249999997,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.253125,
+       "lo": 0.25018671875,
+       "hi": 0.25615703125000006,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.19375,
+       "lo": 0.19071875000000002,
+       "hi": 0.1968125,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.1348125,
+       "lo": 0.1221875,
+       "hi": 0.14693749999999997,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 10802.125,
+       "lo": 10707.52890625,
+       "hi": 10904.75078125,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h4",
+     "hypothesis": "H4",
+     "text": "After the same blight on day 16, more people survive where temperaments and skills vary more.",
+     "metric": "survival",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "d10",
+     "b": "d02",
+     "n": 32,
+     "interval": {
+      "estimate": -0.0012500000000000011,
+      "lo": -0.0031250000000000028,
+      "hi": 0,
+      "n": 32
+     },
+     "sdDiff": 0.004918693768379653,
+     "dz": -0.2541325113662817,
+     "cliffsDelta": -0.0625,
+     "p": 0.26887311268873115,
+     "pHolm": 0.8066193380661935,
+     "verdict": "falsified",
+     "reading": "-0.0013 [-0.0031, 0.0000]: the interval includes 0, which the registered rule counts as falsified."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  },
+  {
+   "study": "h5-cadence",
+   "title": "H5 — Cadence has diminishing returns",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 64,
+   "expectedRuns": 64,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "c12",
+     "label": "deliberate every 12 ticks",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.9956250000000001,
+       "lo": 0.9906250000000002,
+       "hi": 0.99875,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.55178125,
+       "lo": 0.5492187500000001,
+       "hi": 0.5543125,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0020625000000000005,
+       "lo": 0.0015937500000000005,
+       "hi": 0.0025937500000000014,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.33178124999999997,
+       "lo": 0.32687500000000014,
+       "hi": 0.33728203125000006,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.16843749999999996,
+       "lo": 0.165625,
+       "hi": 0.17131328125000003,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.22487500000000002,
+       "lo": 0.20865546874999993,
+       "hi": 0.24037578125000003,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 6414.96875,
+       "lo": 6376.37421875,
+       "hi": 6451.96953125,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "c48",
+     "label": "deliberate every 48 ticks",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.998125,
+       "lo": 0.9950000000000001,
+       "hi": 1,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.5829062500000001,
+       "lo": 0.57896875,
+       "hi": 0.5866874999999999,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.0007500000000000002,
+       "lo": 0.00046875000000000015,
+       "hi": 0.0010625000000000005,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.40025000000000005,
+       "lo": 0.3957187500000001,
+       "hi": 0.40493750000000006,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.16971874999999995,
+       "lo": 0.16621874999999997,
+       "hi": 0.17321874999999998,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.20715625,
+       "lo": 0.1911875,
+       "hi": 0.22178124999999999,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 3103.78125,
+       "lo": 3091.6875,
+       "hi": 3115.90625,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h5a",
+     "hypothesis": "H5",
+     "text": "Welfare at cadence 48 is at least 90% of welfare at cadence 12.",
+     "metric": "welfare",
+     "kind": "ratio",
+     "predicts": "at-least",
+     "bound": 0.9,
+     "a": "c48",
+     "b": "c12",
+     "n": 32,
+     "interval": {
+      "estimate": 1.0564082233675032,
+      "lo": 1.051087703052527,
+      "hi": 1.0617920253738102,
+      "n": 32
+     },
+     "sdDiff": 0.008567568255138183,
+     "dz": 3.6328861437822217,
+     "cliffsDelta": 0.9912109375,
+     "p": null,
+     "pHolm": null,
+     "verdict": "supported",
+     "reading": "1.056 [1.051, 1.062]: the lower end is at or above 0.9."
+    },
+    {
+     "id": "h5b",
+     "hypothesis": "H5",
+     "text": "…with at most 35% as many deliberations (the check that the treatment was applied).",
+     "metric": "deliberations",
+     "kind": "ratio",
+     "predicts": "at-most",
+     "bound": 0.35,
+     "a": "c48",
+     "b": "c12",
+     "n": 32,
+     "interval": {
+      "estimate": 0.4838341963863815,
+      "lo": 0.48173721503788886,
+      "hi": 0.4861244027365732,
+      "n": 32
+     },
+     "sdDiff": 92.59570027640278,
+     "dz": -35.759624800243856,
+     "cliffsDelta": -1,
+     "p": null,
+     "pHolm": null,
+     "verdict": "not supported",
+     "reading": "0.4838 [0.4817, 0.4861]: the upper end exceeds 0.35."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  },
+  {
+   "study": "h6-institutions",
+   "title": "H6 — Do institutions have anything to do? (The Long Winter)",
+   "registered": true,
+   "seedClass": "confirmatory",
+   "seeds": [
+    9000,
+    9001,
+    9002,
+    9003,
+    9004,
+    9005,
+    9006,
+    9007,
+    9008,
+    9009,
+    9010,
+    9011,
+    9012,
+    9013,
+    9014,
+    9015,
+    9016,
+    9017,
+    9018,
+    9019,
+    9020,
+    9021,
+    9022,
+    9023,
+    9024,
+    9025,
+    9026,
+    9027,
+    9028,
+    9029,
+    9030,
+    9031
+   ],
+   "days": 40,
+   "runs": 96,
+   "expectedRuns": 96,
+   "missing": [],
+   "conditions": [
+    {
+     "condition": "off",
+     "label": "institutions off",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.6037499999999999,
+       "lo": 0.5481250000000001,
+       "hi": 0.6581250000000001,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.4033750000000001,
+       "lo": 0.38790624999999995,
+       "hi": 0.41840625,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.015093750000000008,
+       "lo": 0.013156250000000006,
+       "hi": 0.017125781249999996,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.03334375,
+       "lo": 0.014592968750000006,
+       "hi": 0.054531249999999996,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.2665625,
+       "lo": 0.2611562500000001,
+       "hi": 0.27209375,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.17712499999999998,
+       "lo": 0.17393749999999997,
+       "hi": 0.1801875,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.15053125000000003,
+       "lo": 0.13306171875,
+       "hi": 0.16787578125000002,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 8644.1875,
+       "lo": 8247.08828125,
+       "hi": 9070.75859375,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "scripted",
+     "label": "scripted control",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.595,
+       "lo": 0.5381250000000001,
+       "hi": 0.6525000000000001,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.40181249999999996,
+       "lo": 0.38634296874999996,
+       "hi": 0.41787578124999997,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.01856250000000001,
+       "lo": 0.016500000000000008,
+       "hi": 0.02059375000000001,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.30387499999999995,
+       "lo": 0.24481171874999996,
+       "hi": 0.3662203124999999,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.2704999999999999,
+       "lo": 0.26581171875,
+       "hi": 0.2753125,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.1795625,
+       "lo": 0.17631171874999996,
+       "hi": 0.18271875,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.1536875,
+       "lo": 0.13615546875000004,
+       "hi": 0.17078125000000002,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 0.90625,
+       "lo": 0.78125,
+       "hi": 1,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0,
+       "lo": 0,
+       "hi": 0,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 8786.15625,
+       "lo": 8445.3390625,
+       "hi": 9122.8140625,
+       "n": 32
+      }
+     }
+    },
+    {
+     "condition": "search",
+     "label": "grammar search",
+     "n": 32,
+     "metrics": {
+      "survival": {
+       "estimate": 0.6243749999999999,
+       "lo": 0.570625,
+       "hi": 0.6749999999999999,
+       "n": 32
+      },
+      "welfare": {
+       "estimate": 0.40996875000000016,
+       "lo": 0.39490624999999996,
+       "hi": 0.42403124999999997,
+       "n": 32
+      },
+      "cooperation": {
+       "estimate": 0.019218750000000007,
+       "lo": 0.017000000000000008,
+       "hi": 0.021468750000000012,
+       "n": 32
+      },
+      "reciprocity": {
+       "estimate": 0.29471875000000003,
+       "lo": 0.24746875000000004,
+       "hi": 0.34465703124999997,
+       "n": 32
+      },
+      "specialization": {
+       "estimate": 0.26796875,
+       "lo": 0.26274999999999993,
+       "hi": 0.27384374999999994,
+       "n": 32
+      },
+      "gini": {
+       "estimate": 0.1805625,
+       "lo": 0.17740625,
+       "hi": 0.18371875,
+       "n": 32
+      },
+      "commonsMin": {
+       "estimate": 0.15099999999999994,
+       "lo": 0.13278125,
+       "hi": 0.1694375,
+       "n": 32
+      },
+      "e2": {
+       "estimate": 1,
+       "lo": 1,
+       "hi": 1,
+       "n": 32
+      },
+      "e4": {
+       "estimate": 0.875,
+       "lo": 0.75,
+       "hi": 0.96875,
+       "n": 32
+      },
+      "deliberations": {
+       "estimate": 9289.09375,
+       "lo": 8909.71875,
+       "hi": 9636.7828125,
+       "n": 32
+      }
+     }
+    }
+   ],
+   "contrasts": [
+    {
+     "id": "h6a",
+     "hypothesis": "H6a",
+     "text": "Positive control: a charter written by the designers raises survival.",
+     "metric": "survival",
+     "kind": "difference",
+     "predicts": "greater",
+     "bound": 0,
+     "a": "scripted",
+     "b": "off",
+     "n": 32,
+     "interval": {
+      "estimate": -0.008750000000000023,
+      "lo": -0.054375000000000014,
+      "hi": 0.03687499999999998,
+      "n": 32
+     },
+     "sdDiff": 0.1321716869783755,
+     "dz": -0.06620177286101829,
+     "cliffsDelta": -0.068359375,
+     "p": 0.7095290470952905,
+     "pHolm": 0.8066193380661935,
+     "verdict": "falsified",
+     "reading": "-0.0088 [-0.0544, 0.0369]: the interval includes 0, which the registered rule counts as falsified."
+    },
+    {
+     "id": "h6b",
+     "hypothesis": "H6b",
+     "text": "Institutions found by non-LLM search change survival (no prediction of sign).",
+     "metric": "survival",
+     "kind": "difference",
+     "predicts": "two-sided",
+     "bound": 0,
+     "a": "search",
+     "b": "off",
+     "n": 32,
+     "interval": {
+      "estimate": 0.02062499999999998,
+      "lo": -0.026250000000000016,
+      "hi": 0.06812499999999999,
+      "n": 32
+     },
+     "sdDiff": 0.13851604076202542,
+     "dz": 0.14889972227429116,
+     "cliffsDelta": 0.1123046875,
+     "p": 0.39536046395360464,
+     "pHolm": 0.8066193380661935,
+     "verdict": "reported",
+     "reading": "0.0206 [-0.0263, 0.0681]: no difference distinguishable from 0."
+    }
+   ],
+   "warnings": [
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
+   ]
+  }
+ ],
+ "plans": []
+}

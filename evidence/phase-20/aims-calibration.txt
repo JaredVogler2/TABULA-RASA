@@ -1,0 +1,126 @@
+The aims on the scenario cards, counted in worlds nobody touches — 2026-11-25
+
+  $ pnpm exec tsx scripts/aims.ts --seeds 1-10
+
+Development seeds 1-10, both kinds of baseline mind, one year and a day each, no intervention.
+Each row: when the aim was decided, the figure it is about, and the first sentence the game shows. The script
+also checks, for every world, that the answer read at the end is the answer given on the morning it was decided.
+First Light — "See four in five through the first winter." — planner minds, nobody intervening: met 10
+  seed  1  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  2  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  3  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  4  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  5  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  6  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  7  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  8  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  9  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed 10  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+
+First Light — "See four in five through the first winter." — reflex minds, nobody intervening: met 10
+  seed  1  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  2  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  3  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  4  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  5  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  6  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  7  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  8  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed  9  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+  seed 10  met on day 41    50 of 50 saw the winter out  Met on day 41: 50 of the 50 who began saw the winter out. Four in five is 40.
+
+The Long Winter — "Bring three in five through to spring." — planner minds, nobody intervening: lost 6, met 4
+  seed  1  lost on day 25   28 of 50 alive               Lost on day 25: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  2  met on day 29    34 of 50 saw the spring      Met on day 29: 34 of the 50 who began saw the spring. Three in five is 30.
+  seed  3  met on day 29    37 of 50 saw the spring      Met on day 29: 37 of the 50 who began saw the spring. Three in five is 30.
+  seed  4  lost on day 28   29 of 50 alive               Lost on day 28: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  5  met on day 29    34 of 50 saw the spring      Met on day 29: 34 of the 50 who began saw the spring. Three in five is 30.
+  seed  6  lost on day 28   25 of 50 alive               Lost on day 28: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  7  lost on day 23   16 of 50 alive               Lost on day 23: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  8  met on day 29    36 of 50 saw the spring      Met on day 29: 36 of the 50 who began saw the spring. Three in five is 30.
+  seed  9  lost on day 28   27 of 50 alive               Lost on day 28: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed 10  lost on day 25   25 of 50 alive               Lost on day 25: the 21st death left 29 of the 50 who began, and three in five is 30.
+
+The Long Winter — "Bring three in five through to spring." — reflex minds, nobody intervening: met 5, lost 5
+  seed  1  met on day 29    42 of 50 saw the spring      Met on day 29: 42 of the 50 who began saw the spring. Three in five is 30.
+  seed  2  met on day 29    35 of 50 saw the spring      Met on day 29: 35 of the 50 who began saw the spring. Three in five is 30.
+  seed  3  met on day 29    33 of 50 saw the spring      Met on day 29: 33 of the 50 who began saw the spring. Three in five is 30.
+  seed  4  lost on day 27   23 of 50 alive               Lost on day 27: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  5  lost on day 24   26 of 50 alive               Lost on day 24: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  6  met on day 29    37 of 50 saw the spring      Met on day 29: 37 of the 50 who began saw the spring. Three in five is 30.
+  seed  7  lost on day 22   12 of 50 alive               Lost on day 22: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed  8  met on day 29    42 of 50 saw the spring      Met on day 29: 42 of the 50 who began saw the spring. Three in five is 30.
+  seed  9  lost on day 25   24 of 50 alive               Lost on day 25: the 21st death left 29 of the 50 who began, and three in five is 30.
+  seed 10  lost on day 27   28 of 50 alive               Lost on day 27: the 21st death left 29 of the 50 who began, and three in five is 30.
+
+Thin Commons — "See four in five through the year, on commons that can be stripped bare." — planner minds, nobody intervening: met 4, lost 6
+  seed  1  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  2  lost on day 39   25 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  3  lost on day 36   5 of 50 alive                Lost on day 36: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  4  lost on day 35   6 of 50 alive                Lost on day 35: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  5  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  6  lost on day 39   26 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  7  met on day 41    49 of 50 saw the year out    Met on day 41: 49 of the 50 who began saw the year out. Four in five is 40.
+  seed  8  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  9  lost on day 36   5 of 50 alive                Lost on day 36: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed 10  lost on day 39   22 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+
+Thin Commons — "See four in five through the year, on commons that can be stripped bare." — reflex minds, nobody intervening: met 5, lost 5
+  seed  1  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  2  met on day 41    42 of 50 saw the year out    Met on day 41: 42 of the 50 who began saw the year out. Four in five is 40.
+  seed  3  lost on day 39   24 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  4  lost on day 37   1 of 50 alive                Lost on day 37: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  5  met on day 41    48 of 50 saw the year out    Met on day 41: 48 of the 50 who began saw the year out. Four in five is 40.
+  seed  6  lost on day 39   25 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed  7  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  8  met on day 41    50 of 50 saw the year out    Met on day 41: 50 of the 50 who began saw the year out. Four in five is 40.
+  seed  9  lost on day 39   15 of 50 alive               Lost on day 39: the eleventh death left 39 of the 50 who began, and four in five is 40.
+  seed 10  lost on day 38   4 of 50 alive                Lost on day 38: the eleventh death left 39 of the 50 who began, and four in five is 40.
+
+Two Shores — "Narrow the gap in well-being between the shores." — planner minds, nobody intervening: reading 10
+  seed  1  reading          a gap of 3                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 49 on the shore short of timber and food (25 of 25 alive), 52 on the shore short of stone and clay (25 of 25 alive).
+  seed  2  reading          a gap of 14                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 40 on the shore short of timber and food (24 of 24 alive), 54 on the shore short of stone and clay (26 of 26 alive).
+  seed  3  reading          a gap of 0                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 38 on the shore short of timber and food (24 of 28 alive), 38 on the shore short of stone and clay (22 of 22 alive).
+  seed  4  reading          a gap of 4                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 39 on the shore short of timber and food (20 of 23 alive), 43 on the shore short of stone and clay (27 of 27 alive).
+  seed  5  reading          a gap of 1                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 49 on the shore short of timber and food (17 of 17 alive), 50 on the shore short of stone and clay (33 of 33 alive).
+  seed  6  reading          a gap of 5                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 46 on the shore short of timber and food (25 of 25 alive), 51 on the shore short of stone and clay (25 of 25 alive).
+  seed  7  reading          a gap of 12                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 45 on the shore short of timber and food (26 of 26 alive), 57 on the shore short of stone and clay (24 of 24 alive).
+  seed  8  reading          a gap of 5                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 48 on the shore short of timber and food (23 of 23 alive), 53 on the shore short of stone and clay (27 of 27 alive).
+  seed  9  reading          a gap of 1                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 43 on the shore short of timber and food (22 of 23 alive), 44 on the shore short of stone and clay (27 of 27 alive).
+  seed 10  reading          a gap of 17                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 25 on the shore short of timber and food (22 of 25 alive), 42 on the shore short of stone and clay (25 of 25 alive).
+
+Two Shores — "Narrow the gap in well-being between the shores." — reflex minds, nobody intervening: reading 10
+  seed  1  reading          a gap of 4                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 30 on the shore short of timber and food (24 of 25 alive), 26 on the shore short of stone and clay (24 of 25 alive).
+  seed  2  reading          a gap of 1                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 64 on the shore short of timber and food (24 of 24 alive), 63 on the shore short of stone and clay (26 of 26 alive).
+  seed  3  reading          a gap of 1                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 37 on the shore short of timber and food (25 of 28 alive), 38 on the shore short of stone and clay (21 of 22 alive).
+  seed  4  reading          a gap of 23                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 47 on the shore short of timber and food (18 of 23 alive), 24 on the shore short of stone and clay (11 of 27 alive).
+  seed  5  reading          a gap of 2                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 62 on the shore short of timber and food (17 of 17 alive), 64 on the shore short of stone and clay (33 of 33 alive).
+  seed  6  reading          a gap of 5                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 40 on the shore short of timber and food (25 of 25 alive), 35 on the shore short of stone and clay (24 of 25 alive).
+  seed  7  reading          a gap of 10                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 32 on the shore short of timber and food (17 of 26 alive), 42 on the shore short of stone and clay (21 of 24 alive).
+  seed  8  reading          a gap of 3                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 53 on the shore short of timber and food (23 of 23 alive), 50 on the shore short of stone and clay (25 of 27 alive).
+  seed  9  reading          a gap of 5                   Well-being out of 100, for the people who began on each shore, the dead counted as nought: 41 on the shore short of timber and food (23 of 23 alive), 36 on the shore short of stone and clay (25 of 27 alive).
+  seed 10  reading          a gap of 10                  Well-being out of 100, for the people who began on each shore, the dead counted as nought: 25 on the shore short of timber and food (22 of 25 alive), 35 on the shore short of stone and clay (22 of 25 alive).
+
+Dry Year — "Keep four in five alive through the drought." — planner minds, nobody intervening: met 10
+  seed  1  met on day 19    49 of 50 saw the drought out Met on day 19: 49 of the 50 who began saw the drought out. Four in five is 40.
+  seed  2  met on day 25    50 of 50 saw the drought out Met on day 25: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  3  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  4  met on day 19    50 of 50 saw the drought out Met on day 19: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  5  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  6  met on day 26    50 of 50 saw the drought out Met on day 26: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  7  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  8  met on day 26    50 of 50 saw the drought out Met on day 26: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  9  met on day 23    50 of 50 saw the drought out Met on day 23: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed 10  met on day 25    50 of 50 saw the drought out Met on day 25: 50 of the 50 who began saw the drought out. Four in five is 40.
+
+Dry Year — "Keep four in five alive through the drought." — reflex minds, nobody intervening: met 10
+  seed  1  met on day 19    50 of 50 saw the drought out Met on day 19: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  2  met on day 25    50 of 50 saw the drought out Met on day 25: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  3  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  4  met on day 19    49 of 50 saw the drought out Met on day 19: 49 of the 50 who began saw the drought out. Four in five is 40.
+  seed  5  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  6  met on day 26    50 of 50 saw the drought out Met on day 26: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  7  met on day 28    50 of 50 saw the drought out Met on day 28: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  8  met on day 26    50 of 50 saw the drought out Met on day 26: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed  9  met on day 23    50 of 50 saw the drought out Met on day 23: 50 of the 50 who began saw the drought out. Four in five is 40.
+  seed 10  met on day 25    50 of 50 saw the drought out Met on day 25: 50 of the 50 who began saw the drought out. Four in five is 40.

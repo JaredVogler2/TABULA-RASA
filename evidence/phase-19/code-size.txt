@@ -1,0 +1,20 @@
+Size of what is in the repository at commit 36ff011 — context, not merit
+
+area            files    lines  test files  test lines
+src/engine         56   14,487          15       4,655
+src/providers       8    2,264           3       1,147
+src/server         10    2,706           7       2,955
+src/worker          5    2,175           1         571
+src/render         14    5,182           0           0
+src/ui             27   10,054           4         211
+src/lab             4      813           3         469
+src/audio           1      457           0           0
+src/store           2      384           0           0
+src/persist         1      136           0           0
+src/app            20      375           0           0
+scripts            27    3,605           0           0
+tests               5      116          12       2,123
+total             180   42,754          45      12,131
+
+tracked files: 551; documents under docs/: 24; evidence files: 248
+decisions recorded in docs/DECISIONS.md: 48

@@ -150,10 +150,55 @@
 - Rollback side effects: "After a rollback, Vercel turns off auto-assignment of production domains" until a deployment is promoted (`vercel promote`). "Vercel won't update environment variables if you change them in the project settings and will roll back to a previous build". (https://vercel.com/docs/instant-rollback)
 - Retention: Hobby and Pro default to "30 days" for every deployment state; Hobby always keeps the "Last 3" production deployments in state Ready. (https://vercel.com/docs/deployment-retention)
 
+## 12. A hosted PostgreSQL behind a pooler (the provider's own documentation, read 2026-11-25)
+
+Section 4 left this open because the research was limited to vercel.com and nextjs.org. These are from Neon's
+documentation, the provider whose Marketplace listing section 4 quotes. Page dates are the pages' own "Last
+updated".
+
+- Pool mode: "Neon uses PgBouncer in transaction mode (`pool_mode=transaction`)", with `max_client_conn=10000`,
+  `default_pool_size=0.9 * max_connections`, `max_prepared_statements=1000`, `query_wait_timeout=120`; "These
+  settings are not user-configurable." (https://neon.com/docs/connect/connection-pooling, 2026-11-14)
+- Startup parameters: "PgBouncer allows only startup parameters it can keep track of in startup packets."
+  "These include: `client_encoding`, `datestyle`, `timezone`, `standard_conforming_strings`, and
+  `application_name`." The error texts are "unsupported startup parameter: <...>" and "unsupported startup
+  parameter in options: <...>", and the advice is "Please use unpooled connection or remove this parameter from
+  the startup package." (https://neon.com/docs/connect/connection-errors, 2026-11-20)
+- Not supported with pooled connections: "SET / RESET (session variables)", "LISTEN / NOTIFY", "WITH HOLD
+  CURSOR", "PREPARE / DEALLOCATE (SQL-level prepared statements)", "Temporary tables with PRESERVE / DELETE
+  ROWS", "LOAD statement", "Session-level advisory locks". Supported: "PgBouncer supports protocol-level
+  prepared statements (as of PgBouncer 1.22.0)". For a schema the page's fix is `SET LOCAL` or `ALTER ROLE`.
+  (https://neon.com/docs/connect/connection-pooling)
+- "PgBouncer doesn't reset a server connection when it returns to the pool in transaction mode."
+  (https://neon.com/docs/connect/connection-pooling)
+- Pooled and direct strings differ by the host: "Add `-pooler` to your endpoint ID".
+  (https://neon.com/docs/connect/connection-pooling)
+- Connections: the smallest compute (0.25 CU, 1 GB) has `max_connections` 112, of which "Seven connections are
+  reserved for the Neon superuser account"; the pooler accepts "up to 10,000 concurrent connections".
+  (https://neon.com/docs/connect/connection-pooling)
+- What the Vercel-managed integration sets: "`DATABASE_URL` | Pooled connection string (PgBouncer)",
+  "`DATABASE_URL_UNPOOLED` | Direct connection string", "`PGHOST`, `PGHOST_UNPOOLED`, `PGUSER`, `PGDATABASE`,
+  `PGPASSWORD` | Raw pieces to build custom strings", "`POSTGRES_*` (legacy)". A "Custom Prefix" changes the
+  names. (https://neon.com/docs/guides/vercel-managed-integration, 2026-11-18)
+- Free plan: "$0/month"; "100 CU-hours/project"; storage "1 GB/project, 20 GB account total"; scale to zero
+  "After 5 min" ("Free: 5 min inactivity; cannot disable"); "On the Free plan, when you run out of CU-hours,
+  your compute is suspended until the next billing period or until you upgrade." "On the **Free** plan, there
+  is no monthly cost." Whether a payment method is needed: not stated. (https://neon.com/docs/introduction/plans,
+  2026-11-24)
+- Waking: "The transition from an idle to an active state only takes a few hundred milliseconds."
+  (https://neon.com/docs/connect/connection-errors)
+- History on the Free plan: "6 hours, up to 1 GB of changes"; "1 manual snapshot"; "scheduled backups are not
+  available on the Free plan". (https://neon.com/docs/introduction/plans)
+
+What follows for this application is in D-047. That a pooled connection refuses this application's *former*
+startup settings (`options=-c statement_timeout=…`) is not a sentence in the documentation; a local PgBouncer
+1.22.0 in transaction mode does refuse them, with the error text quoted above (`evidence/phase-16/pooler.txt`).
+Nothing here has been run against the provider.
+
 ## UNCONFIRMED (not found on an official vercel.com / nextjs.org page)
 
 - Function duration limits when Fluid compute is disabled. A search-engine summary cited legacy values (Hobby 10s/60s, Pro 15s/300s, Enterprise 15s/900s), but the live limits page does not contain them. Irrelevant to a new project, which gets Fluid by default.
-- `@neondatabase/serverless` semantics: HTTP mode versus WebSocket `Pool`, interactive transactions, and how the pooled (`pgbouncer`) `DATABASE_URL` affects session features such as advisory locks or prepared statements. The authoritative source is the provider's driver documentation, which was outside this research's domain restriction.
+- `@neondatabase/serverless` semantics: HTTP mode versus WebSocket `Pool`, interactive transactions, and how the pooled (`pgbouncer`) `DATABASE_URL` affects session features such as advisory locks or prepared statements. The authoritative source is the provider's driver documentation, which was outside this research's domain restriction. (Section 12 answers the part about the pooled connection string for the `pg` driver this application uses; `@neondatabase/serverless` is not used.)
 - Free-plan quotas of any Marketplace Postgres provider, and whether a `$0` plan requires a payment method or can later incur charges.
 - Environment variable names injected by Supabase and Prisma Postgres (only the Neon listing was read).
 - Explicit Turbopack support for `new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })`, and the CSP `worker-src` value a Turbopack-built worker needs. Must be proven by a build-and-run test.

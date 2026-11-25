@@ -3,9 +3,9 @@
   "format": "tabula-rasa/study-bundle",
   "version": 1,
   "seedClass": "pilot",
-  "engine": "0.6.0",
-  "schema": 5,
-  "affordances": "2026.11-h",
+  "engine": "0.7.0",
+  "schema": 6,
+  "affordances": "2026.11-i",
   "studies": [
    {
     "id": "h1-scarcity",
@@ -381,7 +381,7 @@
    "resamples": 10000,
    "seed": 20261125,
    "interval": "95% percentile bootstrap over seeds",
-   "multiplicity": "Holm across each study's contrasts"
+   "multiplicity": "Holm step-down across the registered family in this batch (7 contrasts with a p-value); verdicts are read from intervals, not from p-values"
   },
   "plan": null,
   "runs": 224,
@@ -649,7 +649,7 @@
      "dz": 1.331490644950174,
      "cliffsDelta": 0.875,
      "p": 0.00009999000099990002,
-     "pHolm": 0.00019998000199980003,
+     "pHolm": 0.0006999300069993001,
      "verdict": "supported",
      "reading": "0.0161 [0.0104, 0.0218]: the whole interval lies above 0."
     },
@@ -674,14 +674,14 @@
      "dz": 0.9229569896644637,
      "cliffsDelta": 0.5546875,
      "p": 0.00019998000199980003,
-     "pHolm": 0.00019998000199980003,
+     "pHolm": 0.000999900009999,
      "verdict": "supported",
      "reading": "0.0113 [0.0054, 0.0171]: the whole interval lies above 0."
     }
    ],
    "warnings": [
     "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
-    "2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family."
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   },
   {
@@ -869,13 +869,14 @@
      "dz": 3.6849732044432333,
      "cliffsDelta": 0.96875,
      "p": 0.00009999000099990002,
-     "pHolm": 0.00009999000099990002,
+     "pHolm": 0.0006999300069993001,
      "verdict": "supported",
      "reading": "0.0631 [0.0551, 0.0712]: the whole interval lies above 0."
     }
    ],
    "warnings": [
-    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say."
+    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   },
   {
@@ -1063,13 +1064,14 @@
      "dz": 0.20189321327181206,
      "cliffsDelta": 0.125,
      "p": 0.5313468653134686,
-     "pHolm": 0.5313468653134686,
+     "pHolm": 1,
      "verdict": "falsified",
      "reading": "0.1250 [-0.1875, 0.4375]: the interval includes 0, which the registered rule counts as falsified."
     }
    ],
    "warnings": [
-    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say."
+    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   },
   {
@@ -1257,13 +1259,14 @@
      "dz": -0.14123317071650804,
      "cliffsDelta": -0.0078125,
      "p": 0.7614238576142386,
-     "pHolm": 0.7614238576142386,
+     "pHolm": 1,
      "verdict": "falsified",
      "reading": "-0.0013 [-0.0050, 0.0025]: the interval includes 0, which the registered rule counts as falsified."
     }
    ],
    "warnings": [
-    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say."
+    "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   },
   {
@@ -1483,7 +1486,7 @@
    ],
    "warnings": [
     "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
-    "2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family."
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   },
   {
@@ -1738,7 +1741,7 @@
      "dz": -0.46896475125081927,
      "cliffsDelta": -0.26953125,
      "p": 0.055894410558944105,
-     "pHolm": 0.11178882111788821,
+     "pHolm": 0.22357764223577642,
      "verdict": "falsified",
      "reading": "-0.0575 [-0.1137, 0.0000]: the interval includes 0, which the registered rule counts as falsified."
     },
@@ -1763,14 +1766,14 @@
      "dz": -0.33028196096140383,
      "cliffsDelta": -0.13671875,
      "p": 0.1815818418158184,
-     "pHolm": 0.1815818418158184,
+     "pHolm": 0.5447455254474552,
      "verdict": "reported",
      "reading": "-0.0412 [-0.1013, 0.0163]: no difference distinguishable from 0."
     }
    ],
    "warnings": [
     "Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.",
-    "2 contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family."
+    "Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: 7 contrasts with a p-value (ratio contrasts are read from their interval and have none)."
    ]
   }
  ],

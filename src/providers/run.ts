@@ -143,8 +143,12 @@ export interface AskHooks {
    * switch); the mind is then not asked and keeps its turn for a later epoch.
    */
   before?(call: DecisionCall): Promise<{ go: true } | { go: false; why: string }>;
-  /** Called with every attempt's result, as soon as it is known. */
-  after?(call: DecisionCall, result: CallResult): Promise<void>;
+  /**
+   * Called with every attempt's result, as soon as it is known. It may hand back the result as
+   * it was actually recorded (when it could not be recorded as it came): that is then the
+   * result everything afterwards uses, so that a resumed step and an uninterrupted one agree.
+   */
+  after?(call: DecisionCall, result: CallResult): Promise<CallResult | void>;
   /** If it returns true, no further call is started. */
   halted?(): boolean;
 }
@@ -164,12 +168,19 @@ export async function ask(
   provider: Provider,
   have: ReadonlyMap<number, Asked> = new Map(),
   hooks: AskHooks = {},
-  options: { deadlineMs?: number; now?: () => number; warmFirst?: boolean; attemptsMade?: ReadonlyMap<number, number>; retryDelayMs?: number } = {},
+  options: { deadlineMs?: number; hardDeadlineMs?: number; now?: () => number; warmFirst?: boolean; attemptsMade?: ReadonlyMap<number, number>; retryDelayMs?: number } = {},
 ): Promise<Map<number, Asked>> {
   const now = options.now ?? (() => Date.now());
   const out = new Map<number, Asked>();
   const todo = plan.schedule.activations.filter((a) => !have.has(a.agent));
-  const pastDeadline = (): boolean => options.deadlineMs !== undefined && now() >= options.deadlineMs;
+  /** The least time worth starting a call with. */
+  const WORTH_STARTING_MS = 5_000;
+  // No call is started after `deadlineMs`, and none may still be waiting at `hardDeadlineMs`:
+  // whoever holds this work (a lease, a function with a time limit) is gone by then, and a
+  // call still in flight would be paid for with nobody left to record what it cost.
+  const pastDeadline = (): boolean => (options.deadlineMs !== undefined && now() >= options.deadlineMs) || (options.hardDeadlineMs !== undefined && now() + WORTH_STARTING_MS >= options.hardDeadlineMs);
+  // the first thing to go wrong in a hook: nothing new is started after it, and it is thrown once everything in flight has ended
+  let failure: { error: unknown } | null = null;
 
   const one = async (act: Activation): Promise<void> => {
     // attempts already made for this mind in an earlier, interrupted invocation count against the limit
@@ -180,6 +191,8 @@ export async function ask(
       const call = callFor(runId, cfg, spec, plan, act, attempts + 1);
       const leave = hooks.before ? await hooks.before(call) : { go: true as const };
       if (!leave.go) break;
+      // the wait for an answer never outlasts whoever is waiting for it
+      if (options.hardDeadlineMs !== undefined) call.timeoutMs = Math.max(1_000, Math.min(call.timeoutMs, options.hardDeadlineMs - now()));
       attempts++;
       let result: CallResult;
       try {
@@ -188,7 +201,7 @@ export async function ask(
         // a provider that throws has told us nothing about what happened to the request
         result = { status: "unknown", decision: null, confidence: "", cites: [], text: null, usage: null, costMicroUsd: null, model: provider.model, requestId: null, stopReason: null, error: { code: "provider_threw", status: null, retryable: false, message: err instanceof Error ? err.name : "error" }, latencyMs: 0 };
       }
-      if (hooks.after) await hooks.after(call, result);
+      if (hooks.after) result = (await hooks.after(call, result)) ?? result;
       last = result;
       // only a definite, unbilled failure that might clear is tried again, after a pause if one is asked for
       if (!(result.status === "rejected" && result.error?.retryable)) break;
@@ -197,21 +210,31 @@ export async function ask(
     if (last) out.set(act.agent, { result: last, attempts });
   };
 
+  const guarded = async (act: Activation): Promise<void> => {
+    try {
+      await one(act);
+    } catch (error) {
+      failure ??= { error };
+    }
+  };
   let cursor = 0;
   if (options.warmFirst && todo.length > 1) {
     // let one call finish first so that the others can read the prompt cache it wrote
-    await one(todo[0] as Activation);
+    await guarded(todo[0] as Activation);
     cursor = 1;
   }
   const worker = async (): Promise<void> => {
     for (;;) {
-      if (hooks.halted?.() || pastDeadline()) return;
+      if (failure !== null || hooks.halted?.() || pastDeadline()) return;
       const i = cursor++;
       if (i >= todo.length) return;
-      await one(todo[i] as Activation);
+      await guarded(todo[i] as Activation);
     }
   };
   await Promise.all(Array.from({ length: Math.min(spec.concurrency, Math.max(1, todo.length - cursor)) }, worker));
+  // every call that was in flight has ended and been recorded by its own hook; now the failure is the caller's
+  const failed = failure as { error: unknown } | null;
+  if (failed !== null) throw failed.error;
   return out;
 }
 

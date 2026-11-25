@@ -1,7 +1,7 @@
 # Model description (ODD)
 
 A description of the simulation in the Overview–Design concepts–Details format used for agent-based models.
-It describes engine version 0.4.0 as it is in the repository; every number below is a constant or default in
+It describes engine version 0.7.0 as it is in the repository; every number below is a constant or default in
 `src/engine/model/constants.ts` or `config.ts` unless a file is named. Where this document and the code
 disagree, the code is the model.
 
@@ -22,7 +22,7 @@ It is not a model of any historical society and supports no claim about human pr
 | Entity | State | Notes |
 |---|---|---|
 | **Tile** (64 × 64 by default) | height, water (none / sea / stream / pond), biome (shore, wetland, meadow, forest, scrub, highland), fertility, movement cost, drinkable (perennial / seasonal), region | Static after generation. |
-| **Resource node** (≈ 1,000 per island) | kind (berry bush, root patch, tree, reed bed, stone outcrop, clay bank, fishing water), capacity, amount | Renewable kinds regrow; stone and clay are finite. |
+| **Resource node** (about 860 on the reference island: 825–891 over seeds 1–16) | kind (berry bush, root patch, tree, reed bed, stone outcrop, clay bank, fishing water), capacity, amount | Renewable kinds regrow; stone and clay are finite. |
 | **Agent** (50 by default) | position; energy, hydration, rest, warmth, health (0–1000); illness; inventory (13 items); tool wear; 9 traits, 4 physical attributes, 7 skills; current action and queued intents; **mind** | Traits are fixed at creation; skills grow with practice. |
 | **Mind** (per agent) | tiles ever seen; believed amount, time and source for each node; the fullest each node has been seen; last known position of each other agent; trust, favours given and received, promises kept and broken per other agent; known structures; ≤ 48 episodic memories with salience; ≤ 8 commitments; ≤ 12 things heard; home; felt-temperature average and trend; cold nights, hungry days and winters lived; charters and offers known | Nothing in a mind is true by construction; it is what the agent has perceived or been told. |
 | **Structure** | kind (campfire, shelter, store, plot), site, founder, builders, contributors, missing materials, labour, fuel, contents, contents open to all, controlling institution, integrity | Built by agents from gathered materials. |
@@ -75,7 +75,8 @@ choose intents from an observation and an action mask.
 projects in energy-equivalents per tick; nothing rewards cooperation, institutions or survival of others.
 
 **Learning.** Skills rise with practice (faster work, occasional extra yield). Beliefs are corrected by
-perception and testimony. There is no reinforcement learning and no evolution in the shipped policies.
+perception, and changed by testimony: a speaker can tell only of what they themselves know of, and the hearer
+takes on what the speaker believed, with its age and its teller — never the state of the world (D-040). There is no reinforcement learning and no evolution in the shipped policies.
 
 **Prediction.** Seasonal foresight comes only from a running mean and trend of temperatures the agent has
 itself felt. Yields and travel are estimated by rule of thumb.
@@ -105,8 +106,12 @@ self-descriptions are never used as data.
 ### 3.1 Initialization
 
 From a scenario and a 32-bit seed: terrain by layered value noise with a percentile sea level, priority-flood
-drainage, streams and ponds; biomes by percentile; nodes placed by biome with capacities drawn per kind and
-starting full; 50 adults with independently drawn traits (mean 50, spread set by `diversity`), small skill
+drainage, streams and ponds; biomes by percentile; nodes placed by biome with capacities drawn per kind, the
+renewable kinds starting at 60–100% of capacity (drawn per node) and stone and clay starting full
+(`world/nodes.ts`); in the scenario Two Shores alone, the chance of each kind of node also depends on the
+shore (`shoreSplit` 800‰: one shore, chosen by the seed, has a fifth of the usual trees, two fifths of the
+berries and roots and 1.8 times the stone and clay; the other 1.6 times the berries and roots and a fifth of
+the stone and clay; D-041); 50 adults with independently drawn traits (mean 50, spread set by `diversity`), small skill
 differences and a little food, dispersed over habitable land with no relationships, groups or shared history.
 Trust in everyone starts at 300 + 4 × trustfulness (clamped to 200–760). The year starts in early spring
 (First Light) or as the scenario says. No structure, institution, promise or memory exists at tick 0.

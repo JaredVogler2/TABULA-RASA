@@ -22,16 +22,56 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSwipeDown } from "./swipe";
 import { AFFORDANCES, AFFORDANCE_CATEGORIES, AFFORDANCE_VERSION, ENGINE_VERSION, type AffordanceCategory } from "@/engine";
 import { useGame } from "@/store/game";
 import { useController } from "./context";
 import styles from "./game.module.css";
+import { runsOf } from "./runs";
 import { clock, type ChronicleGroup } from "./text";
 
-export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+/**
+ * The world on screen could not be carried on (the simulation worker reported a fault). It is
+ * said in words, over everything, and the only thing left to do is leave: a world that is
+ * silently standing still would look like one that is merely paused.
+ */
+export function Fault() {
+  const controller = useController();
+  const error = useGame((s) => s.error);
+  const leave = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    leave.current?.focus();
+  }, [error]);
+  if (!error) return null;
   return (
-    <div className={styles.panelHead}>
+    <div className={styles.scrim} style={{ zIndex: 45 }}>
+      <section className={`${styles.paper} ${styles.sheet}`} role="alertdialog" aria-modal="true" aria-labelledby="fault-title" aria-describedby="fault-text" data-testid="fault">
+        <div className={styles.panelHead}>
+          <div className={styles.panelTitle}>
+            <div className={styles.kicker}>Something went wrong</div>
+            <h2 id="fault-title">This world has stopped</h2>
+          </div>
+        </div>
+        <div className={styles.panelBody}>
+          <p id="fault-text" data-testid="fault-text">
+            {error}
+          </p>
+          <p className={styles.muted}>Nothing more will happen in it, and it will not be saved over anything. From the title you can open a saved world or begin another.</p>
+          <button type="button" ref={leave} className={styles.button} style={{ marginTop: 12 }} onClick={() => void controller.toTitle()} data-testid="fault-leave">
+            Back to the title
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+  // on a phone the sheet can be pulled down by its header to close it
+  const swipe = useSwipeDown(onClose);
+  return (
+    <div className={styles.panelHead} {...swipe}>
       <div className={styles.panelTitle}>
         <div className={styles.kicker}>{kicker}</div>
         <h2 id={testId ? `${testId}-title` : undefined}>{title}</h2>
@@ -69,6 +109,9 @@ export function Chronicle() {
     return list.slice(-220).reverse();
   }, [entries, filter, onlySelected, selectedAgent]);
   const byId = useMemo(() => new Map(entries.map((e) => [e.id, e])), [entries]);
+  // the same sentence about several places at the same hour is one line with a count (runs.ts)
+  const runs = useMemo(() => runsOf(shown), [shown]);
+  const [opened, setOpened] = useState<number | null>(null);
 
   return (
     <aside className={`${styles.paper} ${styles.side} ${styles.sideLeft}`} aria-label="Chronicle" data-testid="chronicle">
@@ -90,11 +133,13 @@ export function Chronicle() {
           <p className={styles.empty}>Nothing has been logged yet. Press play: every line that appears here is an event the engine validated and executed.</p>
         ) : (
           <ol className={styles.entries} data-testid="chronicle-entries">
-            {shown.map((e, index) => {
+            {runs.map((run, index) => {
+              const e = run.first;
               const day = Math.floor(e.tick / 96);
-              const previous = shown[index - 1];
+              const previous = runs[index - 1]?.first;
               const heading = !previous || Math.floor(previous.tick / 96) !== day;
               const cause = e.parents.map((p) => byId.get(p)).find((p) => p !== undefined);
+              const more = run.rest.length;
               return (
                 <li key={e.id}>
                   {heading ? <div className={styles.dayHeading}>Day {day + 1}</div> : null}
@@ -102,9 +147,30 @@ export function Chronicle() {
                     <span className={styles.entryTime}>{clock(e.tick % 96)}</span>
                     <span>
                       <span className={styles.entryText}>{e.text}</span>
+                      {more ? (
+                        <span className={styles.entryCount} data-testid="entry-count">
+                          {" "}
+                          × {more + 1}
+                        </span>
+                      ) : null}
                       {cause ? <span className={styles.cause}>Recorded cause: {cause.text}</span> : null}
                     </span>
                   </button>
+                  {more ? (
+                    <button type="button" className={styles.whyButton} aria-expanded={opened === e.id} onClick={() => setOpened(opened === e.id ? null : e.id)} data-testid={`run-${e.id}`}>
+                      {opened === e.id ? "Show them as one line" : `Show each of the ${more + 1}`}
+                    </button>
+                  ) : null}
+                  {more && opened === e.id
+                    ? run.rest.map((other) => (
+                        <button key={other.id} type="button" className={styles.entry} data-group={other.group} data-weight={other.weight} onClick={() => controller.jumpTo(other)} title="Go to where this happened">
+                          <span className={styles.entryTime}>{clock(other.tick % 96)}</span>
+                          <span>
+                            <span className={styles.entryText}>{other.text}</span>
+                          </span>
+                        </button>
+                      ))
+                    : null}
                   {e.parents.length ? (
                     <button
                       type="button"
@@ -216,6 +282,7 @@ export function MenuPanel() {
   const world = useGame((s) => s.world);
   const replay = useGame((s) => s.hud?.replay ?? null);
   const soundOn = useGame((s) => s.soundOn);
+  const autosaveElsewhere = useGame((s) => s.autosaveElsewhere);
   const close = () => controller.openPanel("menu");
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
@@ -259,6 +326,12 @@ export function MenuPanel() {
             <div className={styles.sectionTitle}>
               Saved worlds <span>stored only in this browser</span>
             </div>
+            {autosaveElsewhere ? (
+              <div className={styles.note} data-tone="caution" data-testid="autosave-elsewhere" style={{ marginBottom: 10 }}>
+                <Info aria-hidden />
+                <span>Another tab of this browser is keeping the autosave, so this world is not autosaved here. Save it by hand to keep it.</span>
+              </div>
+            ) : null}
             {saves.length === 0 ? (
               <p className={styles.muted}>No saves yet. The game also autosaves every second day.</p>
             ) : (
@@ -347,6 +420,10 @@ export function MenuPanel() {
                 : "Every citizen here is driven by a deterministic BASELINE policy, not a language model."}{" "}
               No data leaves this device.{" "}
               <Link href="/diagnostics">System check</Link>
+              {" · "}
+              <a href="/licenses.txt" target="_blank" rel="noopener" data-testid="open-source-notices">
+                Open-source notices
+              </a>
             </p>
           </div>
         </div>

@@ -1,14 +1,17 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createWorld, makeConfig, type WorldConfig } from "@/engine";
+import { PROMPT_VERSION } from "@/providers/prompt";
 import { MockProvider } from "@/providers/mock";
 import { DEFAULT_SPEC, verifyTape, type RunSpec } from "@/providers/run";
 import { noResult, type CallResult, type DecisionCall, type Provider } from "@/providers/types";
 import { TEST_DATABASE_URL, memoryDb, serverDb } from "../../tests/support/db";
-import { num, type Db } from "./db";
+import { num, type Db, type Queryer } from "./db";
 import { Ledger } from "./ledger";
-import { callSummary, createRun, epochsOf, getRun, listRuns, previewRun, publishRun, setRunStatus, stepRun, type Run } from "./runs";
+import { STEP_BUDGET_MS, STEP_LEASE_SECONDS } from "./api";
+import { UNUSABLE_LIMIT, callSummary, createRun, epochsOf, getRun, listRuns, previewRun, publishRun, setRunStatus, stepRun, type Run } from "./runs";
 
 const USD = 1_000_000;
+const CEILING = 10_000 * USD;
 const LIVE: { available: boolean; reasons: string[]; model: string | null } = { available: true, reasons: [], model: "claude-fable-5-2" };
 const config = (seed: number, over: Partial<WorldConfig> = {}): WorldConfig => makeConfig("first_light", seed, { population: 10, externalShare: 1000, illness: 0, institutions: "open", ...over });
 const spec = (over: Partial<RunSpec> = {}, sched: Partial<RunSpec["scheduler"]> = {}): RunSpec => ({ ...DEFAULT_SPEC, epochs: 4, concurrency: 3, ...over, scheduler: { ...DEFAULT_SPEC.scheduler, kind: "round_robin", callsPerEpoch: 10, maxPerAgentPerDay: 8, ...sched } });
@@ -83,15 +86,15 @@ describe("server-side runs (in memory)", () => {
   });
   beforeEach(async () => {
     for (const t of ["calls", "epochs", "reservations", "daily_spend", "runs", "audit_log"]) await db.query(`DELETE FROM ${t}`);
-    await db.query("UPDATE budget SET authorized_microusd = 0, daily_cap_microusd = 0, reserved_microusd = 0, settled_microusd = 0, overage_microusd = 0, kill_switch = true, kill_reason = 'never enabled' WHERE id = 1");
-    ledger = new Ledger(db);
+    await db.query("UPDATE budget SET authorized_microusd = 0, daily_cap_microusd = 0, reserved_microusd = 0, settled_microusd = 0, overage_microusd = 0, kill_switch = true, kill_reason = 'never enabled', kill_code = '' WHERE id = 1");
+    ledger = new Ledger(db, { ceilingMicroUsd: CEILING });
   });
 
   it("a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world", async () => {
     const cfg = config(51);
     const run = await create(cfg, spec({ provider: "mock" }));
     expect(run).toMatchObject({ status: "active", provider: "mock", model: "mock", capMicroUsd: 0, epoch: 0, tick: 0 });
-    expect(run.manifest).toMatchObject({ promptVersion: "p1", provider: "mock", seed: 51, externalAgents: 10, epochsPlanned: 4 });
+    expect(run.manifest).toMatchObject({ promptVersion: PROMPT_VERSION, provider: "mock", seed: 51, externalAgents: 10, epochsPlanned: 4 });
     const states = await drive(db, ledger, run.id, new MockProvider());
     expect(states).toEqual(["committed", "committed", "committed", "done"]);
     const done = (await getRun(db, run.id))!;
@@ -286,6 +289,190 @@ describe("server-side runs (in memory)", () => {
     await books(db);
   });
 
+  it("a call cut off in flight and then swept as unknown does not wedge the run: the next step records it and moves on", async () => {
+    await open();
+    const cfg = config(57);
+    const run = await create(cfg, spec({ provider: "anthropic", epochs: 2 }), 12 * USD, true);
+    // a step dies with a call in flight: a reservation, and no record of any answer…
+    const lost = `${run.id}:0:1:1`;
+    expect(await ledger.reserve({ id: lost, runId: run.id, amount: 100_000, model: "claude-fable-5-2", requestHash: "h" })).toEqual({ ok: true });
+    // …the owner comes back a quarter of an hour later, and looking at the console sweeps it to "unknown"
+    await db.query("UPDATE reservations SET created_at = now() - interval '20 minutes' WHERE id = $1", [lost]);
+    expect(await ledger.sweep(15 * 60_000)).toBe(1);
+    expect((await ledger.get(lost))!.state).toBe("unknown");
+    expect(await db.query("SELECT 1 FROM calls WHERE run_id = $1", [run.id])).toEqual([]);
+    // the owner presses Advance. The run moves: every epoch commits, and that attempt is never made again
+    const provider = new FakePaid();
+    const states = await drive(db, ledger, run.id, provider);
+    expect(states).toEqual(["committed", "done"]);
+    expect(provider.calls.some((c) => c.epoch === 0 && c.agent === 1)).toBe(false);
+    expect((await db.query("SELECT status, reason, reservation_id FROM calls WHERE run_id = $1 AND epoch = 0 AND agent = 1", [run.id]))[0]).toMatchObject({ status: "unknown", reason: "interrupted", reservation_id: lost });
+    // the money is still held, for the owner to decide — and deciding it afterwards is still possible
+    expect((await ledger.summary()).unknownMicroUsd).toBe(100_000);
+    expect(await ledger.reconcile(lost, { release: true }, "owner")).toBe("done");
+    await books(db);
+  });
+
+  it("whatever state a recordless reservation is in, the next step writes its record and never asks for that attempt again", async () => {
+    await open();
+    const cfg = config(59);
+    const run = await create(cfg, spec({ provider: "anthropic", epochs: 1 }), 12 * USD, true);
+    const id = (agent: number) => `${run.id}:0:${agent}:1`;
+    for (const agent of [1, 2, 3, 4]) expect(await ledger.reserve({ id: id(agent), runId: run.id, amount: 100_000, model: "claude-fable-5-2", requestHash: "h" })).toEqual({ ok: true });
+    // as an older version could leave things, stopping between the money and the record:
+    expect(await ledger.settle(id(1), { costMicroUsd: 31_000 })).toBe("settled"); // charged, answer never written down
+    expect(await ledger.release(id(2), "rate_limited")).toBe("released"); // given back, nothing written down
+    await ledger.markUnknown(id(3), "timeout"); // held as unknown, nothing written down
+    // (agent 4: still plainly reserved)
+    const provider = new FakePaid();
+    expect(await drive(db, ledger, run.id, provider)).toEqual(["done"]);
+    for (const agent of [1, 2, 3, 4]) expect(provider.calls.some((c) => c.agent === agent), `agent ${agent}`).toBe(false);
+    const rows = await db.query("SELECT agent, status, reason, result FROM calls WHERE run_id = $1 AND agent IN (1, 2, 3, 4) ORDER BY agent", [run.id]);
+    expect(rows.map((r) => [num(r.agent), r.status, r.reason])).toEqual([
+      [1, "unknown", "answer_lost"],
+      [2, "rejected", "released_without_record"],
+      [3, "unknown", "interrupted"],
+      [4, "unknown", "interrupted"],
+    ]);
+    // what is known of the cost is kept: paid 31,000 for an answer nobody has
+    expect((JSON.parse(String(rows[0]!.result)) as CallResult).costMicroUsd).toBe(31_000);
+    expect((await ledger.get(id(4)))!.state).toBe("unknown");
+    const budget = await ledger.summary();
+    expect(budget).toMatchObject({ unknownCount: 2, unknownMicroUsd: 200_000 });
+    await books(db);
+    // a second look changes nothing: there is one record per attempt, and no orphan left to find
+    expect((await db.query("SELECT COUNT(*) AS n FROM calls WHERE run_id = $1 AND agent IN (1, 2, 3, 4)", [run.id]))[0]!.n).toBe(4);
+  });
+
+  it("if the record of a call cannot be written, its money is not moved either; nothing new is started, and the next step tidies up", async () => {
+    await open();
+    const cfg = config(60);
+    const run = await create(cfg, spec({ provider: "anthropic", epochs: 1, concurrency: 1 }), 12 * USD, true);
+    // the database fails once, at the moment the third call's record is written
+    let inserts = 0;
+    const failing = (q: Queryer): Queryer => ({
+      query: async (sql, params) => {
+        if (sql.includes("INSERT INTO calls") && sql.includes("latency_ms") && ++inserts === 3) throw new Error("connection lost");
+        return q.query(sql, params);
+      },
+    });
+    const flaky = { kind: db.kind, close: () => db.close(), query: failing(db).query, tx: <T>(fn: (q: Queryer) => Promise<T>) => db.tx((q) => fn(failing(q))) } as Db;
+    const provider = new FakePaid();
+    await expect(stepRun(flaky, new Ledger(flaky, { ceilingMicroUsd: CEILING }), run.id, provider, { owner: "a", budgetMs: 60_000, retryDelayMs: 0 })).rejects.toThrow("connection lost");
+    // two calls are on the books whole; the third was answered, and neither its money nor its record was written
+    expect(provider.calls).toHaveLength(3);
+    const third = provider.calls[2]!;
+    const rid = `${run.id}:0:${third.agent}:1`;
+    expect((await ledger.get(rid))!.state).toBe("reserved");
+    expect(await db.query("SELECT 1 FROM calls WHERE reservation_id = $1", [rid])).toEqual([]);
+    expect((await db.query("SELECT COUNT(*) AS n FROM calls WHERE run_id = $1", [run.id]))[0]!.n).toBe(2);
+    expect((await ledger.summary()).settledMicroUsd).toBe(2 * 23_000);
+    await books(db);
+    // the lease was handed back, so the next step can start at once; it finds the orphan, holds its money as unknown, and finishes
+    expect(await drive(db, ledger, run.id, provider)).toEqual(["done"]);
+    expect(provider.calls.filter((c) => c.agent === third.agent)).toHaveLength(1);
+    expect((await ledger.get(rid))!.state).toBe("unknown");
+    await books(db);
+  });
+
+  it("a run that keeps paying for answers it cannot use is stopped after three, and an answer from the wrong model stops it at once", async () => {
+    await open();
+    const cfg = config(61);
+    const paidFor = (status: CallResult["status"], code: string): CallResult => ({ ...failed(status, code), costMicroUsd: 23_000, usage: { input_tokens: 1000, output_tokens: 2000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, cache_creation_5m: 0, cache_creation_1h: 0, inference_geo: "global", speed: "standard", service_tier: "standard", thinking_tokens: 2000 } });
+    // every answer is cut off at its length limit: paid for, and useless
+    const run = await create(cfg, spec({ provider: "anthropic", epochs: 2, concurrency: 1 }), 12 * USD, true);
+    let mode: "truncated" | "ok" | "mixed" = "truncated";
+    let n = 0;
+    const provider = new FakePaid(() => {
+      n++;
+      if (mode === "ok") return "ok";
+      if (mode === "mixed") return n % 2 === 0 ? "ok" : paidFor("malformed", "wrong_shape");
+      return paidFor("truncated", "max_tokens");
+    });
+    const first = await stepRun(db, ledger, run.id, provider, { owner: "a", budgetMs: 60_000, retryDelayMs: 0 });
+    expect(first).toMatchObject({ state: "paused", reason: "unusable_answers", calls: UNUSABLE_LIMIT });
+    expect(provider.calls).toHaveLength(3);
+    expect((await ledger.summary()).settledMicroUsd).toBe(3 * 23_000);
+    expect((await getRun(db, run.id))!).toMatchObject({ status: "paused", statusReason: "unusable_answers", epoch: 0 });
+    expect((await db.query("SELECT action FROM audit_log WHERE action = 'run.paused'")).length).toBe(1);
+    // the owner resumes it without changing anything: one more such answer and it stops again
+    expect(await setRunStatus(db, run.id, "active", "owner")).toBe(true);
+    const second = await stepRun(db, ledger, run.id, provider, { owner: "a", budgetMs: 60_000, retryDelayMs: 0 });
+    expect(second).toMatchObject({ state: "paused", reason: "unusable_answers", calls: 1 });
+    // a usable answer ends the count: once the answers are good again the run goes on to its end
+    mode = "ok";
+    expect(await setRunStatus(db, run.id, "active", "owner")).toBe(true);
+    expect(await drive(db, ledger, run.id, provider)).toEqual(["committed", "done"]);
+    await books(db);
+    // answers that are sometimes unusable do not stop a run: only an unbroken run of them does
+    const patchy = await create(config(65), spec({ provider: "anthropic", epochs: 2, concurrency: 1 }), 12 * USD, true);
+    mode = "mixed";
+    n = 0;
+    expect(await drive(db, ledger, patchy.id, provider)).toEqual(["committed", "done"]);
+    expect((await db.query("SELECT COUNT(*) AS n FROM calls WHERE run_id = $1 AND status = 'malformed'", [patchy.id]))[0]!.n).toBeGreaterThanOrEqual(5);
+    await books(db);
+
+    // an answer that says it came from another model than the one approved: paid for, unusable, and so would the next be
+    const other = await create(config(62), spec({ provider: "anthropic", epochs: 1, concurrency: 1 }), 12 * USD, true);
+    const wrong = new FakePaid(() => paidFor("malformed", "wrong_model"));
+    expect(await stepRun(db, ledger, other.id, wrong, { owner: "a", budgetMs: 60_000, retryDelayMs: 0 })).toMatchObject({ state: "failed", reason: "wrong_model", calls: 1 });
+    expect(wrong.calls).toHaveLength(1);
+  });
+
+  it("no call is left waiting past the end of the lease: its wait is cut to the time that is left, and none is started in the last seconds", async () => {
+    await open();
+    const cfg = config(63);
+    const run = await create(cfg, spec({ provider: "anthropic", epochs: 1, concurrency: 1, timeoutMs: 240_000 }), 12 * USD, true);
+    let clock = 5_000_000;
+    const started = clock;
+    const waits: { at: number; timeoutMs: number }[] = [];
+    const provider = new FakePaid((call) => {
+      waits.push({ at: clock - started, timeoutMs: call.timeoutMs });
+      clock += 9_000; // each answer takes nine seconds
+      return "ok";
+    });
+    // a lease of sixty seconds: nothing may still be waiting forty seconds in
+    const out = await stepRun(db, ledger, run.id, provider, { owner: "a", budgetMs: 600_000, leaseSeconds: 60, retryDelayMs: 0, now: () => clock });
+    expect(out.state).toBe("partial");
+    // calls began at 0, 9, 18 and 27 seconds; at 36 fewer than five seconds were left, and none was started
+    expect(waits.map((w) => w.at)).toEqual([0, 9_000, 18_000, 27_000]);
+    for (const w of waits) {
+      expect(w.timeoutMs).toBe(40_000 - w.at);
+      expect(w.at + w.timeoutMs).toBeLessThanOrEqual(40_000);
+    }
+    // with the lease the application uses, a call started at the last moment a step starts one still ends before the lease does
+    expect(STEP_BUDGET_MS + Math.min(240_000, STEP_LEASE_SECONDS * 1000 - 20_000 - STEP_BUDGET_MS)).toBeLessThan(STEP_LEASE_SECONDS * 1000);
+    expect(await drive(db, ledger, run.id, new FakePaid())).toEqual(["done"]);
+    await books(db);
+  });
+
+  it("an answer too large to be written down is recorded as one that could not be read, paid for all the same, and never used", async () => {
+    await open();
+    const cfg = config(64);
+    const make = async () => create(cfg, spec({ provider: "anthropic", epochs: 1, concurrency: 1 }), 12 * USD, true);
+    const run = await make();
+    const inner = new MockProvider();
+    let big = -1;
+    const provider = new FakePaid((call) => {
+      if (big === -1) big = call.agent;
+      if (call.agent !== big) return "ok";
+      return { ...failed("ok", ""), error: null, decision: { intents: [{ k: "explore" }], goal: "explore", rationale: "" }, text: "x".repeat(400_000), costMicroUsd: 23_000 };
+    });
+    void inner;
+    expect(await drive(db, ledger, run.id, provider)).toEqual(["done"]);
+    const [row] = await db.query("SELECT status, result FROM calls WHERE run_id = $1 AND agent = $2", [run.id, big]);
+    expect(row!.status).toBe("malformed");
+    const kept = JSON.parse(String(row!.result)) as CallResult;
+    expect(kept).toMatchObject({ status: "malformed", decision: null, text: null, costMicroUsd: 23_000, error: { code: "unserializable" } });
+    expect(String(row!.result).length).toBeLessThan(2_000);
+    expect((await ledger.get(`${run.id}:0:${big}:1`))!).toMatchObject({ state: "settled", settledMicroUsd: 23_000 });
+    // the world did not act on it: the committed epoch says that mind's answer could not be used
+    const epochs = await epochsOf(db, run.id);
+    expect(epochs[0]!.outcomes.find((o) => o.agent === big)).toMatchObject({ status: "malformed", accepted: 0 });
+    expect(verifyTape(createWorld(cfg), epochs[0]!.tape, epochs)).toBe(-1);
+    await books(db);
+  });
+
   it("a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice", async () => {
     await open();
     const cfg = config(58);
@@ -379,8 +566,8 @@ describe.skipIf(!TEST_DATABASE_URL)("server-side runs with two instances steppin
   it("two instances racing through a paid run commit every epoch once and pay for every call once", async () => {
     const dbA = handle.db;
     const dbB = await handle.second();
-    const ledgerA = new Ledger(dbA);
-    const ledgerB = new Ledger(dbB);
+    const ledgerA = new Ledger(dbA, { ceilingMicroUsd: CEILING });
+    const ledgerB = new Ledger(dbB, { ceilingMicroUsd: CEILING });
     await ledgerA.authorize(50 * USD, 50 * USD, "owner");
     await ledgerA.setKillSwitch(false, "test", "owner");
     const cfg = config(71, { population: 12 });

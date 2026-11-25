@@ -6,7 +6,7 @@
  * replayed bit-for-bit. Writes are single transactions: a save is either fully
  * replaced or untouched.
  */
-import type { DaySample, SavePayload } from "@/worker/protocol";
+import type { DaySample, PackedWorld, SavePayload } from "@/worker/protocol";
 
 const DB_NAME = "tabula-rasa";
 const DB_VERSION = 1;
@@ -38,8 +38,11 @@ export interface SavedJournalEntry {
 }
 
 export interface SaveRecord extends SaveMeta {
+  /** Canonical text ("" when the record is packed). Saves made before packing existed hold their text here. */
   snapshot: string;
   control: string | null;
+  /** The same text gzip-compressed: how saves are kept since phase 15. The hash is of the text either way. */
+  packed?: PackedWorld | null;
   series: DaySample[];
   controlSeries: DaySample[];
   /** What the observer had witnessed by then. Absent in saves made before the journal existed. */
@@ -102,9 +105,11 @@ export function toRecord(id: string, name: string, payload: SavePayload, savedAt
     alive: payload.alive,
     treated: payload.treated,
     hash: payload.hash,
-    bytes: payload.snapshot.length + (payload.control?.length ?? 0),
+    // what the record actually occupies: compressed bytes when packed, characters of text otherwise
+    bytes: payload.packed ? payload.packed.snapshot.byteLength + (payload.packed.control?.byteLength ?? 0) : payload.snapshot.length + (payload.control?.length ?? 0),
     snapshot: payload.snapshot,
     control: payload.control,
+    packed: payload.packed,
     series: payload.series,
     controlSeries: payload.controlSeries,
   };

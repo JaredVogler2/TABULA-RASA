@@ -17,7 +17,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, write
 import { cpus } from "node:os";
 import { join } from "node:path";
 import { AFFORDANCE_VERSION, ENGINE_VERSION, SCHEMA_VERSION } from "../src/engine";
-import { analyse, confirmatoryRefusal, planFrom, seedClassOf, toCsv, toMarkdown, type Plan, type StudyReport } from "../src/lab/analyse";
+import { adjustFamily, analyse, confirmatoryRefusal, planFrom, seedClassOf, toCsv, toMarkdown, type Plan, type StudyReport } from "../src/lab/analyse";
 import { STUDIES, runCell, type RunResult, type Study } from "../src/lab/studies";
 
 function arg(name: string, fallback: string): string {
@@ -127,6 +127,8 @@ function main(): void {
   }
 
   const reports: StudyReport[] = studies.map((base) => analyse(days > 0 ? { ...base, days } : base, seeds, runs));
+  // the protocol registers Holm "across the family": every registered contrast with a p-value in this batch, together
+  const family = adjustFamily(reports);
   const relevant = runs.filter((r) => studies.some((s) => s.id === r.study) && seeds.includes(r.seed));
   const plans = seedClass === "pilot" ? reports.flatMap((r) => planFrom(r)) : [];
   const manifest = {
@@ -138,7 +140,7 @@ function main(): void {
     affordances: AFFORDANCE_VERSION,
     studies: studies.map((s) => ({ id: s.id, title: s.title, registered: s.registered, days: days > 0 ? days : s.days, conditions: s.conditions, contrasts: s.contrasts, note: s.note })),
     seeds,
-    analysis: { resamples: 10_000, seed: 20261125, interval: "95% percentile bootstrap over seeds", multiplicity: "Holm across each study's contrasts" },
+    analysis: { resamples: 10_000, seed: 20261125, interval: "95% percentile bootstrap over seeds", multiplicity: `Holm step-down across the registered family in this batch (${family} contrasts with a p-value); verdicts are read from intervals, not from p-values` },
     plan,
     runs: relevant.length,
     expectedRuns: reports.reduce((s, r) => s + r.expectedRuns, 0),

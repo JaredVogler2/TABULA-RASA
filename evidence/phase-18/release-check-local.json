@@ -1,0 +1,134 @@
+{
+  "base": "http://127.0.0.1:3299",
+  "level": 1,
+  "fast": true,
+  "quick": false,
+  "at": "2026-11-25T19:33:01.038Z",
+  "results": [
+    {
+      "name": "health: the service answers, and says nothing of how it is configured",
+      "ok": true,
+      "detail": "engine 0.7.0, schema 6, affordances 2026.11-i: the same as this checkout"
+    },
+    {
+      "name": "security headers on the game's page",
+      "ok": true,
+      "detail": "policy, framing, sniffing, referrer, permissions, opener (no transport security expected over http)"
+    },
+    {
+      "name": "answers from the API are never stored by anything in between",
+      "ok": true,
+      "detail": "Cache-Control: no-store"
+    },
+    {
+      "name": "a stranger is refused by everything that could spend or change",
+      "ok": true,
+      "detail": "7 routes answer 401; a run that is not published is not found"
+    },
+    {
+      "name": "a request from another origin is refused whatever it carries",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "the owner's door: not configured, and it says so",
+      "ok": true,
+      "detail": "signInPossible: false; an attempt answers 503"
+    },
+    {
+      "name": "the public list of recordings",
+      "ok": true,
+      "detail": "0 published by the owner"
+    },
+    {
+      "name": "the files a release ships",
+      "ok": true,
+      "detail": "the bundled recording (78 KB), the studies, the licences"
+    },
+    {
+      "name": "desktop: the title screen draws",
+      "ok": true,
+      "detail": "697 KB over the network for a first visit"
+    },
+    {
+      "name": "desktop: a world is made and a day passes",
+      "ok": true,
+      "detail": "day 9, tick 801"
+    },
+    {
+      "name": "desktop: the Chronicle has lines the engine logged",
+      "ok": true,
+      "detail": "220 lines"
+    },
+    {
+      "name": "desktop: a save survives a reload, to the tick",
+      "ok": true,
+      "detail": "Saved. Snapshot 67b1b1570b25… Resumed at tick 801"
+    },
+    {
+      "name": "desktop: the bundled recording replays to its end and matches its record, with nobody consulted",
+      "ok": true,
+      "detail": "ended: all 6 days matched the record (Recording · MOCK minds, a test double (not a language model) · 400 decisions replayed, nob)"
+    },
+    {
+      "name": "desktop: the laboratory draws its studies",
+      "ok": true,
+      "detail": "6 studies"
+    },
+    {
+      "name": "desktop: the owner's door says it is not configured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: nothing was asked of any other origin",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: no page error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop: nothing the browser was sent belongs only on the server",
+      "ok": true,
+      "detail": "117 responses read"
+    },
+    {
+      "name": "phone: the title screen draws",
+      "ok": true,
+      "detail": "697 KB over the network for a first visit"
+    },
+    {
+      "name": "phone: a world is made and a day passes",
+      "ok": true,
+      "detail": "day 12, tick 1099"
+    },
+    {
+      "name": "phone: the Chronicle has lines the engine logged",
+      "ok": true,
+      "detail": "220 lines"
+    },
+    {
+      "name": "phone: a save survives a reload, to the tick",
+      "ok": true,
+      "detail": "Saved. Snapshot ec2d438c9715… Resumed at tick 1099"
+    },
+    {
+      "name": "phone: nothing was asked of any other origin",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone: no page error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone: nothing the browser was sent belongs only on the server",
+      "ok": true,
+      "detail": "50 responses read"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import { dyeOf } from "@/render/dyes";
 import { landHeightToWorld } from "@/render/heightfield";
 import { BIOME_COLORS, wearOf } from "@/render/palette";
 import { useGame } from "@/store/game";
-import { AF, AGENT_STRIDE, type DaySample, type StaticWorldView } from "@/worker/protocol";
+import { AF, AGENT_STRIDE, type AimView, type DaySample, type StaticWorldView } from "@/worker/protocol";
 import { useController } from "./context";
 import styles from "./game.module.css";
 import { PanelHead } from "./Panels";
@@ -361,6 +361,61 @@ function TrendChart({ trend, series }: { trend: Trend; series: DaySample[] }) {
   );
 }
 
+const AIM_STATE: Record<AimView["state"], (aim: AimView) => string> = {
+  open: () => "Open",
+  met: (aim) => `Met on day ${aim.decidedDay ?? "?"}`,
+  lost: (aim) => `Lost on day ${aim.decidedDay ?? "?"}`,
+  reading: () => "A reading, not a verdict",
+};
+
+function AimReading({ aim, testId }: { aim: AimView; testId: string }) {
+  return (
+    <div data-testid={testId} data-state={aim.state}>
+      <div className={styles.chips}>
+        <span className={styles.chip} data-tone={aim.state === "met" ? "good" : aim.state === "lost" ? "caution" : undefined} data-testid={`${testId}-state`}>
+          {AIM_STATE[aim.state](aim)}
+        </span>
+        <span className={styles.chip}>{aim.figure}</span>
+      </div>
+      {aim.lines.map((line) => (
+        <p key={line} className={styles.aimLine}>
+          {line}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The aim on this world's card, and how it stands: counted from the engine's state each morning
+ * (src/worker/aims.ts), here and in the untouched twin. Nothing is scored and no citizen is told.
+ */
+function Aim() {
+  const aim = useGame((s) => s.aim);
+  if (!aim?.yours) return null;
+  return (
+    <div className={styles.aim} data-testid="aim">
+      <div className={styles.sectionTitle} style={{ marginTop: 0 }}>
+        The aim on this world&apos;s card <span>counted, not scored</span>
+      </div>
+      <p className={styles.aimText} data-testid="aim-text">
+        {aim.yours.text}
+      </p>
+      <AimReading aim={aim.yours} testId="aim-yours" />
+      {aim.twin ? (
+        <>
+          <div className={styles.aimTwin}>In the untouched twin</div>
+          <AimReading aim={aim.twin} testId="aim-twin" />
+        </>
+      ) : (
+        <p className={styles.aimLine} data-testid="aim-no-twin">
+          Nobody has touched this world, and no citizen is told of this aim. If you change something, the untouched twin is counted here beside it.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Almanac() {
   const series = useGame((s) => s.series);
   const [table, setTable] = useState(false);
@@ -420,7 +475,8 @@ export function AtlasPanel() {
           <div className={styles.atlas}>
             <AtlasMap />
             <div>
-              <div className={styles.sectionTitle} style={{ marginTop: 0 }}>
+              <Aim />
+              <div className={styles.sectionTitle}>
                 Almanac <span>one line per measure, a point per day · your timeline</span>
               </div>
               <Almanac />

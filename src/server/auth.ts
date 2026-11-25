@@ -9,8 +9,10 @@ import "server-only";
  * anything must also come from this site (Origin and Fetch-Metadata checks) and carry a token
  * derived from the session that scripts on other sites cannot read.
  *
- * Nothing here stores state: a session is valid if its signature is, until it expires.
- * Changing AUTH_SECRET signs everyone out, which is the rotation procedure.
+ * A session is valid if its signature is, it has not expired, and it carries the current
+ * session epoch — a number kept in the database that signing out advances, so that signing
+ * out ends every copy of the session, not only the cookie in one browser. Changing
+ * AUTH_SECRET also signs everyone out, and is the rotation procedure.
  */
 import { createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual, type ScryptOptions } from "node:crypto";
 
@@ -19,8 +21,13 @@ const scrypt = (password: string, salt: Buffer, keylen: number, options: ScryptO
     scryptCallback(password, salt, keylen, options, (err, key) => (err ? reject(err) : resolve(key)));
   });
 
-/** scrypt cost. N = 2^15, r = 8, p = 1 needs about 32 MiB and a tenth of a second. */
-const COST = { N: 32_768, r: 8, p: 1, keylen: 32, saltBytes: 16 } as const;
+/**
+ * scrypt cost for new hashes: N = 2^17, r = 8, p = 1 (the minimum OWASP's password storage
+ * guidance gives for scrypt), about 128 MiB and a few tenths of a second a check. A hash made
+ * with a lower cost still verifies — its own parameters are stored in it — until the
+ * passphrase is next set.
+ */
+const COST = { N: 131_072, r: 8, p: 1, keylen: 32, saltBytes: 16 } as const;
 const maxmemFor = (N: number, r: number): number => 256 * N * r;
 
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
@@ -69,6 +76,8 @@ export interface Session {
   sid: string;
   issuedAt: number;
   expiresAt: number;
+  /** The session epoch it was issued under: it is valid only while that is still the current one. */
+  epoch: number;
 }
 
 const mac = (secret: string, purpose: string, data: string): Buffer => createHmac("sha256", secret).update(`${purpose}\n${data}`).digest();
@@ -78,9 +87,9 @@ function safeEqual(a: Buffer, b: Buffer): boolean {
 }
 
 /** A new session and the cookie value that carries it. */
-export function issueSession(secret: string, nowMs: number, ttlMs: number = SESSION_TTL_MS): { session: Session; cookie: string } {
-  const session: Session = { sid: b64(randomBytes(18)), issuedAt: nowMs, expiresAt: nowMs + ttlMs };
-  const payload = b64(Buffer.from(JSON.stringify({ v: 1, sid: session.sid, iat: session.issuedAt, exp: session.expiresAt }), "utf8"));
+export function issueSession(secret: string, nowMs: number, ttlMs: number = SESSION_TTL_MS, epoch = 0): { session: Session; cookie: string } {
+  const session: Session = { sid: b64(randomBytes(18)), issuedAt: nowMs, expiresAt: nowMs + ttlMs, epoch };
+  const payload = b64(Buffer.from(JSON.stringify({ v: 1, sid: session.sid, iat: session.issuedAt, exp: session.expiresAt, ep: epoch }), "utf8"));
   return { session, cookie: `v1.${payload}.${b64(mac(secret, "session", payload))}` };
 }
 
@@ -98,10 +107,13 @@ export function readSession(secret: string, cookie: string | undefined | null, n
   }
   if (!safeEqual(given, mac(secret, "session", payload))) return null;
   try {
-    const p = JSON.parse(unb64(payload).toString("utf8")) as { v?: unknown; sid?: unknown; iat?: unknown; exp?: unknown };
+    const p = JSON.parse(unb64(payload).toString("utf8")) as { v?: unknown; sid?: unknown; iat?: unknown; exp?: unknown; ep?: unknown };
     if (p.v !== 1 || typeof p.sid !== "string" || typeof p.iat !== "number" || typeof p.exp !== "number") return null;
     if (!(p.iat <= nowMs + 60_000) || !(nowMs < p.exp) || p.exp - p.iat > 7 * 24 * 60 * 60 * 1000) return null;
-    return { sid: p.sid, issuedAt: p.iat, expiresAt: p.exp };
+    // a session issued before epochs existed belongs to epoch 0
+    const epoch = p.ep === undefined ? 0 : p.ep;
+    if (typeof epoch !== "number" || !Number.isInteger(epoch) || epoch < 0) return null;
+    return { sid: p.sid, issuedAt: p.iat, expiresAt: p.exp, epoch };
   } catch {
     return null;
   }
@@ -121,6 +133,41 @@ export function csrfMatches(secret: string, session: Session, given: string | nu
     return false;
   }
   return safeEqual(buf, mac(secret, "csrf", session.sid));
+}
+
+/**
+ * A device this site has signed the owner in on before. It carries no rights at all — it
+ * signs nobody in — and exists for one thing: sign-in attempts from a known device are counted
+ * in a bucket of their own, so that strangers who exhaust the shared one cannot keep the owner
+ * from signing in where they have signed in before.
+ */
+export const DEVICE_TTL_MS = 180 * 24 * 60 * 60 * 1000;
+
+export function issueDevice(secret: string): { id: string; cookie: string } {
+  const id = b64(randomBytes(12));
+  return { id, cookie: `d1.${id}.${b64(mac(secret, "device", id))}` };
+}
+
+/** The device id a cookie value carries, if this site issued it. */
+export function readDevice(secret: string, cookie: string | undefined | null): string | null {
+  if (typeof cookie !== "string" || cookie.length > 200) return null;
+  const parts = cookie.split(".");
+  if (parts.length !== 3 || parts[0] !== "d1" || !/^[A-Za-z0-9_-]{8,32}$/.test(parts[1] as string)) return null;
+  let given: Buffer;
+  try {
+    given = unb64(parts[2] as string);
+  } catch {
+    return null;
+  }
+  return safeEqual(given, mac(secret, "device", parts[1] as string)) ? (parts[1] as string) : null;
+}
+
+export function deviceCookieName(secure: boolean): string {
+  return secure ? "__Host-tr_device" : "tr_device";
+}
+
+export function deviceCookie(value: string, secure: boolean): string {
+  return [`${deviceCookieName(secure)}=${value}`, "Path=/", "HttpOnly", "SameSite=Strict", ...(secure ? ["Secure"] : []), `Max-Age=${Math.floor(DEVICE_TTL_MS / 1000)}`].join("; ");
 }
 
 /** `__Host-` binds the cookie to this exact host over HTTPS; plain HTTP (local development) cannot use it. */

@@ -1,0 +1,21 @@
+request timing — Intel(R) Xeon(R) Processor @ 2.30GHz × 4, Node v22.23.5, loopback, production build
+milliseconds, measured by the caller; one request at a time unless it says otherwise
+
+what                                                                                    n      p50      p95      p99      max    bytes  status
+GET /api/health                                                                       200     2.06     4.06     6.65     7.70       89  200×200
+GET / (the game's page)                                                               100     2.38     4.01    14.43    14.43    10958  200×100
+GET /lab (the laboratory's page)                                                       50     2.25     2.89     7.26     7.26    12676  200×50
+GET /api/owner/status, signed out (no database)                                       200     2.15     4.23     6.89    38.22       40  200×200
+GET /api/recordings (reads the database)                                              150     1.93     3.71     4.61     4.64       27  200×150
+GET /api/owner/status, signed in (budget, runs, audit)                                 60     4.32     8.36    19.97    19.97     1999  200×60
+POST /api/runs/:id/step (one six-hour epoch, 50 people, 8 mock decisions)               4   132.50   154.40   154.40   154.40           200×4
+GET /api/runs/:id, a visitor reading the published run (tape and digests)              60     2.45     4.62     5.70     5.70     6922  200×60
+GET /api/health, 20 at a time                                                         100    15.83    54.12    68.90    68.90           200×100
+
+server ready after start (ms)                                                            620.32
+first request answered in (ms)                                                           192.32
+first request that needs the database: schema made and migrated (ms)                      77.37
+POST /api/owner/login (scrypt N = 2^17) (ms)                                             293.10
+POST /api/runs/preview (50 people) (ms)                                                   58.22
+POST /api/runs (world made, stored) (ms)                                                  90.54
+100 requests for /api/health, 20 at a time: wall time (ms)                               123.42

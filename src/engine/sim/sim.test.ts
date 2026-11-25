@@ -201,6 +201,23 @@ describe("snapshots", () => {
       undo();
     }
   });
+
+  it("migration 5 → 6: a world saved before the shores could differ keeps its nodes and is marked as having them alike", () => {
+    // an old Two Shores world: its nodes were placed with no split, and a snapshot stores them
+    const world = createWorld(makeConfig("two_shores", 4, { population: 8, shoreSplit: 0 }));
+    advance(world, 40);
+    const old = serializeWorld(world).replace(`"schema":${SCHEMA_VERSION}`, '"schema":5').replace('"shoreSplit":0,', "");
+    expect(old).not.toContain("shoreSplit");
+    const restored = restoreWorld(old);
+    expect(restored.config.shoreSplit).toBe(0);
+    expect(restored.config.strait).toBe(true);
+    expect(Array.from(restored.nodes.kind)).toEqual(Array.from(world.nodes.kind));
+    expect(worldDigest(restored)).toBe(worldDigest(world));
+    // and it goes on exactly as the world it was saved from
+    advance(world, 60);
+    advance(restored, 60);
+    expect(worldDigest(restored)).toBe(worldDigest(world));
+  });
 });
 
 describe("branches", () => {

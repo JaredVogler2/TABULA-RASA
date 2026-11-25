@@ -40,6 +40,10 @@ export type Pick =
   | { type: "node"; id: number; x: number; y: number }
   | { type: "tile"; x: number; y: number };
 
+/** A frame longer than this (under 24 a second) counts as slow; the internal resolution never goes below MIN_PIXEL_RATIO. */
+export const SLOW_FRAME_MS = 42;
+export const MIN_PIXEL_RATIO = 0.6;
+
 export interface RendererOptions {
   quality: Quality;
   reducedMotion: boolean;
@@ -50,6 +54,11 @@ export interface RendererOptions {
   onPick?(pick: Pick | null): void;
   onHover?(pick: Pick | null): void;
   onUserCamera?(): void;
+  /**
+   * Called once if frames still run long after the internal resolution has gone as low as it
+   * goes: the next step down is a simpler preset, and that is the caller's decision.
+   */
+  onStruggle?(): void;
 }
 
 export interface RenderStats {
@@ -95,6 +104,7 @@ export class WorldRenderer {
   private pixelRatio = 1;
   private readonly frameTimes: number[] = [];
   private slowSince = 0;
+  private struggled = false;
   private selection: Pick | null = null;
   private readonly ring: Mesh;
   private readonly resizeObserver: ResizeObserver;
@@ -352,15 +362,23 @@ export class WorldRenderer {
     if (this.options.adaptiveResolution !== false) this.adapt(dt, now);
   }
 
-  /** Lower resolution, never fidelity of the simulation, when frames run long. */
+  /**
+   * Lower resolution, never fidelity of the simulation, when frames run long: after three
+   * seconds of frames slower than SLOW_FRAME_MS the pixel ratio steps down by 0.2, to
+   * MIN_PIXEL_RATIO (0.6 device pixels per CSS pixel) at the lowest. If six more seconds at the
+   * lowest are still slow, say so once (`onStruggle`).
+   */
   private adapt(dt: number, now: number): void {
-    if (dt * 1000 > 42) {
+    if (dt * 1000 > SLOW_FRAME_MS) {
       if (this.slowSince === 0) this.slowSince = now;
-      // step the internal resolution down (to 60% at the lowest) rather than drop frames
-      if (now - this.slowSince > 3000 && this.pixelRatio > 0.6) {
-        this.pixelRatio = Math.max(0.6, this.pixelRatio - 0.2);
+      // step the internal resolution down rather than drop frames
+      if (now - this.slowSince > 3000 && this.pixelRatio > MIN_PIXEL_RATIO) {
+        this.pixelRatio = Math.max(MIN_PIXEL_RATIO, this.pixelRatio - 0.2);
         this.slowSince = 0;
         this.applySize();
+      } else if (now - this.slowSince > 6000 && this.pixelRatio <= MIN_PIXEL_RATIO && !this.struggled) {
+        this.struggled = true;
+        this.options.onStruggle?.();
       }
     } else {
       this.slowSince = 0;

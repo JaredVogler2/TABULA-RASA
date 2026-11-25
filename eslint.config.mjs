@@ -9,6 +9,9 @@ import nextTs from "eslint-config-next/typescript";
  *                  no wall clock, no ambient randomness, no platform-dependent math.
  *  - src/server  : server-only code (secrets, database, provider SDK).
  *  - everything else must never import server code or server-only packages.
+ *  - nothing in src turns a string into markup or code. The game shows text that models and
+ *    imported files wrote, and it shares an origin with the owner console; React's text
+ *    rendering is the only way that text reaches the page (docs/SECURITY.md, "One origin").
  */
 
 const NON_DETERMINISTIC_MATH = [
@@ -84,6 +87,38 @@ const eslintConfig = defineConfig([
       eqeqeq: ["error", "always"],
       "no-var": "error",
       "prefer-const": "error",
+    },
+  },
+  {
+    // Placed before "engine-purity" on purpose: that block's own no-restricted-syntax replaces
+    // this one for engine files, which cannot reach the DOM at all (no window, no document).
+    name: "no-injection-sinks",
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    rules: {
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-new-func": "error",
+      "no-script-url": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML'], Property[key.name='dangerouslySetInnerHTML'], Property[key.value='dangerouslySetInnerHTML']",
+          message: "No raw HTML: text reaches the page as React text only (docs/SECURITY.md, \"One origin\").",
+        },
+        {
+          selector: "AssignmentExpression[left.type='MemberExpression'][left.property.name=/^(innerHTML|outerHTML|srcdoc)$/]",
+          message: "No raw HTML: build elements and set textContent (docs/SECURITY.md, \"One origin\").",
+        },
+        {
+          selector: "CallExpression[callee.property.name=/^(insertAdjacentHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|parseFromString|writeln)$/]",
+          message: "No string-to-markup calls (docs/SECURITY.md, \"One origin\").",
+        },
+        {
+          selector: "CallExpression[callee.object.name='document'][callee.property.name='write']",
+          message: "No document.write (docs/SECURITY.md, \"One origin\").",
+        },
+      ],
     },
   },
   {

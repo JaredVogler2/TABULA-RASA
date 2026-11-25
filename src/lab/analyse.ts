@@ -117,8 +117,30 @@ export function analyse(study: Study, seeds: readonly number[], runs: readonly R
   if (seedClass === "pilot") warnings.push("Development seeds: these numbers size a study. They are not a test of any hypothesis, and the verdict column is only what the rule would say.");
   if (seedClass === "mixed") warnings.push("Development and holdout seeds are mixed: this cannot be read as a confirmatory result.");
   if (!study.registered) warnings.push("Exploratory: not part of the registered family; no significance language applies.");
-  if (contrasts.length > 1) warnings.push(`${contrasts.length} contrasts in this study: unadjusted intervals are shown; Holm-adjusted p-values account for the family.`);
+  if (contrasts.length > 1) warnings.push(`${contrasts.length} contrasts in this study: unadjusted intervals are shown; the Holm-adjusted p-values here account for this study's contrasts only.`);
   return { study: study.id, title: study.title, registered: study.registered, seedClass, seeds: [...seeds], days: study.days, runs: byCell.size, expectedRuns: study.conditions.length * seeds.length, missing, conditions, contrasts, warnings };
+}
+
+/**
+ * Holm's step-down adjustment across the registered family (protocol §6–§7): every contrast
+ * that has a p-value, in every registered study of the batch, taken together. `analyse` on
+ * its own can only adjust within one study; a batch calls this afterwards. Verdicts are read
+ * off the intervals and never off a p-value, so this changes only the adjusted p shown beside
+ * them. Returns the size of the family.
+ */
+export function adjustFamily(reports: StudyReport[]): number {
+  const family = reports
+    .filter((r) => r.registered)
+    .flatMap((r) => r.contrasts)
+    .filter((c) => !Number.isNaN(c.p));
+  const adjusted = holm(family.map((c) => c.p));
+  family.forEach((c, i) => (c.pHolm = adjusted[i] as number));
+  for (const r of reports) {
+    if (!r.registered) continue;
+    r.warnings = r.warnings.filter((w) => !w.includes("account for this study's contrasts only"));
+    if (family.length > 1) r.warnings.push(`Unadjusted intervals are shown. Holm-adjusted p-values account for the whole registered family in this batch: ${family.length} contrasts with a p-value (ratio contrasts are read from their interval and have none).`);
+  }
+  return family.length;
 }
 
 export interface Plan {

@@ -10,13 +10,14 @@ reason no criterion here is scored as verified with people.
 | Instrument | What it shows | Where the data comes from | Keys |
 |---|---|---|---|
 | Time bar | play / pause, one tick, six speeds, hour and day | the worker's clock | Space, `.`, 1–6 |
-| Chronicle | every logged event in plain sentences, filtered by kind or by the selected citizen, with the engine's recorded cause; click to go there | the engine's event ledger | C |
+| Chronicle | notable logged events in plain sentences, not the whole ledger: the worker forwards 44 of the engine's 60 event kinds and 38 of them have a line (routine acts such as gathering, eating, sleeping, single decisions and refused intents are left out); the page keeps the latest 600 lines and the panel lists the newest 220 that pass the filter; filtered by six groups of kinds or by the selected citizen, with the engine's recorded cause; click to go there | the engine's event ledger, through `UI_EVENTS` in `src/worker/sim.worker.ts` | C |
 | Inspector | a citizen's needs, load, plan, **what they set out to do and what came of it** (refusals in plain words), what they believe against what is true, whom they know, what they remember, temperament, skills | on-demand read of the citizen | click, F to follow |
 | What they know | the land the selected citizen has never seen is washed out, in the world and on the atlas | the citizen's own seen-tiles set | V |
 | Who they know | arcs to the people they have dealt with, warm for trust, cool for distrust | the citizen's own record of others | T |
 | Charters | every agreement, its rules as sentences, how it came to be proposed, who signed, how often it was used; its pennant colour | the institution engine | G |
 | Atlas | relief map with people, hearths (lit or not), shelters, stores, plots, worn ground and agreements in force; click to look or to select | latest frame | L |
 | Almanac | seven daily measures (living, welfare, food held, wild food, commons health, inequality, things built) with the numbers as a table | one sample per simulated day | L |
+| The aim | the one sentence on the scenario's card, and where it stands: open, then met or lost on a named day, or a reading with no verdict (Two Shores); the same for the untouched twin once there is one; a notice on the morning it is decided. Not a score, and no citizen is told (D-049) | the world's own state — who is alive and when the others died, the calendar, the scheduled drought — read each morning and when the Atlas opens | L |
 | Field journal | twenty-one questions, each answered by the first logged event of its kind (D-030) | the event stream | J |
 | Intervene | eight changes to conditions (weather, scarcity, abundance, arrivals, how far voices carry); never to minds; no forecast | logged in the world's own ledger; history forks | I |
 | Compare | your timeline against its untouched twin: charts with a marked fork day, the day-by-day difference, deltas, the two worlds counted side by side, what happened in each by kind, who is dead in only one, the daily table. Beside a recording: the record against the same island with the engine's own minds (D-034) | both worlds, same seed and luck | K |
@@ -55,7 +56,8 @@ reason no criterion here is scored as verified with people.
 - **Keyboard**: every panel opens and closes by key; Escape closes the top panel, then clears the selection;
   nothing traps focus (the E2E walks it). The 3D view is one labelled element; everything in it is reachable
   through the Chronicle, the atlas and the inspector rather than by aiming a pointer.
-- **Touch**: controls are at least 44 px; on a phone the journal and the sound switch move into the menu so
+- **Touch**: controls are at least 44 × 44 px (measured on every screen of the phone project by
+  `a11y.spec.ts`); on a phone the journal and the sound switch move into the menu so
   that the remaining tools keep that size; sheets rise from the bottom and never cover the recording banner
   (asserted).
 - **A layout bug that every test passed.** The atlas reached a 390-pixel screen as two columns, the almanac
@@ -75,6 +77,15 @@ reason no criterion here is scored as verified with people.
   nothing off screen at any of them; at one, 390 px, the status row still spilled by 22 px when the weather
   had a long name — see `docs/EVIDENCE.md`, phase 13), and `history.spec.ts` asserts the same at several widths
   on both projects.
+- **And a third, of the same family.** That "widest state" was not the widest. In phase 15 the script was taught
+  to write the longest labels the bar can ever be asked to show — a four-digit day, "Cold snap", a frost, five
+  hundred citizens, a fork on a four-digit day — and found the game's name squeezed at three laptop widths, the
+  tools two pixels off the screen at 1120 px, and the status row spilling on every phone. Fixed widths cannot
+  promise a fit for text they were not measured with, and they had to assume that the fork pill was there, so
+  an untouched world gave up words it had room for. The bar now measures itself (`src/ui/game/fit.ts`, D-045):
+  it shows as many words as fit, in a stated order of giving way, and on a phone the status row and the fork
+  pill shorten only as far as they must. The script measures 25 widths three ways — untouched, forked, and with
+  the longest labels — and also fails on a squeezed name or a pill pushed onto a row of its own.
 - **Motion and sound**: reduced motion (system setting or the menu) slows time-driven motion, stills the
   camera's easing and removes birds and fish rings; sound never starts on its own.
 - **Not colour alone**: chart lines are named and tabulated; agreement colours come with the agreement's name;
@@ -93,7 +104,7 @@ reason no criterion here is scored as verified with people.
 | Filter by causal event, group or resource | partly | by event group and by citizen; not by resource |
 | What they know vs what the observer knows; rationale; witnessed events; intentions vs outcomes | done | D-029; outcomes list |
 | Interventions: shocks, resources, migration, communication; observer vs treatment distinguished; no forecast | done | eight kinds; forked badge; "the only honest forecast is to run it" |
-| Optional objectives, dilemmas, knowledge through observation | changed | D-030: a journal of things witnessed, not goals |
+| Optional objectives, dilemmas, knowledge through observation | changed | D-030: a journal of things witnessed, not goals. D-049: the one aim on each scenario's card is counted in the Atlas, for the world and its untouched twin, and never scored |
 | Portrait and landscape, bottom sheets, 44 px, keyboard, contrast, labels, reduced motion, pause, audio sliders | done | landscape phone is exercised by the art captures only, not by an E2E flow |
 | Procedural ambient sound and event cues, no autoplay | done, unheard | D-028 |
 

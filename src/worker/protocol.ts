@@ -66,6 +66,14 @@ export interface HistoryView {
   rebuildBlocked: "" | "new_luck" | "outside_minds";
   /** Present while that is being done: how far it has got. */
   rebuilding: { tick: number; untilTick: number } | null;
+  /**
+   * How far the world on hand can be vouched for. "made": every tick of it was lived in this
+   * session, from its seed. "opened": it came from a save or a file — what happened before is
+   * a claim that nothing here has seen (a file being whole says only that it was not damaged).
+   * "relived": opened, and since then its past was lived again from the seed, with the
+   * observer's interventions re-done at their ticks, and arrived at exactly this world.
+   */
+  provenance: "made" | "opened" | "relived";
 }
 
 /** One world line: the one being lived, or one set aside at its last moment. */
@@ -320,6 +328,34 @@ export interface DaySample {
   structures: number;
 }
 
+export type AimState = "open" | "met" | "lost" | "reading";
+
+/**
+ * How the aim on a scenario's card stands, counted from the world's own state (`aims.ts`).
+ * "open" until its day of reckoning, then "met" or "lost"; "reading" for an aim that has no
+ * such day and so no verdict.
+ */
+export interface AimView {
+  /** The scenario's objective id. */
+  id: string;
+  /** The aim as the scenario's card states it. */
+  text: string;
+  state: AimState;
+  /** The day, as shown on screen (counting from 1), on which it was decided; null while open and for a reading. */
+  decidedDay: number | null;
+  /** The one figure the aim is about, for setting beside the twin's. */
+  figure: string;
+  /** Where it stands, in plain sentences. */
+  lines: string[];
+}
+
+export interface AimPair {
+  /** The world being lived. Null for a scenario with no aim. */
+  yours: AimView | null;
+  /** The same reading of the untouched twin, when there is one. */
+  twin: AimView | null;
+}
+
 export interface CompareView {
   /**
    * "intervention": the world the observer changed against its untouched twin.
@@ -438,10 +474,24 @@ export interface TileDetail {
   agents: number[];
 }
 
+/** A world and its twin as gzip of their canonical text: what is kept in the browser's storage. */
+export interface PackedWorld {
+  snapshot: Uint8Array;
+  control: Uint8Array | null;
+}
+
 export interface SavePayload {
+  /** The canonical text of the world ("" when the save was asked for packed: the text is then in `packed`). */
   snapshot: string;
+  /** SHA-256 of the canonical text, packed or not: what a load checks. */
   hash: string;
   control: string | null;
+  /** Present when the save was asked for packed. */
+  packed: PackedWorld | null;
+  /** Characters of canonical text (world and twin), whatever form they travel in. */
+  textBytes: number;
+  /** How long serializing (and, if packed, compressing) took in the worker. */
+  buildMs: number;
   tick: number;
   day: number;
   alive: number;
@@ -452,10 +502,30 @@ export interface SavePayload {
   controlSeries: DaySample[];
 }
 
+/** Measurements taken inside the simulation worker (see `scripts/perf.mjs`). Times are of whole ticks, the twin's included when there is one. */
+export interface WorkerPerf {
+  tick: number;
+  agents: number;
+  /** How many recent ticks the quantiles are over (at most 1,024). */
+  samples: number;
+  tickMsP50: number;
+  tickMsP95: number;
+  tickMsMax: number;
+  twin: boolean;
+  /** The worker's JavaScript heap, where the browser reports it (Chromium only), else null. */
+  heapMb: number | null;
+  keyframes: number;
+  keyframeKb: number;
+  eventsHeld: number;
+}
+
 export type ToWorker =
   | { type: "init"; config: WorldConfig; requestId: number }
-  /** `hash` is the content hash recorded when the save was made; a snapshot that no longer hashes to it is refused. */
-  | { type: "load"; snapshot: string; control: string | null; series: DaySample[]; controlSeries: DaySample[]; hash?: string; requestId: number }
+  /**
+   * `hash` is the content hash recorded when the save was made; a snapshot that no longer hashes to it is refused.
+   * `packed`, when given, is used instead of the text fields.
+   */
+  | { type: "load"; snapshot: string; control: string | null; packed?: PackedWorld | null; series: DaySample[]; controlSeries: DaySample[]; hash?: string; requestId: number }
   | { type: "replay"; recording: Recording; requestId: number }
   | { type: "play" }
   | { type: "pause" }
@@ -465,8 +535,11 @@ export type ToWorker =
   | { type: "inspectAgent"; id: number; requestId: number }
   | { type: "inspectTile"; x: number; y: number; requestId: number }
   | { type: "compare"; requestId: number }
+  /** How the scenario's stated aim stands, in the world being lived and in its twin. */
+  | { type: "aim"; requestId: number }
   | { type: "civics"; requestId: number }
-  | { type: "save"; requestId: number }
+  /** `packed`: return the world gzip-compressed instead of as text (for storage). */
+  | { type: "save"; packed?: boolean; requestId: number }
   /** Go back to a stored moment of this world: re-run it exactly, or leave from there on a new line. */
   | { type: "rewind"; tick: number; mode: "rerun" | "branch" | "branch_new_luck"; requestId: number }
   | { type: "branches"; requestId: number }
@@ -476,6 +549,8 @@ export type ToWorker =
   | { type: "import"; text: string; requestId: number }
   /** The recorded causes of an event: its parents, and theirs, as the engine logged them. */
   | { type: "trace"; id: number; requestId: number }
+  /** How long recent ticks took in this worker, and what it is holding in memory. Measures; changes nothing. */
+  | { type: "perf"; requestId: number }
   /** The events the engine has logged for the world being lived, as held in memory: one JSON object per line. */
   | { type: "ledger"; requestId: number }
   /** Look at the twin instead of the world being lived (or back). Changes nothing in either. */
@@ -491,12 +566,14 @@ export type FromWorker =
   | { type: "branches"; requestId: number; list: BranchView[] }
   | { type: "exported"; requestId: number; text: string; manifest: Manifest }
   | { type: "trace"; requestId: number; chain: SimEvent[] }
+  | { type: "perf"; requestId: number; perf: WorkerPerf }
   /** `complete` is true only if the text holds every event since the first tick (ids 0 … n−1 with nothing dropped). */
   | { type: "ledger"; requestId: number; text: string; events: number; firstTick: number; complete: boolean }
   /** `ok` is true only if the re-lived world and its twin are, state for state, the ones that were loaded. */
   | { type: "rebuilt"; requestId: number; ok: boolean; ticks: number; ms: number; moments: number; series: DaySample[]; controlSeries: DaySample[]; events: SimEvent[] }
   | { type: "frame"; frame: ViewFrame }
-  | { type: "day"; sample: DaySample; control: DaySample | null }
+  | { type: "day"; sample: DaySample; control: DaySample | null; aim: AimPair }
+  | { type: "aim"; requestId: number; aim: AimPair }
   | { type: "agent"; requestId: number; detail: AgentDetail | null }
   | { type: "civics"; requestId: number; view: CivicsView | null }
   | { type: "tile"; requestId: number; detail: TileDetail | null }

@@ -80,11 +80,13 @@ after dark.
   shelter is a thatched A-frame: three overlapping courses a side, a dark ridge, crossed gable poles, an open
   front in shadow.
 - Agreements (D-031): where an institution was ratified stands a post with a cap stone, one cord tied round
-  it for each person who holds to it, and a pennant in the institution's colour; the same pennant flies beside
-  each store it governs. When the institution ends the post is left leaning, bare. A proposal draws nothing.
+  it for each person who holds to it, up to ten, and a pennant in the institution's colour; the same pennant
+  flies beside each store it governs. When the institution ends the post is left leaning, bare. A proposal draws
+  nothing.
 
 Every count on screen is a count in the engine: trees thin out as wood stock falls, berries vanish one by one,
-piles appear where goods were dropped, cords on a post are members, smoke rises only from fires that are lit,
+piles appear where goods were dropped, cords on a post are members (the eleventh member and those after add no
+cord: `src/render/structures.ts`), smoke rises only from fires that are lit,
 fish rise only over waters that still hold fish, and worn ground is ground that was walked (a beaten track is
 a tile past the engine's own threshold for easier going; D-032).
 
@@ -146,11 +148,16 @@ Icons are Lucide line icons, always paired with a text label or an accessible na
 | Low | 2× terrain mesh, simplified canopies/bushes/rocks, no shadows or post chain, cheaper terrain and water shaders, pixel ratio ≤ 1 | 0.41 million triangles, 52 draw calls |
 
 Measured after phase 11 (`evidence/phase-11/shots.txt`). In phase 04, before the ecology was retuned to carry
-about one and a half times the flora (D-014), the same three presets drew 1.08, 1.05 and 0.26 million triangles
-in 58, 45 and 30 calls.
+about one and a half times the flora (D-014), the phase-04 version of this table gave 1.08, 1.05 and 0.26
+million triangles in 58, 45 and 30 calls for the same three presets (seed 1; the high preset's figure was stated
+as including the shadow pass). No raw output for those figures was kept. The phase-04 measurement that is on
+file, `evidence/phase-04/render-budget.txt`, counts the triangles of the scene's meshes without the shadow pass:
+600,682, 575,258 and 249,190.
 
-All presets lower their internal resolution in 20% steps (to 60% at most) when frames stay above 42 ms for
-three seconds. Presets and resolution change drawing only; the simulation cannot observe them.
+All presets lower their internal resolution when frames stay above 42 ms for three seconds: the pixel ratio
+drops by 0.2 at a time and never below 0.6 (`adapt` in `src/render/WorldRenderer.ts`). From a ratio of 1 that is
+two steps of 20%, down to 60%; from 2, the high preset's cap, it is seven steps, down to 30% of where it began.
+Presets and resolution change drawing only; the simulation cannot observe them.
 
 ## Screenshot-led critique log
 
@@ -167,16 +174,19 @@ recapture. Images for the final state are in `evidence/phase-04/shots/`.
 
 ### Phase 11 passes
 
-Captures of every pass are kept, reduced, in `evidence/phase-11/cycles/`; the final state is in
-`evidence/phase-11/shots/`. The phase-04 stills (`evidence/phase-04/shots/`) are the "before".
+Captures of passes 6 to 9 are kept, reduced, in `evidence/phase-11/cycles/` (eight files, two for each pass);
+the final state is in `evidence/phase-11/shots/`. Two captures the table speaks of were not kept: the first
+charter capture of pass 9 (the only charter capture on file is the final `shots/charter.jpg`) and the dark
+first knowledge view that pass 10 started from (`shots/knowledge.jpg` shows the pale wash that replaced it). The
+phase-04 stills (`evidence/phase-04/shots/`) are the "before".
 
 | Pass | Seen in the capture | Change made next |
 |---|---|---|
 | 6 | `1-closeup-…`, `1-midday-…`: fresh water was a milky, uniform pale blue over sand-coloured beds; clay banks were single slabs that overhung stream banks like floating discs; smoke stacked into a pale vertical bar; shelters read as flat tan planks from above. Hats, by contrast, made people findable across the island. | Fresh water coloured by depth over dark gravel, with damp earth on the banks and streaks along the current; clay as low lumps set into the ground; smoke puffs that wander, spread and lean downwind; the shelter rebuilt as a thatched A-frame with courses, ridge, gable poles and a dark open front. |
 | 7 | `2-woodcutter-hidden.jpg`, `2-stream-stair-steps.jpg`: a woodcutter beside the trunk was invisible under the crown, a builder behind a shelter likewise; stream edges and mouths ended in the stair-steps of the water mesh; the lake was marbled by "current" streaks. The forager with a basket of berries, standing beside the bush, read exactly as intended. | Work stance moved to the crown's edge and toward the middle of the tile; one more ring of water samples beyond every bank so the visible edge is the mask's contour; ponds flagged as still water; pebbles on the banks; sleeves and a belt on the figures; a first version of the faint shape for hidden people. |
 | 8 | `3-silhouette-smear.jpg`, `3-midday-loud-silhouettes.jpg`: the faint shapes worked for hidden people but also smeared over visible ones wherever a belt, hem or hat overlapped the body, and at the vista they were near-white and louder than the people in plain sight. | Stencil-gated silhouettes (D-027) in ember; opacity tied to how close the camera is. |
-| 9 | `4-silhouette-clean.jpg`, `4-midday.jpg`, and the first charter capture: visible people clean, hidden people hinted; the lake a calm teal; a ratified charter's post, cords and pennant legible beside its store in the snow. Worn paths still could not be found at day 22. | Traffic was measured (never above about 33 on a tile in 40 days) and the wear mapping recalibrated to the engine's own threshold, with grass trodden down on worn tiles (D-032). |
-| 10 | `shots/knowledge.jpg`: the first knowledge view washed unknown land to a dark slab, heaviest over the sea. | The wash became a pale parchment tone scaled to the light of the hour, so that it reads as unmapped paper by day and does not glow at night. |
+| 9 | `4-silhouette-clean.jpg`, `4-midday.jpg`, and the first charter capture (not kept): visible people clean, hidden people hinted; the lake a calm teal; a ratified charter's post, cords and pennant legible beside its store in the snow. Worn paths still could not be found at day 22. | Traffic was measured (never above about 33 on a tile in 40 days) and the wear mapping recalibrated to the engine's own threshold, with grass trodden down on worn tiles (D-032). |
+| 10 | The first knowledge view (capture not kept; `shots/knowledge.jpg` is the view after this pass): it washed unknown land to a dark slab, heaviest over the sea. | The wash became a pale parchment tone scaled to the light of the hour, so that it reads as unmapped paper by day and does not glow at night. |
 
 ## Rubric (S02 scale: 0 absent · 1 placeholder · 2 functional · 3 polished · 4 exceptional and verified)
 

@@ -1,0 +1,105 @@
+{
+  "machine": "Intel(R) Xeon(R) Processor @ 2.30GHz × 4, Node v22.23.5, loopback, production build",
+  "measuredAt": "2026-11-25T19:15:52.605Z",
+  "rows": [
+    {
+      "what": "GET /api/health",
+      "n": 200,
+      "p50": 2.06,
+      "p95": 4.06,
+      "p99": 6.65,
+      "max": 7.7,
+      "bytes": 89,
+      "status": "200×200"
+    },
+    {
+      "what": "GET / (the game's page)",
+      "n": 100,
+      "p50": 2.38,
+      "p95": 4.01,
+      "p99": 14.43,
+      "max": 14.43,
+      "bytes": 10958,
+      "status": "200×100"
+    },
+    {
+      "what": "GET /lab (the laboratory's page)",
+      "n": 50,
+      "p50": 2.25,
+      "p95": 2.89,
+      "p99": 7.26,
+      "max": 7.26,
+      "bytes": 12676,
+      "status": "200×50"
+    },
+    {
+      "what": "GET /api/owner/status, signed out (no database)",
+      "n": 200,
+      "p50": 2.15,
+      "p95": 4.23,
+      "p99": 6.89,
+      "max": 38.22,
+      "bytes": 40,
+      "status": "200×200"
+    },
+    {
+      "what": "GET /api/recordings (reads the database)",
+      "n": 150,
+      "p50": 1.93,
+      "p95": 3.71,
+      "p99": 4.61,
+      "max": 4.64,
+      "bytes": 27,
+      "status": "200×150"
+    },
+    {
+      "what": "GET /api/owner/status, signed in (budget, runs, audit)",
+      "n": 60,
+      "p50": 4.32,
+      "p95": 8.36,
+      "p99": 19.97,
+      "max": 19.97,
+      "bytes": 1999,
+      "status": "200×60"
+    },
+    {
+      "what": "POST /api/runs/:id/step (one six-hour epoch, 50 people, 8 mock decisions)",
+      "n": 4,
+      "p50": 132.5,
+      "p95": 154.4,
+      "p99": 154.4,
+      "max": 154.4,
+      "bytes": 0,
+      "status": "200×4"
+    },
+    {
+      "what": "GET /api/runs/:id, a visitor reading the published run (tape and digests)",
+      "n": 60,
+      "p50": 2.45,
+      "p95": 4.62,
+      "p99": 5.7,
+      "max": 5.7,
+      "bytes": 6922,
+      "status": "200×60"
+    },
+    {
+      "what": "GET /api/health, 20 at a time",
+      "n": 100,
+      "p50": 15.83,
+      "p95": 54.12,
+      "p99": 68.9,
+      "max": 68.9,
+      "bytes": 0,
+      "status": "200×100"
+    }
+  ],
+  "once": {
+    "server ready after start (ms)": 620.32,
+    "first request answered in (ms)": 192.32,
+    "first request that needs the database: schema made and migrated (ms)": 77.37,
+    "POST /api/owner/login (scrypt N = 2^17) (ms)": 293.1,
+    "POST /api/runs/preview (50 people) (ms)": 58.22,
+    "POST /api/runs (world made, stored) (ms)": 90.54,
+    "100 requests for /api/health, 20 at a time: wall time (ms)": 123.42
+  }
+}

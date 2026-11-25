@@ -130,7 +130,9 @@ rollback. Read this file before modifying any contract it mentions.
 - **Affected acceptance tests.** S04-7.
 - **Cost / risks.** PGlite is single-connection, so it cannot by itself prove concurrency safety — hence the
   additional real-server test. A managed Postgres is infrastructure the owner must approve.
-- **Rollback.** The ledger is behind `LedgerStore`; another transactional store can implement it.
+- **Rollback.** The ledger (`Ledger`, `src/server/ledger.ts`) is written against the small `Db` interface in
+  `src/server/db.ts` (query, transaction, close), which `pg` and PGlite both implement; another transactional
+  SQL store can implement it. (An earlier version of this line named a `LedgerStore` interface; none exists.)
 
 ## D-009 — Client-driven, resumable epoch steps instead of a workflow service (2026-11-25)
 
@@ -201,8 +203,10 @@ rollback. Read this file before modifying any contract it mentions.
   same worker and renderer as the game and exposes read-only stats (`scripts/shots.mjs` drives it). It can
   change nothing about a game in progress. (2) The low preset is a real, lighter scene — half-resolution
   terrain mesh, simplified canopies, no shadow or post passes, cheaper terrain and water shaders (549,974 →
-  249,190 triangles, measured) — not a test-only code path. (3) All presets may lower internal resolution to
-  60% when frames stay long; still captures turn that off so evidence is rendered at the stated size.
+  249,190 triangles, measured) — not a test-only code path. (3) All presets may lower internal resolution
+  when frames stay long; still captures turn that off so evidence is rendered at the stated size. (Corrected
+  2026-11-25: this said "to 60%". The floor is a pixel ratio of 0.6, reached in steps of 0.2: from the high
+  preset's ratio of 2 that is 30% of its resolution along each axis, not 60%.)
   (4) `?q=` and `?pr=` let a visitor or a test force a preset or cap resolution; both affect drawing only.
 - **Evidence.** `evidence/phase-04/render-budget.txt`, `frame-cadence-swiftshader.txt`; E2E 1.4–1.7 min.
 - **Cost / risks.** One extra static route in the bundle. Frame statistics now report the interval between
@@ -301,8 +305,9 @@ rollback. Read this file before modifying any contract it mentions.
   privilege tests (outsiders, late joiners, founder roles, amendments), capability demonstrations (exchange,
   mutual aid, funded infrastructure), determinism and snapshot round-trip with a living institution.
 - **Affected tests.** Snapshot schema 3 with migration; `auditGoods` now counts custody, proposal bonds and pact escrow.
-- **Cost / risks.** The grammar is a strong prior over what institutions can be: five rule forms, three
-  sanctions, twelve public facts. Anything outside it is refused, with a reason, rather than approximated.
+- **Cost / risks.** The grammar is a strong prior over what institutions can be: five rule forms, four
+  sanctions (`note`, which only records the breach, and `forfeit`, `suspend`, `expel`), twelve public facts.
+  Anything outside it is refused, with a reason, rather than approximated.
 - **Rollback.** `institutions: "off"` removes every institutional affordance; charters carry their grammar version.
 
 ## D-018 — Grammar search, the judging rule, and an honest positive control (2026-11-25)
@@ -566,7 +571,7 @@ rollback. Read this file before modifying any contract it mentions.
   terrain, flora, structures and both water shaders fade toward a pale parchment tone where it is zero. People
   are left in colour: they are the observer's knowledge. The same toggle dims the atlas. A second view draws an
   arc to each person the citizen has dealt with, warm for trust and cool for distrust.
-- **Evidence.** `evidence/phase-11/knowledge.jpg`; `observer.spec.ts` (toggles, and a legend that states how
+- **Evidence.** `evidence/phase-11/shots/knowledge.jpg`; `observer.spec.ts` (toggles, and a legend that states how
   many of the island's 4,096 tiles the citizen knows).
 - **Cost / risks.** One texture read in five materials. Belief *errors* (a bush believed full that is bare) are
   still only in the inspector's list.
@@ -596,7 +601,7 @@ rollback. Read this file before modifying any contract it mentions.
   member (up to ten), flies a pennant in the institution's colour on the post and beside each governed store,
   and leaves the post leaning, without pennant or cords, when the institution ends. A charter that was only
   proposed draws nothing. The same colour marks the charter in the Charters panel and the atlas.
-- **Evidence.** `evidence/phase-11/charter.jpg` (a scripted control charter, labelled as such in the product).
+- **Evidence.** `evidence/phase-11/shots/charter.jpg` (a scripted control charter, labelled as such in the product).
 - **Rollback.** `setMarks` in `src/render/structures.ts`.
 
 ## D-032 — A path is drawn where the engine says there is one (2026-11-25)
@@ -606,7 +611,7 @@ rollback. Read this file before modifying any contract it mentions.
 - **Decision.** One mapping, `wearOf`, shared by the ground shader, the grass and the atlas, calibrated to the
   engine's own threshold: at 24 footfalls — where the engine makes a tile cheaper to cross — the ground is
   drawn as a beaten track and the grass is gone; lighter use only dulls and flattens the turf.
-- **Evidence.** `scripts`-level measurement recorded in `docs/EVIDENCE.md` (phase 11); `evidence/phase-11/paths.jpg`.
+- **Evidence.** `scripts`-level measurement recorded in `docs/EVIDENCE.md` (phase 11); `evidence/phase-11/shots/paths.jpg`.
 - **Rollback.** Change the constant in `src/render/palette.ts`.
 
 ## D-033 — History is moments and lines; nothing is rewritten, and a past is only trusted if re-living it arrives where it left (2026-11-25)
@@ -780,4 +785,473 @@ rollback. Read this file before modifying any contract it mentions.
   longer name made the status row 22 px wider than a 390 px screen (the row scrolls; found by the script, not
   by a person). The next commit lets the weather's name give way on phones and measures with the widest text.
 - **Rollback.** The media queries under "the top bar on windows that are not wide" in `game.module.css`.
+
+
+## D-039 — The charter is brought back to the product (2026-11-25)
+
+- **Problem.** The charter was the first document written, before any code. The phase-16 documentation audit
+  (`evidence/phase-16/review-documentation.md`) found it still promising things that were never built, or were
+  built differently, with no decision saying so. A reader of the charter would have expected a product that
+  does not exist in seven places.
+- **Original proposal (charter, phase 01).** "dampen or widen how far voices carry"; overlays for "social
+  network · resources · knowledge of selected citizen"; "Compare (treated vs control) ─► Debrief"; an inspector
+  for "citizen · place · structure · institution · event"; scenario objectives "evaluated only from engine
+  state"; a tutorial whose marks appear "when its subject is on screen".
+- **Alternatives.** Build all seven before release; or state plainly what exists, why, and what would have to
+  be built — and build only what earns its place.
+- **Decision.** The charter now describes the product as built, and lists what its first version promised
+  that is not there. Item by item:
+  1. *Widening how far voices carry* is not built. An intervention can only lower the hearing radius (Hush:
+     radius 1 for four days); `hearingRadius` takes the smaller of the configured radius and the hush. A wider
+     radius exists only as a starting condition of a registered study (E2 compares radius 2 with 9).
+  2. *A resources overlay* is not built. Stock is read from the thing itself in the world, from the
+     inspector's place card and from the almanac's charts of wild food and commons health.
+  3. *A Debrief after Compare* is not built. Compare is the last step and ends by saying that one pair of
+     worlds is an anecdote (D-012).
+  4. *Institutions and events as inspector subjects* are not built. The inspector shows a citizen or a place;
+     institutions are read in Charters and events in the Chronicle, each of which links back to the world.
+  5. *Scenario aims* are text only: stated on each scenario's card, never evaluated, scored or reported. The
+     field journal took the place of objectives (D-030), and that decision did not say the aims stayed as text.
+  6. *A social-network overlay of the whole society* is not built: ties are drawn for the selected citizen (D-029).
+  7. *The tutorial* is five fixed steps in order, each advanced by the player's own act, not marks that appear
+     when their subject comes on screen.
+- **Evidence.** The audit report; `docs/CHARTER.md` §§ 3, 5, 6, 7 and 9 as rewritten.
+- **Affected acceptance tests.** None changes: no test ever asserted these features. `ACCEPTANCE.md` rows that
+  quote the charter were checked against the new text.
+- **Cost / risks.** The product is narrower than first sketched. Items 2, 5 and 6 are the ones a player is
+  most likely to miss; they are listed as candidates for the redesign phase.
+- **Rollback.** None needed for a document. Each item can be built later and the charter extended again.
+
+## D-040 — A speaker can tell only what they know; names and payloads are data (engine 0.7.0) (2026-11-25)
+
+- **Problem.** The adversarial review (`evidence/phase-16/review-security.md`) found four ways in which text
+  or structure written by a mind could do more than the engine intended:
+  1. *(M7)* A speech act could name any place, structure, agreement or offer by its number, and the hearer's
+     beliefs were then filled in from the **world's** state of that thing, not from what the speaker believed.
+     Numbers are small integers. A model-driven mind could have named places it had never seen and its hearers
+     would have learned what was truly there: knowledge nobody in the conversation had.
+  2. *(M8)* The names of roles in a charter were free text, and were shown to every member's mind inside the
+     engine's own description of the rules, without quotation marks. A sentence written as a role name would
+     have read as part of the rules.
+  3. *(L4)* `cleanText` relied on Unicode property classes, whose membership changes with the version of
+     Unicode a JavaScript engine ships. Line separators and several invisible characters passed through, and
+     two engines could have cleaned the same text differently — a determinism risk for anything stored.
+  4. *(L5)* An intent written by a model was stored as it arrived. Fields the engine does not know survived
+     into the ledger tape and so into published recordings, and a charter block was bounded only by the wire limit.
+- **Alternatives.** Trust the prompt to discourage this (not a control); filter in the provider adapter only
+  (leaves the engine open to any future source of intents); or enforce in the engine, where every intent passes.
+- **Decision.** All four are enforced in the engine:
+  1. `say` begins by asking `untold(world, speaker, act)`: a speaker may tell only of a place, structure,
+     agreement or offer they know (refusals `unknown_place`, `unknown_structure`, `unknown_charter`,
+     `unknown_offer`). A hearer receives the **speaker's belief** — amount and age for a place, the speaker's
+     own record for a structure — never the world's truth. The parties to an agreement or an offer always count
+     as knowing it, whatever their bounded memory has let go of.
+  2. A role name is a plain label: ASCII letters, digits, `-` and `_`, at most 24 characters (`cleanLabel`),
+     and it is shown in quotation marks wherever the engine describes a charter. The rules text given to
+     model-driven minds says that names, purposes and role names are their authors' words.
+  3. `cleanText` lists the code points it removes explicitly, collapses whitespace to single spaces, never
+     splits a surrogate pair and is idempotent. A test sweeps every code point against the property classes of
+     this runtime (Unicode 17) so that the list cannot silently fall behind.
+  4. `plainIntent` rebuilds every intent from the fields the engine knows, and `boundedCopy` bounds what a
+     model may attach: depth 12, 6,000 values and keys, 6,000 characters of text, keys from the grammar's own
+     vocabulary. (The largest charter the grammar allows was measured at 4,137 values and keys, 3,696
+     characters, depth 9.) Anything larger is refused as `too_large`.
+- **Evidence.** `institutions.test.ts`, `cognition.test.ts`, `core/text.test.ts`, `core/bounded.test.ts`,
+  `providers/wire.test.ts`. The pilot of the registered studies, re-run on engine 0.7.0, ends every one of
+  its 224 runs on the same state digest as the 0.6.0 pilot and with the same value of every measure
+  (`evidence/phase-16/pilot-compare.txt`; the SHA-256 of the saved text differs, as it must: the text carries
+  the versions). The baseline minds never told of what they did not know, so the studies' behaviour is
+  unchanged. (The first re-run matched 219: a member whose memory of charters was full had "forgotten" its
+  own. Parties now always know their agreements; a test holds it.)
+- **Affected acceptance tests.** Engine 0.7.0, snapshot schema 6, affordances 2026.11-i, prompt p2. Recordings
+  made on earlier versions are refused by version, as before; the bundled mock recording was re-recorded and
+  ends on the same state digest.
+- **Cost / risks.** Role names lose spaces and non-ASCII letters. A mind cannot pass on a rumour of a place it
+  has only an id for — which is the point. The explicit code-point list has to be extended when Unicode adds
+  invisible characters; the sweep test fails on a runtime that knows some the list does not.
+- **Rollback.** Not recommended. The gate is one call at the start of `say`.
+
+## D-041 — Two Shores has two shores (2026-11-25)
+
+- **Problem.** The scenario's card and the charter said "stone and clay lie on one shore, timber and most
+  food on the other." The engine placed resources by biome alone: both shores had the same ecology, and only
+  the strait and its ford existed (audit finding H3: stone 31/35, clay 5/10, trees 193/213 on seed 1).
+- **Alternatives.** Change the sentence to match the engine; or make the engine do what the sentence says.
+  For the latter: only take resources away from each shore; or move them, keeping the island's total.
+- **Evidence gathered first.** `scripts/shores.ts`, development seeds 1–12, baseline minds: of the people who
+  began on each shore, the share alive at the end (`evidence/phase-16/two-shores.txt`). Unsplit: 99.7% / 99.3%
+  at 40 days, 98.1% / 98.6% at 80. Moving resources, at 800‰: 96.6% / 100.0% and 75.6% / 81.3% (famine in
+  three of the twelve worlds, near-total in two of them); at 600‰: 96.9% / 99.0% and 81.7% / 84.9%; at 400‰:
+  97.3% / 99.7% and 81.4% / 85.9%. Nearly everyone crosses the ford at some time, at every setting. The first
+  version only took resources away; at 800‰ it measured 96.9% / 99.0% at 40 days and 47.5% / 52.5% at 80 — the
+  island was a third short of food and both shores starved in their second year. That version was replaced
+  and is not in the repository, so those two figures are from the developer's notes and cannot be re-run.
+- **Decision.** A configuration setting, `shoreSplit` (permille), 800 in Two Shores and 0 everywhere else.
+  One shore, chosen by the seed, has a fifth of its usual trees, two fifths of its berries and roots and 1.8
+  times its stone and clay; the other has 1.6 times the berries and roots and a fifth of the stone and clay.
+  Reeds and fishing water are the same on both. What one shore loses in food and stone the other gains, so the
+  island holds about what an undivided one would. With the setting at 0, placement is byte-for-byte what it
+  was before (asserted against the node count of the previous commit).
+- **Affected acceptance tests.** `world.test.ts` (Two Shores). Snapshot schema 6 migrates older saves with
+  `shoreSplit: 0`, so a saved Two Shores world keeps the island it was made with.
+- **Cost / risks.** Two Shores is now a hard scenario for the baseline minds in its second year: about a
+  fifth of the people are lost by day 80 on development seeds, most of them in three worlds that starve. That
+  is a property of the scenario, stated here, and not a finding. None of the registered studies uses it.
+- **Rollback.** `SHORE_SPLIT = 0` in `src/engine/model/config.ts`, and the old sentence would then be false again.
+
+## D-042 — Hardening after the adversarial review (2026-11-25)
+
+- **Problem.** Before any live call is ever authorized, the server was reviewed by an independent agent
+  briefed to attack it (`evidence/phase-16/review-security.md`). It found no way for an unauthenticated or
+  cross-site request to reach the provider or the budget, and no request sent without a reservation; and it
+  found eight medium and sixteen low weaknesses at the edges. Those bearing on the engine are D-040, and the
+  file import is D-043. The rest are here.
+- **Decision.** In the order of the review:
+  - *M1, who may raise the authorization.* A deployment has a ceiling, `BUDGET_CEILING_USD`, set in the
+    server's environment (default 0, at most 10,000). The owner's console can authorize up to it and no
+    further; raising it takes access to the deployment, not the passphrase. The console shows it.
+  - *M2, the smoke test.* The vitest-driven live test is deleted. `pnpm live:smoke` is a script that prints
+    what is configured and the words that would authorize the next run; with `-- --run` and those words it
+    makes at most three requests under a cap of at most $2. Each run has a number and its words work once;
+    its ledger is a schema that is never dropped. **It has never been run with a key.**
+  - *M3, locking the owner out.* Sign-in attempts are counted per client (5 per quarter hour) before the
+    shared count (40), and a browser the owner has signed in on carries a signed device cookie with a count
+    of its own (10), so strangers cannot use up the owner's attempts.
+  - *M4, strangers writing to the database.* Public reads are limited in memory and touch no table. Client
+    addresses are believed only from the platform's own header on Vercel (or with `TRUST_FORWARDED_FOR`), and
+    IPv6 addresses are counted by /64.
+  - *M5, a run wedged by an interrupted call.* Every state a reservation can be left in is recovered when the
+    run is next stepped (`interrupted`, `answer_lost`, `released_without_record`); money and the record of
+    the call are written in one transaction (`Ledger.conclude`).
+  - *M6, a 5xx is not proof.* A failure is "rejected, not billed" only if it carries the provider's error
+    envelope and a request id; anything else is "unknown" and holds its reservation until reconciled.
+  - *L1, overage.* What a call costs beyond its reservation counts against the total, the run and the day. A
+    settlement that arrives after its reservation was released is recorded as overage, turns the kill switch
+    on with a reason of its own, and that switch is released only with the words "I have checked what the
+    provider charged".
+  - *L2, the SDK's environment.* The adapter passes a `fetch` that will only POST to
+    `https://api.anthropic.com/v1/messages` with an allow-listed set of headers and no redirects; logging is
+    off; and live mode refuses to start while `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`,
+    `ANTHROPIC_CUSTOM_HEADERS`, `ANTHROPIC_LOG` or `ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE` is set.
+    Reading the installed SDK for this turned up something the review had not: version 1.14.0 enables
+    OpenTelemetry tracing and trace propagation by default. Both are switched off (`openTelemetry: false`).
+  - *L3.* Live mode requires PostgreSQL everywhere, not only in production.
+  - *L6–L8.* Late settlements are recorded (above); three answers in a row that were paid for and unusable
+    pause the run (`unusable_answers`); a call has a hard deadline inside its lease, and a step's lease (280 s)
+    outlasts its budget (150 s). An answer from a model other than the one asked for is fatal (`wrong_model`).
+  - *L9–L10.* A visitor is given a named subset of a published run's manifest (no cap, no cost); `from` is
+    validated; every handler is wrapped so that an unexpected error is a plain 500 with nothing in it.
+  - *L11–L12.* Signing out ends every session (an epoch in the database, checked on each request); new
+    passphrase hashes use scrypt with N = 2^17; forwarding headers are trusted as in M4.
+  - *L14.* Reconciliation, a run's status and publication write their audit row in the same transaction.
+  - *L15.* The secret scan knows every kind of key and token the provider issues, excuses no line, treats a
+    database host as nobody's only if the name is the whole host (whichever host the address means), scans
+    untracked files that are not ignored, fails on archives and oversized files instead of skipping them, and
+    has a history mode (`pnpm scan:history`, in CI) that reads every line any commit has added.
+  - *L16, one origin for the game and the console.* Accepted, with two mitigations. The source may contain no
+    way of turning a string into markup or code: `dangerouslySetInnerHTML`, `innerHTML`, `insertAdjacentHTML`,
+    `document.write`, `eval`, `new Function`, string timers and `javascript:` URLs are lint errors under `src/`.
+    And what a script running in the owner's browser could do is bounded by the deployment's ceiling (M1); it
+    could not read the key. A separate host for the console is the stronger fix and is left to the owner
+    (`docs/SECURITY.md`, "One origin").
+  - *Information items.* Database connections have statement, lock and idle-in-transaction timeouts, and a
+    broken connection is destroyed rather than returned; `pnpm db:migrate` honours `DATABASE_SCHEMA`. Left as
+    they are and documented: HSTS is sent only on Vercel; CI actions are pinned by tag; `window.__tr` is a
+    read-only handle shipped in production; members see their agreement's live rules whatever the distance.
+- **Evidence.** `src/server/*.test.ts`, `tests/unit/scans.test.ts`, `tests/e2e/owner.spec.ts` (the ceiling is
+  shown and enforced; signing out ends a copied session); migration `0002_hardening.sql`.
+- **Affected acceptance tests.** Deliberate changes of expected behaviour, listed in `docs/QA_REPORT.md`:
+  a settlement after a release is now `late`, not `already`; the failure table requires the provider's
+  envelope; sign-in sets two cookies; the scan's `scan:allow` exception is gone.
+- **Cost / risks.** One more setting the owner must make before a live run. A failure the provider answers
+  without its envelope (a proxy's error page) holds its reservation until the owner reconciles it by hand.
+  None of the live path has met the real service: every provider test uses canned responses.
+- **Rollback.** Each item is independent; the migration only adds columns, an index and one table.
+
+## D-043 — An opened file is checked, tried and labelled (2026-11-25)
+
+- **Problem.** *(Review L13.)* Opening a world file checked its envelope and its hash, not its contents. A
+  file could carry a well-formed snapshot of an impossible world — an agent standing in the sea, an inventory
+  of negative berries, a pointer past the end of a list — and the engine would run it, fail somewhere inside a
+  tick, and leave the page with a dead world and no explanation. A file could also claim a past it never had.
+- **Decision.** Four layers. `validateState` checks every field of a restored world for type and range,
+  including every stored charter against the grammar, and `restoreWorld` refuses with the path of the first
+  thing wrong. A bundle's goods must add up (`auditGoods`) for the world and for its twin. The worker then
+  runs a copy of the opened world forward for a short trial and refuses the file if that throws. And any
+  error inside a tick stops the world behind a notice with one way on, instead of leaving a frozen page; a
+  stopped world is not autosaved. Separately, History says where a past came from: `made` here, `opened` from
+  a file (whole, unchecked) or `relived` (re-run from its start and found to arrive where the file says).
+- **Evidence.** `save/validate.test.ts` (worlds the engine itself produces are accepted; about forty targeted
+  corruptions are each refused at the expected path; and a seeded property test — whatever passes can be lived
+  in — 400 cases on every run of the suite and 3,000 in `evidence/phase-16/fuzz-validate.txt`),
+  `save/history.test.ts` (a forged bundle), `worker/sim.worker.test.ts` (the trial and the fault notice),
+  `tests/e2e/history.spec.ts`.
+- **Cost / risks.** About 350 lines that must follow the shape of the state. A field added to the engine
+  later and not to the validator is simply not checked, and nothing fails; the guard against that is the
+  property test, not the validator. Opening a file costs one extra pass and a trial of half a simulated day.
+- **Rollback.** Remove the call in `restoreWorld`; the envelope and hash checks remain.
+
+## D-044 — The confirmatory batch, as it came out (2026-11-25)
+
+- **Problem.** The protocol registered six hypotheses with falsification rules before any data existed, and
+  kept seeds 9000–9999 unseen. A pilot on development seeds (D-037) had already suggested that the positive
+  control would fail. Running the confirmatory batch risks an unflattering result; not running it leaves the
+  laboratory as machinery with nothing through it.
+- **Decision.** Run it once, on the engine as frozen (0.7.0), and publish whatever comes. 448 runs of 448:
+  holdout seeds 9000–9031, the pilot's plan of 32 seeds, seven contrasts in one Holm family. Every cell was
+  then recomputed and matched (`verify.txt`: 16 of 16 sampled cells; the pilot's 12 of 12).
+- **Result.** Paired differences with 95% intervals:
+  - H1a, cooperation at richness 0.7 against 1.3: 0.0151 [0.0122, 0.0179] — supported.
+  - H1b, cooperation at 0.7 against 0.4: 0.0109 [0.0079, 0.0138] — supported.
+  - H2, specialization with skills that grow: 0.056 [0.052, 0.060] — supported.
+  - H3, reach of agreements at hearing radius 9 against 2: 0.31 [0.06, 0.53] — supported by its registered
+    rule (the interval excludes zero); its Holm-adjusted p is 0.0564, which is reported beside it.
+  - H4, diversity and survival after a blight: −0.001 [−0.003, 0.000] — **falsified**. Almost nobody died in
+    either arm (a ceiling the pilot had shown).
+  - H5a, welfare with a slower clock (ratio): 1.056 [1.051, 1.062] — supported.
+  - H5b, deliberations with a slower clock (ratio): 0.484 [0.482, 0.486] — **not supported**: the
+    manipulation was weaker than the 0.35 the protocol required of it.
+  - H6a, the positive control — a charter written by the designers raises survival in The Long Winter:
+    −0.009 [−0.054, 0.037] — **falsified**.
+  - H6b, agreements found by the agents' own search change survival: 0.021 [−0.026, 0.068] — reported; no
+    direction was predicted and the interval includes zero.
+  - Not registered, descriptive only: with the agents' own search an agreement was adopted in every run of
+    The Long Winter and persisted in 0.88 [0.75, 0.97] of them; the designers' charter was adopted in 0.91 of
+    runs and persisted in none.
+- **What follows, as registered.** With the positive control failed, institutional affordances have not been
+  shown to be materially useful in this world, and no claim that agreements *help* the baseline minds can be
+  made from it. H1–H3 and H5a are statements about a designed simulation with baseline (non-language-model)
+  minds on one parameterization; they are not findings about people or about language models.
+- **Evidence.** `evidence/phase-16/confirmatory/` (every run, the manifest with each run's hash, the report,
+  the verification); published at `/lab` from `public/studies/confirmatory/`.
+- **Cost / risks.** The holdout seeds 9000–9031 are spent: they cannot be used to confirm anything else.
+  Seeds 9032–9999 remain unseen.
+- **Rollback.** None. A registered result is not withdrawn; a redesign of the control or of H4's shock would
+  be a new registration on new seeds.
+
+## D-045 — The top bar measures itself (supersedes the breakpoints of D-038) (2026-11-25)
+
+- **Problem.** D-038 laid the bar out with media queries computed from its width "in its widest state". That
+  state was not the widest: `scripts/topbar.mjs`, taught to write the longest labels the bar can be asked to
+  show (a four-digit day, "Cold snap", −18°, five hundred citizens, a fork on a four-digit day), found the
+  game's name squeezed at 1600, 1366 and 1180 px, the tools 2 px off the screen at 1120, and the status row
+  spilling at every phone width from 430 down to 320. The fixed widths also had to assume the fork pill was
+  present, so a world nobody had touched lost words it had room for.
+- **Alternatives.** New, wider breakpoints for the longest labels (correct, and wasteful: at 1366 px every
+  tool would lose its word to make room for a pill that is usually absent); a `:has()` rule for the pill
+  (two sets of numbers to keep true); or measuring.
+- **Decision.** `src/ui/game/fit.ts` tries the bar in eight states, most generous first, and sets the first
+  in which nothing is squeezed, clipped or off the screen; if none fits, the status takes a row of its own
+  (and the tools keep their words there if they still fit beside the name and the fork pill).
+  Words give way in the order: Compare's label and the season and weather's name; "Twin"; "Forked on"; the
+  world's label; then the tools' words — after which the world's label and "Forked on" come back if there is
+  room. A status row as wide as the window that is still too full (a narrow phone late in a long game) gives
+  up its optional words, then its spacing, then the size of the founding population. It is measured again
+  when the window changes size and when what the bar holds changes width — numbers are tabular, so that is
+  when a count of characters changes — not on every frame. Below 880 px the stylesheet lays out the rows as
+  before and only the status row is measured.
+- **Evidence.** `evidence/phase-15/topbar.txt` and `topbar-*.jpg`: 25 widths from 2560 to 320 px, three
+  times — untouched, forked, and with the longest labels. `fit.test.ts` for the order of the states.
+- **Affected acceptance tests.** S04-10; `history.spec.ts` (no overlap at four desktop and three phone
+  widths). Tests no longer treat the world label's visibility as the sign that a world has loaded.
+- **Cost / risks.** Layout is read up to nine times when the bar's contents change width, which is rare. The
+  states are words in a `data-hide` attribute that the stylesheet must know (a test checks the vocabulary).
+  Font scaling by the user is handled by the measuring, but has not been looked at by a person.
+- **Rollback.** Remove the hook; the attribute rules do nothing without it and every word shows.
+
+## D-046 — Profile first: what the long benchmark found, and the one change made to the frozen engine (2026-11-25)
+
+- **Problem.** Phase 15 asks for profiling before optimizing. The benchmark inherited from phase 03 runs five
+  simulated days and showed nothing wrong: 3,244 ticks a second at 50 people, 234 at 500. Run for twenty days
+  it showed something else. At 250 people throughput fell to 41 ticks a second, with one tick in twenty taking
+  130 ms or more; at 500 people to 13, with one in twenty taking 280 ms
+  (`evidence/phase-15/bench-planner-before-memo.txt`).
+- **Evidence.** The profile put 75% of the whole process in `findPath`, all of it called from `approach`
+  (`evidence/phase-15/profile-planner-250-before-memo.txt`). Counting refusals day by day explained it: from
+  about the fifteenth day of that crowded world, hungry planner agents ask — every tick — to gather from a
+  place that cannot be reached with what they know of the map. On day 20 there were 7,014 such refusals, some
+  agents making 96 in a day. Each asking searched every tile the agent could reach before failing. The
+  reference world (50 people on a 64 × 64 island, seed 1) has no such refusal in forty days, and a sample of 42
+  cells of the registered studies has 110 in all, in five cells: an occasional refused step, never the loop
+  (`evidence/phase-15/unreachable-refusals.txt`).
+- **Alternatives.** (a) Teach the planner to remember what it could not reach. That is the right repair of the
+  *behaviour* — and it is a change of behaviour, so a new engine version, after the confirmatory batch was run
+  on this one. (b) A faster search (jump points, a hierarchy of regions): hard to make break ties exactly as
+  the present one does. (c) Remember failed searches, exactly.
+- **Decision.** (c), and nothing else. `findPath` answers "no route" without searching only when the agent,
+  the tile it starts from, the goal, the nearness asked and the agent's entire memory of what it has seen are
+  bit for bit those of an earlier search that exhausted every tile it could reach. A search is a function of
+  exactly those and of terrain that never changes, so the answer cannot differ; nothing is inferred beyond
+  that (one new tile seen, or one step taken, and the search is made again). What is remembered lives in the
+  engine's transient working memory, never in a snapshot. **The engine's behaviour is unchanged and its
+  version stays 0.7.0.**
+- **Proof that nothing changed.** `sim/pathfind.test.ts`: 720 questions on a divided island — between them
+  the agent moves, learns, learns everything and (as no agent in the engine ever does) forgets everything —
+  each answered identically by a copy of the world that has never searched; and a crowded island in famine
+  arriving at the same state digest with the memory and with it thrown away before every tick. Four worlds, lived with the memory
+  and with it switched off, ending on the same SHA-256 of their whole saved state, with the same deaths and
+  the same refusals (`evidence/phase-15/pathfind-memo.txt`). And the
+  registered studies: 48 cells of the confirmatory batch and 24 of the pilot, re-run from scratch on the
+  changed engine, each reproducing its published hash (`evidence/phase-16/*/verify.txt`).
+- **Result.** Twenty days, planner minds, three runs: 250 people 240–278 ticks a second (from 41), the slow
+  tick in twenty 8–10 ms (from 130); 500 people 97–102 (from 13), 20–23 ms (from 280). The reference world is
+  as it was within the noise of this machine (1,070–1,579 over twenty days).
+- **What was not changed, and should be known.** The behaviour itself. In a crowded world that is starving,
+  baseline planner agents still ask for the unreachable every tick, and some die doing it. That is a defect of
+  the hand-written baseline, found by this benchmark, present in the engine the studies ran on (their worlds
+  are not crowded, and show the refusal now and then but not the loop), and left for the redesign phase:
+  repairing it means engine 0.8.0.
+- **Also decided in this phase, and measured in `docs/PERFORMANCE.md`.** Saves are stored compressed (the
+  text of a 50-person world is 1,162 KiB and 112 KiB as stored; the hash is of the text either way). The
+  autosave slot has one owner among a browser's tabs. A hidden tab stops time and saves. A renderer that
+  cannot keep up lowers its resolution, then — only if the preset was automatic — steps down once. No WASM:
+  after the memory, the largest single cost is perception at about a quarter of the process, spread over
+  loops on typed arrays, and the reference world runs at eight times what the fastest speed asks.
+- **Cost / risks.** One copy of an agent's sight memory (at most 2 KB on the largest island) for each agent
+  that has ever failed a search, and a byte-for-byte comparison when it asks again. If terrain ever became
+  changeable, the memory would have to be keyed on that too: a comment in `findPath` says so.
+- **Rollback.** Two calls in `findPath` (`knownNoRoute`, `rememberNoRoute`).
+
+## D-047 — The database's limits travel with each transaction, and a lost connection is survived (2026-11-25)
+
+- **Problem.** Two things, found while preparing to deploy and while writing the test the QA report said did
+  not exist ("no test waits for a timeout").
+  1. D-042 gave every database connection a statement, a lock and an idle-in-transaction limit by sending them
+     when the connection is made (the driver's `options` startup parameter), and put a suite's tables in a
+     schema the same way. The connection string a Vercel Marketplace database injects as `DATABASE_URL` — the
+     name this application reads — points at a transaction pooler. The provider documents that its pooler
+     "allows only startup parameters it can keep track of", names five, and has an error for the rest
+     (`docs/research/vercel-platform.md` §12). Run here against the same pooler in the same mode (PgBouncer
+     1.22.0, transaction mode, default strictness), the application's former settings get exactly that error:
+     `FATAL: unsupported startup parameter in options: statement_timeout`. The ledger could not have been
+     reached on the first hosted database it met. That is failing closed, and it is still a deployment that
+     does not work.
+  2. A connection lost while a transaction held it — the server ending an idle transaction, a database
+     restarting, a network drop — is announced by the driver as an `error` event on that connection. The pool
+     listens for it only while a connection is idle. An `error` event nobody listens for ends a Node process:
+     every request in flight on that instance, not just the one whose connection dropped.
+- **Original proposal.** D-042's information item: "Database connections have statement, lock and
+  idle-in-transaction timeouts", by construction, untested.
+- **Alternatives.** (a) Use the direct connection string where the provider offers one
+  (`DATABASE_URL_UNPOOLED`): the code stays as it was, and the smallest hosted database has 105 usable
+  connections to share among every function instance, ten a pool. (b) Set the limits on the role
+  (`ALTER ROLE … SET`): changes a database the application may share, and needs rights it should not want.
+  (c) Open every transaction with `SET LOCAL`. (d) The platform's `attachDatabasePool`: about idle connections
+  when a function is suspended, not about either problem; a new dependency.
+- **Decision.** (c). Every transaction opens with one statement — `BEGIN`, the three limits and the schema, each
+  `SET LOCAL` — and a statement on its own is a transaction of one, so nothing is ever asked of the database
+  outside those limits and nothing is left on a connection when a transaction ends. The same code path runs
+  through a pooler and straight to a server; there is no switch to forget. Every held connection has a
+  listener for its `error` event; the loss then fails whatever is asked of the connection next, the
+  transaction's caller sees the failure, and the connection is destroyed rather than returned. If the opening
+  statement itself fails, the connection is destroyed and one more is tried: a pooled connection can have died
+  while a function was suspended, and nothing has been asked of the database at that point. **Nothing after the
+  opening is ever sent twice** — a statement that may have run is not repeated; the ledger's own rules decide
+  what an unknown outcome means (D-020).
+- **Evidence.** `src/server/db.test.ts`, ten tests. Six read what is actually sent, with a stand-in for the
+  server that speaks enough of the protocol: the first message of a connection carries only parameters a
+  pooler accepts and no `options`; every transaction opens with exactly the limits and schema; a connection
+  dropped at the opening costs one retry; two dropped openings are the caller's error; a connection dropped
+  after the opening is not retried and the work is not started again. Four run against PostgreSQL 16: the
+  limits and schema are in force for a lone statement and inside a transaction, and the session between
+  transactions is exactly an untouched session; a statement past its limit is cancelled (57014) and the
+  connection goes on working; a lock not given within its limit is not waited for (55P03) and nothing is
+  written; a transaction left idle past its limit is ended by the server, its work undone, and the pool's only
+  connection replaced. With the listener removed the same run reports "Connection terminated unexpectedly" as
+  unhandled errors and fails.
+- **Through a pooler** (`evidence/phase-16/pooler.txt`). With the test database behind PgBouncer in transaction
+  mode: all 107 server tests pass, the ten that need a real server among them; the ledger load test balances
+  its books with no error and no ceiling exceeded (809 reservations a second against 1,144 straight to the
+  server); the production server serves every route and a mock run from start to finish; and the owner's
+  browser tests pass on the desktop and phone projects.
+- **Cost, measured on this machine.** Straight to a local server, before and after: 1,059 and 1,144
+  reservations a second, one reservation p50 25 and 22 ms — no difference beyond noise, as expected where a
+  round trip costs a tenth of a millisecond; the public list of recordings p50 1.9 ms both times
+  (`evidence/phase-15/load*.txt`, `requests*.txt`). Through the local pooler a lone statement's two extra round
+  trips show: the list of recordings p50 3.2 ms, the signed-in status p50 8.2 ms (from 4.3). A hosted database
+  adds a network to each of those; that has not been measured.
+- **What this does not show.** No hosted database has been connected to. The pooler here is the same program
+  in the same mode as the provider documents, not the provider's installation of it; `docs/DEPLOYMENT.md` has
+  the check to make on the first real one.
+- **Affected acceptance tests.** New: `src/server/db.test.ts`. Unchanged and passing: every suite that uses
+  PostgreSQL (`ledger.test.ts`, `runs.test.ts`, `api.test.ts`, `smoke.test.ts`), which now run through the new
+  path.
+- **Cost / risks.** A lone statement is three round trips instead of one (open, statement, commit). On a
+  hosted database in the function's region that is of the order of a millisecond or two more per statement;
+  the public list of recordings is the only route a stranger can make pay it.
+- **Rollback.** `openPostgres` in `src/server/db.ts`: restore the `options` string and `pool.query`. Do not
+  roll back the listener.
+
+## D-048 — The site runs on the Node.js the tests ran on (2026-11-25)
+
+- **Problem.** `engines.node` said `>=22.12.0`. Vercel reads that field to choose the runtime, and a range
+  like it selects the newest major the platform offers — 26.x on the day its documentation was read
+  (`docs/research/vercel-platform.md` §2). Every test, benchmark, study and replay in this repository ran on
+  Node 22. The server replays worlds and compares digests; what it runs on should be what was tested.
+- **Original proposal.** `>=22.12.0`, from phase 02, when nothing was being deployed.
+- **Alternatives.** Leave the range and meet an untested runtime in production. Test on 26 as well and keep
+  the range: right, later; that version is not in the development container or in CI.
+- **Decision.** `"node": "22.x"`. The platform then deploys the latest 22.x; CI already pins 22.
+- **Evidence.** The platform's documentation, as quoted in the research file; `.github/workflows/ci.yml`
+  (`node-version: 22`); `evidence/*` (Node v22.23.5 in every recorded environment).
+- **Affected acceptance tests.** None.
+- **Cost / risks.** A developer on another major gets a warning from the package manager, not an error
+  (nothing here sets `engine-strict`). Node 22 will leave the platform's list one day: moving on means running
+  `pnpm check`, `pnpm e2e` and `pnpm study -- --verify` on the new major, then changing this one line.
+- **Rollback.** That line.
+
+## D-049 — The aim on a scenario's card is counted, here and in the untouched twin (2026-11-25)
+
+- **Problem.** Phase 20 asks whether the thing is worth watching and whether the observer's choices mean
+  anything. Every scenario states an optional aim on its card — and nothing in the product ever said how it
+  had gone (D-039 item 5 said so plainly). An observer could change a world and be shown two columns of
+  numbers, with no word on the one question the world had been set up to ask. The first charter promised
+  aims "evaluated only from engine events"; that promise was withdrawn in D-039 rather than kept.
+- **Evidence, before anything was built.** Two of the five aims as first written cannot be met, and two cannot
+  be missed (`evidence/phase-20/aims-first-written.txt`; development seeds 1–10, both baseline minds, nobody
+  intervening). "Lose no one to cold or hunger before spring" (The Long Winter): between 8 and 38 people are
+  lost that way in every world measured. "Keep every commons above its collapse threshold for a year" (Thin
+  Commons): some grove or fishing water is below its threshold by the eighth morning in every one of the hundred
+  worlds, whatever the scenario — ordinary foraging does it. First Light and Dry Year are met in all twenty
+  worlds each.
+- **Alternatives.** (a) Leave the aims as text: honest, and the gap stays. (b) Evaluate them as written: two
+  verdicts that are always "lost" teach nothing. (c) Objectives about what the citizens should build: rejected
+  in D-030 and still rejected — an aim here is about who is alive, never about how. (d) Count what the card
+  asks, reword the two that could not be met to ones that can go either way, and show the same count for the
+  untouched twin.
+- **Decision.** (d).
+  - *What is counted* (`src/worker/aims.ts`, a pure reading of the world's state; the engine is untouched and
+    its version stays 0.7.0). First Light: four in five of the fifty who began, alive on the first morning of
+    the spring after the first winter. The Long Winter: three in five by that morning (was: nobody lost to cold
+    or hunger). Thin Commons: four in five at the end of the first year, with the commons' average fullness
+    and their emptiest morning shown beside it (was: every commons above its threshold). Dry Year: four in five
+    on the morning the scenario's own drought ends. Two Shores: the gap in well-being between those who began
+    on each shore, the dead counted as nought — a reading with no day of reckoning and so no verdict.
+  - *Three kinds of answer.* Open until the day of reckoning; then met or lost; lost early on the day too many
+    have died for it to be met. A verdict once given does not move. Newcomers brought by the observer's hand
+    are not among those counted.
+  - *From the state alone.* Deaths carry their tick, so a world that was saved, opened from a file or returned
+    to in History gives the answer it would have given if watched: no latch, no stored verdict.
+  - *The drought is not foretold.* Before it comes the reading says only that it has not come.
+  - *Where it is shown.* The Atlas, above the almanac: the card's sentence, where it stands, and the same for
+    the untouched twin once the observer has made one. A notice on the morning it is decided. Nothing is
+    scored, nothing accumulates, and no citizen is told.
+- **Why this does not undo D-030.** D-030 refused objectives that reward steering toward a designer's picture
+  of civilization. These five sentences were already on the cards; none says what the citizens should do or
+  build; and the reading is the almanac's kind of statement — a count — not a reward.
+- **How the reworded aims fall** (`evidence/phase-20/aims-calibration.txt`, same seeds): The Long Winter is met
+  in 4 of 10 worlds with planner minds and 5 of 10 with reflex minds; Thin Commons in 4 and 5; First Light and
+  Dry Year in all. So two aims are the observer's to lose and two can go either way. Whether the observer's
+  hand can *save* a world that would have lost has not been measured.
+- **Affected acceptance tests.** New: `src/worker/aims.test.ts` (eleven), three in
+  `src/worker/sim.worker.test.ts`; `tests/e2e/observer.spec.ts` (the aim in an untouched world) and
+  `tests/e2e/play.spec.ts` (both worlds after an intervention). The charter's table of scenarios is rewritten
+  (§5). Unchanged: every engine test, every golden digest and every published study hash — the aims' wording
+  lives beside the scenarios in `src/engine/model/config.ts` and is part of no world.
+- **Cost / risks.** One reading a morning (a count over fifty people; for Two Shores, one flood fill and, once
+  per world, one making of the world as it first was). An aim that is always met is a weak aim: First Light
+  and Dry Year are gentle on purpose (D-014), and say so by being met. Counting an aim invites treating it as
+  a score; the block says in its heading that it is not one.
+- **Rollback.** `src/worker/aims.ts`, the `aim` messages in the protocol and the block in `Atlas.tsx`; the
+  cards' sentences in `config.ts`.
 

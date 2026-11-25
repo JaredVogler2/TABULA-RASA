@@ -15,6 +15,12 @@ import "server-only";
  * What it never contains: tools, thinking or sampling parameters (the model rejects them),
  * a fallback list, fast mode, a second turn, or anything from the environment.
  *
+ * Where it goes, and what else leaves with it: one place and nothing. The SDK would take its
+ * destination, extra headers, its log level and its tracing from environment variables; the
+ * client built here pins the destination, turns logging and tracing off, and sends every
+ * request through `guardedFetch`, which lets through only a POST to the Messages endpoint of
+ * the provider's own host carrying only the headers such a request needs.
+ *
  * What happens to the answer:
  *   - only `text` blocks are read; thinking blocks are neither stored nor logged
  *   - `usage` is priced first; an answer whose usage cannot be priced has an unknown cost
@@ -34,12 +40,48 @@ export interface MessagesClient {
   create(body: Record<string, unknown>, options: { timeout: number; maxRetries: 0; signal?: AbortSignal }): Promise<unknown>;
 }
 
+/** The only host the owner's key is ever sent to, and the only path on it. */
+export const PROVIDER_ORIGIN = "https://api.anthropic.com";
+export const PROVIDER_PATH = "/v1/messages";
+
+/** The headers a Messages request needs: content, credential, API version, and the SDK's own description of itself. */
+const SENT_HEADERS = /^(accept|content-type|content-length|user-agent|authorization|x-api-key|anthropic-version|x-stainless-[a-z0-9-]+)$/;
+
 /**
- * A real client for the owner's key. The key goes nowhere else. `fetchImpl` replaces the
- * network (tests drive the real SDK against canned HTTP responses with it).
+ * The network, narrowed to the one request this application makes. Anything else — another
+ * host, another path, another method — is refused before it is sent, and any header that is
+ * not on the short list is left behind. This is what makes "the key goes to the provider and
+ * nowhere else, with nothing added" true whatever the SDK is told by its environment
+ * (`ANTHROPIC_CUSTOM_HEADERS` would otherwise add headers, a beta flag among them).
+ */
+export function guardedFetch(inner: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const target = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    const url = new URL(target);
+    const method = (init?.method ?? (typeof input === "object" && "method" in input ? input.method : "GET")).toUpperCase();
+    if (url.origin !== PROVIDER_ORIGIN || url.pathname !== PROVIDER_PATH || url.search !== "" || method !== "POST") {
+      throw new Error("refused: not a request this application makes");
+    }
+    const headers = new Headers();
+    new Headers(init?.headers).forEach((value, name) => {
+      if (SENT_HEADERS.test(name.toLowerCase())) headers.set(name, value);
+    });
+    return inner(url.href, { ...init, headers, redirect: "error" });
+  };
+}
+
+/**
+ * A real client for the owner's key. The key goes nowhere else — by construction, not by
+ * default: the base URL is pinned (the SDK would otherwise take `ANTHROPIC_BASE_URL`), a
+ * credential passed in code is the client's only one (the SDK then reads none from the
+ * environment), logging is off (`ANTHROPIC_LOG=debug` would otherwise print request and
+ * response bodies), tracing is off (the SDK otherwise opens OpenTelemetry spans and adds trace
+ * headers when a tracer is registered), its own retries are off, and every request passes
+ * `guardedFetch`. `fetchImpl` replaces the network (tests drive the real SDK against canned
+ * HTTP responses with it); it too sits behind the guard.
  */
 export function sdkClient(apiKey: string, fetchImpl?: typeof fetch): MessagesClient {
-  const client = new Anthropic({ apiKey, maxRetries: 0, ...(fetchImpl ? { fetch: fetchImpl } : {}) });
+  const client = new Anthropic({ apiKey, baseURL: PROVIDER_ORIGIN, maxRetries: 0, logLevel: "off", openTelemetry: false, fetch: guardedFetch(fetchImpl ?? fetch) });
   return {
     create: (body, options) => client.messages.create(body as unknown as Anthropic.Messages.MessageCreateParamsNonStreaming, options),
   };
@@ -71,9 +113,17 @@ export function readUsage(raw: unknown): Usage | null {
 /**
  * What an error from the SDK means for the request's fate.
  *
- *   a response with an error status  → the request failed and is not billed ("rejected"),
- *     except 408 / 499 / 504, where the work may have been done and nobody told us ("unknown")
+ *   the provider itself refused it → the request failed and is not billed ("rejected").
+ *     "The provider itself" means two things were both present: the provider's own error
+ *     envelope in the body ({ type: "error", error: { type, … } }) and the request id it gave
+ *     the request. A status alone proves nothing: a 502 or 503 written by something between
+ *     here and the provider can arrive after the provider has done the work and charged for it.
+ *   408 / 499 / 504, whoever sent them → the work may have been done and nobody told us ("unknown")
+ *   any other response that is not the provider's own → "unknown"
  *   no response at all (timeout, connection lost, abort, anything else) → "unknown"
+ *
+ * An unknown outcome keeps its money held and is never retried; only a person, having looked
+ * at the provider's own usage record, can release it.
  */
 export function classifyError(err: unknown): { status: "rejected" | "unknown"; error: CallError; requestId: string | null } {
   const e = isObj(err) ? err : {};
@@ -82,6 +132,9 @@ export function classifyError(err: unknown): { status: "rejected" | "unknown"; e
   const apiMessage = str(e.apiMessage) ?? "";
   const errorCode = str(e.errorCode) ?? "";
   const name = err instanceof Error ? err.name : "";
+  const body = isObj(e.error) ? e.error : null;
+  const inner = body && isObj(body.error) ? body.error : null;
+  const fromProvider = body !== null && body.type === "error" && inner !== null && typeof inner.type === "string" && requestId !== null && requestId.length > 0;
   const make = (status: "rejected" | "unknown", code: string, retryable: boolean): { status: "rejected" | "unknown"; error: CallError; requestId: string | null } => ({
     status,
     // the provider's message is not kept: only a code of our own, the HTTP status and the provider's error code
@@ -95,6 +148,7 @@ export function classifyError(err: unknown): { status: "rejected" | "unknown"; e
     return make("unknown", "no_response", false);
   }
   if (http === 408 || http === 499 || http === 504) return make("unknown", "gateway_timeout", false);
+  if (!fromProvider) return make("unknown", "unrecognized_response", false);
   if (http === 429) {
     if (/spend_limit/.test(errorCode)) return make("rejected", "spend_limit", false);
     if (errorCode === "ramp_limit_exceeded") return make("rejected", "ramp_limit", false);
@@ -114,8 +168,12 @@ export function classifyError(err: unknown): { status: "rejected" | "unknown"; e
   return make("rejected", "client_error", false);
 }
 
-/** Error codes after which no further call in the run can succeed until a person changes something. */
-export const FATAL_CODES: readonly string[] = ["auth", "billing", "spend_limit", "model_unavailable", "bad_request", "too_large"];
+/**
+ * Error codes after which no further call in the run can succeed until a person changes
+ * something. `wrong_model` is among them: an answer from a model that was not asked for is
+ * paid for and unusable, and the next one would be too.
+ */
+export const FATAL_CODES: readonly string[] = ["auth", "billing", "spend_limit", "model_unavailable", "bad_request", "too_large", "wrong_model"];
 
 export interface LiveOptions {
   /** Put a 5-minute cache breakpoint on the rules text. */

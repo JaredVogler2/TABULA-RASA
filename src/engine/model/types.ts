@@ -22,7 +22,7 @@ export interface Terrain {
   moveCost: Uint8Array;
   /** Where an agent standing on the tile can drink: 2 = perennial water, 1 = seasonal (dries in drought), 0 = none. */
   fresh: Uint8Array;
-  /** Connected land region id (ignoring fords), used by "Two Shores" metrics. 255 = not land. */
+  /** Connected land region id (ignoring fords): the shores of a world with a strait are its two largest. 255 = not land. */
   region: Uint8Array;
   /** Flow accumulation (clamped), for rendering stream width. */
   flow: Uint16Array;

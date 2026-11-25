@@ -287,10 +287,12 @@
   font-size: 13.5px;
 }
 .downloads a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
   color: var(--umber-700);
   font-family: var(--font-mono);
   font-size: 12.5px;
-  padding: 10px 0;
 }
 .result {
   margin-top: 10px;

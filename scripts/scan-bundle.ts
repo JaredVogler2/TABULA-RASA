@@ -36,7 +36,7 @@ const SERVER_MARKERS = [
 ];
 
 const CREDENTIAL_SHAPES: [string, RegExp][] = [
-  ["Anthropic API key", /sk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{40,}/],
+  ["Anthropic key or token", /sk-ant-[a-z]{2,8}\d{2}-[A-Za-z0-9_-]{40,}/],
   ["database URL", /postgres(?:ql)?:\/\/[^\s"'`:@/]+:[^\s"'`@/]+@/],
   ["private key block", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
   ["owner password hash", /scrypt:\d{5,7}:\d{1,2}:\d:[A-Za-z0-9_-]{20,}:[A-Za-z0-9_-]{40,}/],
@@ -76,7 +76,8 @@ function main(): void {
   const findings: string[] = [];
   let bytes = 0;
   for (const file of files) {
-    if (/\.(png|jpe?g|webp|gif|ico|woff2?|ttf|otf|mp3|ogg|wav|map)$/i.test(file)) continue;
+    // source maps are text a browser can fetch: if a build ever emits them, they are scanned like the rest
+    if (/\.(png|jpe?g|webp|gif|ico|avif|woff2?|ttf|otf|mp3|ogg|wav)$/i.test(file)) continue;
     const text = readFileSync(file, "utf8");
     bytes += text.length;
     findings.push(...bundleFindings(file, text, liveValues));

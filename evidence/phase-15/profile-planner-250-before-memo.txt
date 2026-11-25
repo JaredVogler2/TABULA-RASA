@@ -1,0 +1,42 @@
+# Where the time went: 250 people, 96 x 96, planner minds, 20 days, BEFORE the route finder's memo (the profile that found the problem).
+# node --cpu-prof --import tsx scripts/bench.ts -- --policy planner --days 20 --only 250 ; node scripts/cpuprofile-top.mjs <profile> 16
+total sampled 44696 ms over 40405 samples
+
+self time by function
+ 75.0%   33543 ms  findPath src/engine/sim/pathfind.ts:1
+  6.5%    2919 ms  perceive src/engine/mind/knowledge.ts:1
+  3.6%    1619 ms  step src/engine/sim/step.ts:1
+  2.2%     962 ms  knownStructure src/engine/mind/knowledge.ts:1
+  1.4%     635 ms  noteStructure src/engine/mind/knowledge.ts:1
+  1.4%     633 ms  (garbage collector) (native)
+  1.1%     471 ms  bestKnownNode src/engine/mind/knowledge.ts:1
+  0.5%     229 ms  canonicalJson src/engine/core/canonical.ts:1
+  0.5%     229 ms  write src/engine/core/canonical.ts:1
+  0.4%     193 ms  dflt node_modules/fflate/esm/index.mjs:643
+  0.4%     193 ms  updateBody src/engine/sim/bodies.ts:1
+  0.4%     162 ms  provision src/engine/mind/planner.ts:1
+  0.3%     148 ms  ints src/engine/core/hash.ts:1
+  0.3%     148 ms  planDecide src/engine/mind/planner.ts:1
+  0.3%     138 ms  parseCanonical src/engine/core/canonical.ts:1
+  0.3%     117 ms  visibleAgents src/engine/mind/senses.ts:1
+
+self time by file
+ 75.2%   33595 ms  src/engine/sim/pathfind.ts
+ 11.4%    5083 ms  src/engine/mind/knowledge.ts
+  3.7%    1643 ms  src/engine/sim/step.ts
+  1.7%     772 ms  src/engine/core/canonical.ts
+  1.4%     633 ms  (garbage collector)
+  1.3%     575 ms  src/engine/mind/planner.ts
+  0.8%     348 ms  src/engine/sim/actions.ts
+  0.7%     316 ms  src/engine/core/hash.ts
+  0.6%     264 ms  node_modules/fflate/esm/index.mjs
+  0.6%     262 ms  src/engine/sim/bodies.ts
+  0.3%     139 ms  src/engine/mind/reflex.ts
+  0.3%     126 ms  src/engine/mind/senses.ts
+  0.2%      82 ms  src/engine/mind/decide.ts
+  0.2%      78 ms  src/engine/mind/civic.ts
+  0.1%      64 ms  src/engine/core/rng.ts
+  0.1%      64 ms  set TextDecoder
+
+# callers of findPath (self time attributed up the stack):
+  33543 ms  approach@sim/actions.ts:1 < startNext@sim/actions.ts:1 < step@sim/step.ts:1 < bench@scripts/bench.ts:1 < (anon)@scripts/bench.ts:1

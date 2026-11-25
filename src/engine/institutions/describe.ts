@@ -1,7 +1,10 @@
 /**
  * Charters in plain words: one sentence per rule, for inspectors and for the observations
  * handed to minds. These sentences describe exactly what the interpreter will do; they are
- * generated from the validated charter and nothing else (never from its narrative fields).
+ * generated from the validated charter and nothing else — never from its name or its stated
+ * purpose. The one thing an author wrote that does appear in them is the name of a role, and
+ * it appears only as the validator leaves it (a short plain label: `cleanLabel`) and only
+ * inside quotation marks, so that a role's name can never pass for part of a rule.
  */
 import { ITEMS, NODE_KINDS } from "../model/constants";
 import { showExpr } from "./expr";
@@ -9,10 +12,13 @@ import type { Charter, MotionBody, Rule, Sanction, Who } from "./types";
 
 const itemName = (i: number): string => (i < 0 ? "food" : (ITEMS[i] ?? "?"));
 
+/** A role's name as it is written into a sentence: quoted, always. */
+export const roleLabel = (name: string | undefined): string => `"${name ?? "role"}"`;
+
 function whoText(who: Who, roles: readonly string[]): string {
   if (who.t === "all") return "Every member";
-  const role = roles[who.role] ?? "role";
-  return who.t === "role" ? `Each ${role}` : `Every member who is not a ${role}`;
+  const role = roleLabel(roles[who.role]);
+  return who.t === "role" ? `Each member with the role ${role}` : `Every member without the role ${role}`;
 }
 
 function sanctionText(s: Sanction, charter: Charter): string {
@@ -51,9 +57,9 @@ export function describeTerms(c: Charter): string[] {
   const out: string[] = [];
   out.push(`Founded by at least ${c.minFounders}; at most ${c.maxMembers} members; ${c.entry === "open" ? "anyone may join" : c.entry === "vote" ? "members vote on each applicant" : "closed to new members"}.`);
   out.push(c.bond ? `Each member posts ${c.bond.qty} ${itemName(c.bond.item)} as a bond, returned on leaving unless forfeited.` : "No bond.");
-  const how: Record<string, string> = { unanimity: "only if every member agrees", majority: "by a majority of those voting", two_thirds: "by two thirds of those voting", role: `by whoever holds the role of ${c.roles[c.decide.role ?? 0]?.name ?? "decider"}` };
+  const how: Record<string, string> = { unanimity: "only if every member agrees", majority: "by a majority of those voting", two_thirds: "by two thirds of those voting", role: `by whoever holds the role ${roleLabel(c.roles[c.decide.role ?? 0]?.name)}` };
   out.push(`Decisions pass ${how[c.decide.rule] ?? c.decide.rule}${c.decide.quorum > 0 ? `, with at least ${Math.round(c.decide.quorum / 10)}% of members voting` : ""}.`);
-  if (c.roles.length) out.push(`Roles: ${c.roles.map((r) => `${r.name} (${r.seats}, ${r.by === "founder" ? "founders" : "elected"})`).join("; ")}.`);
+  if (c.roles.length) out.push(`Roles: ${c.roles.map((r) => `${roleLabel(r.name)} (${r.seats}, ${r.by === "founder" ? "founders" : "elected"})`).join("; ")}.`);
   const span = c.period === 96 ? "one day" : c.period === 48 ? "half a day" : `${(c.period / 4).toFixed(c.period % 4 === 0 ? 0 : 1)} hours`;
   out.push(`A period is ${span}${c.days > 0 ? `; the charter lasts ${c.days} days` : ""}. Anyone may leave at any time.`);
   return out;

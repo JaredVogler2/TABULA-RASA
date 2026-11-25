@@ -162,7 +162,17 @@ test("authorizing spend takes the words, and the kill switch works from the cons
   test.skip(!HAS_DB, "needs TEST_DATABASE_URL: the owner console keeps its ledger in PostgreSQL");
   test.skip(testInfo.project.name !== "desktop", "one pass is enough: this changes the shared ledger");
   await signIn(page, testInfo.project.name);
+  // the deployment's own ceiling is shown, and it is not this page's to change
+  await expect(page.getByTestId("ceiling")).toContainText("This deployment's ceiling is $5.00");
   await page.getByText("Change the authorization").click();
+  // more than the deployment allows is refused, whatever is typed, and nothing changes
+  await page.getByTestId("budget-total").fill("6");
+  await page.getByTestId("budget-daily").fill("6");
+  await page.getByTestId("budget-phrase").fill("I authorize this spending");
+  await page.getByTestId("budget-submit").click();
+  await expect(page.getByTestId("budget-panel")).toContainText("more than this deployment may ever be authorized to spend");
+  await expect(page.getByTestId("authorized")).toHaveText("$0.00");
+  await page.getByTestId("budget-phrase").fill("");
   await page.getByTestId("budget-total").fill("2");
   await page.getByTestId("budget-daily").fill("2");
   // without the confirmation phrase the button stays shut
@@ -250,4 +260,22 @@ test("the bundled recording plays from the title screen and matches its record t
   await expect(page.getByTestId("menu")).toContainText("This is a recording (MOCK minds, a deterministic test double)");
   await expect(page.getByTestId("save-game")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("signing out ends every session, wherever its cookie was copied to", async ({ page, request }, testInfo) => {
+  test.skip(!HAS_DB, "needs TEST_DATABASE_URL: sessions end in the ledger's database");
+  const project = testInfo.project.name;
+  await signIn(page, project);
+  const kept = (await page.context().cookies()).filter((c) => c.name === "tr_owner" || c.name === "__Host-tr_owner");
+  expect(kept).toHaveLength(1);
+  const copy = `${kept[0]!.name}=${kept[0]!.value}`;
+  // a copy of the cookie, used from somewhere else, is a session for as long as the owner is signed in
+  const before = (await (await request.get("/api/owner/status", { headers: { cookie: copy } })).json()) as { signedIn: boolean };
+  expect(before.signedIn).toBe(true);
+  await page.getByTestId("signout").click();
+  await expect(page.getByTestId("passphrase")).toBeVisible();
+  // and is nothing afterwards: not expired in twelve hours, ended now
+  const after = await request.get("/api/owner/status", { headers: { cookie: copy } });
+  expect(await after.json()).toEqual({ signedIn: false, signInPossible: true });
+  sessions.delete(project);
 });

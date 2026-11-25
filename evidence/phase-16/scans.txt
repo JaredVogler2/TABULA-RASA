@@ -1,0 +1,34 @@
+Scans and lint rules — 2026-11-25, on the working tree of the phase 15–16 commit
+
+$ pnpm scan:secrets
+  > tsx scripts/scan-secrets.ts
+  scan:secrets passed: 421 text files (tracked, and untracked but not ignored), 9 credential patterns, no env files, no archives, template values empty, no secret-named public variables.
+
+$ pnpm scan:history
+  > tsx scripts/scan-secrets.ts --history
+  scan:history passed: 152854 added lines across the diffs of every commit on every ref (15 diffs), 9 credential patterns, no env file, archive or secret-named public variable ever committed.
+
+$ pnpm build && pnpm scan:bundle
+  > tsx scripts/scan-bundle.ts
+  scan:bundle passed: 157 client-facing files (2158 KB of text), 13 server-only markers, 4 credential shapes, 1 live secret value(s) checked.
+  (the one live value checked is TEST_DATABASE_URL, set in the shell that ran it)
+
+$ pnpm lint
+  clean: no error, no warning (see tests.txt)
+
+The rule against turning a string into markup or code (eslint.config.mjs, "no-injection-sinks"), tried on a
+throwaway file with nine sinks, one to a line — innerHTML, outerHTML, insertAdjacentHTML, document.write,
+eval, new Function, a string timer, a javascript: URL and dangerouslySetInnerHTML. The file was deleted after.
+
+$ pnpm exec eslint src/probe/sinks.tsx
+    3:3   error    No raw HTML: build elements and set textContent (docs/SECURITY.md, "One origin")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-restricted-syntax
+    4:3   error    No raw HTML: build elements and set textContent (docs/SECURITY.md, "One origin")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-restricted-syntax
+    5:3   error    No string-to-markup calls (docs/SECURITY.md, "One origin")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-restricted-syntax
+    6:3   error    No document.write (docs/SECURITY.md, "One origin")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-restricted-syntax
+    7:3   error    eval can be harmful                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-eval
+    8:3   error    The Function constructor is eval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-new-func
+    9:3   error    Implied eval. Consider passing a function instead of a string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-implied-eval
+   10:16  error    Script URL is a form of eval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-script-url
+   11:25  error    No raw HTML: text reaches the page as React text only (docs/SECURITY.md, "One origin")                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-restricted-syntax
+  9 errors from these rules, one for each sink. (The run also printed two react-hooks errors and a
+  warning about the same lines, which are that plugin's own business; eslint exit code 1.)

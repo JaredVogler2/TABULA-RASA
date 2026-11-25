@@ -28,6 +28,8 @@ export const LIMITS = {
   exprDepth: 6,
   constant: 100_000,
   nameChars: 40,
+  /** A role's name is a plain label (ASCII letters, digits, spaces, - and _), always shown in quotation marks. */
+  roleChars: 24,
   purposeChars: 200,
   members: 500,
   bondQty: 20,

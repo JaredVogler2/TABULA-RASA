@@ -1,0 +1,29 @@
+Continuous-integration runs on GitHub, as listed by the repository on 2026-11-25 (newest first)
+
+run  event         result       commit   started (UTC)         what
+ 22  pull_request  in_progress  36ff011  2026-11-25T19:43:14Z  Phases 15–16 and release preparation: performance, adversarial Q
+ 21  push          success      7d5f651  2026-11-25T13:42:33Z  Merge pull request #2 from JaredVogler2/claude/friendly-gauss-ke
+ 20  pull_request  success      8cf713f  2026-11-25T13:03:51Z  Phases 06–08 and 11–14: provider pathway and budget ledger; art,
+ 19  pull_request  success      8683652  2026-11-25T11:16:31Z  Phases 06–08 and 11–14: provider pathway and budget ledger; art,
+ 18  push          failure      8683652  2026-11-25T11:16:27Z  Phases 11-12: second art pass, sound, and the observer's instrum
+ 17  pull_request  success      5651a2b  2026-11-25T09:10:40Z  Phases 06–08 and 11–14: provider pathway and budget ledger; art,
+ 16  push          success      5651a2b  2026-11-25T09:10:08Z  Merge remote-tracking branch 'origin/main' into claude/friendly-
+ 15  push          cancelled    5a47876  2026-11-25T09:09:29Z  Phases 06-08 (close-out): recordings in the game, owner E2E, pro
+ 14  push          success      5b706ed  2026-11-25T08:25:38Z  Phases 06-08 (core): providers, wire format, budget ledger, owne
+ 13  push          success      72030c4  2026-11-25T07:25:47Z  Merge pull request #1 from JaredVogler2/claude/friendly-gauss-ke
+ 12  pull_request  success      e0ec5cd  2026-11-25T07:11:05Z  TABULA RASA: build the simulation, game and lab from the prompt 
+ 11  push          success      e0ec5cd  2026-11-25T07:11:02Z  Phase 10: society measures from the ledger, baseline exchange, O
+ 10  pull_request  success      904c242  2026-11-25T06:55:50Z  TABULA RASA: build the simulation, game and lab from the prompt 
+  9  push          success      904c242  2026-11-25T06:55:47Z  Phase 09: institution grammar, interpreter, pacts and a civic ba
+  8  pull_request  success      78a3f69  2026-11-25T06:03:22Z  TABULA RASA: build the simulation, game and lab from the prompt 
+  7  push          success      78a3f69  2026-11-25T06:03:19Z  Phase 05: agent cognition, planner baseline and a retuned ecolog
+  6  pull_request  success      64fb5e9  2026-11-25T05:06:29Z  TABULA RASA: build the simulation, game and lab from the prompt 
+  5  push          success      64fb5e9  2026-11-25T05:06:26Z  Phase 04: playable offline slice with first art pass
+  4  pull_request  success      b8a2e17  2026-11-25T03:35:13Z  TABULA RASA: build the simulation, game and lab from the prompt 
+  3  push          success      b8a2e17  2026-11-25T03:35:10Z  Phase 03: deterministic world engine, ecology and reflex baselin
+  2  pull_request  success      403d1ea  2026-11-25T03:04:08Z  TABULA RASA: build the simulation, game and lab from the prompt 
+  1  push          success      403d1ea  2026-11-25T03:03:51Z  Phase 01-02: charter, pre-registered protocol, deterministic cor
+
+22 runs: 19 succeeded; 1 failed (run 18: a transient "Unable to capture screenshot" in a browser test; captures
+were made to retry through one helper, and the following run on the same content passed); 1 was cancelled when
+a newer push replaced it; 1 was in progress when this was listed (pull request 3).

@@ -41,8 +41,8 @@ import { newSchedulerState, type SchedulerState, type TraceEntry } from "@/provi
 import type { CallResult, DecisionCall, Provider } from "@/providers/types";
 import { WIRE_VERSION } from "@/providers/wire";
 import { FATAL_CODES } from "./anthropic";
-import { num, type Db } from "./db";
-import { audit, type Ledger } from "./ledger";
+import { num, type Db, type Queryer } from "./db";
+import { audit, type Ledger, type Outcome } from "./ledger";
 
 export type RunStatus = "active" | "paused" | "done" | "cancelled" | "failed";
 
@@ -234,17 +234,22 @@ export async function createRun(db: Db, ledger: Ledger, input: CreateInput, live
   return { ok: true, run: (await getRun(db, id)) as Run, preview };
 }
 
+/** A change of a run's status and its entry in the audit log are one transaction: neither exists without the other. */
 export async function setRunStatus(db: Db, id: string, to: "paused" | "active" | "cancelled", actor: string, reason = ""): Promise<boolean> {
   const from = to === "paused" ? "status = 'active'" : to === "active" ? "status = 'paused'" : "status IN ('active', 'paused')";
-  const rows = await db.query(`UPDATE runs SET status = $2, status_reason = $3, updated_at = now() WHERE id = $1 AND ${from} RETURNING id`, [id, to, reason.slice(0, 200)]);
-  if (rows.length) await audit(db, actor, `run.${to}`, { id, reason });
-  return rows.length > 0;
+  return db.tx(async (q) => {
+    const rows = await q.query(`UPDATE runs SET status = $2, status_reason = $3, updated_at = now() WHERE id = $1 AND ${from} RETURNING id`, [id, to, reason.slice(0, 200)]);
+    if (rows.length) await audit(q, actor, `run.${to}`, { id, reason: reason.slice(0, 200) });
+    return rows.length > 0;
+  });
 }
 
 export async function publishRun(db: Db, id: string, published: boolean, actor: string): Promise<boolean> {
-  const rows = await db.query("UPDATE runs SET published = $2, updated_at = now() WHERE id = $1 RETURNING id", [id, published]);
-  if (rows.length) await audit(db, actor, published ? "run.publish" : "run.unpublish", { id });
-  return rows.length > 0;
+  return db.tx(async (q) => {
+    const rows = await q.query("UPDATE runs SET published = $2, updated_at = now() WHERE id = $1 RETURNING id", [id, published]);
+    if (rows.length) await audit(q, actor, published ? "run.publish" : "run.unpublish", { id });
+    return rows.length > 0;
+  });
 }
 
 // ───────────────────────── stepping a run
@@ -267,6 +272,12 @@ interface StoredCall {
 }
 
 const FINAL = new Set(["ok", "malformed", "truncated", "refused", "unknown", "abstain"]);
+/** Answers that were paid for, or may have been, and could not be used. */
+const UNUSABLE = new Set(["malformed", "truncated", "refused", "unknown"]);
+/** After this many of them in a row, with no usable answer between, a paid run stops and waits for a person. */
+export const UNUSABLE_LIMIT = 3;
+/** A stored result larger than this is not a decision: it is recorded as one that could not be kept. */
+const MAX_STORED_RESULT = 200_000;
 const isFinal = (c: StoredCall, maxAttempts: number): boolean => FINAL.has(c.status) || !(c.result.error?.retryable ?? false) || c.attempt >= maxAttempts;
 
 export interface StepOptions {
@@ -274,6 +285,11 @@ export interface StepOptions {
   owner: string;
   /** Stop starting new calls after this much time (ms). */
   budgetMs: number;
+  /**
+   * How long the lease on the run holds. No call is left waiting past twenty seconds before
+   * its end: by then every call has timed out, been recorded, and the step has finished, so a
+   * second stepper never overlaps the first and nothing is paid for with nobody to record it.
+   */
   leaseSeconds?: number;
   /** Pause before a second attempt after a failure that may clear (a rate limit, an overloaded provider). */
   retryDelayMs?: number;
@@ -326,18 +342,50 @@ export async function stepRun(db: Db, ledger: Ledger, id: string, provider: Prov
       attemptsMade.set(c.agent, Math.max(attemptsMade.get(c.agent) ?? 0, c.attempt));
       if (isFinal(c, run.spec.maxAttempts)) have.set(c.agent, { result: c.result, attempts: c.attempt });
     }
+    let streak = 0;
     if (provider.paid) {
-      // a reservation with no recorded outcome belongs to an attempt that was cut off in flight: its fate is unknown
-      const orphans = await db.query("SELECT r.id FROM reservations r WHERE r.run_id = $1 AND r.state = 'reserved' AND r.id LIKE $2 AND NOT EXISTS (SELECT 1 FROM calls c WHERE c.reservation_id = r.id)", [id, `${id}:${epoch}:%`]);
+      // A reservation of this epoch with no record of a call belongs to an attempt whose step
+      // ended before it could write one — killed in flight, or swept as unknown while it lay
+      // there, or (in an older record) stopped between the money and the record. Whatever
+      // became of the money, the answer is gone: the attempt is over, a record of it is written
+      // now, and its number is never used again. Without this the same reservation would be
+      // refused as a duplicate on every later step and the run would never move.
+      const orphans = await db.query("SELECT r.id, r.state, r.settled_microusd + r.overage_microusd AS cost FROM reservations r WHERE r.run_id = $1 AND r.id LIKE $2 AND NOT EXISTS (SELECT 1 FROM calls c WHERE c.reservation_id = r.id)", [id, `${id}:${epoch}:%`]);
       for (const o of orphans) {
         const [, , agentText, attemptText] = String(o.id).split(":");
         const agent = Number(agentText);
         const attempt = Number(attemptText);
-        await ledger.markUnknown(String(o.id), "no outcome was recorded");
-        const result: CallResult = { status: "unknown", decision: null, confidence: "", cites: [], text: null, usage: null, costMicroUsd: null, model: provider.model, requestId: null, stopReason: null, error: { code: "interrupted", status: null, retryable: false, message: "" }, latencyMs: 0 };
-        await db.query("INSERT INTO calls (run_id, epoch, agent, attempt, status, reason, reservation_id, result) VALUES ($1, $2, $3, $4, 'unknown', 'interrupted', $5, $6) ON CONFLICT DO NOTHING", [id, epoch, agent, attempt, String(o.id), JSON.stringify(result)]);
+        if (!Number.isInteger(agent) || !Number.isInteger(attempt)) continue;
+        const state = String(o.state);
+        const released = state === "released";
+        const settled = state === "settled";
+        const result: CallResult = {
+          status: released ? "rejected" : "unknown",
+          decision: null,
+          confidence: "",
+          cites: [],
+          text: null,
+          usage: null,
+          costMicroUsd: released ? 0 : settled ? num(o.cost) : null,
+          model: provider.model,
+          requestId: null,
+          stopReason: null,
+          error: { code: released ? "released_without_record" : settled ? "answer_lost" : "interrupted", status: null, retryable: false, message: "" },
+          latencyMs: 0,
+        };
+        const record = async (q: Queryer): Promise<void> => {
+          await q.query("INSERT INTO calls (run_id, epoch, agent, attempt, status, reason, reservation_id, result) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING", [id, epoch, agent, attempt, result.status, result.error?.code ?? "", String(o.id), JSON.stringify(result)]);
+        };
+        if (state === "reserved") await ledger.conclude(String(o.id), { kind: "unknown", note: "no outcome was recorded" }, record);
+        else await record(db);
         have.set(agent, { result, attempts: attempt });
         attemptsMade.set(agent, Math.max(attemptsMade.get(agent) ?? 0, attempt));
+      }
+      // how the run's most recent paid answers went: a run that keeps paying for answers it cannot use is stopped
+      const recent = await db.query("SELECT status FROM calls WHERE run_id = $1 AND reservation_id IS NOT NULL ORDER BY created_at DESC, epoch DESC, agent DESC, attempt DESC LIMIT $2", [id, UNUSABLE_LIMIT]);
+      for (const r of recent) {
+        if (!UNUSABLE.has(String(r.status))) break;
+        streak++;
       }
     }
 
@@ -373,31 +421,60 @@ export async function stepRun(db: Db, ledger: Ledger, id: string, provider: Prov
           }
           return active ? { go: true } : { go: false, why: "run_not_active" };
         },
-        after: async (call, result) => {
+        after: async (call, given) => {
           calls++;
           const rid = provider.paid ? reservationOf(call) : null;
-          if (rid) {
-            // the money is accounted for before anything else is done with the answer
-            if (result.status === "rejected") await ledger.release(rid, result.error?.code ?? "rejected");
-            else if (result.costMicroUsd === null || result.status === "unknown") await ledger.markUnknown(rid, result.error?.code ?? "unknown");
-            else await ledger.settle(rid, { costMicroUsd: result.costMicroUsd, usage: result.usage, requestId: result.requestId, note: result.status });
+          // an answer that cannot be written down is recorded as one that could not be read —
+          // and its money is accounted for exactly as if it could
+          let result = given;
+          let stored = "";
+          try {
+            stored = JSON.stringify(result);
+          } catch {
+            stored = "";
           }
-          await db.query(
-            "INSERT INTO calls (run_id, epoch, agent, attempt, status, reason, request_hash, reservation_id, result, latency_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING",
-            [id, call.epoch, call.agent, call.attempt, result.status, reasonOf.get(call.agent) ?? "", requestHash(call.request, provider.model, call.maxTokens, call.effort), rid, JSON.stringify(result), Math.round(result.latencyMs)],
-          );
+          if (stored === "" || stored.length > MAX_STORED_RESULT) {
+            result = { ...given, status: given.costMicroUsd === null || given.status === "unknown" ? "unknown" : given.status === "rejected" ? "rejected" : "malformed", decision: null, confidence: "", cites: [], text: null, error: { code: "unserializable", status: given.error?.status ?? null, retryable: false, message: "" } };
+            stored = JSON.stringify(result);
+          }
+          const record = async (q: Queryer): Promise<void> => {
+            await q.query(
+              "INSERT INTO calls (run_id, epoch, agent, attempt, status, reason, request_hash, reservation_id, result, latency_ms) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING",
+              [id, call.epoch, call.agent, call.attempt, result.status, reasonOf.get(call.agent) ?? "", requestHash(call.request, provider.model, call.maxTokens, call.effort), rid, stored, Math.round(result.latencyMs)],
+            );
+          };
+          if (rid) {
+            // the money and the record of the call are written together, or not at all
+            const outcome: Outcome =
+              result.status === "rejected"
+                ? { kind: "release", note: result.error?.code ?? "rejected" }
+                : result.costMicroUsd === null || result.status === "unknown"
+                  ? { kind: "unknown", note: result.error?.code ?? "unknown" }
+                  : { kind: "settle", input: { costMicroUsd: result.costMicroUsd, usage: result.usage, requestId: result.requestId, note: result.status } };
+            const done = await ledger.conclude(rid, outcome, record);
+            // charged after its hold had been given back: the ledger has turned the kill switch on, and the run waits too
+            if (done === "late") stop = { status: "paused", reason: "charged_after_release" };
+            if (result.status === "ok") streak = 0;
+            else if (UNUSABLE.has(result.status)) streak++;
+            if (streak >= UNUSABLE_LIMIT && stop === null) stop = { status: "paused", reason: "unusable_answers" };
+          } else {
+            await record(db);
+          }
           if (result.error && FATAL_CODES.includes(result.error.code)) stop = { status: "failed", reason: result.error.code };
+          return result;
         },
       },
-      { deadlineMs: started + options.budgetMs, now, warmFirst: provider.paid, attemptsMade, retryDelayMs: options.retryDelayMs ?? 1500 },
+      { deadlineMs: started + options.budgetMs, hardDeadlineMs: started + leaseSeconds * 1000 - 20_000, now, warmFirst: provider.paid, attemptsMade, retryDelayMs: options.retryDelayMs ?? 1500 },
     );
 
     const all = new Map([...have, ...asked]);
     const halted = stop as { status: "paused" | "failed"; reason: string } | null;
     if (halted) {
       // the epoch stays open: whatever was answered is kept, and nothing more is asked until a person intervenes
-      await db.query("UPDATE runs SET status = $2, status_reason = $3, updated_at = now() WHERE id = $1 AND status = 'active'", [id, halted.status, halted.reason]);
-      await audit(db, "runner", `run.${halted.status}`, { id, epoch, reason: halted.reason });
+      await db.tx(async (q) => {
+        const changed = await q.query("UPDATE runs SET status = $2, status_reason = $3, updated_at = now() WHERE id = $1 AND status = 'active' RETURNING id", [id, halted.status, halted.reason]);
+        if (changed.length) await audit(q, "runner", `run.${halted.status}`, { id, epoch, reason: halted.reason });
+      });
       return { state: halted.status, run: await getRun(db, id), epoch, calls, reason: halted.reason };
     }
     if (!active) return { state: "not_active", run: await getRun(db, id), epoch, calls };

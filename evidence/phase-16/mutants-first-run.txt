@@ -1,0 +1,24 @@
+unmutated: 15 test files pass in the copy (42.6 s)
+
+killed    ledger-kill-switch             with the kill switch on, nothing new is held  (4 tests failed, 4.9 s)
+killed    ledger-total                   what is held, settled and overcharged never exceeds what was authorized  (6 tests failed, 25.7 s)
+killed    ledger-ceiling                 nothing above the deployment's ceiling can be authorized  (2 tests failed, 24.6 s)
+killed    ledger-settle-once             a settlement is applied once, however many times it arrives  (3 tests failed, 5.9 s)
+killed    gate-csrf                      a write without the session's own token changes nothing  (3 tests failed, 23.9 s)
+killed    gate-origin                    a write from another site is refused  (5 tests failed, 22.1 s)
+killed    session-epoch                  signing out ends every session  (1 test failed, 24.9 s)
+killed    sign-in-limit                  guessing the passphrase is slowed  (3 tests failed, 19.2 s)
+killed    provider-error-proves-nothing  a failure that is not in the provider's own format is never taken as unbilled  (2 tests failed, 1.5 s)
+killed    run-lease                      one stepper at a time holds a run  (1 test failed, 7.3 s)
+killed    goods-conserved                nothing is made from nothing: what is gathered leaves the place it was gathered from, unit for unit  (7 tests failed, 11.8 s)
+killed    speech-untold                  a speaker can tell only of what they know  (2 tests failed, 7.9 s)
+SURVIVED  hearing-belief                 a hearer learns of an agreement only from someone who knows of it
+killed    role-label                     the name of a role cannot be a sentence  (2 tests failed, 6.5 s)
+killed    authority-members              only a member can put a motion to an agreement  (1 test failed, 6.1 s)
+killed    payload-depth                  what a mind attaches to an intent is bounded in depth  (1 test failed, 0.6 s)
+killed    file-ranges                    an opened world whose numbers are out of range is refused  (1 test failed, 35.8 s)
+killed    replay-digest                  a recording that this engine does not reproduce is not accepted as reproduced  (4 tests failed, 5.8 s)
+SURVIVED  route-memo                     a failed route search is remembered only while what the agent has seen is unchanged
+killed    determinism                    the same seed and the same decisions make the same world (the golden recording)  (1 test failed, 1 s)
+
+18 of 20 seeded mutants killed; SURVIVED: hearing-belief, route-memo.

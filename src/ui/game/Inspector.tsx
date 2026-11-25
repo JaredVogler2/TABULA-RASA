@@ -6,6 +6,7 @@ import { NODE_LABEL } from "@/worker/describe";
 import { useGame } from "@/store/game";
 import type { AgentDetail, TileDetail } from "@/worker/protocol";
 import { useController } from "./context";
+import { useSwipeDown } from "./swipe";
 import styles from "./game.module.css";
 import { MEMORY_TEXT, goalSentence, itemName, outcomeLine, structureName, tickLabel, type OutcomeLine } from "./text";
 
@@ -50,6 +51,7 @@ export function mindSentence(controller: string, source: string, recorded: boole
 
 function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
   const controller = useController();
+  const swipe = useSwipeDown(() => controller.select(null));
   const following = useGame((s) => s.following);
   const overlay = useGame((s) => s.overlay);
   const tiles = useGame((s) => (s.world ? s.world.w * s.world.h : 0));
@@ -64,7 +66,7 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
     .slice(0, 8);
   return (
     <>
-      <div className={styles.panelHead}>
+      <div className={styles.panelHead} {...swipe}>
         <div className={styles.panelTitle}>
           <div className={styles.kicker}>{detail.alive ? "Citizen" : "Died"}</div>
           <h2 data-testid="inspector-name">{detail.name}</h2>
@@ -298,6 +300,7 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
 
 function TileCard({ detail }: { detail: TileDetail }) {
   const controller = useController();
+  const swipe = useSwipeDown(() => controller.select(null));
   const roster = useGame((s) => s.roster);
   const biome = BIOMES[detail.biome] ?? "land";
   const node = detail.node;
@@ -305,7 +308,7 @@ function TileCard({ detail }: { detail: TileDetail }) {
   const s = detail.structure;
   return (
     <>
-      <div className={styles.panelHead}>
+      <div className={styles.panelHead} {...swipe}>
         <div className={styles.panelTitle}>
           <div className={styles.kicker}>
             Place · {detail.x}, {detail.y}

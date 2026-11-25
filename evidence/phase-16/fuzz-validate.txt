@@ -1,0 +1,13 @@
+# The state validator's property test at 3,000 cases (400 on every run of the suite). 2026-11-25 · v22.23.5
+# Whatever passes validation must be livable: a corrupted save is refused, or it runs, and it never breaks the engine.
+$ FUZZ_RUNS=3000 pnpm exec vitest run src/engine/save/validate.test.ts
+ RUN  v5.1.1 /home/user/TABULA-RASA
+ ✓ src/engine/save/validate.test.ts (3 tests) 188730ms
+   ✓ a stored world is checked before it is lived in (3)
+     ✓ everything the engine itself produces passes: every scenario, with interventions, agreements, offers and outside minds 12527ms
+     ✓ refuses a state that would drive the engine out of bounds or into an endless loop, and says where 1789ms
+     ✓ property: whatever passes can be lived in — a corrupted save is refused or runs, and never breaks the engine 174412ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  18:18:02
+   Duration  189.00s (tests 100%)

@@ -184,11 +184,15 @@ test("history: an exact re-run, the twin on screen, a new line, a return, a rebu
   await page.getByTestId("open-history").click();
   await expect(page.getByTestId("rebuild-offer")).toBeVisible();
   await expect(page.getByTestId("moment-0")).toHaveCount(0);
+  // an opened world's past is a claim until it has been lived again
+  await expect(page.getByTestId("provenance")).toHaveAttribute("data-provenance", "opened");
   await page.getByTestId("rebuild-past").click();
   await expect(page.getByTestId("toast")).toContainText("arriving at exactly this world", { timeout: 120_000 });
   await expect(page.getByTestId("moment-0")).toBeVisible();
   await expect(page.getByTestId("moment-384")).toBeVisible();
   await expect(page.getByTestId("rebuild-offer")).toHaveCount(0);
+  await expect(page.getByTestId("provenance")).toHaveAttribute("data-provenance", "relived");
+  await expect(page.getByTestId("provenance")).toContainText("Checked");
   await shot(page, project, "45-past-rebuilt");
   // a rebuilt morning is as good as a remembered one: re-run from it and arrive at the saved world
   await page.getByTestId("moment-384").click();
@@ -251,9 +255,15 @@ test("history: an exact re-run, the twin on screen, a new line, a return, a rebu
   expect(await tick(page)).toBe(left + 3);
 
   await page.getByTestId("import-file").setInputFiles(good);
-  await expect(page.getByTestId("toast")).toContainText("Its contents match its manifest");
+  // a whole file is said to be whole, and no more than that: its past is a claim until it is lived again
+  await expect(page.getByTestId("toast")).toContainText("The file is whole");
+  await expect(page.getByTestId("toast")).toContainText("its past is unchecked");
   expect(await tick(page)).toBe(left + 2);
   await expect(page.getByTestId("forked-badge")).toBeVisible();
+  await page.getByTestId("open-history").click();
+  await expect(page.getByTestId("provenance")).toHaveAttribute("data-provenance", "opened");
+  await expect(page.getByTestId("provenance")).toContainText("Not checked");
+  await page.getByTestId("history-close").click();
 
   mark("files out and in");
 
