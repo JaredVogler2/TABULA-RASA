@@ -330,7 +330,12 @@ export class GameController {
       }
     }
     this.feedSound();
-    if (now - this.lastHud > 120) {
+    // The top bar is redrawn at most eight times a second — except when time has started or stopped, or the
+    // world on screen has changed: the frame that says so is shown at once. (A page that is slow is sent two
+    // frames close together, one that waited for it and one made the moment it took that; throttled alike,
+    // the second — the one that says "paused" — was not shown until the page's next turn.)
+    const hudNow = state.hud;
+    if (now - this.lastHud > 120 || !hudNow || hudNow.playing !== frame.playing || hudNow.viewing !== frame.viewing) {
       this.lastHud = now;
       const patch: Partial<ReturnType<typeof useGame.getState>> = {
         hud: {
@@ -371,11 +376,15 @@ export class GameController {
       this.lastInspect = now;
       void this.refreshInspector();
     }
-    // autosave every second simulated day while a real game is running (a recording is never saved).
-    // The first frame seen on such a day does it: at high speeds several ticks pass between frames, and
-    // waiting for the frame that lands exactly on midnight would skip most of them.
-    if (!state.vista && !frame.replay && frame.playing && frame.cal.day > 0 && frame.cal.day % 2 === 0 && frame.cal.day !== this.lastAutosaveDay) {
-      this.lastAutosaveDay = frame.cal.day;
+    // Autosave on every second morning while a real game is running (a recording is never saved). The page is
+    // not shown every moment of the world: at the fastest speed a day lasts under a second, and a page that is
+    // busy is shown the world as it is when it next looks (D-050). So what is asked of a frame is not "is this a
+    // second morning" but "has a second morning come that was not kept": the first frame seen on or after one
+    // keeps it. (While the browser is still deciding which tab holds the slot nothing can be written, and the
+    // morning stays owed.)
+    const due = frame.cal.day - (frame.cal.day % 2);
+    if (!state.vista && !frame.replay && frame.playing && due > 0 && due !== this.lastAutosaveDay && this.autosaveOwner !== "asking") {
+      this.lastAutosaveDay = due;
       void this.autosave();
     }
   }
@@ -526,8 +535,8 @@ export class GameController {
     renderer.pushFrame(ready.frame);
     renderer.start();
     this.pendingChronicle = [];
-    // the day a world is arrived at is not autosaved again: the next one is the next second morning
-    this.lastAutosaveDay = ready.frame.cal.day;
+    // a world that is arrived at is not autosaved for the mornings behind it: the next one kept is its next second morning
+    this.lastAutosaveDay = ready.frame.cal.day - (ready.frame.cal.day % 2);
     this.structures = ready.frame.structures ?? [];
     this.marks = ready.frame.marks ?? [];
     this.traffic = ready.frame.traffic;

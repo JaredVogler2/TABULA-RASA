@@ -1,0 +1,167 @@
+pnpm e2e in a clean checkout of de2f0e1 — 2026-11-25
+The whole browser suite against that commit's production build, desktop and phone projects, one worker, headless
+Chromium with a software renderer (no graphics chip), nothing else running on the machine. Exit code 1:
+28 passed, 5 skipped by design (tests that belong to one project only), 1 timed out, in 39.7m.
+
+The one that timed out is the test that asks the software renderer for more than it can draw and then steps two
+worlds by hand: its 300-second limit ran out with the first world done and the second half way (the snapshot of
+the page at that moment shows the first world at 12:00 on day 1, six hours stepped). Nothing it asserts failed.
+Its limit was raised to ten minutes, like the two-tabs test's, and run on its own it passes in 4.5m
+(e2e-fallback-rerun.txt). The same commit's whole suite passed on GitHub's runners, both projects (ci.txt).
+What follows is the command's output, colours removed.
+
+
+> tabula-rasa@0.1.0 e2e <checkout>
+> playwright test --trace off
+
+[WebServer] ▲ Next.js 16.4.6
+[WebServer] - Local:         http://localhost:3210
+[WebServer] - Network:       http://192.0.2.2:3210
+[WebServer] ✓ Ready in 98ms
+[WebServer] ✓ Running next.config.ts took 27ms
+
+Running 34 tests using 1 worker
+
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (3.2m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (245ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (21ms)
+[history desktop] 89s forked, top bar measured · 119s twin seen · 162s watched again · 202s new line, return, compare · 297s saved, reloaded, past rebuilt, re-run from it · 328s files out and in · 353s recorded cause
+  ✓   4 [desktop] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (5.9m)
+  ✓   5 [desktop] › tests/e2e/lab.spec.ts:40:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (18.0s)
+  ✓   6 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.0m)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (218ms)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.0s)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console (697ms)
+  ✓  10 [desktop] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (10.6s)
+  ✓  11 [desktop] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (45.6s)
+  ✓  12 [desktop] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (605ms)
+  ✓  13 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.2m)
+  ✓  14 [desktop] › tests/e2e/play.spec.ts:202:1 › the keyboard alone can drive the game: every key it reads, and never a pointer (1.6m)
+  ✓  15 [desktop] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about (1.0m)
+  ✓  16 [desktop] › tests/e2e/resilience.spec.ts:113:1 › two tabs share one autosave slot without overwriting each other, and an altered save is refused (3.4m)
+  ✘  17 [desktop] › tests/e2e/resilience.spec.ts:217:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world (5.0m)
+  ✓  18 [mobile] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (3.1m)
+  ✓  19 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (341ms)
+  ✓  20 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (21ms)
+[history mobile] 76s forked, top bar measured · 106s twin seen · 146s watched again · 180s new line, return, compare · 267s saved, reloaded, past rebuilt, re-run from it · 301s files out and in · 325s recorded cause
+  ✓  21 [mobile] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (5.4m)
+  ✓  22 [mobile] › tests/e2e/lab.spec.ts:40:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (19.2s)
+  ✓  23 [mobile] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.2m)
+  ✓  24 [mobile] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (104ms)
+  ✓  25 [mobile] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.3s)
+  -  26 [mobile] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console
+  ✓  27 [mobile] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (9.9s)
+  ✓  28 [mobile] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (47.5s)
+  ✓  29 [mobile] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (320ms)
+  ✓  30 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.0m)
+  -  31 [mobile] › tests/e2e/play.spec.ts:202:1 › the keyboard alone can drive the game: every key it reads, and never a pointer
+  -  32 [mobile] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about
+  -  33 [mobile] › tests/e2e/resilience.spec.ts:113:1 › two tabs share one autosave slot without overwriting each other, and an altered save is refused
+  -  34 [mobile] › tests/e2e/resilience.spec.ts:217:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world
+
+
+  1) [desktop] › tests/e2e/resilience.spec.ts:217:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world 
+
+    Test timeout of 300000ms exceeded.
+
+    Error: browserContext.close: Test ended.
+    Browser logs:
+
+    <launching> /opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-O4wbAq --remote-debugging-pipe --no-startup-window
+    <launched> pid=14931
+    [pid=14931][err] [1125/203150.250390:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+    [pid=14931][err] [1125/203150.251228:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=14931][err] [1125/203150.255019:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+    [pid=14931][err] [1125/203150.255192:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+    [pid=14931][err] [1125/203150.255689:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=14931][err] [1125/203150.255773:WARNING:dbus/object_proxy.cc:439] Failed to connect to NameOwnerChanged signal for object: /org/freedesktop/portal/desktop
+    [pid=14931][err] [1125/203150.255794:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=14931][err] [1125/203150.255799:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=14931][err] [1125/203150.279312:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+    [pid=14931][err] [1125/203150.279926:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+    [pid=14931][err] [1125/203150.280002:WARNING:device/bluetooth/dbus/bluez_dbus_manager.cc:209] Floss manager service not available, cannot set Floss enable/disable.
+    [pid=14931][err] [1125/203150.280671:WARNING:media/gpu/vaapi/vaapi_wrapper.cc:1652] drmGetDevices2() has not found any devices
+    [pid=14931][err] [1125/203150.283978:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+    [pid=14931][err] [1125/203150.287672:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+    [pid=14931][err] [1125/203150.415568:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/203151.346424:ERROR:gpu/command_buffer/service/gl_utils.cc:431] [.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+    [pid=14931][err] [1125/203152.572460:INFO:CONSOLE:0] "[.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203152.611445:ERROR:gpu/command_buffer/service/gl_utils.cc:431] [.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+    [pid=14931][err] [1125/203152.981739:INFO:CONSOLE:0] "[.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203152.985410:ERROR:gpu/command_buffer/service/gl_utils.cc:431] [.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+    [pid=14931][err] [1125/203153.290484:INFO:CONSOLE:0] "[.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203153.293332:ERROR:gpu/command_buffer/service/gl_utils.cc:431] [.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+    [pid=14931][err] [1125/203153.599866:INFO:CONSOLE:0] "[.WebGL-0x22c003d2800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203154.239826:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203201.090215:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203339.235349:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203339.235589:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/41z66l66mcmnt.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/203503.467256:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/203504.958684:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/203505.232913:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/203509.221959:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.4 (0)
+    [pid=14931][err] [1125/203836.728488:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/203840.819679:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.4 (0)
+    [pid=14931][err] [1125/204058.785017:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204116.760876:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204125.564818:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204140.065444:WARNING:media/audio/linux/audio_manager_linux.cc:53] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
+    [pid=14931][err] [1125/204202.536393:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204202.536431:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/41z66l66mcmnt.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204206.587945:WARNING:services/audio/sync_reader.cc:154] ASR: No room in socket buffer.: Broken pipe (32)
+    [pid=14931][err] [1125/204319.260870:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204319.556418:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204321.239183:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204321.956915:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204325.699955:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?recording=run_mwwlc4il_9mbesz1w&q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204332.511108:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204342.161557:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204350.085298:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204418.126611:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204418.714435:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204422.427857:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204621.912096:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204621.912165:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/41z66l66mcmnt.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204622.326684:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204625.982792:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204632.851339:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204806.498654:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204810.405390:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204857.374590:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.6 (0)
+    [pid=14931][err] [1125/204906.582526:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/204916.060597:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.4 (0)
+    [pid=14931][err] [1125/205002.467484:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/205026.853989:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.4 (0)
+    [pid=14931][err] [1125/205227.639583:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/205228.175359:INFO:CONSOLE:1] "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.", source: http://127.0.0.1:3210/_next/static/chunks/06pag4tw6r7ft.js (1)
+    [pid=14931][err] [1125/205231.597951:INFO:CONSOLE:1] "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.", source: http://127.0.0.1:3210/_next/static/chunks/06pag4tw6r7ft.js (1)
+    [pid=14931][err] [1125/205232.316816:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/ (0)
+    [pid=14931][err] [1125/205237.373874:INFO:CONSOLE:1] "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.", source: http://127.0.0.1:3210/_next/static/chunks/06pag4tw6r7ft.js (1)
+    [pid=14931][err] [1125/205242.824594:INFO:CONSOLE:1] "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.", source: http://127.0.0.1:3210/_next/static/chunks/06pag4tw6r7ft.js (1)
+    [pid=14931][err] [1125/205247.177105:INFO:CONSOLE:1] "THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.", source: http://127.0.0.1:3210/_next/static/chunks/06pag4tw6r7ft.js (1)
+    [pid=14931][err] [1125/205312.374436:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/ (0)
+    [pid=14931][err] [1125/205312.374745:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/41z66l66mcmnt.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/ (0)
+    [pid=14931][err] [1125/205414.460679:INFO:CONSOLE:0] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+    [pid=14931][err] [1125/205424.514359:INFO:CONSOLE:0] "The resource http://127.0.0.1:3210/_next/static/chunks/2rb6idmy6-nm5.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.", source: http://127.0.0.1:3210/?q=low&pr=0.4 (0)
+    [pid=14931] <gracefully close start>
+
+      279 |     expect(simplified).toEqual(reference);
+      280 |   } finally {
+    > 281 |     await other.close();
+          |     ^
+      282 |   }
+      283 |
+      284 |   expect(errors, `page errors: ${errors.join(" | ")}`).toEqual([]);
+        at <checkout>/tests/e2e/resilience.spec.ts:281:5
+
+    Error Context: test-results/resilience-a-renderer-that-d0bb1-hanges-nothing-in-the-world-desktop/error-context.md
+
+  Slow test file: [desktop] › tests/e2e/resilience.spec.ts (8.4m)
+  Slow test file: [desktop] › tests/e2e/history.spec.ts (5.9m)
+  Slow test file: [mobile] › tests/e2e/history.spec.ts (5.4m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [desktop] › tests/e2e/resilience.spec.ts:217:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world 
+  5 skipped
+  28 passed (39.7m)
+ ELIFECYCLE  Command failed with exit code 1.

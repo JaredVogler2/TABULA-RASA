@@ -121,7 +121,7 @@ baseline policies emit and passes through the same checking and completion code 
 
 | Host | Runs | Notes |
 |---|---|---|
-| Browser Web Worker | Free play, the title vista, the untouched twin and other world lines, replay of recordings (`sim.worker.ts`); the laboratory's re-run of one study cell (`lab.worker.ts`); the diagnostics self-test (`selftest.worker.ts`) | Posts compact view frames to the UI. The worker holds the world, its twin, its keyframes and the event ledger in memory and never touches IndexedDB; the page writes saves there (`src/persist/saves.ts`, §8). Study batches do not run in the browser (next row). |
+| Browser Web Worker | Free play, the title vista, the untouched twin and other world lines, replay of recordings (`sim.worker.ts`); the laboratory's re-run of one study cell (`lab.worker.ts`); the diagnostics self-test (`selftest.worker.ts`) | Posts compact view frames to the UI, one at a time: the next goes when the page has answered the last, so a slow page is shown the world as it is and never a queue of what it missed (D-050). The worker holds the world, its twin, its keyframes and the event ledger in memory and never touches IndexedDB; the page writes saves there (`src/persist/saves.ts`, §8). Study batches do not run in the browser (next row). |
 | Node (scripts, Vitest) | Headless runs, benchmarks, studies, property tests | Same engine build. |
 | Server route handlers | Owner-authorized live runs | Server-authoritative world; see §7. |
 

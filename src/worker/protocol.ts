@@ -559,7 +559,13 @@ export type ToWorker =
   | { type: "rebuild"; requestId: number }
   | { type: "frameRate"; hz: number }
   /** Ask for structures, piles, traffic and roster to be re-sent in the next frame (after a renderer rebuild). */
-  | { type: "resync" };
+  | { type: "resync" }
+  /**
+   * The page has taken a frame: the next may be sent. The worker sends a frame only when the last
+   * one has been taken, so a page slower than the world is shown the world as it is when it next
+   * looks, and never a queue of the moments it missed (D-050). Sent once for every `frame` message.
+   */
+  | { type: "taken" };
 
 export type FromWorker =
   | { type: "ready"; requestId: number; world: StaticWorldView; frame: ViewFrame; series: DaySample[]; controlSeries: DaySample[]; imported?: { manifest: Manifest; extras: Record<string, unknown> } }

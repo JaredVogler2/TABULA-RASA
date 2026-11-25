@@ -190,8 +190,9 @@ desktop window and as a phone. It signs in nowhere, sends no secret and changes 
 pnpm release:check -- https://SITE
 ```
 
-(`--level 2` once the console is configured; `--out <dir>` keeps screenshots and a JSON report.) What it
-checks, each of which can also be done by hand:
+(`--level 2` once the console is configured; `--out <dir>` keeps screenshots and a JSON report. It drives a
+real browser: on a machine that has never run the browser tests, `pnpm exec playwright install chromium`
+first.) What it checks, each of which can also be done by hand:
 
 | Check | By hand | Expect |
 |---|---|---|

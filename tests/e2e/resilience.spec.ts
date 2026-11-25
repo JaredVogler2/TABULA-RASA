@@ -32,12 +32,26 @@ async function begin(page: Page, seed: string, address = "/?q=low&pr=0.4", first
   else await expect(page.getByTestId("coach")).toHaveCount(0);
 }
 
-async function playPast(page: Page, target: number): Promise<void> {
+/**
+ * Play at the fastest speed until the top bar shows a tick past `target`, then pause. Returns a tick
+ * the top bar showed while time was still running: the page had seen the world that far, in motion.
+ */
+async function playPast(page: Page, target: number): Promise<number> {
   await page.getByTestId("speed-5").click();
   if ((await page.getByTestId("play-toggle").getAttribute("data-playing")) !== "true") await page.getByTestId("play-toggle").click();
-  await expect.poll(() => tick(page), { timeout: 240_000 }).toBeGreaterThan(target);
+  let seen = 0;
+  await expect
+    .poll(
+      async () => {
+        seen = await tick(page);
+        return seen;
+      },
+      { timeout: 240_000 },
+    )
+    .toBeGreaterThan(target);
   await page.getByTestId("play-toggle").click();
   await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "false");
+  return seen;
 }
 
 interface Stored {
@@ -48,24 +62,35 @@ interface Stored {
 }
 
 /**
- * After playing at the fastest speed and pausing: the slot holds this seed's world as it was on one
- * of the last second mornings. Which one cannot be fixed in advance — on a slow renderer the world
- * runs on while the test's own click waits its turn — so it is read off where the world stopped:
- * an even day, not after today, and no more than one autosave behind. (That the slot is not simply
- * the first autosave ever made is the point: at the fastest speed they must keep being written.)
+ * After playing at the fastest speed and pausing: the slot holds this seed's world from no earlier than
+ * the last second morning the page had seen while time ran (`seen` is a tick it showed then), and no
+ * later than where the world stopped.
+ *
+ * That is what the game promises, and all of it. The page asks for the autosave when it sees that a
+ * second morning has come, and the worker keeps the world as it is when asked: at the fastest speed a
+ * day lasts under a second, so on a slow machine that can be the day after. This used to demand a save
+ * from an even day, no more than three days behind where the world stopped; on a slow runner the last
+ * one was kept a day late, on day 9, and the test failed for a save that was newer than it asked for.
+ * Neither bound here depends on how fast anything is.
  */
-async function expectRecentAutosave(page: Page, seed: number): Promise<Stored> {
-  const today = Math.floor((await tick(page)) / 96);
-  expect(today, "the world has reached its third morning").toBeGreaterThanOrEqual(2);
+async function expectAutosaveSince(page: Page, seed: number, seen: number): Promise<Stored> {
+  const stopped = await tick(page);
+  const seenDay = Math.floor(seen / 96);
+  const morning = seenDay - (seenDay % 2);
+  expect(morning, "the page saw the world reach a second morning while time ran").toBeGreaterThanOrEqual(2);
   await expect
     .poll(
       async () => {
         const s = await autosave(page);
-        return s !== null && s.seed === seed && s.day % 2 === 0 && s.day >= Math.max(2, today - 3) && s.day <= today;
+        if (s === null) return "the slot is empty";
+        if (s.seed !== seed) return `the slot holds seed ${s.seed}`;
+        if (s.tick < morning * 96) return `the slot holds tick ${s.tick} (day ${s.day}), from before that morning`;
+        if (s.tick > stopped) return `the slot holds tick ${s.tick} (day ${s.day}), from after the world stopped`;
+        return "kept";
       },
-      { timeout: 30_000, message: `an autosave of seed ${seed} from one of the last second mornings before day ${today}` },
+      { timeout: 30_000, message: `an autosave of seed ${seed} from tick ${morning * 96} (the second morning the page saw at tick ${seen}) to tick ${stopped} (where the world stopped)` },
     )
-    .toBe(true);
+    .toBe("kept");
   return (await autosave(page)) as Stored;
 }
 
@@ -116,11 +141,14 @@ test("two tabs share one autosave slot without overwriting each other, and an al
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(String(err)));
 
-  // ── the first tab: at the fastest speed, the third morning is autosaved
+  // ── the first tab: at the fastest speed autosaves keep being written. The page is watched until it has seen
+  // the seventh morning (day 6, the third to be kept): what the slot holds must be from then or later, so it is
+  // not the first autosave, nor the second. (Once, only a frame that landed exactly on midnight wrote one.)
   await begin(page, "7");
   expect(await autosave(page)).toBeNull();
-  await playPast(page, 200);
-  const first = await expectRecentAutosave(page, 7);
+  const seen = await playPast(page, 6 * 96 + 8);
+  const first = await expectAutosaveSince(page, 7, seen);
+  expect(first.tick).toBeGreaterThanOrEqual(6 * 96);
   expect(first.hash).toMatch(/^[0-9a-f]{64}$/);
 
   // ── nobody is watching: the tab is hidden. Time stops, the moment is kept, and time starts again when the tab is seen
@@ -167,8 +195,7 @@ test("two tabs share one autosave slot without overwriting each other, and an al
 
   // ── the first tab closes; the lock goes with it, and the second tab's next second morning is autosaved
   await page.close();
-  await playPast(second, await pastNextSecondMorning(second));
-  await expectRecentAutosave(second, 9);
+  await expectAutosaveSince(second, 9, await playPast(second, await pastNextSecondMorning(second)));
   await second.getByTestId("open-menu").click();
   await expect(second.getByTestId("autosave-elsewhere")).toHaveCount(0);
 
@@ -216,7 +243,10 @@ test("two tabs share one autosave slot without overwriting each other, and an al
 
 test("a renderer that cannot keep up is simplified once, says so, and changes nothing in the world", async ({ page, browser }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "the software renderer is the slow device here: run once");
-  test.setTimeout(300_000);
+  // Ten minutes, like the two-tabs test. It asks a software renderer for more than it can draw, on purpose, and
+  // then steps two worlds by hand: on a busy machine that has taken a little over five minutes (the whole-suite
+  // run in a clean checkout timed out here at 300 s with the first world done and the second half way).
+  test.setTimeout(600_000);
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(String(err)));
 

@@ -28,7 +28,7 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing (and, later, in phases 18–20) | 0 | 0 | 10 | 12 | — | 21 | 1 |
+| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 11 | 13 | — | 23 | 1 |
 
 ## Security review: finding by finding
 
@@ -120,6 +120,8 @@ Defects that neither review reported, found by the tests and measurements writte
 | Low | The laboratory's browser test still expected the page to open on the pilot bundle, which it had not done since the confirmatory batch was published; the test had not been run since | The first run of the whole suite in a clean checkout (phase 18) | The test checks the confirmatory bundle as what it is, then the pilot |
 | Medium | Two of the five aims on the scenario cards could not be met in any world measured: nobody lost to cold or hunger in The Long Winter, and every commons above its threshold in Thin Commons | Counting them, before building the reading that reports them (phase 20) | Reworded to aims that can go either way; all five are now counted (D-049) |
 | Low | A morning's worth of identical lines — "A root patch began to recover." six times — pushed everything else out of the Chronicle | Looking at the release's stills (phase 20) | One line with a count, which opens out again |
+| Medium | A page slower than its world fell behind it without limit: the worker sent thirty frames a second whether or not the page had dealt with the last. With the page slowed twenty times at 64×, "paused" was shown 31–39 seconds after pause was pressed and the page's own timers ran 17–27 seconds late | Following a browser test that failed once in CI back to its cause, then measuring (after phase 20) | The worker sends a frame only when the page has taken the last one (D-050): 0.7–0.9 seconds under the same slowing; four tests in `sim.worker.test.ts` |
+| Low | The two-tabs test demanded an autosave from an even day. The page asks for the autosave when it sees a second morning; at 64× a day lasts three quarters of a second, and on a slow machine the world kept is the next day's. A newer save than the test allowed failed it, once in CI and in five of ten runs here with the page slowed ten times | The failed run; `evidence/after-20/old-assertion.txt` | The test asserts what the game promises — a save from between the last second morning the page saw and where the world stopped — and says what the slot held when it fails |
 
 ## What the phase asked to be examined, and where each is
 
@@ -271,8 +273,16 @@ On the working tree of this commit, 2026-11-25, Node 22.23.5, PostgreSQL 16:
 - The seeded mutation run: 20 of 20 killed (`evidence/phase-16/mutants.txt`).
 - Browser tests, run spec by spec while the fixes were made — the whole loop on the phone project, the
   keyboard on desktop, accessibility and target sizes on the phone project, both resilience tests, the owner's
-  console on both projects (through the pooler). **The whole suite in one run, in a clean checkout,** is made
-  on this commit and recorded by the next one (the whole-suite log (next commit)).
+  console on both projects (through the pooler). **The whole suite in one run, in a clean checkout**
+  of `de2f0e1`, with nothing else on the machine: `pnpm check` exits 0 with 491 tests in 40 files; `pnpm e2e`
+  ends with 28 passed, 5 skipped by design and one timed out, in 39.7 minutes. The one is the renderer-fallback
+  test, which ran out of a 300-second limit with nothing it asserts having failed; its limit is now ten minutes
+  and it passes on its own in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
+  (`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). An earlier whole-suite
+  run, at `36ff011`, is how the stale laboratory test was found. That run was stopped part-way and is not
+  evidence of anything else: one more test failed in it because the developer started another browser run
+  beside it, and every browser run begins by dropping the test server's schema. The test in question (signing
+  out) passes in the run above and in CI.
 - The registered studies: 48 cells of the confirmatory batch and 24 of the pilot re-run and matched to the hash
   (`evidence/phase-16/*/verify.txt`).
 

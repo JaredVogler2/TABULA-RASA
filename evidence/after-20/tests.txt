@@ -1,0 +1,60 @@
+# Worker tests with D-050 in place, and three deliberate breakages
+
+pnpm exec vitest run src/worker/sim.worker.test.ts --reporter=verbose   (2026-11-25, Node v22.23.5)
+
+ ✓ src/worker/sim.worker.test.ts > worker: a world's own history > keeps the start and every second morning as moments that can be returned to 521ms
+ ✓ src/worker/sim.worker.test.ts > worker: a world's own history > an intervention forks an untouched twin at that tick, and the frame says so 573ms
+ ✓ src/worker/sim.worker.test.ts > worker: a world's own history > an exact re-run does again what the observer did, when it was done, and arrives at the world that was left 979ms
+ ✓ src/worker/sim.worker.test.ts > worker: a world's own history > the twin can be looked at: same tick, same people, its own state, and nothing can be done to it 63ms
+ ✓ src/worker/sim.worker.test.ts > worker: a world's own history > leaving from an earlier morning starts a new line without what was done later, and the old line can be returned to exactly 944ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > a loaded world has only its present in memory, and says its past can be rebuilt 1069ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > rebuilding re-lives every day, forks the twin where it was forked, and is kept because it arrives at exactly the loaded world 1307ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > a save whose record of interventions was edited does not survive the check, and nothing of the false past is kept 647ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > a stored save that no longer matches its own hash is refused, and the world on screen stays 213ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > a save kept packed is a fraction of its text, opens to the same world, and is refused if a byte of it changes 678ms
+ ✓ src/worker/sim.worker.test.ts > worker: a saved world's past, lived again from its seed > a line that took new luck cannot be rebuilt from the seed alone, and says why 585ms
+ ✓ src/worker/sim.worker.test.ts > worker: a file out and back in > an exported world opens to the same state, and an altered one is refused without changing anything 1060ms
+ ✓ src/worker/sim.worker.test.ts > worker: a recording beside the engine's own minds > a recording with outside minds gets a twin of the same seed with the built-in planner, and the comparison is named for what it is 274ms
+ ✓ src/worker/sim.worker.test.ts > worker: the event ledger > is the engine's own list of what happened: consecutive ids from the first event, time never running backwards, every recorded cause earlier than its effect 250ms
+ ✓ src/worker/sim.worker.test.ts > worker: the event ledger > a loaded world's ledger says it is partial, until its past has been lived again 548ms
+ ✓ src/worker/sim.worker.test.ts > worker: time is driven in many ways, the world in one > single steps, long steps, play at any speed, any frame rate and any pauses arrive at the same world at the same tick 3721ms
+ ✓ src/worker/sim.worker.test.ts > worker: time is driven in many ways, the world in one > after a long suspension while playing, time resumes at its pace instead of replaying the gap 74ms
+ ✓ src/worker/sim.worker.test.ts > worker: the world is lived at its own pace, the picture sent at the page's > a page that takes each frame at once is sent them at the rate asked 339ms
+ ✓ src/worker/sim.worker.test.ts > worker: the world is lived at its own pace, the picture sent at the page's > no second frame is sent until the first is taken; the world runs on; the frame sent then shows it as it is, with everything the missing ones would have carried 905ms
+ ✓ src/worker/sim.worker.test.ts > worker: the world is lived at its own pace, the picture sent at the page's > a slow page is sent one frame for each it takes, and the world keeps the pace it would have kept 1143ms
+ ✓ src/worker/sim.worker.test.ts > worker: the world is lived at its own pace, the picture sent at the page's > a `taken` that answers nothing changes nothing, and a new world is shown whatever was left untaken of the old one 130ms
+ ✓ src/worker/sim.worker.test.ts > worker: when a world cannot be carried on > a world file that is well formed but cannot be lived is refused, and the world on hand stays 227ms
+ ✓ src/worker/sim.worker.test.ts > worker: when a world cannot be carried on > if the engine throws while a world is being lived, time stops for good, the page is told in words, and a new world starts clean 102ms
+ ✓ src/worker/sim.worker.test.ts > worker: the aim on the scenario's card > is answered when asked and sent each morning, for the world being lived and, once the observer has touched it, for its twin 396ms
+ ✓ src/worker/sim.worker.test.ts > worker: the aim on the scenario's card > is decided on the morning spring comes, and a save opened again reads the same in both worlds 6022ms
+ ✓ src/worker/sim.worker.test.ts > worker: the aim on the scenario's card > an aim with no day of reckoning is a reading from the first morning, never a verdict 102ms
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+
+## Three deliberate breakages of the mechanism, each run against the same file
+
+Breakage: frames are sent whether or not the last was taken.
+  Tests  3 failed | 23 passed (26)
+  × no second frame is sent until the first is taken; the world runs on; the frame sent then shows it as it is, with everything the missing ones would have carried 670ms
+  × a slow page is sent one frame for each it takes, and the world keeps the pace it would have kept 1019ms
+  × a `taken` that answers nothing changes nothing, and a new world is shown whatever was left untaken of the old one 59ms
+
+Breakage: a frame that came due is left to the next turn of the loop instead of being sent when the last is taken.
+  Tests  7 failed | 19 passed (26)
+  × no second frame is sent until the first is taken; the world runs on; the frame sent then shows it as it is, with everything the missing ones would have carried 729ms
+  × a slow page is sent one frame for each it takes, and the world keeps the pace it would have kept 1119ms
+  × a `taken` that answers nothing changes nothing, and a new world is shown whatever was left untaken of the old one 119ms
+  × a world file that is well formed but cannot be lived is refused, and the world on hand stays 60ms
+  × if the engine throws while a world is being lived, time stops for good, the page is told in words, and a new world starts clean 30ms
+  × is answered when asked and sent each morning, for the world being lived and, once the observer has touched it, for its twin 51ms
+  × is decided on the morning spring comes, and a save opened again reads the same in both worlds 0ms
+
+Breakage: answers to frames that were never sent are banked.
+  Tests  5 failed | 21 passed (26)
+  × a `taken` that answers nothing changes nothing, and a new world is shown whatever was left untaken of the old one 73ms
+  × a world file that is well formed but cannot be lived is refused, and the world on hand stays 29ms
+  × if the engine throws while a world is being lived, time stops for good, the page is told in words, and a new world starts clean 29ms
+  × is answered when asked and sent each morning, for the world being lived and, once the observer has touched it, for its twin 57ms
+  × is decided on the morning spring comes, and a save opened again reads the same in both worlds 1ms
+
+The file was restored after each, and the run above this section is of the file as committed.

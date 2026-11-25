@@ -49,11 +49,16 @@ happens in it. The world runs in a worker and the renderer only reads what the w
 4. **The worker cannot keep up with the speed asked:** time simply passes more slowly than the speed button
    says. Ticks are never skipped and never batched differently: the world at tick *n* is the same world
    however long it took to get there (`sim.worker.test.ts`, phase 13).
-5. **A hidden tab** pauses time and writes the autosave; it resumes when seen again
+5. **The page cannot keep up with the world:** the worker sends a frame only when the page has taken the
+   last one, and at once if one came due in the meantime (D-050). The world goes on at the pace asked; the
+   page is shown it as it is when the page next looks, with every Chronicle event since the last frame; and
+   there is never more than one frame waiting. Before this, a page slowed twenty times at the fastest speed
+   showed "paused" more than half a minute after pause was pressed (the table under Resilience).
+6. **A hidden tab** pauses time and writes the autosave; it resumes when seen again
    (`resilience.spec.ts`).
-6. **Two tabs:** one autosave slot, one owner at a time, by the browser's Web Locks; the other tab says its
+7. **Two tabs:** one autosave slot, one owner at a time, by the browser's Web Locks; the other tab says its
    world is not being autosaved and never overwrites the slot (`resilience.spec.ts`).
-7. **A save is one IndexedDB transaction**: whole or absent, never partial. A stored save that has been
+8. **A save is one IndexedDB transaction**: whole or absent, never partial. A stored save that has been
    altered is refused by its hash without touching the world on screen (`resilience.spec.ts`).
 
 ## Headless engine
@@ -265,7 +270,36 @@ unless another file is named), on the desktop project.
 | A save cut short or altered | A save is one transaction; an altered one fails its hash and is refused without touching the world on screen | the same test as two tabs; `save/validate.test.ts` |
 | Any speed, any frame rate, long pauses | The world at a given tick is the same world | `sim.worker.test.ts` › "single steps, long steps, play at any speed, any frame rate and any pauses arrive at the same world at the same tick" |
 | A renderer that cannot keep up | Resolution steps down; then, once, the preset (if automatic); six hours on, the world's hash is that of a world drawn with the simplest preset from the start | "a renderer that cannot keep up is simplified once, says so, and changes nothing in the world" |
+| A page slower than its world | One frame on its way at a time: the picture is the world as it was when the page last looked, never a queue of what it missed; nothing a frame carries is lost; the world keeps its pace | `sim.worker.test.ts` › "the world is lived at its own pace, the picture sent at the page's" (four tests); measured below |
 | A slow network | Once the page has loaded, free play asks its own server for nothing and no other server for anything (`play.spec.ts` asserts that no request goes to another origin; only the list of recordings and the Laboratory fetch data, when opened). The owner console's steps are leased: a step that is cut off is resumed, and nobody is asked twice (`runs.test.ts`) | as named. **Not tested:** loading the page itself over a slow or failing connection; there is no offline cache |
+
+### A page slower than its world, measured (D-050)
+
+`node scripts/trail.mjs <address> <folder>` plays the reference world with the page's main thread slowed by a
+factor (Chromium's own CPU throttling, applied to the page and not to the worker), presses pause from inside
+the page, and reports how late the page's own timer fired, how many ticks the top bar went on to show, and how
+long it took to show "paused". The same script was run against the build before the change and the build
+after it (`evidence/after-20/trail-before.md`, `trail-after.md`):
+
+| Page slowed | Speed | Played | "Paused" shown after: before | after | Picture ran on: before | after | Page's timer late: before | after |
+|---|---|---|---|---|---|---|---|---|
+| 1× | 4× | 20 s | 465 ms | 335 ms | 6 ticks | 5 | 0.7 s | 0.5 s |
+| 1× | 64× | 20 s | 363 ms | 369 ms | 84 | 109 | 0.8 s | 0.6 s |
+| 1× | 64× | 40 s | 449 ms | 311 ms | 55 | 47 | 0.7 s | 0.3 s |
+| 4× | 64× | 20 s | 661 ms | 484 ms | 169 | 131 | 1.0 s | 0.9 s |
+| 10× | 64× | 20 s | 1,169 ms | 639 ms | 98 | 148 | 0.8 s | 1.1 s |
+| 20× | 4× | 20 s | 1,071 ms | 474 ms | 8 | 7 | 0.9 s | 0.9 s |
+| 20× | 64× | 20 s | **38,924 ms** | 736 ms | **3,359** | 111 | **26.9 s** | 1.2 s |
+| 20× | 64× | 40 s | **30,873 ms** | 899 ms | **2,079** | 247 | **16.9 s** | 1.1 s |
+
+One run of each row on each build. The two rows in bold are the finding: before, a page that slow never caught
+up with a world at the fastest speed, and its timers — so its clicks — waited with it. After, it is where
+every other row is. The other rows show nothing that one run each can establish: repeated by hand, the same
+row varied by as much (the unslowed 64× row gave 363–510 ms before the change). The unslowed page here trails
+by about a third of a second before and after, which is one turn of the software rasterizer that draws it.
+**This is a measurement of a queue, not of a device.** A slowing of twenty is far beyond a
+phone; what it stands in for is anything that makes a frame cost the page more than the thirtieth of a second
+it is given — more people, more events, a heavier picture.
 
 ## What is not known
 

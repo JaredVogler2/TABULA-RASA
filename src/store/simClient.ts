@@ -55,7 +55,12 @@ export class SimClient {
   private receive(msg: FromWorker): void {
     switch (msg.type) {
       case "frame":
-        this.onFrame?.(msg.frame);
+        // every frame is answered, whatever becomes of it here: the worker sends the next only then
+        try {
+          this.onFrame?.(msg.frame);
+        } finally {
+          this.send({ type: "taken" });
+        }
         return;
       case "day":
         this.onDay?.(msg.sample, msg.control, msg.aim);
