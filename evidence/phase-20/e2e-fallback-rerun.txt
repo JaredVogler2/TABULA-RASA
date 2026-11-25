@@ -1,0 +1,10 @@
+The renderer-fallback test on its own, with a ten-minute limit — 2026-11-25
+Working tree at de2f0e1 plus that one change to the test's limit; the production build of de2f0e1.
+
+  $ pnpm e2e --project=desktop tests/e2e/resilience.spec.ts -g "cannot keep up"
+
+[WebServer] ✓ Ready in 98ms
+[WebServer] ✓ Running next.config.ts took 46ms
+Running 1 test using 1 worker
+  ✓  1 [desktop] › tests/e2e/resilience.spec.ts:217:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world (4.5m)
+  1 passed (4.5m)

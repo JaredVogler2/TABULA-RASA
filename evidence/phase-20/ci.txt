@@ -1,0 +1,13 @@
+Continuous integration on GitHub for commit de2f0e1 (phase 20) — as the repository reported it on 2026-11-25
+
+workflow run 45695515802, pull request 3, three jobs on GitHub's own machines (ubuntu-latest, Node 22, PostgreSQL 16):
+
+  job            result    started (UTC)          finished (UTC)
+  check          success   2026-11-25T20:29:57Z   2026-11-25T20:33:23Z   lint, types, unit tests, generated files, links, scans, build, bundle scan
+  e2e (mobile)   success   2026-11-25T20:29:57Z   2026-11-25T20:42:53Z   the whole browser suite, phone project
+  e2e (desktop)  success   2026-11-25T20:29:56Z   2026-11-25T20:48:48Z   the whole browser suite, desktop project
+
+https://github.com/JaredVogler2/TABULA-RASA/actions/runs/45695515802
+
+The desktop job includes the renderer-fallback test that ran out of its 300-second limit in the local
+whole-suite run (e2e-run.txt): on GitHub's machine it passed inside that limit.

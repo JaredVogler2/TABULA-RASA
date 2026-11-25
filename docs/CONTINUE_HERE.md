@@ -16,7 +16,7 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
   new confirmatory result from seeds 9000–9031: they are spent.
-- **Last verified commit:** see `git log -1`.
+- **Last verified commit:** `de2f0e1` (phase 20), in a clean checkout: `pnpm check` and the whole of `pnpm e2e`. The commit after it adds that run's logs and stills and changes no code.
 - **Spend:** $0. No API key has ever been present. The application's authorized budget is zero, its ceiling
   is zero and its kill switch is on. **Nothing has been sent to the provider**: the request shape, the
   schema's acceptance and every cost figure are unverified against the real API. The smoke script's paid path
@@ -59,8 +59,12 @@ pnpm live:smoke
 pnpm release:check -- http://127.0.0.1:3299 --fast
 ```
 
-Expected at this commit: `pnpm check` exits 0 with 470 unit tests in 37 files (ten need PostgreSQL and are skipped
-without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout is made on this commit and recorded by the next one (the whole-suite log (next commit)). `replay IDENTICAL`.
+Expected at `de2f0e1`: `pnpm check` exits 0 with 491 unit tests in 40 files (ten need PostgreSQL and are skipped
+without `TEST_DATABASE_URL`). `pnpm e2e`, in a clean checkout on this machine's software renderer: 28 passed, 5
+skipped by design and one timed out, in 39.7 minutes — the renderer-fallback test ran out of a 300-second limit
+with nothing it asserts having failed. Its limit is ten minutes since the commit after, and it passes on its own
+in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
+(`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). `replay IDENTICAL`.
 
 ## Execution order (D-001)
 

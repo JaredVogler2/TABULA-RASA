@@ -271,8 +271,16 @@ On the working tree of this commit, 2026-11-25, Node 22.23.5, PostgreSQL 16:
 - The seeded mutation run: 20 of 20 killed (`evidence/phase-16/mutants.txt`).
 - Browser tests, run spec by spec while the fixes were made — the whole loop on the phone project, the
   keyboard on desktop, accessibility and target sizes on the phone project, both resilience tests, the owner's
-  console on both projects (through the pooler). **The whole suite in one run, in a clean checkout,** is made
-  on this commit and recorded by the next one (the whole-suite log (next commit)).
+  console on both projects (through the pooler). **The whole suite in one run, in a clean checkout**
+  of `de2f0e1`, with nothing else on the machine: `pnpm check` exits 0 with 491 tests in 40 files; `pnpm e2e`
+  ends with 28 passed, 5 skipped by design and one timed out, in 39.7 minutes. The one is the renderer-fallback
+  test, which ran out of a 300-second limit with nothing it asserts having failed; its limit is now ten minutes
+  and it passes on its own in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
+  (`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). An earlier whole-suite
+  run, at `36ff011`, is how the stale laboratory test was found. That run was stopped part-way and is not
+  evidence of anything else: one more test failed in it because the developer started another browser run
+  beside it, and every browser run begins by dropping the test server's schema. The test in question (signing
+  out) passes in the run above and in CI.
 - The registered studies: 48 cells of the confirmatory batch and 24 of the pilot re-run and matched to the hash
   (`evidence/phase-16/*/verify.txt`).
 

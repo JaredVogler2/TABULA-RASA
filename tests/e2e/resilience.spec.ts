@@ -216,7 +216,10 @@ test("two tabs share one autosave slot without overwriting each other, and an al
 
 test("a renderer that cannot keep up is simplified once, says so, and changes nothing in the world", async ({ page, browser }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "the software renderer is the slow device here: run once");
-  test.setTimeout(300_000);
+  // Ten minutes, like the two-tabs test. It asks a software renderer for more than it can draw, on purpose, and
+  // then steps two worlds by hand: on a busy machine that has taken a little over five minutes (the whole-suite
+  // run in a clean checkout timed out here at 300 s with the first world done and the second half way).
+  test.setTimeout(600_000);
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(String(err)));
 
