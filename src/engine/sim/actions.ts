@@ -32,6 +32,7 @@ import {
 import { Activity, type Agent, type Intent, type Structure, type WorldState } from "../model/types";
 import { droughtActive, hearingRadius, sightRadius } from "../world/climate";
 import { believedDrinkable, remember, structureStateCode } from "../mind/knowledge";
+import { notePromiseMade, noteTaking, settleGift } from "../mind/social";
 import { institutionalIntent, storeAccess } from "../institutions/hooks";
 import { emit, parentsOf, type EventOut } from "./events";
 import { carriedWeight, carryCapacity, dropOnGround, emptyInv, roomFor, sink, source } from "./inventory";
@@ -85,6 +86,8 @@ function reject(world: WorldState, a: Agent, out: EventOut, intent: Intent, reas
   if (a.act && a.act.k === "rest") wake(world, a, out);
   a.act = null;
   clearPlan(a);
+  // a deliberate plan that the world refused is not immediately re-proposed (slot 6 = planner back-off)
+  a.mind.cool[6] = world.tick + 5;
 }
 
 function popIntent(a: Agent): void {
@@ -937,7 +940,10 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       if (s.founder !== a.id) {
         // the planter, if watching, notices someone else reaping what they sowed
         for (const o of witnesses(world, s.x, s.y, a.id)) {
-          if (o.id === s.founder) remember(world, o, "took", { who: a.id, ref: s.id, item: Item.root, qty: y, salience: 700 });
+          if (o.id === s.founder) {
+            remember(world, o, "took", { who: a.id, ref: s.id, item: Item.root, qty: y, salience: 700 });
+            noteTaking(o, a.id, true);
+          }
         }
       }
       popIntent(a);
@@ -974,7 +980,8 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       remember(world, a, "gave", { who: t.id, item, qty: q, salience: 240 });
       world.metrics.gives++;
       world.metrics.giveUnits += q;
-      emit(world, out, "give", a.id, { b: t.id, i: item, q, p: parents });
+      const gift = emit(world, out, "give", a.id, { b: t.id, i: item, q, p: parents });
+      settleGift(world, a, t, item, q, out, [gift]);
       popIntent(a);
       return;
     }
@@ -1053,6 +1060,7 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         for (const o of witnesses(world, s.x, s.y, a.id)) {
           if (s.contributors.includes(o.id) && !s.contributors.includes(a.id)) {
             remember(world, o, "took", { who: a.id, ref: s.id, item: intent.item, qty: q, salience: 650 });
+            noteTaking(o, a.id, false);
           }
         }
       }
@@ -1063,7 +1071,9 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       if (intent.k !== "say") return;
       const text = sanitizeText(intent.text);
       const id = world.nextUtterance++;
-      world.speech.push({ id, tick: world.tick, from: a.id, to: intent.to, x: a.x, y: a.y, act: intent.act, ...(text ? { text } : {}) });
+      const utterance = { id, tick: world.tick, from: a.id, to: intent.to, x: a.x, y: a.y, act: intent.act, ...(text ? { text } : {}) };
+      world.speech.push(utterance);
+      notePromiseMade(world, a, utterance);
       a.stats.said++;
       world.metrics.utterances++;
       emit(world, out, "say", a.id, {
@@ -1086,8 +1096,10 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
           a.mind.structs.push(ks);
         }
         ks.tick = world.tick;
-        ks.state = structureStateCode(s);
+        ks.state = structureStateCode(s, world.tick);
         ks.bound = s.bound;
+        if (s.complete) delete ks.missing;
+        else ks.missing = s.missing.slice();
         emit(world, out, "inspect", a.id, { s: s.id, p: parents });
       }
       popIntent(a);

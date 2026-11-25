@@ -12,7 +12,7 @@ import type { Scratch } from "../sim/scratch";
 import { structureAt } from "../sim/scratch";
 
 /** Summary state of a structure as an observer on site would see it. */
-export function structureStateCode(s: Structure): number {
+export function structureStateCode(s: Structure, tick = -1): number {
   if (!s.complete) return 0;
   if (s.kind === StructureKind.campfire) return s.fuel > 0 ? 2 : 1;
   if (s.kind === StructureKind.store) {
@@ -20,7 +20,7 @@ export function structureStateCode(s: Structure): number {
     for (const q of s.inv) total += q;
     return total === 0 ? 1 : total < 20 ? 2 : 3;
   }
-  if (s.kind === StructureKind.plot) return s.ripeTick >= 0 ? 1 : 2; // 1 growing, 2 ripe
+  if (s.kind === StructureKind.plot) return s.ripeTick >= 0 && tick >= s.ripeTick ? 2 : 1; // 1 growing, 2 ripe
   return 1;
 }
 
@@ -42,8 +42,10 @@ function noteStructure(a: Agent, s: Structure, tick: number): void {
     list.push(k);
   }
   k.tick = tick;
-  k.state = structureStateCode(s);
+  k.state = structureStateCode(s, tick);
   k.bound = s.bound;
+  if (s.complete) delete k.missing;
+  else k.missing = s.missing.slice();
 }
 
 /** Add an episodic memory, evicting the least salient/oldest item when full. */
@@ -126,6 +128,7 @@ export function perceive(world: WorldState, sc: Scratch, a: Agent): void {
         m.nodeAmt[node] = amount;
         m.nodeTick[node] = tick;
         m.nodeSrc[node] = -1;
+        if (amount > (m.nodeMax[node] as number)) m.nodeMax[node] = amount;
       }
       const sid = structureAt(world, sc, tile);
       if (sid >= 0) noteStructure(a, world.structures[sid]!, tick);

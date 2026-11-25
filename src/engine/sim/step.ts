@@ -13,6 +13,7 @@ import { TICKS_PER_DAY, WEATHER } from "../model/constants";
 import { ACTOR_ENV, type Agent, type WorldState } from "../model/types";
 import { hearingRadius, updateClimate } from "../world/climate";
 import { decide, deliverSpeech } from "../mind/decide";
+import { reflect } from "../mind/social";
 import { perceive } from "../mind/knowledge";
 import { urgentNeed } from "../mind/reflex";
 import { stepInstitutions } from "../institutions/hooks";
@@ -64,7 +65,7 @@ export function step(world: WorldState, out: EventOut): void {
   for (let k = 0; k < agents.length; k++) {
     const a = agents[k]!;
     if (!a.alive) continue;
-    updateBody(world, sc, a, out);
+    if (!updateBody(world, sc, a, out)) reflect(world, a, out);
   }
   for (let k = 0; k < agents.length; k++) {
     const a = agents[k]!;

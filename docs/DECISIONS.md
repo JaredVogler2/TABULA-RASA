@@ -209,3 +209,72 @@ rollback. Read this file before modifying any contract it mentions.
   frames reaching the screen rather than the time spent in JavaScript, which is less flattering and correct.
 - **Rollback.** Delete `src/app/studio` and `scripts/shots.mjs`; presets are independent of it.
 
+## D-014 — Reference ecology: an island that can carry its people, and a commons that can still be destroyed (2026-11-25)
+
+- **Problem.** With the phase-03 tables, fifty people needed about as much food as the island could produce
+  under *perfect* management. Under any actual policy the commons were stripped by the first winter, winter
+  die-back took every bush to zero, and because growth was proportional to standing stock a hungry population
+  then pinned every patch at zero. On development seeds 1–6 both baselines were down to about five survivors of
+  fifty by day 60 — at productivity ×1.0, ×1.2 and ×1.25 alike. There was no sustainable regime, so no room for
+  an institution (or a player) to make a visible difference, and the "forgiving" first scenario was a death trap.
+- **Original proposal.** Phase 03 deferred tuning until a planner existed.
+- **Alternatives considered.** (a) Scale richness and regrowth only: a knife-edge — at ×1.15 most die, at ×1.25
+  all survive year one, and year two collapses in both cases. (b) Lower metabolism: same knife-edge. (c) Fewer
+  people: the brief asks for fifty. (d) Change the growth law so that what a *plant* yields does not depend on
+  the fruit left on it, keep true stock-recruitment dynamics for fish and roots, and add slack.
+- **Evidence.** `pnpm compare` on development seeds (commands and outputs in `evidence/phase-05/`). After the
+  change, 8 seeds × 80 days: planners 50/50 alive on every seed; reflex-only mean 46.4, minimum 36. On the old
+  tables (still reachable with `--set richness=1000 --set regrowth=1000 --set nodeDensity=1000`, apart from the
+  growth law): about 19 of 50 alive after one year under either baseline.
+- **Decision.** (d). Growth is `rate · (stock + base·K) · (1 − stock/K)`. `base` is 15% of capacity for berry
+  bushes and reed beds, 3–4% for root patches and trees, **0 for fishing waters** (pure logistic, with the
+  collapse threshold kept). Winter die-back stops at a dormant reserve of 25% of capacity for bushes and reeds —
+  which the hungry can still eat, and then spring starts from nothing. Empty patches re-seed faster. Defaults
+  become richness 1200, nodeDensity 1500, regrowth 1200. Calibration target, checked by arithmetic and by runs:
+  the island feeds fifty with slack when patches are left half full and roughly two thirds of them when every
+  patch is picked bare. Thin Commons and The Long Winter were rescaled to stay hard (Long Winter severity
+  1500 → 1350, where planners on seed 1 keep 84% alive rather than 56%).
+- **Affected tests.** Pinned reference digests (reflex and planner), node-scaling test, snapshot schema tests.
+- **Cost / risks.** The first scenario is now gentle under the planner baseline: its optional aim (four in
+  five through the winter) is usually met without help. Every number here was chosen on development seeds; the
+  holdout seeds have not been touched. Berries are now a weak commons; fish, roots and timber remain strong ones.
+- **Rollback.** `base` and `dormant` are per-kind constants; the three multipliers are config.
+
+## D-015 — The planner baseline: individual foresight, no collective script (2026-11-25)
+
+- **Problem.** The brief asks for a non-LLM baseline that is "not deliberately weak" and for distinct agents
+  that "behave differently for documented reasons", while forbidding scripted institutions.
+- **Decision.** A project chooser over a fixed repertoire (`docs/COGNITION.md`), every threshold tied to a
+  named trait, skill or lived experience; seasonal foresight only from temperatures the agent has felt; social
+  behaviour limited to giving, asking, repaying, pledging and telling. No institutional intent appears in its
+  source (asserted by a test). The cadence gate was removed for baseline planners (they deliberate whenever
+  idle; `cadence` now paces external minds) and a five-tick back-off follows any rejected plan.
+- **Three mistakes found by running it, and fixed.** (1) Agents starved beside full stores because the urgent
+  hunger path bypassed the planner; (2) planners ran hungrier than reflex agents because they never "topped
+  up"; (3) hoarding perishables that then rotted drained the commons twice as fast as the reflex baseline —
+  perishables now count toward today only, and the storable stock is built from roots, smoked fish and crops.
+- **What it shows, honestly.** Individually much more robust than reflex agents in the same world (65.5% vs
+  20.3% alive after a lean year); as a whole society on a lean island, no better (18.6 vs 18.8 of 50), and
+  lower on the well-being measure everywhere because it works longer. That is a commons dilemma arising from
+  the model. It is a development observation on development seeds, not a finding.
+- **Cost / risks.** The repertoire is a designer prior (that food should be stored, crops sown, favours
+  returned) and is disclosed in the affordance registry. A richer baseline narrows what a model-driven mind can
+  add; a poorer one would flatter it.
+- **Rollback.** `policy: "reflex"` runs the world without it.
+
+## D-016 — One observation, one mask, one tape for every external mind (2026-11-25)
+
+- **Problem.** Model-driven agents must not see hidden state, must not be able to write state, and their runs
+  must be replayable at no cost.
+- **Decision.** `buildObservation` is the only view an external mind gets and is assembled solely from the
+  agent's own state, beliefs, memories and current senses (the same `senses.ts` the planner uses). Its `actions`
+  list is the action mask. `submitDecision` enforces shape, limits (6 intents, 240-character rationale,
+  160-character speech), the structural gate and the mask, and queues what survives through the same path as
+  baseline plans. The ledger stores accepted intents, so the ledger *is* the replay tape.
+- **Evidence.** `cognition.test.ts`: sentinel-leak tests, mask and limit tests, and a 4-day, 12-agent run driven
+  by the mock mind that replays from its tape to an identical physical state and event sequence.
+- **Cost / risks.** The mask lists options, not guarantees: the engine still rejects at execution time, with a
+  reason the next observation will show as a memory. Observation size is bounded (≤ 14 places, 10 structures,
+  10 people, 12 memories) but not yet measured in tokens — that belongs to phase 06.
+- **Rollback.** None needed; baseline minds do not use it.
+

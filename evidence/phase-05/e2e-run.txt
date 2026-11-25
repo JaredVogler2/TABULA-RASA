@@ -1,0 +1,23 @@
+
+> tabula-rasa@0.1.0 e2e /home/user/TABULA-RASA
+> playwright test --trace off
+
+[WebServer] ▲ Next.js 16.4.6
+[WebServer] - Local:         http://localhost:3210
+[WebServer] - Network:       http://192.0.2.2:3210
+[WebServer] ✓ Ready in 94ms
+[WebServer] ✓ Running next.config.ts took 28ms
+
+Running 8 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (341ms)
+  ✓  2 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (22ms)
+  ✓  3 [desktop] › tests/e2e/play.spec.ts:56:1 › a new player can complete the whole loop offline (2.1m)
+  ✓  4 [desktop] › tests/e2e/play.spec.ts:185:1 › the keyboard alone can drive the game (16.6s)
+  ✓  5 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (238ms)
+  ✓  6 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (20ms)
+  ✓  7 [mobile] › tests/e2e/play.spec.ts:56:1 › a new player can complete the whole loop offline (1.7m)
+  -  8 [mobile] › tests/e2e/play.spec.ts:185:1 › the keyboard alone can drive the game
+
+  1 skipped
+  7 passed (4.2m)

@@ -10,8 +10,32 @@ import type { SnapshotEnvelope } from "./snapshot";
 
 type Migration = (env: SnapshotEnvelope) => SnapshotEnvelope;
 
-/** Index = source schema version. Schema 1 is the first released format, so there is nothing below it. */
-const MIGRATIONS: Record<number, Migration> = {};
+/**
+ * Index = source schema version.
+ *
+ *  1 → 2 (engine 0.2.0): minds gained the day's temperature accumulators and the cold-spell
+ *        counter that seasonal foresight is built on (zero = has not yet sensed anything), and
+ *        a per-node memory of the fullest each place has been seen.
+ */
+const MIGRATIONS: Record<number, Migration> = {
+  1: (env) => {
+    const agents = (env.state as unknown as { agents?: { mind?: Record<string, unknown> }[] }).agents;
+    if (Array.isArray(agents)) {
+      for (const a of agents) {
+        const m = a.mind;
+        if (!m) continue;
+        if (typeof m.tempSum !== "number") m.tempSum = 0;
+        if (typeof m.tempN !== "number") m.tempN = 0;
+        if (typeof m.coldRun !== "number") m.coldRun = 0;
+        if (!(m.nodeMax instanceof Int16Array) && m.nodeAmt instanceof Int16Array) {
+          // the fullest a node is known to have been is, at worst, what is believed of it now
+          m.nodeMax = Int16Array.from(m.nodeAmt, (v) => (v > 0 ? v : 0));
+        }
+      }
+    }
+    return { ...env, schema: 2 };
+  },
+};
 
 export function migrateSnapshot(env: SnapshotEnvelope): SnapshotEnvelope {
   let cur = env;

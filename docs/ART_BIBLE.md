@@ -102,6 +102,9 @@ Icons are Lucide line icons, always paired with a text label or an accessible na
 | Medium | as high without bloom, shadows 1024², 2× MSAA, pixel ratio ≤ 1.5 | 1,054k triangles, 45 draw calls (seed 1) |
 | Low | 2× terrain mesh, simplified canopies/bushes/rocks, no shadows or post chain, cheaper terrain and water shaders, pixel ratio ≤ 1 | 256k triangles, 30 draw calls (seed 1); was 550k before the rebuild |
 
+The table was measured before the ecology was retuned (D-014). The reference island now carries about one and
+a half times as many trees, bushes and reeds; re-measured figures are in `evidence/phase-05/render-budget.txt`.
+
 All presets lower their internal resolution in 20% steps (to 60% at most) when frames stay above 42 ms for
 three seconds. Presets and resolution change drawing only; the simulation cannot observe them.
 

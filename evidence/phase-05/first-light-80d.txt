@@ -1,0 +1,21 @@
+scenario=first_light days=80 seeds=1,2,3,4,5,6,7,8 overrides={}
+ seed   policy   d30  d40  d60  d80  welfare   gini  gifts  built  commons   wild  held  stored  deaths
+    1   reflex    50   50   50   47     66.0   0.23      0     19     17.3    807   123       0  {"hunger":3}
+    1  planner    50   50   50   50     56.9   0.17      1    553      9.3    341   249     490  {}
+    2   reflex    50   50   50   50     64.6   0.19      0     19      9.8    389   140       0  {}
+    2  planner    50   50   50   50     55.8   0.18      2    555      2.9     92   115     495  {}
+    3   reflex    50   50   48   48     65.1   0.20      0     13     15.7    725   155       0  {"hunger":2}
+    3  planner    50   50   50   50     56.0   0.18      2    544      3.9    134   218     503  {}
+    4   reflex    50   50   46   42     63.1   0.23      0     14     18.5    833   138       0  {"hunger":8}
+    4  planner    50   50   50   50     56.5   0.17      2    455      2.6     90   103     405  {}
+    5   reflex    50   50   50   50     64.7   0.21      0     30     15.6    703   173       0  {}
+    5  planner    50   50   50   50     56.3   0.16      4    608     14.5    534   380     495  {}
+    6   reflex    50   50   37   36     55.6   0.23      0     20     20.5   1052   143       0  {"hunger":14}
+    6  planner    50   50   50   50     54.9   0.18      9    500      6.3    255   161     193  {}
+    7   reflex    50   50   50   50     66.8   0.22      0     24     16.8    763   184       0  {}
+    7  planner    50   50   50   50     58.7   0.17      1    598     13.4    523   480     770  {}
+    8   reflex    50   50   50   48     64.7   0.24      0     21     15.2    599   120       0  {"hunger":2}
+    8  planner    50   50   50   50     57.8   0.17      2    543      6.8    214   248     596  {}
+
+  reflex  alive at checkpoints (mean): 50.0 / 50.0 / 47.6 / 46.4   median final 48   min 36   welfare 63.8%   4735 ms/run
+ planner  alive at checkpoints (mean): 50.0 / 50.0 / 50.0 / 50.0   median final 50   min 50   welfare 56.6%   5789 ms/run

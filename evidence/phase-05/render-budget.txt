@@ -1,0 +1,4 @@
+Triangles submitted per frame, before the shadow pass (First Light, seed 7, /studio, window.__studio.budget()):
+low total 354358
+high total 852410
+(high with the sun shadow pass, seed 1, from scripts/shots.mjs: 1585437 triangles, 63 draw calls)

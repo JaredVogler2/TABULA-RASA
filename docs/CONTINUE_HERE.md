@@ -5,7 +5,7 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/1
-- **Phase:** 04 PASS. **Next: phase 05, agent cognition** (bounded-rational planner baseline).
+- **Phase:** 05 PASS. **Next: phase 09, institution grammar** (D-001 order), then 10, then 06–08.
 - **Last verified commit:** see `git log -1`.
 - **Spend:** $0. No API key present. Live mode must stay disabled until the owner authorizes a capped run.
 
@@ -15,18 +15,20 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 pnpm install --frozen-lockfile
 pnpm check        # lint + typecheck + unit + affordance-doc freshness + build
 pnpm e2e          # Playwright, production build, desktop + phone emulation (about 4 minutes on a CPU renderer)
-pnpm sim -- --scenario first_light --seed 1 --days 40 --policy reflex --replay
+pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 pnpm bench
+pnpm compare -- --seeds 1-4 --days 40                  # paired baselines, development seeds
+pnpm exec tsx scripts/mixed.ts --seeds 1-4 --days 40   # planners and reflex agents on one island
 # art stills (needs `pnpm build && pnpm exec next start -p 3210` in another shell)
 node scripts/shots.mjs /tmp/shots vista closeup dusk night phone
 ```
 
-Expected at this commit: 98 unit/property tests pass; E2E 7 passed, 1 skipped (keyboard test is desktop-only);
+Expected at this commit: 124 unit/property tests pass; E2E 7 passed, 1 skipped (keyboard test is desktop-only);
 `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
-01 ✔ → 02 (partial) → 03 ✔ → 04 ✔ → **05** → 09 → 10 → 06 → 07 → 08 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20
+01 ✔ → 02 (partial) → 03 ✔ → 04 ✔ → 05 ✔ → **09** → 10 → 06 → 07 → 08 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20
 
 ## Where things live
 
@@ -40,17 +42,17 @@ Expected at this commit: 98 unit/property tests pass; E2E 7 passed, 1 skipped (k
 
 ## Next actions
 
-1. Phase 05: implement `planDecide` in `src/engine/mind/planner.ts` (currently returns null, so every agent is
-   reflex-driven and the setup screen offers only "reflex"). Stockpiling, tools, fire/shelter/store, planting,
-   sharing, requests/offers/promises, trust, commitments, deliberation cadence. Re-add the planner option to
-   `src/ui/game/Title.tsx` when it exists. Then tune ecology on development seeds so First Light is survivable
-   for planner agents.
-2. Phase 09: institution grammar behind `src/engine/institutions/hooks.ts` (D-006, D-010, D-011).
-3. Phase 10: windowed reciprocity and the other protocol measures; `docs/ODD.md`.
-4. Engine notes for later phases:
-   - External (model) decisions will enter through `adopt()` in `src/engine/mind/decide.ts` after
-     `checkIntent()`; reflex decisions for external minds are already labelled `fallback`.
-   - Snapshots at 500 agents are ~25 MiB (dense belief arrays): sparse encoding is a phase 15 item.
+1. Phase 09: institution grammar behind `src/engine/institutions/hooks.ts` (D-006, D-010, D-011): charters,
+   membership, roles, decision rules, lockable stores, bonds, deontic rules, motions, sanctions, exit, pacts with
+   escrow; validator, interpreter with fuel, lifecycle events, fuzz tests; `grammar_search` as a labelled
+   treatment that plugs into `planner.ts` *outside* the baseline repertoire.
+2. Phase 10: windowed reciprocity and the other protocol measures; `docs/ODD.md`.
+3. Phase 06–08: provider adapters behind `src/engine/mind/external.ts` (`observe`, `submitDecision`,
+   `dueForDecision`, `tapeFromEvents`, `replayTape` are the whole contract); `mock.ts` is the reference mind.
+4. Engine notes:
+   - Baselines and what they show: `docs/COGNITION.md`. Ecology calibration: D-014. Do not retune on holdout
+     seeds (9000–9999); every tuning run so far used seeds 1–8.
+   - Snapshots at 500 agents are ~36 MiB (dense belief arrays): sparse encoding is a phase 15 item.
 5. Art items carried to phase 11 are listed in `docs/ART_BIBLE.md` § Known weaknesses.
 
 ## Blockers

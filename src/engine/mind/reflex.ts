@@ -138,7 +138,8 @@ function hungerPlan(world: WorldState, sc: Scratch, a: Agent, tile: number, why:
 }
 
 function sleepPlan(world: WorldState, sc: Scratch, a: Agent, tile: number, night: boolean): Plan {
-  const ticks = night ? Math.min(44, ticksUntilMorning(world) + 2) : 16;
+  // the short nights of summer do not restore a hard day's work: the tired sleep in
+  const ticks = night ? Math.min(56, ticksUntilMorning(world) + (a.rest < 450 ? 12 : 2)) : 16;
   const intents: Intent[] = [];
   const shelter = nearestKnownStructure(a, StructureKind.shelter, 8, (k) => k.state >= 1);
   const fire = sc.warm[tile] ? undefined : nearestKnownStructure(a, StructureKind.campfire, 6, (k) => k.state === 2);
@@ -190,8 +191,9 @@ export function reflexDecide(world: WorldState, sc: Scratch, a: Agent): Plan {
     if (plan) return plan;
   }
 
-  // ── sleep
-  if (a.rest < 270 || (night && a.rest < 830)) return sleepPlan(world, sc, a, tile, night);
+  // ── sleep: at night, or as the light fails for those already weary
+  const dim = world.climate.light < 420;
+  if (a.rest < 270 || (night && a.rest < 830) || (dim && a.rest < 520)) return sleepPlan(world, sc, a, tile, night || dim);
 
   // ── top up while it is cheap
   if (a.energy < 780) {

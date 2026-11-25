@@ -69,6 +69,27 @@ number here comes from a GPU. (3) No person other than the developer agent has u
 physical phone has run it. (4) There is no sound yet. (5) The Chronicle shows notable events (the most recent
 4,000), not the complete ledger; full export arrives with phase 13.
 
+## Phase 05 — agent cognition (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Agents identical except for one trait choose differently, for the documented reason: generosity (feeds a starving neighbour or not), patience (leaves a thin bush or strips it), prudence (keeps provisioning with two days in hand or stops), conformity (repays when it hurts or not), sociability (tells where food is or stays quiet) | `pnpm test` (`cognition.test.ts` › distinct agents…) | `evidence/phase-05/tests.txt` | pass (8 cases) | That these traits matter as much in a whole society as in a staged pair. |
+| A private remark is not heard by a bystander; sleepers hear nothing; testimony is recorded with its teller and ignored from a distrusted one | same (› private information…) | same | pass | — |
+| An observation contains beliefs, not truth; only known places; and nothing of another person's needs, inventory, goal, memory or trust (sentinel values planted in other agents never appear) | same | same | pass | Inference attacks by a capable model from what *is* visible (phase 16). |
+| Trust: gifts raise it; a kept promise raises it and is recorded by both; a broken promise lowers it by more and only for the person promised; hearsay scales with trust in the teller; self-praise does nothing | same (› trust is earned…) | same | pass | — |
+| External decisions are proposals: malformed, unknown, masked and over-limit intents are refused with reasons; a refused decision changes no state; text is sanitized and bounded; only external agents accept them | same (› external decisions…) | same | pass | A real model's output (phase 06). |
+| Replay uses recorded intents: a 12-agent, 4-day run driven by the mock mind replays from its ledger tape to an identical physical state and event sequence, with zero mind calls | same | same | pass | Longer runs; live-model tapes. |
+| Planner runs are deterministic: all five scenarios, seed 1, 40 days, run twice | `pnpm sim -- --scenario <id> --seed 1 --days 40 --policy planner --replay` | `evidence/phase-05/replay-planner.txt` | `replay IDENTICAL` ×5 | Other seeds. |
+| As individuals, planners outlive reflex-only neighbours on the same lean island | `pnpm exec tsx scripts/mixed.ts --seeds 1-8 --days 40 --set richness=1000 --set regrowth=1000 --set nodeDensity=1000` | `evidence/phase-05/lean-island-mixed-40d.txt` | 65.5% (133/203) vs 20.3% (40/197) alive | Holdout seeds. Development observation. |
+| As whole societies on that lean island, they do not | `pnpm compare -- --seeds 1-8 --days 40 … (same overrides)` | `evidence/phase-05/lean-island-societies-40d.txt` | planners 18.6, reflex 18.8 of 50 alive (mean); medians 6 and 11 | Same caveat. Not a finding. |
+| On the reference island, two years | `pnpm compare -- --seeds 1-8 --days 80 --checkpoints 30,40,60,80` | `evidence/phase-05/first-light-80d.txt`, `.json` | planners 50/50 on all 8 seeds; reflex mean 46.4, min 36; well-being 56.6% vs 63.8% | Same caveat. |
+| Planner cost | `pnpm bench -- --days 5 --policy planner --json evidence/phase-05/bench-planner.json` | that file | 50 agents: 2,860 ticks/s (p95 0.92 ms/tick); 500 agents on 128²: 222 ticks/s (p95 9.9 ms) | Browser worker throughput; other hardware. |
+| Snapshots written before this phase still load | `cognition.test.ts` › snapshot migration 1 → 2 | `tests.txt` | pass | — |
+
+**Stated plainly.** The planner is a hand-written prior about sensible individual behaviour. It never proposes
+a group, role, rule, vote or pact; nothing institutional exists in any baseline run (asserted). Whatever
+cooperation appears in these runs is thin: a few gifts per thousand person-days.
+
 ## Research inputs
 
 | Input | File | Status |

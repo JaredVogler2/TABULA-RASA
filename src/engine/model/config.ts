@@ -68,6 +68,8 @@ export interface WorldConfig {
 
   // cognition
   policy: PolicyKind;
+  /** Permille of agents that deliberate when `policy` is "planner"; the rest are reflex-only (for mixed-population studies). */
+  plannerShare: number;
   cadence: number; // ticks between strategic deliberations for planner agents
 
   // affordance switches
@@ -88,9 +90,12 @@ export const DEFAULT_CONFIG: WorldConfig = {
   landFraction: 500,
   relief: 1000,
   strait: false,
-  richness: 1000,
-  nodeDensity: 1000,
-  regrowth: 1000,
+  // Reference ecology (D-014): tuned on development seeds so that an island feeds fifty
+  // people with slack when its patches are left half full, and about two thirds of them
+  // when every patch is picked bare. 1000 is the neutral multiplier of the underlying tables.
+  richness: 1200,
+  nodeDensity: 1500,
+  regrowth: 1200,
   collapse: 1000,
   spoilage: 1000,
   seasonDays: [10, 10, 10, 10],
@@ -108,6 +113,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   learningRate: 1000,
   memoryCapacity: 48,
   policy: "planner",
+  plannerShare: 1000,
   cadence: 24,
   institutions: "grammar_search",
   escrow: true,
@@ -151,7 +157,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     overrides: {
       seasonDays: [8, 8, 8, 16],
       startDay: 12,
-      winterSeverity: 1500,
+      winterSeverity: 1350,
       spoilage: 1250,
     },
   },
@@ -163,10 +169,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
       "Food is concentrated in a handful of fishing waters and berry groves that collapse if they are stripped and recover only slowly.",
     objective: { id: "commons_alive", text: "Keep every commons above its collapse threshold for a year while four in five survive." },
     overrides: {
-      nodeDensity: 520,
-      richness: 1500,
+      nodeDensity: 700,
+      richness: 1800,
       collapse: 1800,
-      regrowth: 850,
+      regrowth: 1020,
     },
   },
   {
@@ -252,6 +258,7 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   intInRange("cadence", cfg.cadence, 1, 960);
   if (cfg.spawn !== "dispersed" && cfg.spawn !== "clustered") throw new Error("config.spawn invalid");
   if (cfg.policy !== "reflex" && cfg.policy !== "planner") throw new Error("config.policy invalid");
+  intInRange("plannerShare", cfg.plannerShare, 0, 1000);
   if (!["off", "grammar_search", "scripted_control", "open"].includes(cfg.institutions)) {
     throw new Error("config.institutions invalid");
   }

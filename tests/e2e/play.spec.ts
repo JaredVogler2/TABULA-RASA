@@ -12,7 +12,9 @@ import { join } from "node:path";
  * graphics preset because CI renders WebGL in software; it changes drawing only.
  */
 
-const SHOTS = process.env.E2E_SHOTS ?? "evidence/phase-04/e2e";
+// Screenshots go to the (untracked) test output folder unless a phase's evidence is being recorded:
+//   E2E_SHOTS=evidence/phase-04/e2e pnpm e2e
+const SHOTS = process.env.E2E_SHOTS ?? "test-results/shots";
 
 async function shot(page: Page, project: string, name: string): Promise<void> {
   mkdirSync(join(SHOTS, project), { recursive: true });

@@ -45,19 +45,25 @@ function regrow(world: WorldState, out: EventOut, day: number, season: number): 
     const before = A;
     let rate = Math.round((spec.growth[season as 0 | 1 | 2 | 3] * cfg.regrowth) / 1000);
     if (drought && DROUGHT_SENSITIVE.has(kind)) rate = 0;
-    if (A === 0) {
+    if (A === 0 && spec.base === 0) {
       if (rate > 0 && chance(spec.reseed, 1000, cfg.seed, Stream.Regrowth, day, n, epoch, 1)) A = 1;
     } else if (rate > 0 && A < K) {
       if (spec.collapseBelow > 0 && cfg.collapse > 0) {
         const threshold = (K * spec.collapseBelow * cfg.collapse) / 1_000_000;
         if (A < threshold) rate = Math.round((rate * spec.collapseFactor) / 1000);
       }
-      // logistic growth: rate · A · (1 − A/K), with exact expectation via stochastic rounding
-      A += stochasticDiv(rate * A * (K - A), 1000 * K, cfg.seed, Stream.Regrowth, day, n, epoch, 2);
+      // growth: rate · (A + base·K) · (1 − A/K), with exact expectation via stochastic rounding.
+      // With base = 0 this is logistic growth, which stops at zero stock.
+      A += stochasticDiv(rate * (1000 * A + spec.base * K) * (K - A), 1_000_000 * K, cfg.seed, Stream.Regrowth, day, n, epoch, 2);
       if (A > K) A = K;
     }
     if (season === 3 && spec.winterLoss > 0 && A > 0) {
-      A -= stochasticDiv(A * spec.winterLoss, 1000, cfg.seed, Stream.Regrowth, day, n, epoch, 3);
+      // die-back stops at the dormant reserve: the plant outlives its fruit
+      const reserve = Math.ceil((K * spec.dormant) / 1000);
+      if (A > reserve) {
+        A -= stochasticDiv(A * spec.winterLoss, 1000, cfg.seed, Stream.Regrowth, day, n, epoch, 3);
+        if (A < reserve) A = reserve;
+      }
     }
     if (drought && kind === NodeKind.berry_bush && A > 0) {
       A -= stochasticDiv(A * 120, 1000, cfg.seed, Stream.Regrowth, day, n, epoch, 4);

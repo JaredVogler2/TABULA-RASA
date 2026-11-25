@@ -1,0 +1,37 @@
+
+> tabula-rasa@0.1.0 test /home/user/TABULA-RASA
+> vitest run
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/engine/world/world.test.ts (28 tests) 2145ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 523ms
+ ✓ src/engine/core/core.test.ts (19 tests) 149ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 34ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 8106ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1256ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 461ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 781ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 345ms
+     ✓ re-keying the branch gives an independent stochastic continuation 534ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 635ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 768ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1096ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 8184ms
+   ✓ external decisions: proposals, not writes (4)
+     ✓ replay uses the recorded intents and reproduces the same world without consulting any mind 338ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 3965ms
+     ✓ on the reference island a society of planners comes through its first winter 2667ms
+
+ Test Files  6 passed (6)
+      Tests  124 passed (124)
+   Start at  05:57:00
+   Duration  8.49s (tests 97%, transform 2%, import 1%)
+

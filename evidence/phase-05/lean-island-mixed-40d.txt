@@ -1,0 +1,11 @@
+days=40 plannerShare=500 overrides={"richness":1000,"regrowth":1000,"nodeDensity":1000}
+seed   1  planner 24/24 alive, welfare 53.2%, food in hand 40   |   reflex 21/26 alive, welfare 53.8%, food in hand 1
+seed   2  planner 24/25 alive, welfare 52.5%, food in hand 16   |   reflex 11/25 alive, welfare 49.1%, food in hand 0
+seed   3  planner 15/26 alive, welfare 45.5%, food in hand 23   |   reflex 1/24 alive, welfare 34.2%, food in hand 0
+seed   4  planner 6/29 alive, welfare 45.3%, food in hand 11   |   reflex 0/21 alive, welfare 43.3%, food in hand 0
+seed   5  planner 20/23 alive, welfare 48.9%, food in hand 11   |   reflex 1/27 alive, welfare 42.7%, food in hand 0
+seed   6  planner 12/23 alive, welfare 46.4%, food in hand 36   |   reflex 0/27 alive, welfare 36.6%, food in hand 0
+seed   7  planner 18/26 alive, welfare 50.6%, food in hand 7   |   reflex 3/24 alive, welfare 48.7%, food in hand 0
+seed   8  planner 14/27 alive, welfare 46.2%, food in hand 27   |   reflex 3/23 alive, welfare 41.7%, food in hand 0
+ planner: survival 65.5% (133/203), welfare incl. the dead 48.5%
+  reflex: survival 20.3% (40/197), welfare incl. the dead 43.8%

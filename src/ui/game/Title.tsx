@@ -57,7 +57,7 @@ export function Setup() {
   const error = useGame((s) => s.error);
   const [scenario, setScenario] = useState("first_light");
   const [seedText, setSeedText] = useState("1");
-  const [policy, setPolicy] = useState<PolicyKind>("reflex");
+  const [policy, setPolicy] = useState<PolicyKind>("planner");
   const chosen = SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0]!;
   const seed = parseSeed(seedText);
 
@@ -103,12 +103,13 @@ export function Setup() {
               <label className={styles.field} style={{ flex: "1 1 220px" }}>
                 Minds
                 <select className={styles.select} value={policy} onChange={(e) => setPolicy(e.target.value as PolicyKind)} data-testid="policy-select">
-                  <option value="reflex">Baseline — reflex (serves the most urgent need)</option>
+                  <option value="planner">Baseline — planner (looks ahead: stores, tools, crops, favours)</option>
+                  <option value="reflex">Baseline — reflex (serves only the most urgent need)</option>
                 </select>
               </label>
             </div>
             <p className={styles.muted} style={{ marginTop: 8 }}>
-              This world will use seed <b className="tnum">{seed}</b>. These minds are a deterministic program labelled BASELINE — not a language model.
+              This world will use seed <b className="tnum">{seed}</b>. Both kinds of mind are deterministic programs labelled BASELINE — neither is a language model, and neither is told to form any group or rule.
             </p>
           </div>
           {error ? (

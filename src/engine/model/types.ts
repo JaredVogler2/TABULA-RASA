@@ -165,6 +165,8 @@ export interface KnownStructure {
   state: number;
   /** Institution it was bound to when last seen, or -1. */
   bound: number;
+  /** For an unfinished site: materials still missing when last seen (per item id). Absent once complete. */
+  missing?: number[];
 }
 
 export interface Commitment {
@@ -195,6 +197,8 @@ export interface Mind {
   nodeAmt: Int16Array;
   nodeTick: Int32Array;
   nodeSrc: Int16Array;
+  /** The most this agent has ever seen at each node with its own eyes (0 = never seen): its idea of "full". */
+  nodeMax: Int16Array;
   /** Last known position of each other agent, and when (-1 = never met). */
   metX: Uint8Array;
   metY: Uint8Array;
@@ -233,6 +237,11 @@ export interface Mind {
   /** Smoothed felt temperature and its day-over-day trend (the basis of seasonal foresight). */
   tempEma: number;
   tempTrend: number;
+  /** Running sum and count of today's sensed outdoor temperature (folded into tempEma at day's end). */
+  tempSum: number;
+  tempN: number;
+  /** Consecutive days whose mean sensed temperature was cold (a cold season being lived through). */
+  coldRun: number;
   /** Tick at which this agent last saw a dried-up stream (-1 = never). */
   droughtSeen: number;
   /** Earliest tick at which a planner-controlled agent may deliberate strategically again. */

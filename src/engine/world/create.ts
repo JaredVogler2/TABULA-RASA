@@ -48,6 +48,10 @@ export function createWorld(config: WorldConfig, branch: BranchInfo = ROOT_BRANC
     metrics: emptyMetrics(),
   };
   world.shockTicks = resolveShockTicks(world);
+  // everyone wakes already feeling the air of the day they wake into
+  for (const a of agents) {
+    a.mind.tempEma = world.climate.temp - Math.floor(((terrain.height[a.y * terrain.w + a.x] as number) * 40) / 1000);
+  }
   // initial possessions are the first declared source in the conservation ledger
   for (const a of agents) for (let i = 0; i < ITEM_COUNT; i++) source(world, i, a.inv[i] as number);
   return world;

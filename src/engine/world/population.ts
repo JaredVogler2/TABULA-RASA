@@ -3,7 +3,7 @@
  * empty minds. Fifty unrelated adults with no relationships and no shared history.
  */
 import { clampInt } from "../core/math";
-import { SeqRng, Stream, u32 } from "../core/rng";
+import { SeqRng, Stream, u32, below } from "../core/rng";
 import type { WorldConfig } from "../model/config";
 import { Biome, ITEM_COUNT, Item, PHYS_COUNT, SKILL_COUNT, TRAIT_COUNT, Trait, Water } from "../model/constants";
 import { ACTIVITY_CLASSES, type Agent, type Mind, type Nodes, type Terrain } from "../model/types";
@@ -55,6 +55,7 @@ export function emptyMind(cfg: WorldConfig, terrain: Terrain, nodes: Nodes, trus
     nodeAmt: new Int16Array(nodes.count).fill(-1),
     nodeTick: new Int32Array(nodes.count).fill(-1),
     nodeSrc: new Int16Array(nodes.count).fill(-1),
+    nodeMax: new Int16Array(nodes.count),
     metX: new Uint8Array(cap),
     metY: new Uint8Array(cap),
     metTick: new Int32Array(cap).fill(-1),
@@ -82,6 +83,9 @@ export function emptyMind(cfg: WorldConfig, terrain: Terrain, nodes: Nodes, trus
     wintersSeen: 0,
     tempEma: 0,
     tempTrend: 0,
+    tempSum: 0,
+    tempN: 0,
+    coldRun: 0,
     droughtSeen: -1,
     nextDeliberation: 0,
   };
@@ -146,7 +150,8 @@ export function createAgent(
     traits,
     phys,
     skills,
-    controller: cfg.policy,
+    // in a mixed population who deliberates is drawn per person, independently of everything else about them
+    controller: cfg.policy === "planner" && (cfg.plannerShare >= 1000 || below(1000, cfg.seed, Stream.Policy, id, 1) < cfg.plannerShare) ? "planner" : "reflex",
     queue: [],
     act: null,
     path: [],

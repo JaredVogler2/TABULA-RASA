@@ -155,6 +155,18 @@ export interface NodeSpec {
   /** Fraction (permille) of standing stock lost per day in winter (die-back). */
   winterLoss: number;
   /**
+   * Dormant reserve, permille of capacity: winter die-back never takes a node below it
+   * (the plant outlives its fruit). Foragers still can, and then spring starts from nothing.
+   */
+  dormant: number;
+  /**
+   * Base productivity, permille of capacity: growth is rate · (stock + base) · (1 − stock/K).
+   * A bush fruits from the plant, not from last week's berries, so picking it bare slows it
+   * without killing it (base > 0); a shoal or a root bed reproduces from what is left (base ≈ 0),
+   * which is what makes those two a commons that can be destroyed.
+   */
+  base: number;
+  /**
    * Collapse threshold as a permille of capacity: below it, growth is multiplied by
    * `collapseFactor` permille (an Allee effect). 0 disables it.
    */
@@ -175,38 +187,38 @@ export const SKILL_MAX = 1000;
 export const NODE_SPECS: readonly NodeSpec[] = [
   {
     kind: 0, name: "berry_bush", yields: Item.berry, work: 4, baseYield: 2, skill: Skill.forage, tool: -1,
-    capMin: 8, capMax: 14, renewable: true, growth: [320, 380, 140, 0], winterLoss: 250,
-    collapseBelow: 150, collapseFactor: 300, reseed: 120, standOn: true,
+    capMin: 8, capMax: 14, renewable: true, growth: [320, 380, 140, 0], winterLoss: 250, dormant: 250, base: 150,
+    collapseBelow: 150, collapseFactor: 300, reseed: 200, standOn: true,
   },
   {
     kind: 1, name: "root_patch", yields: Item.root, work: 6, baseYield: 1, skill: Skill.forage, tool: -1,
-    capMin: 5, capMax: 9, renewable: true, growth: [140, 160, 120, 20], winterLoss: 0,
-    collapseBelow: 0, collapseFactor: 1000, reseed: 80, standOn: true,
+    capMin: 5, capMax: 9, renewable: true, growth: [140, 160, 120, 20], winterLoss: 0, dormant: 0, base: 30,
+    collapseBelow: 0, collapseFactor: 1000, reseed: 120, standOn: true,
   },
   {
     kind: 2, name: "tree", yields: Item.wood, work: 6, baseYield: 1, skill: Skill.wood, tool: Item.axe,
-    capMin: 10, capMax: 22, renewable: true, growth: [45, 55, 25, 0], winterLoss: 0,
+    capMin: 10, capMax: 22, renewable: true, growth: [45, 55, 25, 0], winterLoss: 0, dormant: 0, base: 40,
     collapseBelow: 0, collapseFactor: 1000, reseed: 40, standOn: true,
   },
   {
     kind: 3, name: "reed_bed", yields: Item.fiber, work: 4, baseYield: 2, skill: Skill.forage, tool: -1,
-    capMin: 8, capMax: 14, renewable: true, growth: [240, 280, 120, 0], winterLoss: 80,
+    capMin: 8, capMax: 14, renewable: true, growth: [240, 280, 120, 0], winterLoss: 80, dormant: 250, base: 150,
     collapseBelow: 0, collapseFactor: 1000, reseed: 150, standOn: true,
   },
   {
     kind: 4, name: "stone_outcrop", yields: Item.stone, work: 8, baseYield: 1, skill: Skill.mine, tool: -1,
-    capMin: 30, capMax: 70, renewable: false, growth: [0, 0, 0, 0], winterLoss: 0,
+    capMin: 30, capMax: 70, renewable: false, growth: [0, 0, 0, 0], winterLoss: 0, dormant: 0, base: 0,
     collapseBelow: 0, collapseFactor: 1000, reseed: 0, standOn: true,
   },
   {
     kind: 5, name: "clay_bank", yields: Item.clay, work: 6, baseYield: 1, skill: Skill.mine, tool: -1,
-    capMin: 20, capMax: 45, renewable: false, growth: [0, 0, 0, 0], winterLoss: 0,
+    capMin: 20, capMax: 45, renewable: false, growth: [0, 0, 0, 0], winterLoss: 0, dormant: 0, base: 0,
     collapseBelow: 0, collapseFactor: 1000, reseed: 0, standOn: true,
   },
   {
     kind: 6, name: "fishing_water", yields: Item.fish, work: 8, baseYield: 1, skill: Skill.fish, tool: Item.spear,
-    capMin: 14, capMax: 26, renewable: true, growth: [260, 280, 220, 110], winterLoss: 0,
-    collapseBelow: 200, collapseFactor: 200, reseed: 60, standOn: false,
+    capMin: 14, capMax: 26, renewable: true, growth: [260, 280, 220, 110], winterLoss: 0, dormant: 0, base: 0,
+    collapseBelow: 200, collapseFactor: 200, reseed: 120, standOn: false,
   },
 ];
 

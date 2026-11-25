@@ -151,4 +151,5 @@ until a human registers them here.
 
 | Date | Deviation | Reason | Impact on registered analyses |
 |---|---|---|---|
-| — | none yet | | |
+| 2026-11-25 | Reference ecology retuned and the growth law amended (D-014): node density ×1.5, capacity ×1.2, growth ×1.2; bushes and reeds gain a base productivity and a dormant winter reserve; re-seeding is faster. Engine 0.2.0, snapshot schema 2. | With the phase-03 ecology both baselines went nearly extinct by the second summer on every development seed examined, leaving no regime in which a treatment could be seen to help or harm. | None on registered analyses: no confirmatory run had been made, only development seeds 1–8 were used, and no holdout seed has been drawn. All pilot variance estimates must be made on the retuned ecology. |
+| 2026-11-25 | A `plannerShare` setting allows mixed populations of planner and reflex agents. | Needed to compare the baselines as individuals inside one world (phase 05 gate). | Not a registered factor. Registered studies keep it at 1000. |

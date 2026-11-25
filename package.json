@@ -2,7 +2,7 @@
   "name": "tabula-rasa",
   "version": "0.1.0",
   "private": true,
-  "description": "TABULA RASA — Civilization Without Instructions. A deterministic artificial-society simulation, observer game and experiment lab.",
+  "description": "TABULA RASA \u2014 Civilization Without Instructions. A deterministic artificial-society simulation, observer game and experiment lab.",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
@@ -26,7 +26,8 @@
     "owner:hash": "tsx scripts/owner-hash.ts",
     "scan:secrets": "tsx scripts/scan-secrets.ts",
     "scan:bundle": "tsx scripts/scan-bundle.ts",
-    "gen:affordances": "tsx scripts/gen-affordances.ts"
+    "gen:affordances": "tsx scripts/gen-affordances.ts",
+    "compare": "tsx scripts/compare.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.14.0",

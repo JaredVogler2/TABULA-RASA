@@ -1,0 +1,25 @@
+TABULA RASA headless run — scenario=first_light seed=1 days=40 policy=planner population=50
+survival 100.0%  welfare 56.3% (living 56.3%)  gini 0.191  cooperation 0/1000 agent-days  specialization 0.273  commons min 20.9%
+deaths {}  structures built 332  decisions 11044  rejected intents 135  utterances 504
+final digest d27235ad30ef826d  snapshot 4e2378bb551feed6fef264298efd12416397863aaf180501faca620526aa7e61  (1609 KiB)
+replay  IDENTICAL  second run snapshot 4e2378bb551feed6fef264298efd12416397863aaf180501faca620526aa7e61
+TABULA RASA headless run — scenario=long_winter seed=1 days=40 policy=planner population=50
+survival 84.0%  welfare 46.4% (living 50.4%)  gini 0.178  cooperation 15/1000 agent-days  specialization 0.253  commons min 13.3%
+deaths {"cold":6,"hunger":2}  structures built 396  decisions 10583  rejected intents 192  utterances 218
+final digest 02cea7912eaf1eaf  snapshot 3f0c810a973bcc0681bbc9c6c2d717f86e7f0e13e739be7d3b5da791b17641a9  (1739 KiB)
+replay  IDENTICAL  second run snapshot 3f0c810a973bcc0681bbc9c6c2d717f86e7f0e13e739be7d3b5da791b17641a9
+TABULA RASA headless run — scenario=thin_commons seed=1 days=40 policy=planner population=50
+survival 100.0%  welfare 55.0% (living 55.0%)  gini 0.206  cooperation 2/1000 agent-days  specialization 0.238  commons min 6.2%
+deaths {}  structures built 294  decisions 10438  rejected intents 153  utterances 381
+final digest 80461e7f8cd0caa2  snapshot fca0f79565e6cea4a09b369dc5da6b701c483dfbf51adeec1ae3eed158104b8c  (1280 KiB)
+replay  IDENTICAL  second run snapshot fca0f79565e6cea4a09b369dc5da6b701c483dfbf51adeec1ae3eed158104b8c
+TABULA RASA headless run — scenario=two_shores seed=1 days=40 policy=planner population=50
+survival 100.0%  welfare 54.9% (living 54.9%)  gini 0.192  cooperation 1/1000 agent-days  specialization 0.293  commons min 24.7%
+deaths {}  structures built 335  decisions 10948  rejected intents 119  utterances 413
+final digest be93ba3072e279e9  snapshot ec349984b2d16ed2fc6b3b763725a2bd0685fdaf98f609fb8674a0c44920a555  (1553 KiB)
+replay  IDENTICAL  second run snapshot ec349984b2d16ed2fc6b3b763725a2bd0685fdaf98f609fb8674a0c44920a555
+TABULA RASA headless run — scenario=dry_year seed=1 days=40 policy=planner population=50
+survival 90.0%  welfare 51.0% (living 52.7%)  gini 0.220  cooperation 10/1000 agent-days  specialization 0.244  commons min 9.7%
+deaths {"hunger":5}  structures built 267  decisions 16493  rejected intents 7040  utterances 250
+final digest b640b409ae5c10ae  snapshot c6660d47610bba6639ef81308c42c43804085c23b71101b25614feeb40ba4f60  (1557 KiB)
+replay  IDENTICAL  second run snapshot c6660d47610bba6639ef81308c42c43804085c23b71101b25614feeb40ba4f60

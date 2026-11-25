@@ -194,7 +194,37 @@ export function goalSentence(goal: string, why: string): string {
     no_food_known: "knows of no food",
     by_fire: "is warming up by a fire",
     go_to_fire: "is cold and knows of a lit fire",
-    relight: "is cold and has wood for a dead fire",
+    relight: "the fire has gone out",
+    // reasons recorded by the planning layer
+    stock: "wants more food in hand than today needs",
+    cold_coming: "the days are getting colder",
+    fish_spoils: "fresh fish will not keep",
+    carry_more: "could carry more with a basket",
+    fish_better: "would catch more with a spear",
+    need_wood: "expects to need a lot of wood",
+    finish_fire: "a hearth nearby is unfinished",
+    feed_for_night: "the night will be cold",
+    hearth: "wants a fire to cook and gather at",
+    join_work: "someone has started one nearby",
+    cold_nights: "has been cold at night",
+    keep_food: "has more food than can be carried safely",
+    keeps_longer: "food keeps longer in a store",
+    sow_for_later: "one root sown returns several",
+    my_crop: "planted it",
+    others_crop: "is hungry, and someone else's crop is ripe",
+    promised: "gave their word",
+    asked: "was asked",
+    they_look_hungry: "someone nearby looks hungry",
+    was_helped: "was fed when in need",
+    warn_about_someone: "someone let them down",
+    speak_well: "someone did right by them",
+    it_is_bare: "found a place stripped bare",
+    food_is_there: "knows where food is plentiful",
+    from_my_store: "has food put by in a store they built",
+    from_a_store: "knows a store with food in it",
+    found_on_ground: "saw food lying on the ground",
+    hungry_and_empty_handed: "is hungry, with nothing in hand and no food known",
+    night_is_coming: "the light is failing",
     build_fire: "is cold and carries wood and stone",
     shelter: "is cold and knows a shelter",
     fetch_wood: "is cold and needs wood for a fire",
@@ -215,10 +245,32 @@ export function goalSentence(goal: string, why: string): string {
     explore: "Exploring",
     idle: "Idling",
     start: "Just arrived",
+    provision: "Gathering food",
+    preserve: "Smoking fish over a fire",
+    make_basket: "Making a basket",
+    make_spear: "Making a spear",
+    make_axe: "Making an axe",
+    build_fire: "Building a hearth",
+    tend_fire: "Tending a fire",
+    build_shelter: "Building a shelter",
+    build_store: "Building a store",
+    stash: "Putting food by",
+    plant: "Planting",
+    reap: "Harvesting",
+    give: "Giving food away",
+    repay: "Keeping a promise",
+    pledge: "Promising to repay",
+    tell: "Telling others",
+    ask: "Asking for food",
+    go_home: "Heading home",
+    own_plan: "Following a plan of their own",
   };
-  const g = goals[goal] ?? goal.replace(/_/g, " ");
+  const g = goals[goal] ?? goal.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
   const r = reasons[why];
-  return r ? `${g} — ${r}.` : `${g}.`;
+  if (r) return `${g} — ${r}.`;
+  // an externally driven mind states its reason in its own words; it is shown as a quotation, unedited
+  if (why && /\s/.test(why)) return `${g}. Stated reason: “${why}”`;
+  return `${g}.`;
 }
 
 export const MEMORY_TEXT: Record<string, string> = {

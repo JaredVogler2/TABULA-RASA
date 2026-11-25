@@ -8,6 +8,7 @@ import { emit, type EventOut } from "../sim/events";
 import type { Scratch } from "../sim/scratch";
 import { planDecide } from "./planner";
 import { reflexDecide, urgentNeed, type Plan } from "./reflex";
+import { noteHeard } from "./social";
 
 export type DecisionLayer = "reflex" | "planner" | "external";
 
@@ -37,7 +38,8 @@ export function adopt(
   world.metrics.decisionsBySource[source] = (world.metrics.decisionsBySource[source] ?? 0) + 1;
   m.decisionEvent = emit(world, out, "decision", a.id, {
     r: plan.goal,
-    d: { src: source, layer, why: plan.why, n: plan.intents.length },
+    // an external decision is recorded whole: the ledger is then a tape it can be replayed from
+    d: layer === "external" ? { src: source, layer, why: plan.why, n: plan.intents.length, plan: plan.intents.slice() } : { src: source, layer, why: plan.why, n: plan.intents.length },
     p: parents,
   });
 }
@@ -45,12 +47,14 @@ export function adopt(
 /** Give an agent with no plan something to do. */
 export function decide(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void {
   const urgent = urgentNeed(a);
-  if (a.controller === "planner" && urgent === "" && world.tick >= a.mind.nextDeliberation) {
-    a.mind.nextDeliberation = world.tick + world.config.cadence;
+  // the deliberate layer is consulted unless thirst, cold or exhaustion is pressing; it is
+  // consulted in hunger because only it knows about stores, piles and asking
+  if (a.controller === "planner" && (urgent === "" || urgent === "eat")) {
     const plan = planDecide(world, sc, a);
+    // what was heard has now been weighed once; stale speech is not reconsidered forever
+    pruneInbox(world, a);
     if (plan) {
       adopt(world, a, out, plan, "baseline", "planner");
-      a.mind.inbox.length = 0;
       return;
     }
   }
@@ -60,6 +64,17 @@ export function decide(world: WorldState, sc: Scratch, a: Agent, out: EventOut):
 }
 
 const INBOX_CAP = 12;
+/** Ticks for which something heard stays available to deliberation (four hours). */
+const INBOX_TTL = 16;
+
+function pruneInbox(world: WorldState, a: Agent): void {
+  const inbox = a.mind.inbox;
+  let k = 0;
+  for (let i = 0; i < inbox.length; i++) {
+    if (world.tick - inbox[i]!.tick <= INBOX_TTL) inbox[k++] = inbox[i]!;
+  }
+  inbox.length = k;
+}
 
 function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void {
   const m = a.mind;
@@ -70,6 +85,7 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
     m.inbox.splice(k >= 0 ? k : 0, 1);
   }
   m.inbox.push(heard);
+  noteHeard(world, a, u, direct);
   m.lastTalk[u.from] = world.tick;
   m.metX[u.from] = u.x;
   m.metY[u.from] = u.y;
@@ -83,6 +99,14 @@ function hear(world: WorldState, a: Agent, u: Utterance, direct: boolean): void 
     if (Number.isInteger(n) && n >= 0 && n < world.nodes.count && u.act.tick > (m.nodeTick[n] as number)) {
       m.nodeAmt[n] = Math.max(0, Math.min(30000, Math.floor(u.act.amount)));
       m.nodeTick[n] = Math.min(world.tick, Math.floor(u.act.tick));
+      m.nodeSrc[n] = u.from;
+    }
+  } else if (u.act.t === "warn" && trust >= 350) {
+    // "that place is bare": believed only if it is newer than what the hearer knows first-hand
+    const n = u.act.node;
+    if (Number.isInteger(n) && n >= 0 && n < world.nodes.count && u.tick > (m.nodeTick[n] as number) && (m.nodeAmt[n] as number) >= 0) {
+      m.nodeAmt[n] = 0;
+      m.nodeTick[n] = u.tick;
       m.nodeSrc[n] = u.from;
     }
   } else if (u.act.t === "inform_structure" && trust >= 350) {

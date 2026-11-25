@@ -98,7 +98,7 @@ describe("resource nodes", () => {
   });
 
   it("richness scales capacities and density scales counts", () => {
-    const base = makeConfig("first_light", 9);
+    const base = makeConfig("first_light", 9, { richness: 1000, nodeDensity: 1000 });
     const t = generateTerrain(base).terrain;
     const normal = placeNodes(base, t);
     const rich = placeNodes({ ...base, richness: 2000 }, t);

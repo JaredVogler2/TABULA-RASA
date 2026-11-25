@@ -6,6 +6,7 @@ import type { Agent, Intent, SimEvent, WorldState } from "../model/types";
 import { createWorld } from "../world/create";
 import { SnapshotError, cloneWorld, forkWorld, restoreWorld, serializeWorld, snapshotHash, worldDigest } from "../save/snapshot";
 import { registerMigrationForTests } from "../save/migrate";
+import { SCHEMA_VERSION } from "../version";
 import { applyIntervention } from "./environment";
 import { auditGoods, totalGoods } from "./inventory";
 import { scratchOf } from "./scratch";
@@ -104,7 +105,14 @@ describe("phase 03 gate: fifty agents, a thousand ticks, deterministic replay", 
     const world = createWorld(makeConfig("first_light", 1, { policy: "reflex" }));
     run(world, 2 * TICKS_PER_DAY);
     // Updating this value is a deliberate act: bump ENGINE_VERSION when you do.
-    expect(worldDigest(world)).toMatchInlineSnapshot(`"839f3c7e1a272588"`);
+    // 0.2.0: reference ecology retuned (D-014), sleep rule, social bookkeeping.
+    expect(worldDigest(world)).toMatchInlineSnapshot(`"05f6cc416c7e9a87"`);
+  });
+
+  it("pins the reference run of the planner baseline as well", () => {
+    const world = createWorld(makeConfig("first_light", 1, { policy: "planner" }));
+    run(world, 2 * TICKS_PER_DAY);
+    expect(worldDigest(world)).toMatchInlineSnapshot(`"a120669ba8c64cfc"`);
   });
 
   it("event streams are identical across replays, with sequential ids and valid causal parents", () => {
@@ -161,7 +169,7 @@ describe("snapshots", () => {
     expect(code(() => restoreWorld(text.slice(0, text.length - 40)))).toBe("corrupt");
     expect(code(() => restoreWorld("{}"))).toBe("format");
     expect(code(() => restoreWorld('{"kind":"something-else","schema":1}'))).toBe("format");
-    expect(code(() => restoreWorld(text.replace('"schema":1', '"schema":999')))).toBe("schema");
+    expect(code(() => restoreWorld(text.replace(`"schema":${SCHEMA_VERSION}`, '"schema":999')))).toBe("schema");
     // a snapshot whose config no longer regenerates its terrain must not load
     expect(code(() => restoreWorld(text.replace('"relief":1000', '"relief":1400')))).toBe("terrain_drift");
     expect(code(() => restoreWorld(text.replace('"population":6', '"population":-3')))).toBe("config");
@@ -178,7 +186,7 @@ describe("snapshots", () => {
 
   it("applies registered migrations in order", () => {
     const world = createWorld(makeConfig("first_light", 31, { population: 6 }));
-    const text = serializeWorld(world).replace('"schema":1', '"schema":0');
+    const text = serializeWorld(world).replace(`"schema":${SCHEMA_VERSION}`, '"schema":0');
     expect(() => restoreWorld(text)).toThrow(/no migration/);
     let ran = 0;
     const undo = registerMigrationForTests(0, (env) => {
@@ -495,11 +503,18 @@ describe("arbitration and action mechanics", () => {
     // choose a free neighbouring tile
     const w = world.terrain.w;
     let spot = -1;
-    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      const tile = (a.y + dy) * w + (a.x + dx);
-      if ((world.terrain.moveCost[tile] as number) > 0 && world.terrain.water[tile] === Water.none && world.nodes.atTile[tile] === -1) {
-        spot = tile;
-        break;
+    search: for (let r = 0; r <= 4; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const x = a.x + dx;
+          const y = a.y + dy;
+          if (x < 0 || y < 0 || x >= w || y >= world.terrain.h) continue;
+          const tile = y * w + x;
+          if ((world.terrain.moveCost[tile] as number) > 0 && world.terrain.water[tile] === Water.none && world.nodes.atTile[tile] === -1) {
+            spot = tile;
+            break search;
+          }
+        }
       }
     }
     expect(spot).toBeGreaterThanOrEqual(0);

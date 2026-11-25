@@ -1,0 +1,88 @@
+
+> tabula-rasa@0.1.0 check /home/user/TABULA-RASA
+> pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm build
+
+
+> tabula-rasa@0.1.0 lint /home/user/TABULA-RASA
+> eslint
+
+
+> tabula-rasa@0.1.0 typecheck /home/user/TABULA-RASA
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> tabula-rasa@0.1.0 test /home/user/TABULA-RASA
+> vitest run
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/engine/world/world.test.ts (28 tests) 1839ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 510ms
+ ✓ src/engine/core/core.test.ts (19 tests) 112ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 28ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 7949ms
+   ✓ external decisions: proposals, not writes (4)
+     ✓ replay uses the recorded intents and reproduces the same world without consulting any mind 323ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 4102ms
+     ✓ on the reference island a society of planners comes through its first winter 2285ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 8379ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 998ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 471ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 850ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 308ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 329ms
+     ✓ re-keying the branch gives an independent stochastic continuation 595ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 806ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 1126ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1100ms
+
+ Test Files  6 passed (6)
+      Tests  124 passed (124)
+   Start at  05:57:18
+   Duration  8.54s (tests 98%, import 1%, transform 1%)
+
+
+> tabula-rasa@0.1.0 gen:affordances /home/user/TABULA-RASA
+> tsx scripts/gen-affordances.ts --check
+
+docs/AFFORDANCES.md is up to date.
+
+> tabula-rasa@0.1.0 build /home/user/TABULA-RASA
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 32ms
+- Cache Components enabled
+- Partial Prefetching enabled
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.2s
+  Running TypeScript ...
+  Finished TypeScript in 5.0s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/6) ...
+  Generating static pages using 3 workers (1/6) 
+  Generating static pages using 3 workers (2/6) 
+  Generating static pages using 3 workers (4/6) 
+✓ Generating static pages using 3 workers (6/6) in 271ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /api/health
+├ ○ /diagnostics
+└ ○ /studio
+
+
+○  (Static)  prerendered as static content
+
