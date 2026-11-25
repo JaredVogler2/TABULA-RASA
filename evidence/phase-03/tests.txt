@@ -1,0 +1,23 @@
+# 2026-11-25T03:33:54Z node v22.23.5
+$ pnpm test
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 408ms
+ ✓ src/engine/core/core.test.ts (19 tests) 147ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 23ms
+ ✓ src/engine/world/world.test.ts (28 tests) 1301ms
+ ✓ src/engine/sim/sim.test.ts (41 tests) 6425ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (3)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 833ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 506ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 307ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 348ms
+     ✓ re-keying the branch gives an independent stochastic continuation 453ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 494ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 840ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1015ms
+ Test Files  5 passed (5)
+      Tests  98 passed (98)
+   Duration  6.61s (tests 97%, transform 1%, import 1%)

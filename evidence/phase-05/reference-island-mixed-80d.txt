@@ -1,0 +1,11 @@
+days=80 plannerShare=500 overrides={}
+seed   1  planner 24/24 alive, welfare 56.1%, food in hand 144   |   reflex 26/26 alive, welfare 64.3%, food in hand 88
+seed   2  planner 25/25 alive, welfare 55.0%, food in hand 71   |   reflex 25/25 alive, welfare 62.1%, food in hand 31
+seed   3  planner 26/26 alive, welfare 55.6%, food in hand 102   |   reflex 21/24 alive, welfare 64.0%, food in hand 29
+seed   4  planner 29/29 alive, welfare 56.3%, food in hand 143   |   reflex 21/21 alive, welfare 64.8%, food in hand 45
+seed   5  planner 23/23 alive, welfare 56.8%, food in hand 157   |   reflex 27/27 alive, welfare 64.7%, food in hand 84
+seed   6  planner 23/23 alive, welfare 56.2%, food in hand 131   |   reflex 25/27 alive, welfare 61.8%, food in hand 78
+seed   7  planner 26/26 alive, welfare 56.3%, food in hand 156   |   reflex 24/24 alive, welfare 65.2%, food in hand 81
+seed   8  planner 27/27 alive, welfare 56.9%, food in hand 189   |   reflex 14/23 alive, welfare 53.5%, food in hand 39
+ planner: survival 100.0% (203/203), welfare incl. the dead 56.1%
+  reflex: survival 92.9% (183/197), welfare incl. the dead 62.6%

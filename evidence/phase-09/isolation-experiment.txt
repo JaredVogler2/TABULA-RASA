@@ -1,0 +1,15 @@
+Isolation experiment, The Long Winter, 30 days, planner baseline, development seeds 1-6 (alive of 50 per seed).
+Arms: off = institutions off; none = scripted_control mode with the control charter never proposed;
+nolock = control charter proposed without placing the store under control; full = control charter as shipped.
+(temporary instrumentation in scripted.ts, since removed)
+
+off     42 35 33 27 35 40   mean 35.3
+none    42 35 33 27 35 40   mean 35.3
+nolock  37 32 34 24 22 34   mean 30.5
+full    42 26 32 23 32 32   mean 31.2
+
+Seed 5, nolock: nobody ever joined (0 members, 23 announcements, 2 signatures on proposals that lapsed),
+yet 22 were alive against 35 with institutions off. Deaths cluster on days 21-26 in both arms.
+Reading: outcomes near the survival margin are chaotic; a perturbation of a few dozen one-tick acts
+moves the death toll by more than the six-seed mean difference between arms. No conclusion about
+the effect of the control can be drawn from these runs.

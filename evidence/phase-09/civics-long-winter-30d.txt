@@ -1,0 +1,24 @@
+scenario=long_winter days=30 overrides={}
+seed              mode  alive  welfare  commons  E1  E2  E3  E4  events
+   1               off     42     45.9     13.3   0   0   0   0  {}
+   1  scripted_control     42     46.9     11.5   7   0   0   0  {"proposal":7,"d:sign":2,"endorse":2,"lapsed":6}
+   1    grammar_search     43     46.2     13.3  17   2   1   0  {"d:propose":22,"proposal":17,"d:sign":12,"endorse":12,"lapsed":9,"ratified":2,"joined":12,"d:pay_dues":5,"breach":22,"sanction":22,"obligation":5,"left":5,"d:draw_ration":2}
+   2               off     35     43.3     13.3   0   0   0   0  {}
+   2  scripted_control     26     40.9     14.9   2   1   1   1  {"proposal":2,"lapsed":1,"d:sign":6,"endorse":6,"ratified":1,"joined":7,"d:pay_dues":10,"obligation":6,"d:draw_ration":15,"breach":8,"sanction":8,"left":2}
+   2    grammar_search     35     43.0     13.6  27   2   0   0  {"d:propose":30,"proposal":27,"lapsed":15,"d:sign":18,"endorse":17,"ratified":4,"joined":15,"breach":30,"sanction":7,"obligation":4,"d:pay_dues":3,"d:draw_ration":2,"motion":1}
+   3               off     33     43.0     13.8   0   0   0   0  {}
+   3  scripted_control     32     42.3     17.6   3   1   1   1  {"proposal":3,"lapsed":2,"d:sign":4,"endorse":4,"ratified":1,"joined":4,"breach":28,"sanction":28,"obligation":31,"d:draw_ration":1,"d:pay_dues":1}
+   3    grammar_search     38     43.9     12.0  27   6   3   0  {"d:propose":43,"proposal":27,"d:sign":32,"endorse":27,"ratified":7,"joined":31,"lapsed":12,"obligation":21,"breach":12,"sanction":12,"motion":5,"vote":21,"left":1}
+   4               off     27     42.9     12.7   0   0   0   0  {}
+   4  scripted_control     23     40.6     13.7   8   0   0   0  {"proposal":8,"lapsed":7,"d:sign":2,"endorse":2}
+   4    grammar_search     22     41.9     13.2   8   1   1   0  {"d:propose":14,"proposal":8,"d:sign":9,"endorse":9,"ratified":2,"joined":8,"lapsed":4,"breach":29,"sanction":29,"obligation":4,"left":2,"dissolved":1}
+   5               off     35     45.2     14.2   0   0   0   0  {}
+   5  scripted_control     32     44.6     15.6   2   1   1   1  {"proposal":2,"lapsed":1,"d:sign":11,"endorse":11,"ratified":1,"joined":12,"d:pay_dues":9,"obligation":5,"d:draw_ration":30,"breach":12,"sanction":12}
+   5    grammar_search     40     46.4     12.5  36   4   2   0  {"d:propose":43,"proposal":36,"d:sign":40,"endorse":30,"ratified":7,"joined":36,"d:pay_dues":35,"d:draw_ration":16,"obligation":37,"breach":96,"sanction":96,"lapsed":19,"motion":9,"vote":35,"left":1}
+   6               off     40     46.3     11.6   0   0   0   0  {}
+   6  scripted_control     32     45.0     12.3   3   1   1   1  {"proposal":3,"d:sign":10,"endorse":10,"lapsed":2,"ratified":1,"joined":10,"d:draw_ration":8,"d:pay_dues":10,"breach":8,"sanction":8,"obligation":8}
+   6    grammar_search     35     45.0     11.9  29   2   1   0  {"d:propose":40,"proposal":29,"d:sign":24,"endorse":23,"ratified":4,"joined":20,"lapsed":20,"breach":28,"sanction":28,"expelled":1,"motion":1,"vote":2,"d:pay_dues":3,"obligation":3}
+
+              off: mean alive 35.3, welfare 44.4%, runs reaching E2 0/6, E4 0/6
+ scripted_control: mean alive 31.2, welfare 43.4%, runs reaching E2 4/6, E4 4/6
+   grammar_search: mean alive 35.5, welfare 44.4%, runs reaching E2 6/6, E4 0/6

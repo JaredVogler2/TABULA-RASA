@@ -1,0 +1,63 @@
+{
+  "name": "tabula-rasa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TABULA RASA \u2014 Civilization Without Instructions. A deterministic artificial-society simulation, observer game and experiment lab.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test --trace off",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm build",
+    "sim": "tsx scripts/sim.ts",
+    "bench": "tsx scripts/bench.ts",
+    "study": "tsx scripts/study.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "owner:hash": "tsx scripts/owner-hash.ts",
+    "scan:secrets": "tsx scripts/scan-secrets.ts",
+    "scan:bundle": "tsx scripts/scan-bundle.ts",
+    "gen:affordances": "tsx scripts/gen-affordances.ts",
+    "compare": "tsx scripts/compare.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.14.0",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "fflate": "0.8.3",
+    "lucide-react": "1.79.0",
+    "next": "16.4.6",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "three": "0.187.0",
+    "zod": "4.6.7",
+    "zustand": "5.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.6.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.1",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "fast-check": "4.11.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
+  }
+}
