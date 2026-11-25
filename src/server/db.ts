@@ -125,8 +125,19 @@ export function getDb(): Promise<Db> {
   if (!shared) {
     shared = (async () => {
       const url = process.env.DATABASE_URL;
+      // optional: keep this application's tables in a schema of their own inside a shared database
+      const schema = (process.env.DATABASE_SCHEMA ?? "").trim() || undefined;
       let db: Db;
-      if (url) db = await openPostgres(url);
+      if (url && schema) {
+        if (!/^[a-z_][a-z0-9_]{0,62}$/.test(schema)) throw new Error("DATABASE_SCHEMA is not a valid schema name");
+        const admin = await openPostgres(url, 1);
+        try {
+          await admin.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+        } finally {
+          await admin.close();
+        }
+        db = await openPostgres(url, 10, schema);
+      } else if (url) db = await openPostgres(url);
       else if (process.env.NODE_ENV === "production") throw new Error("DATABASE_URL is not configured");
       else db = await openPglite(".data/pglite");
       await migrate(db);

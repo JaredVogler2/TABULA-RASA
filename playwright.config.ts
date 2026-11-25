@@ -1,7 +1,27 @@
 import { defineConfig, devices } from "@playwright/test";
+import { randomBytes, scryptSync } from "node:crypto";
+import { E2E_PASSPHRASE } from "./tests/e2e/constants";
 
 const PORT = Number(process.env.E2E_PORT ?? 3210);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
+
+/**
+ * The owner console is tested against a server that has an owner. The passphrase is a fixed,
+ * public test value; its hash is computed here at start-up (same format as `pnpm owner:hash`),
+ * so no hash is committed. The ledger lives in a schema of its own on the test database, and
+ * live mode stays off: these tests can never reach a provider.
+ */
+const salt = randomBytes(16);
+const ownerHash = `scrypt:32768:8:1:${salt.toString("base64url")}:${scryptSync(E2E_PASSPHRASE.normalize("NFKC"), salt, 32, { N: 32768, r: 8, p: 1, maxmem: 256 * 32768 * 8 }).toString("base64url")}`;
+const serverEnv: Record<string, string> = {
+  LIVE_ENABLED: "false",
+  OWNER_PASSWORD_HASH: ownerHash,
+  AUTH_SECRET: randomBytes(48).toString("base64url"),
+  DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+  DATABASE_SCHEMA: "e2e",
+  ANTHROPIC_API_KEY: "",
+  ANTHROPIC_MODEL: "",
+};
 
 /**
  * E2E runs against the production build (`next build && next start`) unless
@@ -12,6 +32,8 @@ const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
  */
 export default defineConfig({
   testDir: "./tests/e2e",
+  testMatch: "**/*.spec.ts",
+  globalSetup: "./tests/e2e/global-setup.ts",
   outputDir: "./test-results",
   fullyParallel: false,
   workers: 1,
@@ -51,7 +73,8 @@ export default defineConfig({
     : {
         command: `pnpm exec next start -p ${PORT}`,
         url: `${baseURL}/api/health`,
-        reuseExistingServer: true,
+        env: serverEnv,
+        reuseExistingServer: false,
         timeout: 120_000,
         stdout: "pipe",
         stderr: "pipe",

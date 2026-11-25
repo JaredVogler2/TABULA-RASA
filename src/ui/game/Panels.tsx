@@ -23,7 +23,7 @@ import { useController } from "./context";
 import styles from "./game.module.css";
 import { clock, type ChronicleGroup } from "./text";
 
-function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
+export function PanelHead({ kicker, title, onClose, testId }: { kicker: string; title: string; onClose: () => void; testId?: string }) {
   return (
     <div className={styles.panelHead}>
       <div className={styles.panelTitle}>
@@ -187,6 +187,7 @@ export function MenuPanel() {
   const saves = useGame((s) => s.saves);
   const settings = useGame((s) => s.settings);
   const world = useGame((s) => s.world);
+  const replay = useGame((s) => s.hud?.replay ?? null);
   const close = () => controller.openPanel("menu");
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
@@ -194,10 +195,12 @@ export function MenuPanel() {
         <PanelHead kicker="This world" title="Menu" onClose={close} testId="menu" />
         <div className={styles.panelBody}>
           <div className={styles.actions} style={{ marginTop: 0 }}>
-            <button type="button" className={styles.button} data-variant="primary" onClick={() => void controller.save()} data-testid="save-game">
-              <Save aria-hidden />
-              Save this world
-            </button>
+            {replay ? null : (
+              <button type="button" className={styles.button} data-variant="primary" onClick={() => void controller.save()} data-testid="save-game">
+                <Save aria-hidden />
+                Save this world
+              </button>
+            )}
             <button type="button" className={styles.button} onClick={() => controller.openPanel("affordances")} data-testid="open-affordances">
               <Info aria-hidden />
               What was designed
@@ -265,7 +268,11 @@ export function MenuPanel() {
             <div className={styles.sectionTitle}>About this run</div>
             <p className={styles.muted}>
               Engine {ENGINE_VERSION} · affordances {AFFORDANCE_VERSION}
-              {world ? ` · world ${world.terrainHash.slice(0, 12)} · config ${world.configHash.slice(0, 12)}` : ""}. Every citizen here is driven by a deterministic BASELINE policy, not a language model. No data leaves this device.{" "}
+              {world ? ` · world ${world.terrainHash.slice(0, 12)} · config ${world.configHash.slice(0, 12)}` : ""}.{" "}
+              {replay
+                ? `This is a recording (${replay.provider === "anthropic" ? `language model ${replay.model}` : replay.provider === "mock" ? "MOCK minds, a deterministic test double" : "baseline minds"}): ${replay.decisions} decisions made when it was recorded are replayed here, and nobody is consulted now.`
+                : "Every citizen here is driven by a deterministic BASELINE policy, not a language model."}{" "}
+              No data leaves this device.{" "}
               <Link href="/diagnostics">System check</Link>
             </p>
           </div>

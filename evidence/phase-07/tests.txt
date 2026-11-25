@@ -1,0 +1,66 @@
+# Phase 07 — budget ledger, owner authentication, API gate, scans
+# command: TEST_DATABASE_URL=postgres://tabula:tabula@localhost:5432/tabula_test pnpm exec vitest run --reporter=verbose <files>
+# database server: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/server/auth.test.ts > the owner's passphrase > is stored as a salted scrypt hash that only the passphrase opens 393ms
+ ✓ src/server/auth.test.ts > the owner's passphrase > matches nothing when the hash is missing, malformed or absurd, and never throws 118ms
+ ✓ src/server/auth.test.ts > sessions > a session cookie is ours only if we signed it, and only until it expires 1ms
+ ✓ src/server/auth.test.ts > sessions > the anti-forgery token belongs to one session and cannot be guessed from another 0ms
+ ✓ src/server/auth.test.ts > sessions > the cookie is HttpOnly, SameSite=Strict, host-bound and Secure wherever HTTPS is used 0ms
+ ✓ src/server/auth.test.ts > the gate in front of every owner endpoint > lets the owner's own page through and nobody else 19ms
+ ✓ src/server/auth.test.ts > the gate in front of every owner endpoint > with no signing secret configured, nobody is the owner 0ms
+ ✓ src/server/auth.test.ts > the gate in front of every owner endpoint > judges origin by the host the client addressed, behind a proxy or not 1ms
+ ✓ src/server/auth.test.ts > the gate in front of every owner endpoint > reads only JSON, and only so much of it 2ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > starts closed: nothing is authorized and the kill switch is on 51ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > holds money before a request and replaces the hold by what the provider reports 21ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > a repeated or re-ordered request cannot hold or charge twice 25ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > an unknown outcome keeps its money held until the owner decides 42ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > a reservation whose process died is shown as unknown, never given back by itself 29ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > enforces the run's cap, the day's cap and the total, and a refusal leaves nothing behind 51ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > refuses a run that is not active, an unknown run, and malformed amounts 16ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > a request that costs more than was held is recorded as overage and stops everything 18ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > the kill switch stops new holds at once and does not disturb settlement 15ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > the authorization cannot be lowered below what is already committed 21ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > the database itself refuses an overspend that application code tries to write 7ms
+ ✓ src/server/ledger.test.ts > the budget ledger (PostgreSQL semantics, in memory) > property: after any sequence of operations the books balance and no ceiling is exceeded 800ms
+ ✓ src/server/api.test.ts > the owner API > signs the owner in with the passphrase, and slows down anyone guessing it 669ms
+ ✓ src/server/api.test.ts > the owner API > is unavailable when owner sign-in is not configured 4ms
+ ✓ src/server/api.test.ts > the owner API > tells a stranger nothing, and does not touch the database to do it 4ms
+ ✓ src/server/ledger.test.ts > the budget ledger under real concurrency (PostgreSQL server) > 100 concurrent requests from two instances cannot hold more than was authorized 255ms
+ ✓ src/server/api.test.ts > the owner API > no request without the owner's session, origin and token changes anything or reaches a provider 292ms
+ ✓ src/server/ledger.test.ts > the budget ledger under real concurrency (PostgreSQL server) > the same holds for a run's cap and for the day's cap 252ms
+ ✓ src/server/auth.test.ts > rate limiting, shared through the database > allows a fixed number of requests per window per key, then refuses until the window turns 5ms
+ ✓ src/server/auth.test.ts > rate limiting, shared through the database > refuses when it cannot count 1419ms
+ ✓ src/server/auth.test.ts > live mode is off unless everything it needs is in place > is available only with the switch on, a key, a priced model, a database, owner sign-in and fresh prices 2ms
+ ✓ src/server/auth.test.ts > live mode is off unless everything it needs is in place > goes unavailable when the price table is stale, and says so without revealing anything else 0ms
+ ✓ src/server/ledger.test.ts > the budget ledger under real concurrency (PostgreSQL server) > 100 concurrent copies of one request are granted exactly once 111ms
+ ✓ tests/unit/scans.test.ts > the secret scan would catch a real leak > flags credential-shaped strings wherever they are, and says where without repeating them 3ms
+ ✓ tests/unit/scans.test.ts > the secret scan would catch a real leak > flags env files, values in the template, and public variables named like secrets 1ms
+ ✓ tests/unit/scans.test.ts > the secret scan would catch a real leak > lets through what is not a secret: fixtures, local test databases, the real template 0ms
+ ✓ tests/unit/scans.test.ts > the bundle scan would catch server code or secrets sent to the browser > flags server-only markers, credential shapes and live secret values 2ms
+ ✓ tests/unit/scans.test.ts > the embedded migrations are the files in db/migrations > match byte for byte, in order 0ms
+ ✓ src/server/api.test.ts > the owner API > runs a mock society end to end through the API, and the published record can be verified by anyone 578ms
+ ✓ src/server/ledger.test.ts > the budget ledger under real concurrency (PostgreSQL server) > holds, settlements, releases and refusals interleaved from two instances leave the books exact 534ms
+ ✓ src/server/api.test.ts > the owner API > spends nothing until the owner authorizes an amount, releases the switch and approves a run in words 601ms
+ ✓ src/server/api.test.ts > the owner API > lets the owner settle the fate of a request whose outcome is unknown 218ms
+ ✓ src/server/api.test.ts > the owner API > refuses bodies that are too large, not JSON, or not objects, and worlds outside the allowed knobs 131ms
+ ✓ src/server/api.test.ts > the owner API > fails closed when the database cannot be reached 76ms
+ ✓ src/server/api.test.ts > the owner API > never puts a secret in a response, in the audit log or in the server's own log 3ms
+ ✓ src/server/ledger.test.ts > the budget ledger under real concurrency (PostgreSQL server) > the kill switch, thrown mid-burst, lets nothing further through 103ms
+ ✓ src/server/ledger.test.ts > database plumbing > migrations are applied once, in order, and are recorded 1142ms
+ ✓ src/server/ledger.test.ts > database plumbing > a transaction that throws leaves nothing behind 1197ms
+
+ Test Files  4 passed (4)
+      Tests  47 passed (47)
+   Start at  08:43:50
+   Duration  7.28s (tests 98%, import 1%, transform 1%)
+
+
+# pnpm scan:secrets (after staging every new file)
+scan:secrets passed: 261 tracked text files, 9 credential patterns, no env files tracked, template values empty, no secret-named public variables.
+
+# pnpm scan:bundle (after pnpm build)
+scan:bundle passed: 139 client-facing files (1819 KB of text), 13 server-only markers, 4 credential shapes, 1 live secret value(s) checked.

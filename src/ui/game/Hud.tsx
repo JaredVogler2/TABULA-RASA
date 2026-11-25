@@ -6,6 +6,7 @@ import {
   CloudLightning,
   CloudRain,
   CloudSnow,
+  Film,
   GitFork,
   Menu,
   Moon,
@@ -87,7 +88,7 @@ export function TopBar() {
           <span>Chronicle</span>
           {unread ? <i className={styles.badge} aria-hidden /> : null}
         </button>
-        <button type="button" className={styles.iconButton} aria-pressed={panel === "interventions"} onClick={() => controller.openPanel("interventions")} data-testid="open-interventions" title="Change the world (I)">
+        <button type="button" className={styles.iconButton} aria-pressed={panel === "interventions"} onClick={() => controller.openPanel("interventions")} disabled={hud.replay !== null} data-testid="open-interventions" title={hud.replay ? "A recording shows what happened; it cannot be changed" : "Change the world (I)"}>
           <Sparkles aria-hidden />
           <span>Intervene</span>
         </button>
@@ -111,6 +112,38 @@ export function TopBar() {
         </button>
       </nav>
     </header>
+  );
+}
+
+/**
+ * While a recording is watched this says, in full and at all times, whose minds were
+ * recorded and how far the replay has been checked against the record. It is never
+ * abbreviated to something that could be mistaken for a live model.
+ */
+export function RecordingBar() {
+  const replay = useGame((s) => s.hud?.replay ?? null);
+  if (!replay) return null;
+  const minds = replay.provider === "anthropic" ? `language model ${replay.model}` : replay.provider === "mock" ? "MOCK minds, a test double (not a language model)" : "baseline minds";
+  const days = Math.max(1, Math.round(replay.endTick / 96));
+  const day = Math.floor(replay.verifiedTick / 96);
+  const state =
+    replay.state === "mismatch"
+      ? "THIS ENGINE DID NOT REPRODUCE THE RECORD"
+      : replay.state === "ended"
+        ? replay.verifiedTick >= replay.endTick
+          ? `ended: all ${days} days matched the record`
+          : `ended: matched the record to day ${day} of ${days}`
+        : `matches the record to day ${day} of ${days}`;
+  return (
+    <div className={`${styles.glass} ${styles.recording}`} role="status" data-testid="recording-badge" data-state={replay.state} title={replay.title || "Recording"}>
+      <Film aria-hidden />
+      <span>
+        <b>Recording</b> · {minds} · {replay.decisions} decisions replayed, nobody consulted
+      </span>
+      <span className={styles.recordingState} data-testid="recording-state">
+        {state}
+      </span>
+    </div>
   );
 }
 

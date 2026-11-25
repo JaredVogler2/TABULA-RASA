@@ -1,0 +1,59 @@
+# Phase 06 — provider contract, answer format, prompt, live adapter
+# command: TEST_DATABASE_URL=… pnpm exec vitest run --reporter=verbose <files>   (2026-11-25, commit: see git log)
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/providers/prompt.test.ts > the rules text (prompt p1) > says what the role is, that only listed actions exist, that speech is data, and that the unknown is unknown 2ms
+ ✓ src/providers/prompt.test.ts > the rules text (prompt p1) > names no institution, gives no example of one, and tells nobody to form one 1ms
+ ✓ src/providers/prompt.test.ts > the rules text (prompt p1) > a world without the institutional affordance is told nothing about agreements 0ms
+ ✓ src/providers/prompt.test.ts > the rules text (prompt p1) > is the same text for everyone in a run, so it can be cached, and is long enough to be 106ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > sends exactly the request the verified API notes describe, and nothing else 163ms
+ ✓ src/providers/prompt.test.ts > the rules text (prompt p1) > states the numbers the engine actually uses 0ms
+ ✓ src/providers/prompt.test.ts > one person's page > is a function of the observation and nothing else 2ms
+ ✓ src/providers/prompt.test.ts > one person's page > the minimal context leaves out temperament, skills, the record of other people, and memories — and nothing else 0ms
+ ✓ src/providers/prompt.test.ts > one person's page > carries nothing from the server's environment 7ms
+ ✓ src/providers/prompt.test.ts > one person's page > bounds the input: the byte count is an upper bound on tokens, and counts every byte 2ms
+ ✓ src/providers/prompt.test.ts > one person's page > the request hash covers everything that was asked and of whom 6ms
+ ✓ src/providers/prompt.test.ts > hostile speech > cannot add a line, a section or an action to the page 134ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > reads the answer from the text blocks only, prices it from the usage report, and keeps no reasoning 96ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > an answer that was paid for but cannot be used is reported as what it was 70ms
+ ✓ src/providers/prompt.test.ts > hostile speech > a mind that obeys it all still cannot break the world: every forbidden act is refused and recorded 105ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > an answer whose cost cannot be established has an unknown cost, never a guessed one 72ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > reads the usage report defensively 1ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > classifies failures by what they mean for the money 5ms
+ ✓ src/server/anthropic.test.ts > the live adapter (no network) > refuses to exist for a model it cannot price, and reports why live calls are unavailable 3ms
+ ✓ src/server/anthropic.test.ts > the live adapter through the real SDK (network replaced by canned responses) > posts one request to the Messages API with the key in the Authorization header and the current API version 67ms
+ ✓ src/providers/prompt.test.ts > hostile speech > an overlong page is shortened in a fixed order and never past its limit by more than its fixed parts 61ms
+ ✓ src/server/anthropic.test.ts > the live adapter through the real SDK (network replaced by canned responses) > error responses arrive as the SDK's typed errors, are sent exactly once, and are classified 81ms
+ ✓ src/server/anthropic.test.ts > the live adapter through the real SDK (network replaced by canned responses) > a request that gets no answer in time, or loses its connection, has an unknown outcome and is not sent again 105ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > reads arithmetic with the usual precedence, left to right 2ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > reads comparisons, connectives, conditionals and the facts a rule may see 1ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > reads back the symbols a charter is displayed with 0ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > refuses what is not a formula and says where 3ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > property: a formula written out and read back is the same formula 94ms
+ ✓ src/engine/institutions/formula.test.ts > formulas written as text > property: no text makes the reader throw, loop or return anything but a formula or a refusal 32ms
+ ↓ src/server/live.integration.test.ts > LIVE smoke test — real, paid requests (skipped unless the owner has authorized an amount in words) > asks three minds once each, inside the authorized amount, and the books balance
+ ✓ src/server/live.integration.test.ts > live smoke test — authorization state > is NOT authorized: no paid request is made by this test run 1ms
+ ✓ src/providers/wire.test.ts > the answer schema stays inside what structured outputs support > both schemas pass the documented limits 3ms
+ ✓ src/providers/wire.test.ts > the answer schema stays inside what structured outputs support > the civic actions and the charter block exist only in the civic schema 1ms
+ ✓ src/providers/wire.test.ts > the answer schema stays inside what structured outputs support > the linter catches each kind of violation it exists to catch 1ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > property: an intent written to the wire and read back is the same intent 61ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > every charter the grammar search can draw survives the wire unchanged 613ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > names are read without regard to case, and fields an action does not need are ignored 1ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > what cannot be read is dropped with a reason, and the rest stands 0ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > a charter with one unreadable rule is dropped whole, and the reason says where 1ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > refuses outright what is not an answer at all 1ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > property: no answer makes the reader throw, and whatever it returns the world can safely be offered 142ms
+ ✓ src/providers/wire.test.ts > answers are read into intents, deterministically > writes every intent kind the engine has, so the mock mind can say anything a model can 0ms
+ ✓ src/providers/wire.test.ts > prices and reservations, in whole microdollars > prices the published example exactly 0ms
+ ✓ src/providers/wire.test.ts > prices and reservations, in whole microdollars > knows no price for a model it has not been given, and refuses to price a broken report 0ms
+ ✓ src/providers/wire.test.ts > prices and reservations, in whole microdollars > applies the regional and fast-mode multipliers when the report says they were used 1ms
+ ✓ src/providers/wire.test.ts > prices and reservations, in whole microdollars > property: no usage a request could report costs more than was reserved for it 25ms
+ ✓ src/providers/wire.test.ts > prices and reservations, in whole microdollars > goes stale after the stated number of days, and an attestation can only move the date forward 1ms
+
+ Test Files  5 passed (5)
+      Tests  46 passed | 1 skipped (47)
+   Start at  08:43:48
+   Duration  1.48s (tests 63%, import 29%, transform 7%)
+

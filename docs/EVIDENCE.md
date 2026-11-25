@@ -125,6 +125,62 @@ agents do all of that. No benefit of any institution to survival or well-being h
 | Exchange: two agents value the same item differently by need; two planners with complementary surpluses on bare land strike and execute a pact unprompted, with the conservation audit clean every tick | `institutions.test.ts` › exchange among baseline agents | same | pass | That exchange is common in full worlds: it is not (next row). |
 | Society measures on development seeds | `pnpm exec tsx scripts/civics.ts --scenario first_light --seeds 1-6 --days 40 --modes off,grammar_search` | `evidence/phase-10/society-first-light-40d.txt` | hundreds of offers per run, a handful executed; cooperation a few per 1,000 agent-days | Any effect of exchange on outcomes. |
 
+## Phase 06 — Claude API and structured decisions (2026-11-25)
+
+**No request has been sent to the provider.** Everything below was run without a key.
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Formulas written as text are read into the rule grammar's tree with the usual precedence; anything else is refused with a position; writing a tree out and reading it back gives the same tree (800 cases); no text makes the reader throw (1,500 cases) | `pnpm test` (`formula.test.ts`) | `evidence/phase-06/tests.txt` | pass | — |
+| Both answer schemas satisfy every documented structured-output limit, and the linter goes red on each of eleven planted violations | same (`wire.test.ts` › the answer schema…) | same | pass | **That the provider's grammar compiler accepts the schema.** Needs a live call. |
+| Every intent kind survives the wire unchanged (400 cases); 360 charters drawn from the grammar-search distribution survive unchanged, as proposals and as amendments; unreadable actions are dropped with reasons and the rest stands; a charter with one unreadable rule is dropped whole and the reason says where | same | same | pass | — |
+| Fuzz: 300 hostile answers never make the reader throw, and whatever it returns can be offered to the world with the conservation audit clean | same | same | pass | Real model output. |
+| Prices: the published example is reproduced to the microdollar; an unknown model has no price; a broken usage report is not priced; no usage inside the bound costs more than was reserved (3,000 cases, four models); the table goes stale after 45 days | same (› prices and reservations) | same | pass | That the provider's bill equals its usage report. |
+| The rules text states the role, the limits of action, that speech is data and that the unknown is unknown; names no institution, gives no advice; a world without the agreement affordance is told nothing about agreements; it is the same text for everyone in a run | `prompt.test.ts` | same | pass | **Whether the wording primes a real model anyway.** That is an experiment (minimal vs rich context), not a test. |
+| Hostile speech cannot add a line, a heading or an action to a page; a mind that obeys every hostile instruction has each forbidden act refused and recorded, nothing changes hands, no agreement is founded, the audit stays clean | same (› hostile speech) | same | pass | **That a real model resists the fixtures.** Shown instead: obeying them achieves nothing. |
+| The live adapter sends exactly six fields (model, max_tokens, system, messages, output_config, inference_geo), none the model rejects; reads only text blocks; keeps no reasoning; prices the usage report first; classifies 25 failure shapes by what they mean for the money | `anthropic.test.ts` | same | pass | — |
+| Through the **real SDK** with the network replaced by canned responses: one POST to `https://api.anthropic.com/v1/messages`, key in `Authorization: Bearer`, `anthropic-version: 2026-10-21`, no beta header; error responses arrive as typed errors and are sent exactly once; a timeout or lost connection is an unknown outcome and is not re-sent | same (› through the real SDK) | same | pass | The real server's behaviour. |
+| The only test that can make a paid request is skipped, by name, and reports "NOT authorized" | `live.integration.test.ts` | same (lines marked ↓ and "NOT authorized") | skipped by design | Everything about live behaviour. |
+| What a model is told is published verbatim and cannot drift from the code | `pnpm gen:prompts --check` (in `pnpm check` and CI) | `docs/PROMPTS.md` | up to date | — |
+
+## Phase 07 — budget ledger and security (2026-11-25)
+
+Database for the concurrency entries: PostgreSQL 16.15, local, through `pg` pools (two pools standing in for
+two server instances). Everything else: PGlite in memory.
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| The ledger starts closed: nothing authorized, kill switch on; releasing the switch authorizes nothing; a budget without a daily allowance is still closed | `TEST_DATABASE_URL=… pnpm test` (`ledger.test.ts`) | `evidence/phase-07/tests.txt` | pass | — |
+| **100 concurrent requests from two instances cannot hold more than was authorized** (exactly 20 of 100 five-cent holds granted against one dollar); the same for a run's cap and the day's cap | same (› under real concurrency) | same | pass | Other database engines; network partitions. |
+| **Duplicates and re-ordering cannot double charge**: 100 concurrent copies of one request are granted once, 50 concurrent settlements of it charge once; settle-after-release and release-after-settle change nothing | same | same | pass | — |
+| **Unknown outcomes do not free funds**: the money stays held against every ceiling until the owner decides, and can be settled for at most what was held; a reservation whose process died is shown as unknown, never given back | same | same | pass | — |
+| **The kill switch works**: thrown mid-burst it lets nothing further through; in-flight settlements are not disturbed | same | same | pass | — |
+| A request that costs more than was held is recorded as overage and stops everything; the database itself refuses an overspend written by wrong code | same | same | pass | — |
+| Property: after any sequence of 5–40 random operations the books balance and every granted hold was inside every ceiling in force | same | same | pass (60 sequences) | — |
+| Passphrase hashing (scrypt), session signing and expiry, the anti-forgery token, cookie attributes, origin judgement behind a proxy, body limits, rate limiting that refuses when it cannot count, live mode off unless all eight conditions hold | `auth.test.ts` | same | pass | A second factor: there is none. |
+| **Unauthenticated requests never call a provider**: eight write endpoints × six kinds of forged request change nothing and never construct a provider; an expired session is no session; strangers see no unpublished run | `api.test.ts` | same | pass | — |
+| Spending needs an authorized amount, a released switch and a run approved in words; a run is refused on another model than the one it was approved for; the owner can reconcile an unknown request | same | same | pass | — |
+| No secret appears in any response, audit entry or server log line across the whole API suite; the database being down answers 503 without the error text | same | same | pass | Logs of a real deployment. |
+| The scans go red on planted leaks (seven credential shapes, env files, template values, secret-named public variables, server markers in a bundle, a live secret value) | `tests/unit/scans.test.ts` | same | pass | — |
+| The repository and the client bundle are clean | `pnpm scan:secrets`, `pnpm build && pnpm scan:bundle` | same (end of file) | pass: 261 tracked files; 139 client-facing files | — |
+| The owner console against the real server: wrong passphrase refused; nothing can be spent as shipped; authorizing takes the typed phrase and does not release the switch | `TEST_DATABASE_URL=… pnpm e2e` (`owner.spec.ts`) | `evidence/phase-07/e2e-run.txt`, `evidence/phase-07/e2e/` | pass (desktop and phone emulation) | A physical phone; a real deployment behind a real proxy. |
+
+## Phase 08 — orchestration (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| **Fifty minds decide independently** over three days under each of the three schedulers, each on its own page; every living person is in the trace every epoch with a reason; the same run twice gives the same digests | `pnpm test` (`run.test.ts`) | `evidence/phase-08/tests.txt` | pass | Model-driven minds. These are mock minds. |
+| **Deterministic replay**: the tape alone, consulting no mind, reproduces every epoch's digest; a tampered tape is caught at the epoch where it was changed; replay through the provider interface keeps each agreement's recorded author | same | same | pass | — |
+| Fairness: with six slots for fifty minds nobody exceeds the daily cap, everyone alive is consulted, nobody holds 8% of consultations; being talked at buys no more than the cap | same (› rationing deliberation fairly) | same | pass | — |
+| **Cancellation and resume under injected errors**: a failure that may clear is tried once more, an unknown outcome never; an interrupted epoch resumes asking nobody twice and ends in the same world as an uninterrupted one; a deadline and a refusal before the call both leave minds for later | same (› when calls fail…) | same | pass | — |
+| Server-side runs: a mock run advances by repeatable steps and its stored record replays; a paid run (stand-in provider) reserves before every call and settles each once; the kill switch stops it mid-epoch and it later finishes without asking anyone twice; it stops at its cap; an orphaned reservation is found and held; a stale lease is no obstacle and a held one turns a second stepper away; a tampered snapshot is refused | `TEST_DATABASE_URL=… pnpm test` (`runs.test.ts`) | same | pass | — |
+| Two instances racing through a five-epoch paid run on PostgreSQL commit every epoch once and pay for every call once | same (› two instances stepping at once) | same | pass | — |
+| A multi-epoch mock run through the real server and browser: created, advanced to the end, published; a visitor with no session replays it and every epoch matches the record; the bundled 24-epoch recording matches to the end; the inspector says either "Recorded decision by a MOCK mind (a deterministic test double, not a language model)" or, between decisions, "Acting on reflex until its mind is next consulted" — never "a language model" | `pnpm e2e` (`owner.spec.ts`) | `evidence/phase-07/e2e-run.txt`, `evidence/phase-07/e2e/` | pass (desktop and phone emulation) | — |
+| The three policies on the same worlds (seeds 1–4, 50 people, six days, mock minds) | `pnpm schedulers -- --seeds 1-4 --days 6 --slots 8 --out evidence/phase-08/schedulers.json` | `evidence/phase-08/schedulers.txt`, `.json` | 8 slots per epoch: 179 / 170 / 153 calls (round-robin / event / voi), Gini of calls 0.15–0.19, nobody never asked, **7–8% of time on own plan**; upper bound on what would have been held: $49–57 on Fable 5.2, $0.61–0.71 on Haiku 5.5 | **Decision quality under each policy** (needs a model: phase 17). Mock plans are one or two actions long; a model's may be longer. |
+
+**Stated plainly.** The machinery for model-driven minds is built and tested without a model. Nothing here is
+evidence about what a model would do, what it would cost, or whether anything would emerge.
+
 ## Research inputs
 
 | Input | File | Status |

@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { Quality } from "@/render/WorldRenderer";
 import { useGame } from "@/store/game";
 import { CivicsPanel } from "./Civics";
+import { RecordingsPanel } from "./Recordings";
 import { ComparePanel } from "./Compare";
 import { ControllerContext } from "./context";
 import { GameController } from "./controller";
 import styles from "./game.module.css";
-import { Coach, Timebar, Toast, TopBar } from "./Hud";
+import { Coach, RecordingBar, Timebar, Toast, TopBar } from "./Hud";
 import { Inspector } from "./Inspector";
 import { AffordancesPanel, Chronicle, Interventions, MenuPanel } from "./Panels";
 import { Setup, Title } from "./Title";
@@ -64,7 +65,7 @@ export function Game() {
         return;
       }
       if (state.phase !== "playing") return;
-      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances";
+      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings";
       if (modal) return;
       const rig = controller.camera();
       switch (e.key) {
@@ -163,6 +164,7 @@ export function Game() {
         {playing ? (
           <div className={styles.hud}>
             <TopBar />
+            <RecordingBar />
             {panel === "chronicle" ? <Chronicle /> : null}
             <Inspector />
             <Coach />
@@ -175,6 +177,7 @@ export function Game() {
         {playing && panel === "civics" ? <CivicsPanel /> : null}
         {playing && panel === "menu" ? <MenuPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
+        {panel === "recordings" ? <RecordingsPanel /> : null}
         <Toast />
       </div>
     </ControllerContext.Provider>

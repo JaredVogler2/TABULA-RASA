@@ -1,0 +1,43 @@
+# Phase 08 — schedulers, epoch runner, server-side runs
+# command: TEST_DATABASE_URL=… pnpm exec vitest run --reporter=verbose <files>
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > round_robin: fifty people decide independently over three days, and the record replays to the same world 872ms
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > event: fifty people decide independently over three days, and the record replays to the same world 673ms
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > voi: fifty people decide independently over three days, and the record replays to the same world 428ms
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > the record of a run is enough to run it again through the provider interface, asking nothing of the mock 163ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world 589ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > a paid run reserves before every call, settles what each cost, and never exceeds what was previewed 494ms
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > mock minds that write and sign agreements leave them attributed to the mock, in the run and in its replay 677ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > refuses to create a paid run without approval that covers it 255ms
+ ✓ src/providers/run.test.ts > a society of fifty minds outside the engine (mock provider, no cost) > a baseline arm runs through the same harness and is exactly the engine's own world 256ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > round_robin: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 355ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > event: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 334ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > the kill switch stops a paid run mid-epoch; lifting it lets the run finish; nothing is asked twice 785ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > a run stops at its cap and never goes over it 104ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > an unknown outcome keeps its money held and is never re-sent; a failure that may clear is tried once more 160ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > voi: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 333ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > a call that was cut off in flight is found on resume, held as unknown, and not repeated 138ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice 287ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > the three policies spend differently on the same world: round-robin fills every slot, the others ask only when there is cause 477ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > being talked at does not buy more deliberation than the cap allows 92ms
+ ✓ src/providers/run.test.ts > rationing deliberation fairly > refuses a specification outside its bounds, precisely 1ms
+ ✓ src/providers/run.test.ts > when calls fail, are cut short or are interrupted > a definite, unbilled failure is tried once more; an unknown outcome never is; neither reaches the world 58ms
+ ✓ src/providers/run.test.ts > when calls fail, are cut short or are interrupted > an interrupted epoch resumes without asking anyone twice, and ends in the same world as an uninterrupted one 54ms
+ ✓ src/providers/run.test.ts > when calls fail, are cut short or are interrupted > stops at its deadline, and a refusal before the call (no budget, cancelled) leaves that mind for later 28ms
+ ✓ src/providers/run.test.ts > when calls fail, are cut short or are interrupted > can let one call finish before the rest start, so that they can share what it cached 55ms
+ ✓ src/providers/run.test.ts > when calls fail, are cut short or are interrupted > refuses to commit an epoch to a world that has moved on 25ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > while one stepper holds the lease another is turned away; cancelling stops a run for good 97ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > an error no retry can fix fails the run at once and says why 359ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > refuses to continue from a stored world that does not match its digest 80ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > the wrong provider for a run is refused before anything is asked 97ms
+ ✓ src/server/runs.test.ts > server-side runs (in memory) > publishing marks a run as readable by anyone; nothing else about it changes 56ms
+ ✓ src/server/runs.test.ts > server-side runs with two instances stepping at once (PostgreSQL server) > two instances racing through a paid run commit every epoch once and pay for every call once 621ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  08:43:59
+   Duration  6.14s (tests 97%, import 2%, transform 1%)
+

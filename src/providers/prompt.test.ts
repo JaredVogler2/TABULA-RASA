@@ -201,7 +201,7 @@ describe("hostile speech", () => {
     }
     // section headings are exactly the engine's own, each once
     const headings = lines.filter((l) => /^[A-Z][A-Z' ]{6,}(\(|$)/.test(l));
-    expect(headings.map((h) => h.replace(/ \(.*$/, ""))).toEqual(["PEOPLE IN SIGHT", "PLACES YOU KNOW", ...(clean.structures.length ? ["STRUCTURES YOU KNOW"] : []), ...(clean.piles.length ? ["LYING ON THE GROUND IN SIGHT"] : []), ...(clean.memories.length ? ["WHAT YOU REMEMBER"] : []), "WHAT YOU HAVE HEARD", ...(clean.commitments.length ? ["PROMISES"] : []), "AGREEMENTS YOU KNOW OF", "WHAT YOU CAN DO NOW"]);
+    expect(headings.map((h) => h.replace(/ \(.*$/, ""))).toEqual(["PEOPLE IN SIGHT", "PLACES YOU KNOW", ...(clean.structures.length ? ["STRUCTURES YOU KNOW"] : []), ...(clean.piles.length ? ["LYING ON THE GROUND IN SIGHT"] : []), ...(clean.memories.some((m) => m.kind !== "found") ? ["WHAT YOU REMEMBER"] : []), "WHAT YOU HAVE HEARD", ...(clean.commitments.length ? ["PROMISES"] : []), "AGREEMENTS YOU KNOW OF", "WHAT YOU CAN DO NOW"]);
     // no raw control or direction-override character reaches the page
     expect(page).not.toMatch(/[\u0000-\u0009\u000b-\u001f‪-‮⁦-⁩​]/);
     // and what can be done is exactly what could be done before anyone spoke

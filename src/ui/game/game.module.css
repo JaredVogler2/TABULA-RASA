@@ -258,6 +258,50 @@
   height: 14px;
 }
 
+/* ───────── recording banner ───────── */
+
+.recording {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  justify-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  max-width: 100%;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border-color: rgba(246, 197, 126, 0.45);
+  font-size: 12.5px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--text-on-dark);
+}
+.recording svg {
+  width: 15px;
+  height: 15px;
+  color: var(--ember-300);
+  flex: none;
+}
+.recording b {
+  color: var(--ember-300);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+.recordingState {
+  color: var(--sage-200);
+  font-variant-numeric: tabular-nums;
+}
+.recording[data-state="mismatch"] {
+  border-color: var(--berry-400);
+}
+.recording[data-state="mismatch"] .recordingState {
+  color: #ffb3c0;
+  font-weight: 700;
+}
+
 /* ───────── timebar ───────── */
 
 .timebar {
@@ -1245,6 +1289,21 @@
     width: 100%;
     justify-content: space-between;
   }
+  .recording {
+    grid-column: 1;
+    border-radius: var(--radius-m);
+  }
+  /* a recording's banner gets a row of its own, so a sheet rising from the bottom never covers what it says */
+  .hud:has(.recording) {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  .hud:has(.recording) .side,
+  .hud:has(.recording) .coach {
+    grid-row: 3;
+  }
+  .hud:has(.recording) .timebar {
+    grid-row: 4;
+  }
   .clock {
     min-width: 0;
     flex: 1;
@@ -1262,7 +1321,8 @@
     grid-column: 1;
     grid-row: 2;
     align-self: end;
-    max-height: min(58dvh, 520px);
+    /* never taller than the space between the bars above and the timebar below */
+    max-height: min(58dvh, 520px, 100%);
     border-radius: 20px 20px var(--radius-l) var(--radius-l);
   }
   .side::before {
@@ -1350,7 +1410,7 @@
 
 @media (max-height: 480px) and (orientation: landscape) {
   .side {
-    max-height: 62dvh;
+    max-height: min(62dvh, 100%);
   }
   .titleMark {
     font-size: clamp(40px, 9vw, 72px);

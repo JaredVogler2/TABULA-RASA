@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWorld, makeConfig } from "@/engine";
 import { MockProvider } from "@/providers/mock";
 import { DEFAULT_SPEC, verifyTape, type EpochResult } from "@/providers/run";
@@ -37,6 +37,8 @@ describe("the owner API", () => {
   let paid: FakePaid;
   let deps: api.Deps;
   const bodies: string[] = [];
+  // everything the server writes to its log during these tests
+  const logged: string[] = [];
 
   const request = (path: string, init: { method?: string; body?: unknown; cookie?: string; csrf?: string; origin?: string | null; ip?: string; type?: string; raw?: string } = {}): Request => {
     const headers: Record<string, string> = { host: "tabula.example", "x-forwarded-proto": "https", "x-forwarded-for": init.ip ?? "203.0.113.5" };
@@ -67,8 +69,10 @@ describe("the owner API", () => {
   beforeAll(async () => {
     db = await memoryDb();
     hash = await hashPassphrase(PASSPHRASE);
+    for (const level of ["log", "info", "warn", "error", "debug"] as const) vi.spyOn(console, level).mockImplementation((...args: unknown[]) => void logged.push(args.map(String).join(" ")));
   });
   afterAll(async () => {
+    vi.restoreAllMocks();
     await db.close();
   });
   beforeEach(async () => {
@@ -330,10 +334,14 @@ describe("the owner API", () => {
     expect((await read(await api.recordings(request("/api/recordings"), down))).data).toEqual({ ok: true, recordings: [] });
   });
 
-  it("never puts a secret in a response", () => {
+  it("never puts a secret in a response, in the audit log or in the server's own log", async () => {
     expect(bodies.length).toBeGreaterThan(40);
-    const everything = bodies.join("\n");
-    for (const secret of [...Object.values(SECRETS), PASSPHRASE, hash, hash.split(":")[5] as string]) expect(everything).not.toContain(secret);
-    expect(everything).not.toMatch(/sk-ant-|postgres:\/\/|scrypt:/);
+    const audit = JSON.stringify(await db.query("SELECT actor, action, detail FROM audit_log"));
+    // the log is not empty: failures were logged, by code only
+    expect(logged.some((l) => l.includes("database failed"))).toBe(true);
+    for (const [where, text] of [["responses", bodies.join("\n")], ["audit log", audit], ["server log", logged.join("\n")]] as const) {
+      for (const secret of [...Object.values(SECRETS), PASSPHRASE, hash, hash.split(":")[5] as string, "hunter2"]) expect(text, where).not.toContain(secret);
+      expect(text, where).not.toMatch(/sk-ant-|postgres:\/\/|scrypt:/);
+    }
   });
 });

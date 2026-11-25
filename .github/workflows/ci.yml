@@ -50,6 +50,7 @@ jobs:
           TEST_DATABASE_URL: postgres://tabula:tabula@localhost:5432/tabula_test
       - run: pnpm gen:affordances --check
       - run: pnpm gen:migrations --check
+      - run: pnpm gen:prompts --check
       - name: Secret scan (tracked files)
         run: pnpm scan:secrets
       - run: pnpm build
@@ -59,3 +60,6 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end (desktop + phone emulation)
         run: pnpm e2e
+        env:
+          # the owner console's ledger lives in a schema of its own on the test database
+          TEST_DATABASE_URL: postgres://tabula:tabula@localhost:5432/tabula_test

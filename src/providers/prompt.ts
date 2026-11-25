@@ -358,9 +358,12 @@ function page(obs: Observation, context: PromptContext, level: number): string {
     for (const p of obs.piles) out.push(`at (${p.x},${p.y}), ${steps(p.dist)}: ${inv(p.items)}`);
   }
 
-  if (rich && level < 1 && obs.memories.length) {
+  // what was found where is already on the page as a place the person knows; the memories
+  // shown are the ones that say something else (who gave, who took, what went wrong)
+  const memories = obs.memories.filter((m) => m.kind !== "found");
+  if (rich && level < 1 && memories.length) {
     out.push("", "WHAT YOU REMEMBER");
-    obs.memories.forEach((m, i) => out.push(`m${i + 1} ${memory(m)}, ${ago(m.age)}`));
+    memories.forEach((m, i) => out.push(`m${i + 1} ${memory(m)}, ${ago(m.age)}`));
   }
 
   const heard = level >= 2 ? obs.heard.slice(-6) : obs.heard;

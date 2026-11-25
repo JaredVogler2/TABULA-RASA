@@ -325,3 +325,194 @@ rollback. Read this file before modifying any contract it mentions.
   produce different uptake. Both are disclosed in the affordance registry and in the interface.
 - **Rollback.** `institutions: "off"`, or `"open"` with model-driven minds only.
 
+## D-019 — The answer format is flat, and a charter carries its formulas as text (2026-11-25)
+
+- **Problem.** A model must return a decision and, when it writes an agreement, nested formulas. The provider's
+  structured outputs forbid recursive schemas and cap optional and union-typed fields
+  (`docs/research/anthropic-api.md` §D.2), and this model cannot be forced to call a tool.
+- **Original proposal.** Phase 06: `{agentId, observationVersion, intents:[{kind, targetId, quantity, duration,
+  args}], utterances, memoryUpdates, publicRationale, uncertainty}`; S01: "optional bounded rule proposal AST".
+- **Alternatives.** (a) a union of one object shape per intent kind (26 variants: union count and grammar size
+  at risk); (b) free JSON checked afterwards (no guarantee of shape); (c) strict tool use (cannot be forced on
+  Fable 5.2); (d) one flat record per action, with formulas written as text.
+- **Decision.** (d), `src/providers/wire.ts`. An action is one record — `do` plus at most fifteen optional
+  fields. A charter block has every field required and writes each quantity and condition as a short line of
+  arithmetic that `parseFormula` (engine, `institutions/formula.ts`) turns into the grammar's own formula tree.
+  Mapping from the proposed shape: `utterances` are `say` actions; `publicRationale` is `why` ("one short
+  sentence you would say aloud"); `uncertainty` is `confidence`; `memoryUpdates` became `cites` (labels of the
+  page lines the decision rests on) and `note` (D-022). `agentId` and `observationVersion` are not asked of the
+  model: the server knows which page it sent. Translation never repairs meaning — an unreadable action is
+  dropped with a reason that is fed back; a charter with one unreadable rule is dropped whole.
+- **Evidence.** `wire.test.ts`: 400-case round-trip property over every intent kind; 360 charters drawn from the
+  grammar-search distribution survive the wire unchanged; 300-case fuzz of hostile answers with the conservation
+  audit clean. `formula.test.ts`: 800-case write-and-read-back property, 1,500-case fuzz. `lintSchema` checks
+  both schemas against every documented limit and is itself tested with eleven deliberate violations.
+- **Not verified.** That the provider's grammar compiler accepts the schema. That needs a live call.
+- **Affected acceptance tests.** S04-8 (strengthened: round-trip and lint are now part of `pnpm test`).
+- **Cost / risks.** A model may write a formula the grammar cannot express and lose the whole charter until its
+  next decision. Text formulas are a wider input surface than a tree; hence the fuzzing.
+- **Rollback.** The schema is selected by `WIRE_VERSION`; another format can be added beside it.
+
+## D-020 — Reservations are bounded by bytes; a preview is a bound, not an estimate (2026-11-25)
+
+- **Problem.** The ledger must hold, before a request is sent, the most that request can cost. That needs an
+  upper bound on input tokens. No tokenizer is available offline; the provider's token counter is documented as
+  "an estimate" and needs the key and a request of its own.
+- **Alternatives.** (a) characters ÷ N (not a bound); (b) `count_tokens` per request plus a margin (tighter, not
+  a bound, one more request per decision); (c) bytes.
+- **Decision.** (c). A token is never shorter than one byte, so the UTF-8 length of everything sent (rules text,
+  page, schema) bounds the visible input for any tokenizer. To that are added 2,000 tokens for what the provider
+  inserts unseen (its structured-output and thinking prompts; size undocumented), every input token is priced at
+  the dearest applicable rate (a 5-minute cache write), every permitted output token is priced (thinking is
+  billed as output and counts against `max_tokens`), and 10% is added because a workspace's default inference
+  geography can multiply every price by 1.1. Requests send `inference_geo: "global"`. The page has a hard limit
+  of 9,000 bytes. If a settled cost ever exceeds its reservation, the excess is recorded as overage and the kill
+  switch turns on.
+- **Evidence.** `wire.test.ts` › "no usage a request could report costs more than was reserved for it"
+  (3,000 cases across all priced models, cache mixes and geographies). `evidence/phase-08/schedulers.txt`: the
+  bound averages 18,800 input tokens a call, i.e. about $0.32 reserved per Fable 5.2 call at 2,000 output tokens.
+- **Consequence, stated plainly.** The reservation is expected to be several times the real cost. A run is
+  created only if its worst case fits its cap, unless the owner ticks "let the run pause when the cap is
+  reached". Unused reservation is returned as each call settles. Previews show the bound, and show measured
+  costs only once real calls have settled through the ledger; until then there is nothing measured to show.
+- **Follow-up.** After an authorized smoke run the ratio of tokens to bytes will be known. A calibrated bound
+  could then be adopted by a new decision; it would no longer be provable, only observed.
+- **Rollback.** `Provider.reserveFor` is the single place the bound is computed.
+
+## D-021 — What happens to money when nobody knows what happened to a request (2026-11-25)
+
+- **Problem.** "Unknown outcomes retain conservative reservation; no duplicate dispatch on retry without
+  explicit accounting."
+- **Decision.** A call ends in exactly one of: *settled* at the provider-reported cost; *released* because the
+  provider answered with a definite error (documented as not billed); or *unknown*. Unknown covers a timeout, a
+  lost connection, an abort, a 408 / 499 / 504, a usage report that cannot be priced, and a reservation whose
+  process died before recording any outcome (found and marked on the next step). An unknown reservation stays
+  held against every ceiling, is never re-sent and is never released by the application: the owner checks the
+  provider's usage page and either counts it as spent or declares it unbilled. A second attempt is made only
+  after a definite, unbilled failure that may clear (429 rate limit, 5xx, 529), after a pause, under a new
+  reservation id. The SDK's own retries are off.
+- **Departure from the documented billing rule.** The provider's help pages say failed requests are not
+  charged. 408, 499 and 504 are held anyway: nothing proves the work was not done.
+- **Evidence.** `ledger.test.ts`, `runs.test.ts` (unknown held and never re-sent; orphan found on resume; retry
+  ids `:1` released and `:2` settled), `anthropic.test.ts` (classification table; real SDK against canned HTTP).
+- **Cost / risks.** Held money can strand a run below its cap until the owner reconciles.
+- **Rollback.** `classifyError` in `src/server/anthropic.ts`.
+
+## D-022 — Model-driven minds inside the engine: who they are, what they keep, what they are told back (2026-11-25)
+
+- **Problem.** D-016 fixed the contract for outside minds but left three things to the host: which people are
+  outside minds, what a model remembers between calls, and how it learns that a request was refused.
+- **Decision.**
+  1. `externalShare` (config, permille): who is decided for from outside is drawn per person by seed on its own
+     random key, so the same people are model-driven in every arm that shares a seed. Snapshot schema 4.
+  2. Between decisions, and when a decision is missing or refused, such a person acts on the *reflex* layer,
+     labelled `fallback`. The planner is deliberately not the fallback: with it, strategy could not be
+     attributed to the model.
+  3. A note to oneself (at most 200 characters, shown back to that mind only, no effect on the world).
+  4. Refusal feedback: what the world refused of the mind's own last decision, with the engine's reason code
+     and, for charters and motions, the validator's diagnostic. The reflex layer's own mishaps are not reported.
+  5. Every submitted decision is recorded, including one of which nothing was accepted (it changes no body,
+     belief or plan — asserted — but is on the ledger and tells the mind why).
+  6. A replayed decision keeps the author it was recorded with, so that what a replayed mind founds is
+     attributed exactly as in the original run. (Before this change a replayed mock run would have labelled its
+     agreements `llm`; found while writing the replay tests.)
+- **Evidence.** `cognition.test.ts`, `run.test.ts` (replay through the provider interface reproduces digests and
+  origins), pinned baseline digests unchanged. Affordance registry 2026.11-g lists items 2–4 as designer-supplied.
+- **Cost / risks.** The note is memory the engine does not curate. Feedback means the engine explains its rules,
+  on demand, to model-driven minds only; baseline minds neither need nor get that.
+- **Rollback.** `externalShare: 0` gives exactly the previous worlds (digests asserted equal).
+
+## D-023 — Rationing deliberation: three schedulers, one fairness rule (2026-11-25)
+
+- **Problem.** Phase 08: sparse cognition, three activation policies compared on the same seeds, fairness,
+  activation reasons, no omniscient coordination.
+- **Decision.** `src/providers/schedule.ts`. `round_robin` (everyone in turn), `event` (only minds something has
+  happened to: plan finished, refusal, spoken to, asked to decide, new face, a promise falling due, a need
+  slipping), `voi` (a weighted sum of the same signals plus waiting time, above a threshold). All three read
+  only what belongs to the mind in question — its body, plan, inbox, known agreements — so that being asked to
+  think carries no hidden information. All three share the fairness rule: a per-person daily cap, and anyone
+  passed over for a set number of epochs goes to the front. Answers are obtained in parallel from one snapshot
+  and offered to the world in agent-id order, each validated against the world as it then is.
+- **Evidence (development seeds 1–4, mock minds; not findings).** `evidence/phase-08/schedulers.txt`. With 8
+  slots per six-hour epoch for 50 people: 153–179 calls in six days, Gini of calls 0.15–0.19, nobody never
+  asked, and **only 7–8% of people's time spent on a plan of their own** — the rest is reflex. With slots for
+  everyone and a cap of three a day: 16% (voi), 32% (event), 37% (round-robin).
+- **What follows.** A mind consulted about once a day is, most of the time, a reflex agent. A pilot that wants
+  to see what a model *does* should give few people frequent consultation rather than many people rare
+  consultation; mock plans are short (one or two actions) and a model may fill its six, so the real figure has
+  to be measured, not assumed. This belongs in the study design (phase 14) as a manipulation check.
+- **Not done.** Small-batch multi-agent calls (several minds in one context) are not implemented: the prompt
+  program allows them only as a labelled experimental treatment, and one mind per context is the main treatment.
+  The Message Batches API is not used: decisions within a run depend on each other's consequences.
+- **Rollback.** `scheduler.kind` per run.
+
+## D-024 — Prompt p1: one rules text, one page, in plain text (2026-11-25)
+
+- **Problem.** S01 asks for versioned, tested templates with no institutional priming, speech marked untrusted,
+  and minimal versus richer context as separate treatments.
+- **Decision.** `src/providers/prompt.ts`, published verbatim in `docs/PROMPTS.md` (generated; CI fails if it is
+  stale). (1) The rules text is identical for every person and call in a run and names nobody, so it can be
+  cached and so that no mind is told something another is not. (2) The page is rendered from one `Observation`
+  as lines of text rather than JSON (about 3 KB instead of 4–5 KB), with every id a mind may use on it. (3)
+  Other people's words — speech, charter names, stated purposes — are stripped of control and
+  direction-override characters, bounded, and written as one quoted string after a fixed label. (4) Context is
+  `rich` or `minimal`; the difference is exactly temperament, skills, the record of others and memories
+  (asserted). (5) The page says nothing about the calendar: like baseline minds, a model knows of cold only
+  what its own days have told it. (6) Memories of the form "found N at place P" are left off the page: the
+  place is already listed as known.
+- **Departures from S01's context list.** Action costs in ticks are not listed per action (materials for every
+  recipe and structure are). "Token budget" is stated as limits: six actions, a 200-character note,
+  160-character speech.
+- **Evidence.** `prompt.test.ts`: a lexicon test over every variant of the rules text for institution nouns and
+  for advice; a world without the agreement affordance is told nothing about agreements; hostile-speech
+  fixtures cannot add a line, a heading or an action to the page; a mind that obeys every hostile instruction
+  still has each forbidden act refused and recorded, with the conservation audit clean.
+- **Not verified.** How a real model behaves under this prompt, including whether it resists the fixtures. The
+  tests prove that obeying them achieves nothing, not that a model will not try.
+- **Rollback.** `PROMPT_VERSION`; recordings keep the version they were made with.
+
+## D-025 — One owner, no accounts; spending is authorized in words (2026-11-25)
+
+- **Problem.** Phase 07: owner-authenticated live endpoints, CSRF and origin checks, rate limits, a kill switch,
+  no user-supplied API proxy — without adding a billable identity service.
+- **Alternatives.** An authentication provider (new dependency, new billing surface); platform deployment
+  protection as the only gate (not portable, and no defence against cross-site requests once signed in).
+- **Decision.** `src/server/auth.ts`, `http.ts`, `api.ts`. The owner's passphrase is checked against a scrypt
+  hash kept in the server environment (`pnpm owner:hash`). A session is a signed, twelve-hour, HttpOnly,
+  SameSite=Strict cookie (`__Host-` prefixed over HTTPS); nothing is stored server-side, and changing
+  `AUTH_SECRET` signs everyone out. Every state-changing request must name this site in `Origin`, be
+  same-origin by Fetch Metadata where the browser reports it, and carry a token derived from the session.
+  Sign-in is limited to five attempts a quarter of an hour per address and forty overall, counted in the
+  database. Two actions additionally need a typed phrase: setting the authorized budget ("I authorize this
+  spending") and approving a paid run ("I approve this run and its cap"). The kill switch ships **on**, the
+  authorization ships at **zero**, and releasing the switch authorizes nothing. Without a database every owner
+  endpoint answers 503.
+- **Evidence.** `auth.test.ts`, `api.test.ts` (eight write endpoints × six kinds of forged request: none changes
+  anything or constructs a provider), `tests/e2e/owner.spec.ts` against the real server.
+- **Cost / risks.** No second factor. Whoever has the passphrase can spend up to the authorized amount; the
+  budget itself, the kill switch and a provider-side workspace spend limit are the mitigations.
+- **Rollback.** `requireOwner` is the single gate; another identity check can replace what is behind it.
+
+## D-026 — Server runs as built: a lease, stored answers, one commit per epoch, recordings anyone can check (2026-11-25)
+
+- **Problem.** D-009 chose client-driven resumable steps; this records what was built and what differs.
+- **Decision.** `src/server/runs.ts`. A step takes a database lease, rebuilds the world from a gzip snapshot,
+  re-plans the epoch (a pure function, so the same plan every time), asks only minds with no stored answer,
+  and commits snapshot, tape, digest and scheduler state in one transaction when every mind has a final
+  answer — at most once per epoch, guarded by the epoch number and the lease. The lease is handed back by
+  clearing it, not by back-dating it (a back-dated lease made two tests fail intermittently: "expired a moment
+  ago" depends on clock resolution). A budget refusal pauses the run with the epoch still open; an error no
+  retry can fix (bad key, unknown model, spend limit, malformed request) fails it at once. SQL migrations are
+  embedded at build time, so the server reads nothing from disk. `DATABASE_SCHEMA` keeps the tables apart in a
+  shared database.
+- **Recordings.** A visitor may read a *published* run: its configuration, its tape and each epoch's state
+  digest — not its cost, trace or outcomes. The browser rebuilds the world from those and checks every epoch's
+  digest; a mismatch is shown as such. One mock recording is bundled (`public/recordings/`), labelled MOCK
+  wherever it appears.
+- **Evidence.** `runs.test.ts` (interruption, resume, kill switch mid-epoch, cap, orphan, two instances racing on
+  PostgreSQL with every call paid once); `owner.spec.ts` (a signed-out visitor replays a published run and all
+  epochs match).
+- **Cost / risks.** A step holds its lease for up to five minutes if its process dies. Snapshots are about
+  160 KB compressed at 50 people and are rewritten every epoch.
+- **Rollback.** `stepRun` is a plain function; a workflow runner could call it unchanged.
+

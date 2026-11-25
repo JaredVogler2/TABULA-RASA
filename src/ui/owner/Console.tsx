@@ -546,7 +546,7 @@ function NewRun({ live, budget, call, refresh }: { live: Live; budget: Budget; c
           e.preventDefault();
           const r = await call("/api/runs", { ...payload, capUsd: paid ? Number(cap) : 0, allowEarlyStop: early, ...(paid ? { confirm: phrase } : {}) });
           if (r.status === 200) {
-            setMessage("Created. It will not advance until you step it below.");
+            setMessage("Created. It will not advance until you press Advance below.");
             setPhrase("");
             await refresh();
           } else setMessage(String(r.data.message ?? r.data.error ?? `refused (${r.status})`));

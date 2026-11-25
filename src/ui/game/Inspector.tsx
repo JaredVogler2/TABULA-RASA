@@ -34,10 +34,25 @@ function ago(now: number, then: number): string {
   return `${(d / 96).toFixed(1)} d ago`;
 }
 
+/**
+ * Who decided what this citizen is doing, said exactly. A mock is never called a model, a
+ * replayed decision is said to be recorded, and reflex behaviour under an outside mind is
+ * said to be reflex.
+ */
+export function mindSentence(controller: string, source: string, recorded: boolean): string {
+  if (controller !== "external") return "Decided by the built-in BASELINE policy (not a language model).";
+  const when = recorded ? "Recorded decision" : "Decided";
+  if (source === "live") return `${when} by a language model; validated by the engine.`;
+  if (source === "mock") return `${when} by a MOCK mind (a deterministic test double, not a language model); validated by the engine.`;
+  if (source === "replay") return "Recorded decision of an outside mind, replayed; validated by the engine.";
+  return "Acting on reflex until its mind is next consulted (labelled FALLBACK; not a language model).";
+}
+
 function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
   const controller = useController();
   const following = useGame((s) => s.following);
   const roster = useGame((s) => s.roster);
+  const recorded = useGame((s) => !!s.hud?.replay);
   const name = (id: number) => roster[id]?.name ?? "someone";
   const carried = detail.inv.map((q, i) => ({ q, i })).filter((x) => x.q > 0);
   return (
@@ -62,9 +77,14 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
           </p>
         )}
         <p className={styles.muted} style={{ marginTop: 6 }}>
-          {detail.controller === "external" ? "Decided by a language model; validated by the engine." : "Decided by the built-in BASELINE policy (not a language model)."}
+          <span data-testid="inspector-mind">{mindSentence(detail.controller, detail.source, recorded)}</span>
           {detail.ill > 0 ? " Currently ill." : ""}
         </p>
+        {detail.controller === "external" && detail.note ? (
+          <p className={styles.muted} style={{ marginTop: 6 }} data-testid="inspector-note">
+            Its note to itself: “{detail.note}”
+          </p>
+        ) : null}
 
         {detail.alive ? (
           <div className={styles.actions}>

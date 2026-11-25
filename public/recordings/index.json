@@ -1,0 +1,12 @@
+[
+  {
+    "id": "mock-first-light",
+    "title": "Fifty mock minds, six days",
+    "provider": "mock",
+    "model": "mock",
+    "scenario": "first_light",
+    "seed": 7,
+    "population": 50,
+    "days": 6
+  }
+]
