@@ -1,6 +1,6 @@
 # Affordance registry
 
-> Generated from `src/engine/affordances.ts` (affordance version `2026.11-b`). Do not edit by hand; run `pnpm gen:affordances`.
+> Generated from `src/engine/affordances.ts` (affordance version `2026.11-c`). Do not edit by hand; run `pnpm gen:affordances`.
 
 Everything the designers supplied to the world. Read any claim that something *emerged* against this list: agents invent within these affordances; they did not invent the affordances. Entries marked *planned* describe the design and are not yet in the engine.
 
@@ -116,8 +116,8 @@ What the player can change.
 
 | Affordance | What is supplied | Why, and the bias it may introduce | Experimental knob | Status |
 |---|---|---|---|---|
-| **Environmental interventions**<br>`observer.interventions` | Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and changing how far voices carry. Each is logged with observer provenance and forks the timeline. | The player's lever is the environment, never a mind. | — | planned |
-| **The observer sees everything**<br>`observer.omniscience` | The player can inspect true state, any agent's beliefs and the full event ledger. | Observation does not alter the simulation. | — | planned |
+| **Environmental interventions**<br>`observer.interventions` | Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and changing how far voices carry. Each is logged with observer provenance and forks the timeline; an untouched twin of the world keeps running with the same random draws for comparison. | The player's lever is the environment, never a mind. | — | implemented |
+| **The observer sees everything**<br>`observer.omniscience` | The player can inspect true state, any agent's needs, plan, memory and beliefs, and the engine's logged events. | Observation does not alter the simulation. | — | implemented |
 
 ## Initial conditions
 

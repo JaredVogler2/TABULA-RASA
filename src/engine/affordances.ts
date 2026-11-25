@@ -485,17 +485,17 @@ export const AFFORDANCES: readonly Affordance[] = [
     id: "observer.interventions",
     category: "observer",
     name: "Environmental interventions",
-    what: "Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and changing how far voices carry. Each is logged with observer provenance and forks the timeline.",
+    what: "Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and changing how far voices carry. Each is logged with observer provenance and forks the timeline; an untouched twin of the world keeps running with the same random draws for comparison.",
     why: "The player's lever is the environment, never a mind.",
-    status: "planned",
+    status: "implemented",
   },
   {
     id: "observer.omniscience",
     category: "observer",
     name: "The observer sees everything",
-    what: "The player can inspect true state, any agent's beliefs and the full event ledger.",
+    what: "The player can inspect true state, any agent's needs, plan, memory and beliefs, and the engine's logged events.",
     why: "Observation does not alter the simulation.",
-    status: "planned",
+    status: "implemented",
   },
 
   // ───────────────────────── initial conditions

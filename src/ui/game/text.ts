@@ -1,0 +1,266 @@
+/**
+ * Plain-language renderings of simulation facts for the HUD.
+ *
+ * Every sentence here is a fixed rendering of fields from a logged event, a validated
+ * intent or an agent's recorded goal code. Nothing is generated, embellished or inferred.
+ */
+import { ITEMS, NODE_KINDS, RECIPES, SEASONS, STRUCTURE_KINDS, WEATHER, type SimEvent } from "@/engine";
+import { ITEM_LABEL, NODE_LABEL, STRUCTURE_LABEL } from "@/worker/describe";
+import type { StaticAgentView, StaticWorldView } from "@/worker/protocol";
+
+export type ChronicleGroup = "people" | "nature" | "making" | "observer" | "institutions";
+
+export interface ChronicleEntry {
+  id: number;
+  tick: number;
+  kind: string;
+  group: ChronicleGroup;
+  text: string;
+  /** Agents involved (for jump-to and filtering). */
+  agents: number[];
+  /** Tile to look at, if the event has a place. */
+  x?: number;
+  y?: number;
+  /** Causal parents recorded by the engine. */
+  parents: number[];
+  weight: 1 | 2 | 3;
+}
+
+export function itemName(id: number | undefined, qty = 2): string {
+  const key = ITEMS[id ?? -1];
+  if (!key) return "something";
+  const label = ITEM_LABEL[key] ?? key;
+  if (qty === 1) {
+    if (label === "berries") return "berry";
+    if (label === "roots") return "root";
+    if (label === "smoked rations") return "smoked ration";
+  }
+  return label;
+}
+
+export function nodeName(world: StaticWorldView | null, node: number | undefined): string {
+  const kind = world && node !== undefined ? NODE_KINDS[world.nodeKind[node] ?? -1] : undefined;
+  return kind ? (NODE_LABEL[kind] ?? kind) : "resource";
+}
+
+export function structureName(kind: number | undefined): string {
+  const key = STRUCTURE_KINDS[kind ?? -1];
+  return key ? (STRUCTURE_LABEL[key] ?? key) : "structure";
+}
+
+const CAUSES: Record<string, string> = { hunger: "hunger", thirst: "thirst", cold: "cold", exhaustion: "exhaustion", unknown: "unknown causes" };
+
+const SHOCKS: Record<string, string> = {
+  drought: "A drought set in: streams shrink to pools and bushes stop bearing",
+  cold_snap: "A cold snap arrived",
+  blight: "Blight struck berry bushes and root patches",
+  rain: "Steady rain set in",
+  bounty: "Wild resources were replenished",
+  windfall: "A windfall of fish and driftwood washed ashore",
+  newcomers: "Newcomers landed on the shore",
+  hush: "Voices carry less far",
+};
+
+function speechText(act: Record<string, unknown> | undefined, world: StaticWorldView | null, name: (id: number) => string): string {
+  const t = act?.t;
+  switch (t) {
+    case "greet":
+      return "a greeting";
+    case "inform_node":
+      return `where to find a ${nodeName(world, act?.node as number)}`;
+    case "inform_structure":
+      return "where a structure stands";
+    case "inform_agent": {
+      const claim = act?.claim;
+      const who = name(act?.about as number);
+      return claim === "gave" ? `that ${who} gave freely` : claim === "helped" ? `that ${who} helped` : claim === "took" ? `that ${who} took what was not theirs` : claim === "kept" ? `that ${who} kept a promise` : `that ${who} broke a promise`;
+    }
+    case "request":
+      return `a request for ${String(act?.qty)} ${itemName(act?.item as number, act?.qty as number)}`;
+    case "offer":
+      return `an offer of ${String(act?.giveQty)} ${itemName(act?.give as number, act?.giveQty as number)} for ${String(act?.wantQty)} ${itemName(act?.want as number, act?.wantQty as number)}`;
+    case "accept":
+      return "acceptance";
+    case "decline":
+      return "a refusal";
+    case "promise":
+      return `a promise of ${String(act?.qty)} ${itemName(act?.item as number, act?.qty as number)}`;
+    case "announce":
+      return "news of a proposal";
+    case "invite":
+      return "an invitation";
+    case "warn":
+      return "a warning that a place is stripped bare";
+    default:
+      return "something";
+  }
+}
+
+/** Turn a logged event into a Chronicle entry, or null if the Chronicle does not show that kind. */
+export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: StaticAgentView[]): ChronicleEntry | null {
+  const name = (id: number) => roster[id]?.name ?? "Someone";
+  const base = { id: e.id, tick: e.t, kind: e.k, parents: e.p ?? [], agents: e.a >= 0 ? [e.a] : [] as number[] };
+  const place = e.x !== undefined && e.y !== undefined ? { x: e.x, y: e.y } : {};
+  const nodePlace = world && e.n !== undefined ? { x: world.nodeX[e.n] as number, y: world.nodeY[e.n] as number } : {};
+  switch (e.k) {
+    case "death":
+      return { ...base, ...place, group: "people", weight: 3, text: `${name(e.a)} died of ${CAUSES[e.r ?? "unknown"] ?? e.r}.` };
+    case "arrival":
+      return { ...base, ...place, group: "people", weight: 2, text: `${name(e.a)} came ashore.` };
+    case "ill":
+      return { ...base, group: "people", weight: 1, text: `${name(e.a)} fell ill.` };
+    case "recover":
+      return { ...base, group: "people", weight: 1, text: `${name(e.a)} recovered.` };
+    case "give":
+      return { ...base, agents: [e.a, e.b ?? -1].filter((x) => x >= 0), group: "people", weight: 2, text: `${name(e.a)} gave ${e.q} ${itemName(e.i, e.q)} to ${name(e.b ?? -1)}.` };
+    case "say": {
+      const d = e.d as { act?: Record<string, unknown>; text?: string } | undefined;
+      const what = speechText(d?.act, world, name);
+      const quoted = d?.text ? ` “${d.text}”` : "";
+      return {
+        ...base,
+        ...place,
+        agents: [e.a, e.b ?? -1].filter((x) => x >= 0),
+        group: "people",
+        weight: 1,
+        text: e.b !== undefined ? `${name(e.a)} told ${name(e.b)} ${what}.${quoted}` : `${name(e.a)} called out ${what}.${quoted}`,
+      };
+    }
+    case "found":
+      return { ...base, ...place, group: "making", weight: 2, text: `${name(e.a)} began a ${structureName((e.d as { kind?: number } | undefined)?.kind)}.` };
+    case "built": {
+      const d = e.d as { kind?: number; contributors?: number[] } | undefined;
+      const others = (d?.contributors ?? []).filter((c) => c !== e.a);
+      const withText = others.length === 0 ? "" : others.length === 1 ? ` with ${name(others[0] as number)}` : ` with ${others.length} others`;
+      return { ...base, ...place, agents: [e.a, ...others], group: "making", weight: 3, text: `${name(e.a)} finished a ${structureName(d?.kind)}${withText}.` };
+    }
+    case "plant":
+      return { ...base, ...place, group: "making", weight: 2, text: `${name(e.a)} planted a plot.` };
+    case "harvest": {
+      const mine = e.b === undefined || e.b === e.a;
+      return { ...base, agents: [e.a, ...(mine ? [] : [e.b as number])], group: "making", weight: 2, text: mine ? `${name(e.a)} harvested ${e.q} roots from a plot they planted.` : `${name(e.a)} harvested ${e.q} roots from a plot that ${name(e.b as number)} planted.` };
+    }
+    case "craft": {
+      const recipe = RECIPES[(e.d as { recipe?: number } | undefined)?.recipe ?? -1];
+      const made = recipe && recipe.outQty > 1 ? `${recipe.outQty} ${itemName(e.i, recipe.outQty)}` : `a ${itemName(e.i, 1)}`;
+      return { ...base, group: "making", weight: 2, text: `${name(e.a)} made ${made}.` };
+    }
+    case "tool_broke":
+      return { ...base, group: "making", weight: 1, text: `${name(e.a)}'s ${itemName(e.i, 1)} wore out.` };
+    case "deposit":
+      return { ...base, group: "making", weight: 1, text: `${name(e.a)} stored ${e.q} ${itemName(e.i, e.q)}.` };
+    case "withdraw":
+      return { ...base, group: "making", weight: 1, text: `${name(e.a)} took ${e.q} ${itemName(e.i, e.q)} from a store.` };
+    case "depleted":
+      return { ...base, ...nodePlace, group: "nature", weight: 2, text: `A ${nodeName(world, e.n)} was stripped bare.` };
+    case "recovered":
+      return { ...base, ...nodePlace, group: "nature", weight: 1, text: `A ${nodeName(world, e.n)} began to recover.` };
+    case "fire_out":
+      return { ...base, ...place, group: "nature", weight: 1, text: "A fire burned out." };
+    case "collapse":
+      return { ...base, ...place, group: "nature", weight: 2, text: "A structure fell into ruin." };
+    case "weather":
+      return { ...base, group: "nature", weight: 1, text: `The weather turned ${e.r === "clear" ? "clear" : e.r === "overcast" ? "overcast" : e.r === "rain" ? "to rain" : e.r === "storm" ? "stormy" : "to snow"}.` };
+    case "season": {
+      const s = SEASONS[e.q ?? 0] ?? "spring";
+      return { ...base, group: "nature", weight: 3, text: `${s[0]!.toUpperCase()}${s.slice(1)} began.` };
+    }
+    case "shock":
+    case "intervention": {
+      const d = e.d as { kind?: string; days?: number; x?: number; y?: number } | undefined;
+      const what = SHOCKS[d?.kind ?? ""] ?? "The world changed";
+      const dur = d?.days && ["drought", "cold_snap", "rain", "hush"].includes(d.kind ?? "") ? ` for ${d.days} days` : "";
+      const xy = d?.x !== undefined && d?.y !== undefined ? { x: d.x, y: d.y } : {};
+      return { ...base, ...xy, group: "observer", weight: 3, text: e.k === "intervention" ? `You intervened. ${what}${dur}.` : `${what}${dur}.` };
+    }
+    default:
+      return null;
+  }
+}
+
+/** Sentence for an agent's recorded goal code and reason code. */
+export function goalSentence(goal: string, why: string): string {
+  const reasons: Record<string, string> = {
+    thirsty: "is thirsty",
+    parched: "is dangerously thirsty",
+    passing_water: "is beside fresh water",
+    top_up: "has water nearby",
+    no_water_known: "knows of no fresh water",
+    hungry: "is hungry",
+    starving: "is starving",
+    peckish: "has food in hand",
+    found_food: "found food on the ground",
+    buffer: "wants a little food in reserve",
+    no_food_known: "knows of no food",
+    by_fire: "is warming up by a fire",
+    go_to_fire: "is cold and knows of a lit fire",
+    relight: "is cold and has wood for a dead fire",
+    build_fire: "is cold and carries wood and stone",
+    shelter: "is cold and knows a shelter",
+    fetch_wood: "is cold and needs wood for a fire",
+    fetch_stone: "is cold and needs stone for a hearth",
+    night: "it is night",
+    tired: "is exhausted",
+    curious: "has nothing pressing to do",
+    content: "has no pressing need",
+  };
+  const goals: Record<string, string> = {
+    drink: "Going to drink",
+    seek_water: "Searching for fresh water",
+    eat: "Eating",
+    forage: "Foraging",
+    seek_food: "Searching for food",
+    warm: "Getting warm",
+    sleep: "Sleeping",
+    explore: "Exploring",
+    idle: "Idling",
+    start: "Just arrived",
+  };
+  const g = goals[goal] ?? goal.replace(/_/g, " ");
+  const r = reasons[why];
+  return r ? `${g} — ${r}.` : `${g}.`;
+}
+
+export const MEMORY_TEXT: Record<string, string> = {
+  found: "found a resource",
+  empty: "found a place stripped bare",
+  got: "was given",
+  gave: "gave",
+  refused: "was refused",
+  took: "saw someone take",
+  kept: "a promise was kept",
+  broke: "a promise was broken",
+  hungry: "went hungry",
+  thirsty: "went thirsty",
+  cold: "was cold",
+  exhausted: "was exhausted",
+  death: "saw a death",
+  heard: "was told something",
+  built: "helped build",
+  proposal: "heard a proposal",
+  joined: "joined a group",
+  spoiled: "lost food to rot",
+};
+
+export function clock(tickOfDay: number): string {
+  // tick 0 is 06:00; four ticks per hour
+  const minutes = (6 * 60 + tickOfDay * 15) % (24 * 60);
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function seasonName(season: number): string {
+  const s = SEASONS[season] ?? "spring";
+  return s[0]!.toUpperCase() + s.slice(1);
+}
+
+export function weatherName(weather: number): string {
+  const w = WEATHER[weather] ?? "clear";
+  return w[0]!.toUpperCase() + w.slice(1);
+}
+
+export function tickLabel(tick: number): string {
+  const day = Math.floor(tick / 96);
+  return `Day ${day + 1}, ${clock(tick % 96)}`;
+}

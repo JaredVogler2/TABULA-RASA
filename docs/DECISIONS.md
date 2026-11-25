@@ -172,3 +172,40 @@ rollback. Read this file before modifying any contract it mentions.
   rules ("a lock"). All four facts are designer affordances and are disclosed.
 - **Cost / risks.** No model of force means enforcement is limited to exclusion and forfeiture.
 - **Rollback.** Affordance flags per scenario.
+
+## D-012 — The observer's hand always forks, against a twin that shares its luck (2026-11-25)
+
+- **Problem.** The prompt asks for "intervene … compare outcome/debrief". A before/after view of one timeline
+  cannot separate the intervention from everything else that would have happened anyway, and would invite
+  exactly the causal over-reading the project is meant to avoid.
+- **Original proposal.** Save → reload → compare outcome.
+- **Alternatives.** (a) Before/after on one world. (b) Re-run the control from tick 0 on demand. (c) Fork at
+  the first intervention and keep an untouched twin running in the worker with common random numbers.
+- **Evidence.** Engine tests already prove that a common-random-number fork retraces its parent exactly until
+  something differs (phase 03, "branches"). Stepping the twin costs one extra engine step per tick
+  (0.14 ms median at 50 agents).
+- **Decision.** (c). The first intervention forks; the twin shares terrain, people, weather draws and luck and
+  is stepped in lock-step. Compare shows both, labels the result one seed and one difference, and says that it
+  is an anecdote, not a finding. Both worlds and both daily series are saved together.
+- **Affected tests.** `play.spec.ts` (fork badge, Compare, reload keeps the fork).
+- **Cost / risks.** Twice the engine work after a fork; saves double in size. A single paired run is still one
+  seed — the Lab (phase 14) is where claims are made.
+- **Rollback.** Drop the twin and fall back to (a); the snapshot format already treats the control as optional.
+
+## D-013 — A capture harness inside the product, and what the low preset is for (2026-11-25)
+
+- **Problem.** The art gate requires screenshots "from the actual working product" across several passes, at
+  fixed cameras, seasons and hours; and this environment renders WebGL on the CPU, where the first low preset
+  took 510 ms per frame and made the end-to-end test exceed three minutes.
+- **Decision.** (1) `/studio` is a page of the shipped app that builds a world from URL parameters with the
+  same worker and renderer as the game and exposes read-only stats (`scripts/shots.mjs` drives it). It can
+  change nothing about a game in progress. (2) The low preset is a real, lighter scene — half-resolution
+  terrain mesh, simplified canopies, no shadow or post passes, cheaper terrain and water shaders (549,974 →
+  249,190 triangles, measured) — not a test-only code path. (3) All presets may lower internal resolution to
+  60% when frames stay long; still captures turn that off so evidence is rendered at the stated size.
+  (4) `?q=` and `?pr=` let a visitor or a test force a preset or cap resolution; both affect drawing only.
+- **Evidence.** `evidence/phase-04/render-budget.txt`, `frame-cadence-swiftshader.txt`; E2E 1.4–1.7 min.
+- **Cost / risks.** One extra static route in the bundle. Frame statistics now report the interval between
+  frames reaching the screen rather than the time spent in JavaScript, which is less flattering and correct.
+- **Rollback.** Delete `src/app/studio` and `scripts/shots.mjs`; presets are independent of it.
+
