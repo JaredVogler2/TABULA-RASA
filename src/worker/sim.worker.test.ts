@@ -23,11 +23,15 @@ vi.mock("@/engine", async (importOriginal) => {
 import { AF, AGENT_STRIDE, type FromWorker, type Recording, type SavePayload, type ToWorker, type ViewFrame } from "./protocol";
 
 const out: FromWorker[] = [];
+/** Every morning's message since it was last emptied (the list above is emptied whenever a frame is waited for). */
+const mornings: Extract<FromWorker, { type: "day" }>[] = [];
 // messages cross the boundary by structured clone, as they do between a page and a real worker:
 // neither side can reach into the other's arrays
 const fake = {
   postMessage: (m: FromWorker) => {
     out.push(structuredClone(m));
+    if (m.type === "day") mornings.push(structuredClone(m));
+    if (mornings.length > 400) mornings.splice(0, 200);
     if (out.length > 4000) out.splice(0, out.length - 2000);
   },
   onmessage: null as ((e: { data: ToWorker }) => void) | null,
@@ -569,3 +573,55 @@ describe("worker: when a world cannot be carried on", () => {
     expect(stepTo(48).tick).toBe(48);
   });
 });
+
+describe("worker: the aim on the scenario's card", () => {
+  it("is answered when asked and sent each morning, for the world being lived and, once the observer has touched it, for its twin", () => {
+    ask((requestId) => ({ type: "init", config: makeConfig("long_winter", 3, {}), requestId }), "ready");
+    const first = ask((requestId) => ({ type: "aim", requestId }), "aim").aim;
+    expect(first.twin).toBeNull();
+    expect(first.yours).toEqual(expect.objectContaining({ id: "spring_60", text: "Bring three in five through to spring.", state: "open", decidedDay: null, figure: "50 of 50 alive" }));
+
+    // two mornings pass: each morning's message carries the reading, and it is the one a question gets
+    mornings.length = 0;
+    stepTo(2 * TICKS_PER_DAY + 5);
+    expect(mornings.map((m) => m.sample.day)).toEqual([1, 2]);
+    expect(mornings[1]?.aim.twin).toBeNull();
+    expect(mornings[1]?.aim.yours?.state).toBe("open");
+
+    // the observer's hand makes a twin; at that moment the two worlds are one world, and read alike
+    expect(ask((requestId) => ({ type: "intervene", kind: "blight", params: {}, requestId }), "intervened").ok).toBe(true);
+    const forked = ask((requestId) => ({ type: "aim", requestId }), "aim").aim;
+    expect(forked.twin).not.toBeNull();
+    expect(forked.twin).toEqual(forked.yours);
+    mornings.length = 0;
+    stepTo(3 * TICKS_PER_DAY + 5);
+    expect(mornings[0]?.aim.twin?.id).toBe("spring_60");
+  });
+
+  it("is decided on the morning spring comes, and a save opened again reads the same in both worlds", () => {
+    mornings.length = 0;
+    stepTo(28 * TICKS_PER_DAY + 3);
+    const end = ask((requestId) => ({ type: "aim", requestId }), "aim").aim;
+    expect(["met", "lost"]).toContain(end.yours?.state);
+    expect(["met", "lost"]).toContain(end.twin?.state);
+    // the morning it was decided said so, and no later morning said otherwise
+    const states = mornings.map((m) => m.aim.yours?.state);
+    expect(states[states.length - 1]).toBe(end.yours?.state);
+    const decided = states.indexOf(end.yours?.state as "met" | "lost");
+    expect(states.slice(decided).every((s) => s === end.yours?.state)).toBe(true);
+    if (end.yours?.state === "met") expect(end.yours.decidedDay).toBe(29);
+
+    const saved = save();
+    ask((requestId) => ({ type: "load", snapshot: saved.snapshot, control: saved.control, series: saved.series, controlSeries: saved.controlSeries, requestId }), "ready");
+    expect(ask((requestId) => ({ type: "aim", requestId }), "aim").aim).toEqual(end);
+  });
+
+  it("an aim with no day of reckoning is a reading from the first morning, never a verdict", () => {
+    ask((requestId) => ({ type: "init", config: makeConfig("two_shores", 2, {}), requestId }), "ready");
+    const aim = ask((requestId) => ({ type: "aim", requestId }), "aim").aim;
+    expect(aim.yours?.state).toBe("reading");
+    expect(aim.yours?.decidedDay).toBeNull();
+    expect(aim.twin).toBeNull();
+  });
+});
+

@@ -8,7 +8,7 @@ import type { Pick, Quality } from "@/render/WorldRenderer";
 import type { ChronicleEntry } from "@/ui/game/text";
 import type { SaveMeta } from "@/persist/saves";
 import type { JournalEntry } from "@/ui/game/journal";
-import type { AgentDetail, BranchView, CalendarView, ClimateView, CivicsView, CompareView, DaySample, HistoryView, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
+import type { AgentDetail, AimPair, BranchView, CalendarView, ClimateView, CivicsView, CompareView, DaySample, HistoryView, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
 
 export type Phase = "title" | "setup" | "loading" | "playing";
 export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about" | "recordings" | "atlas" | "journal" | "history";
@@ -71,6 +71,8 @@ export interface GameState {
   series: DaySample[];
   controlSeries: DaySample[];
   forkDay: number;
+  /** How the scenario's stated aim stands, here and in the untouched twin: read each morning, and when a world arrives. */
+  aim: AimPair | null;
   compare: CompareView | null;
   /** The world lines of this history (the one lived now and those set aside), refreshed when the History panel opens. */
   branches: BranchView[];
@@ -144,6 +146,7 @@ export const useGame = create<GameState>((set) => ({
   series: [],
   controlSeries: [],
   forkDay: -1,
+  aim: null,
   compare: null,
   branches: [],
   civics: null,

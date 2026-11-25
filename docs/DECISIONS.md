@@ -1200,3 +1200,58 @@ rollback. Read this file before modifying any contract it mentions.
   `pnpm check`, `pnpm e2e` and `pnpm study -- --verify` on the new major, then changing this one line.
 - **Rollback.** That line.
 
+## D-049 — The aim on a scenario's card is counted, here and in the untouched twin (2026-11-25)
+
+- **Problem.** Phase 20 asks whether the thing is worth watching and whether the observer's choices mean
+  anything. Every scenario states an optional aim on its card — and nothing in the product ever said how it
+  had gone (D-039 item 5 said so plainly). An observer could change a world and be shown two columns of
+  numbers, with no word on the one question the world had been set up to ask. The first charter promised
+  aims "evaluated only from engine events"; that promise was withdrawn in D-039 rather than kept.
+- **Evidence, before anything was built.** Two of the five aims as first written cannot be met, and two cannot
+  be missed (`evidence/phase-20/aims-first-written.txt`; development seeds 1–10, both baseline minds, nobody
+  intervening). "Lose no one to cold or hunger before spring" (The Long Winter): between 8 and 38 people are
+  lost that way in every world measured. "Keep every commons above its collapse threshold for a year" (Thin
+  Commons): some grove or fishing water is below its threshold by the eighth morning in every one of the hundred
+  worlds, whatever the scenario — ordinary foraging does it. First Light and Dry Year are met in all twenty
+  worlds each.
+- **Alternatives.** (a) Leave the aims as text: honest, and the gap stays. (b) Evaluate them as written: two
+  verdicts that are always "lost" teach nothing. (c) Objectives about what the citizens should build: rejected
+  in D-030 and still rejected — an aim here is about who is alive, never about how. (d) Count what the card
+  asks, reword the two that could not be met to ones that can go either way, and show the same count for the
+  untouched twin.
+- **Decision.** (d).
+  - *What is counted* (`src/worker/aims.ts`, a pure reading of the world's state; the engine is untouched and
+    its version stays 0.7.0). First Light: four in five of the fifty who began, alive on the first morning of
+    the spring after the first winter. The Long Winter: three in five by that morning (was: nobody lost to cold
+    or hunger). Thin Commons: four in five at the end of the first year, with the commons' average fullness
+    and their emptiest morning shown beside it (was: every commons above its threshold). Dry Year: four in five
+    on the morning the scenario's own drought ends. Two Shores: the gap in well-being between those who began
+    on each shore, the dead counted as nought — a reading with no day of reckoning and so no verdict.
+  - *Three kinds of answer.* Open until the day of reckoning; then met or lost; lost early on the day too many
+    have died for it to be met. A verdict once given does not move. Newcomers brought by the observer's hand
+    are not among those counted.
+  - *From the state alone.* Deaths carry their tick, so a world that was saved, opened from a file or returned
+    to in History gives the answer it would have given if watched: no latch, no stored verdict.
+  - *The drought is not foretold.* Before it comes the reading says only that it has not come.
+  - *Where it is shown.* The Atlas, above the almanac: the card's sentence, where it stands, and the same for
+    the untouched twin once the observer has made one. A notice on the morning it is decided. Nothing is
+    scored, nothing accumulates, and no citizen is told.
+- **Why this does not undo D-030.** D-030 refused objectives that reward steering toward a designer's picture
+  of civilization. These five sentences were already on the cards; none says what the citizens should do or
+  build; and the reading is the almanac's kind of statement — a count — not a reward.
+- **How the reworded aims fall** (`evidence/phase-20/aims-calibration.txt`, same seeds): The Long Winter is met
+  in 4 of 10 worlds with planner minds and 5 of 10 with reflex minds; Thin Commons in 4 and 5; First Light and
+  Dry Year in all. So two aims are the observer's to lose and two can go either way. Whether the observer's
+  hand can *save* a world that would have lost has not been measured.
+- **Affected acceptance tests.** New: `src/worker/aims.test.ts` (eleven), three in
+  `src/worker/sim.worker.test.ts`; `tests/e2e/observer.spec.ts` (the aim in an untouched world) and
+  `tests/e2e/play.spec.ts` (both worlds after an intervention). The charter's table of scenarios is rewritten
+  (§5). Unchanged: every engine test, every golden digest and every published study hash — the aims' wording
+  lives beside the scenarios in `src/engine/model/config.ts` and is part of no world.
+- **Cost / risks.** One reading a morning (a count over fifty people; for Two Shores, one flood fill and, once
+  per world, one making of the world as it first was). An aim that is always met is a weak aim: First Light
+  and Dry Year are gentle on purpose (D-014), and say so by being met. Counting an aim invites treating it as
+  a score; the block says in its heading that it is not one.
+- **Rollback.** `src/worker/aims.ts`, the `aim` messages in the protocol and the block in `Atlas.tsx`; the
+  cards' sentences in `config.ts`.
+

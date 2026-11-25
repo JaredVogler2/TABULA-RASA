@@ -348,3 +348,17 @@ the owner's approval, and `docs/DEPLOYMENT.md` §12 is the checklist that will b
 | CI ran on GitHub for every push | the repository's list of workflow runs | `evidence/phase-19/ci-runs.txt` | 22 runs when listed: 19 passed, 1 failed (transient, fixed forward), 1 cancelled, 1 in progress | — |
 | The size of the build | `git ls-files` at `36ff011` | `evidence/phase-19/code-size.txt` | 42,754 lines of source in 180 files; 12,131 lines of tests in 45 | Anything about quality |
 | The score | — | `docs/SCORECARD.md` | 68 of 100 by the builder's own grading; no veto triggered; two incidents disclosed | **An independent grade.** No criterion is graded as independently stress-tested |
+
+## Phase 20 — redesign and handoff (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Two of the five aims as first written could not be met in any world measured, and two could not be missed | `pnpm exec tsx scripts/aims.ts --seeds 1-10 --first-written` | `evidence/phase-20/aims-first-written.txt` | The Long Winter: 8 to 38 lost to cold or hunger before spring in every world; a commons below its collapse threshold by the eighth morning in every one of the hundred worlds | Worlds the observer changes |
+| As reworded the aims can go either way, and the reading on the morning an aim is decided is the reading at the end | `pnpm exec tsx scripts/aims.ts --seeds 1-10` | `evidence/phase-20/aims-calibration.txt` | The Long Winter met in 4 of 10 worlds (planner) and 5 of 10 (reflex); Thin Commons 4 and 5; First Light and Dry Year 10 of 10; Two Shores a reading | Whether the observer's hand can save a world that would have lost: not measured |
+| The aim is counted from the state alone — who counts, when it is decided, that a verdict does not move, that newcomers are not counted, that the drought is not foretold, that a saved world reads the same | `pnpm test` (`src/worker/aims.test.ts`, `src/worker/sim.worker.test.ts`) | the check's log (next commit) | 11 and 3 tests pass | — |
+| The Atlas shows it, for the world and for its untouched twin once there is one | `pnpm e2e` (`observer.spec.ts`, `play.spec.ts`) | the whole-suite log (next commit), `desktop-32a-the-aim.jpg`, `desktop-08b-aim-in-both-worlds.jpg` and the phone's | pass on both projects | That anyone finds it worth knowing |
+| Lines of the Chronicle that say the same thing at the same hour are one line with a count, and nothing is dropped | `pnpm test` (`src/ui/game/runs.test.ts`) | the check's log (next commit), `desktop-43-recorded-cause.jpg` | 4 tests pass | — |
+| The whole suite at the final commit | `pnpm check`, `pnpm e2e` in a clean checkout | the check's log (next commit), `e2e-run.txt` | see `docs/CONTINUE_HERE.md` | — |
+
+**Not run, in any phase:** a request to a model; a deployment; a person; a physical device.
+

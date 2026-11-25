@@ -140,6 +140,11 @@ export const DEFAULT_CONFIG: WorldConfig = {
   shocks: [],
 };
 
+/**
+ * The one optional aim a scenario states on its card. It is a sentence for the observer: no
+ * citizen is told it and nothing in the engine reads it. How it stands is counted outside the
+ * engine, from the world's state (`src/worker/aims.ts`, D-049).
+ */
 export interface ScenarioObjective {
   id: string;
   text: string;
@@ -170,7 +175,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "Early spring on a temperate island.",
     description:
       "Fifty unrelated adults wake scattered across a green island with a year ahead of them. Food is within reach, water runs from the hills, and winter is three seasons away.",
-    objective: { id: "survive_80", text: "See four in five through the first winter." },
+    objective: { id: "winter_80", text: "See four in five through the first winter." },
     overrides: {},
   },
   {
@@ -179,7 +184,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "Late summer. The cold will come early and stay.",
     description:
       "The warm days are numbered. Winter here is long and hard, fresh food rots quickly, and there is roughly a season and a half to prepare.",
-    objective: { id: "survive_cold", text: "Lose no one to cold or hunger before spring." },
+    objective: { id: "spring_60", text: "Bring three in five through to spring." },
     overrides: {
       seasonDays: [8, 8, 8, 16],
       startDay: 12,
@@ -193,7 +198,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "A few rich groves and lagoons feed everyone — while they last.",
     description:
       "Food is concentrated in a handful of fishing waters and berry groves that collapse if they are stripped and recover only slowly.",
-    objective: { id: "commons_alive", text: "Keep every commons above its collapse threshold for a year while four in five survive." },
+    objective: { id: "year_80", text: "See four in five through the year, on commons that can be stripped bare." },
     overrides: {
       nodeDensity: 700,
       richness: 1800,
@@ -207,7 +212,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "One island, one ford, two unequal halves.",
     description:
       "A strait divides the land. Most of the stone and clay lie on one shore; most of the timber, berries and roots on the other. A single shallow ford joins them.",
-    objective: { id: "narrow_gap", text: "Narrow the gap in well-being between the shores." },
+    objective: { id: "shores_gap", text: "Narrow the gap in well-being between the shores." },
     overrides: {
       strait: true,
       shoreSplit: SHORE_SPLIT,
@@ -220,7 +225,7 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     tagline: "An ordinary spring. Then the rain stops.",
     description:
       "Sometime before autumn a drought arrives without warning: streams shrink to scattered pools and the bushes stop bearing.",
-    objective: { id: "survive_drought", text: "Keep four in five alive through the drought." },
+    objective: { id: "drought_80", text: "Keep four in five alive through the drought." },
     overrides: {
       shocks: [{ kind: "drought", minDay: 9, maxDay: 18, days: 9, magnitude: 1000 }],
     },

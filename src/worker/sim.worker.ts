@@ -47,6 +47,7 @@ import {
 } from "@/engine";
 import { describeMotion, describeRule, describeTerms, type Manifest } from "@/engine";
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from "fflate";
+import { readAims } from "./aims";
 import { describeIntent } from "./describe";
 import {
   ACTION_CODES,
@@ -803,7 +804,7 @@ function tickOnce(): void {
       c = sample(control);
       controlSeries.push(c);
     }
-    post({ type: "day", sample: s, control: c });
+    post({ type: "day", sample: s, control: c, aim: readAims(world, series, control, controlSeries) });
   }
   if (world.tick % KEY_EVERY === 0) takeKeyframe();
 }
@@ -1183,6 +1184,9 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         post({ type: "civics", requestId: msg.requestId, view: w ? civicsView(w) : null });
         break;
       }
+      case "aim":
+        post({ type: "aim", requestId: msg.requestId, aim: world ? readAims(world, series, control, controlSeries) : { yours: null, twin: null } });
+        break;
       case "compare": {
         if (!world || !control) {
           post({ type: "compare", requestId: msg.requestId, view: null });

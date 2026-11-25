@@ -155,6 +155,16 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await shot(page, project, "08-compare");
   await page.getByTestId("compare-close").click();
 
+  // ── the aim on the scenario's card is now counted in both worlds: the one touched and the one left alone
+  await page.getByTestId("open-atlas").click();
+  await expect(page.getByTestId("aim-text")).toHaveText("See four in five through the first winter.");
+  await expect(page.getByTestId("aim-yours-state")).toHaveText(/^(Open|Met on day \d+|Lost on day \d+)$/);
+  await expect(page.getByTestId("aim-twin")).toBeVisible();
+  await expect(page.getByTestId("aim-twin-state")).toHaveText(/^(Open|Met on day \d+|Lost on day \d+)$/);
+  await expect(page.getByTestId("aim-no-twin")).toHaveCount(0);
+  await shot(page, project, "08b-aim-in-both-worlds");
+  await page.getByTestId("atlas-close").click();
+
   // ── save, reload the page, continue exactly where we were
   const savedTick = await tick(page);
   await page.getByTestId("open-menu").click();

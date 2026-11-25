@@ -28,6 +28,7 @@ import { AFFORDANCES, AFFORDANCE_CATEGORIES, AFFORDANCE_VERSION, ENGINE_VERSION,
 import { useGame } from "@/store/game";
 import { useController } from "./context";
 import styles from "./game.module.css";
+import { runsOf } from "./runs";
 import { clock, type ChronicleGroup } from "./text";
 
 /**
@@ -108,6 +109,9 @@ export function Chronicle() {
     return list.slice(-220).reverse();
   }, [entries, filter, onlySelected, selectedAgent]);
   const byId = useMemo(() => new Map(entries.map((e) => [e.id, e])), [entries]);
+  // the same sentence about several places at the same hour is one line with a count (runs.ts)
+  const runs = useMemo(() => runsOf(shown), [shown]);
+  const [opened, setOpened] = useState<number | null>(null);
 
   return (
     <aside className={`${styles.paper} ${styles.side} ${styles.sideLeft}`} aria-label="Chronicle" data-testid="chronicle">
@@ -129,11 +133,13 @@ export function Chronicle() {
           <p className={styles.empty}>Nothing has been logged yet. Press play: every line that appears here is an event the engine validated and executed.</p>
         ) : (
           <ol className={styles.entries} data-testid="chronicle-entries">
-            {shown.map((e, index) => {
+            {runs.map((run, index) => {
+              const e = run.first;
               const day = Math.floor(e.tick / 96);
-              const previous = shown[index - 1];
+              const previous = runs[index - 1]?.first;
               const heading = !previous || Math.floor(previous.tick / 96) !== day;
               const cause = e.parents.map((p) => byId.get(p)).find((p) => p !== undefined);
+              const more = run.rest.length;
               return (
                 <li key={e.id}>
                   {heading ? <div className={styles.dayHeading}>Day {day + 1}</div> : null}
@@ -141,9 +147,30 @@ export function Chronicle() {
                     <span className={styles.entryTime}>{clock(e.tick % 96)}</span>
                     <span>
                       <span className={styles.entryText}>{e.text}</span>
+                      {more ? (
+                        <span className={styles.entryCount} data-testid="entry-count">
+                          {" "}
+                          × {more + 1}
+                        </span>
+                      ) : null}
                       {cause ? <span className={styles.cause}>Recorded cause: {cause.text}</span> : null}
                     </span>
                   </button>
+                  {more ? (
+                    <button type="button" className={styles.whyButton} aria-expanded={opened === e.id} onClick={() => setOpened(opened === e.id ? null : e.id)} data-testid={`run-${e.id}`}>
+                      {opened === e.id ? "Show them as one line" : `Show each of the ${more + 1}`}
+                    </button>
+                  ) : null}
+                  {more && opened === e.id
+                    ? run.rest.map((other) => (
+                        <button key={other.id} type="button" className={styles.entry} data-group={other.group} data-weight={other.weight} onClick={() => controller.jumpTo(other)} title="Go to where this happened">
+                          <span className={styles.entryTime}>{clock(other.tick % 96)}</span>
+                          <span>
+                            <span className={styles.entryText}>{other.text}</span>
+                          </span>
+                        </button>
+                      ))
+                    : null}
                   {e.parents.length ? (
                     <button
                       type="button"

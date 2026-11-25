@@ -67,19 +67,21 @@ never blocks input.
 
 ## 5. Scenarios
 
-All scenarios are win-less sandboxes. Each states an **optional** aim on its card in the setup screen (the last
-column below) and prescribes nothing about how to meet it. The aims are text only: nothing in the product
-evaluates, scores or reports them (a scenario's `objective` in `src/engine/model/config.ts` is read only by the
-setup screen). What the observer has in their place is the field journal: twenty-one questions, each answered
-by the first engine-logged event of its kind (D-030).
+All scenarios are win-less sandboxes. Each states one **optional** aim on its card in the setup screen (the
+last column below) and prescribes nothing about how to meet it. No citizen is told of it and nothing is
+scored. Since phase 20 the aim is **counted**: the Atlas says, from the engine's own state, where it stands —
+open until its day of reckoning, then met or lost — and says the same of the untouched twin once the observer
+has made one (D-049; `src/worker/aims.ts`). Two of the aims were reworded then, because as first written they
+could not be met in any world measured. The field journal is a different thing and is still there: twenty-one
+questions, each answered by the first engine-logged event of its kind (D-030).
 
-| Scenario | Distinct conditions | Optional aim (stated, never evaluated) |
+| Scenario | Distinct conditions | Optional aim, and how it is counted |
 |---|---|---|
-| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks and the default. | See four in five through the first winter. |
-| **The Long Winter** | Starts in late summer; winter is longer and colder; food spoils. Roughly a season and a half to prepare. | Lose no one to cold or hunger before spring. |
-| **Thin Commons** | Food is concentrated in a few fishing lagoons and berry groves that collapse if over-harvested and recover slowly. | Keep every commons above its collapse threshold for a year while four in five survive. |
-| **Two Shores** | A strait with a single ford divides the island; stone and clay lie on one shore, timber and most food on the other. | Narrow the gap in well-being between the shores. |
-| **Dry Year** | An ordinary start, then a drought of unannounced timing: streams shrink to pools and bushes fail. | Keep four in five alive through the drought. |
+| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks and the default. | *See four in five through the first winter.* Of the fifty who began, those alive on the first morning of the following spring (day 41). |
+| **The Long Winter** | Starts in late summer; winter is longer and colder; food spoils. Roughly a season and a half to prepare. | *Bring three in five through to spring.* Those alive on the morning spring comes (day 29). |
+| **Thin Commons** | Food is concentrated in a few fishing lagoons and berry groves that collapse if over-harvested and recover slowly. | *See four in five through the year, on commons that can be stripped bare.* Those alive at the end of the first year; the commons' average fullness and emptiest morning are shown beside it. |
+| **Two Shores** | A strait with a single ford divides the island; stone and clay lie on one shore, timber and most food on the other. | *Narrow the gap in well-being between the shores.* A reading with no day of reckoning: well-being of those who began on each shore, the dead counted as nought. Whether it is narrow is for the twin to say. |
+| **Dry Year** | An ordinary start, then a drought of unannounced timing: streams shrink to pools and bushes fail. | *Keep four in five alive through the drought.* Those alive on the morning the drought ends; before it comes, the Atlas does not say when it will. |
 
 All five scenarios and all eight interventions are in the product. (The first playable slice, phase 04,
 shipped First Light alone.) Two Shores divides its resources between its shores as the table says since engine

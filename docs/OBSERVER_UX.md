@@ -17,6 +17,7 @@ reason no criterion here is scored as verified with people.
 | Charters | every agreement, its rules as sentences, how it came to be proposed, who signed, how often it was used; its pennant colour | the institution engine | G |
 | Atlas | relief map with people, hearths (lit or not), shelters, stores, plots, worn ground and agreements in force; click to look or to select | latest frame | L |
 | Almanac | seven daily measures (living, welfare, food held, wild food, commons health, inequality, things built) with the numbers as a table | one sample per simulated day | L |
+| The aim | the one sentence on the scenario's card, and where it stands: open, then met or lost on a named day, or a reading with no verdict (Two Shores); the same for the untouched twin once there is one; a notice on the morning it is decided. Not a score, and no citizen is told (D-049) | the world's own state — who is alive and when the others died, the calendar, the scheduled drought — read each morning and when the Atlas opens | L |
 | Field journal | twenty-one questions, each answered by the first logged event of its kind (D-030) | the event stream | J |
 | Intervene | eight changes to conditions (weather, scarcity, abundance, arrivals, how far voices carry); never to minds; no forecast | logged in the world's own ledger; history forks | I |
 | Compare | your timeline against its untouched twin: charts with a marked fork day, the day-by-day difference, deltas, the two worlds counted side by side, what happened in each by kind, who is dead in only one, the daily table. Beside a recording: the record against the same island with the engine's own minds (D-034) | both worlds, same seed and luck | K |
@@ -103,7 +104,7 @@ reason no criterion here is scored as verified with people.
 | Filter by causal event, group or resource | partly | by event group and by citizen; not by resource |
 | What they know vs what the observer knows; rationale; witnessed events; intentions vs outcomes | done | D-029; outcomes list |
 | Interventions: shocks, resources, migration, communication; observer vs treatment distinguished; no forecast | done | eight kinds; forked badge; "the only honest forecast is to run it" |
-| Optional objectives, dilemmas, knowledge through observation | changed | D-030: a journal of things witnessed, not goals |
+| Optional objectives, dilemmas, knowledge through observation | changed | D-030: a journal of things witnessed, not goals. D-049: the one aim on each scenario's card is counted in the Atlas, for the world and its untouched twin, and never scored |
 | Portrait and landscape, bottom sheets, 44 px, keyboard, contrast, labels, reduced motion, pause, audio sliders | done | landscape phone is exercised by the art captures only, not by an E2E flow |
 | Procedural ambient sound and event cues, no autoplay | done, unheard | D-028 |
 

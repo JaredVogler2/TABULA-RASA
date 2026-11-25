@@ -848,6 +848,13 @@
 .entry[data-weight="1"] .entryText {
   color: var(--text-on-paper-muted);
 }
+/* how many lines of the same hour say this (runs.ts) */
+.entryCount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+  color: var(--umber-600);
+  white-space: nowrap;
+}
 .cause {
   display: block;
   margin-top: 2px;
@@ -1770,6 +1777,31 @@
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   gap: 22px;
   align-items: start;
+}
+/* the aim on the scenario's card, and how it stands (worker/aims.ts) */
+.aim {
+  margin-bottom: 18px;
+}
+.aimText {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--text-on-paper);
+}
+.aimLine {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-on-paper);
+}
+.aimTwin {
+  margin: 12px 0 6px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--umber-600);
 }
 /* one column on anything narrower than a small laptop (this must follow the rule above to take effect) */
 @media (max-width: 880px) {

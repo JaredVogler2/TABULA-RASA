@@ -171,9 +171,15 @@ export class GameController {
     useGame.getState().set({ settings });
     this.client = new SimClient();
     this.client.onFrame = (frame) => this.onFrame(frame);
-    this.client.onDay = (sample, control) => {
+    this.client.onDay = (sample, control, aim) => {
       const s = useGame.getState();
-      s.set({ series: [...s.series, sample], controlSeries: control ? [...s.controlSeries, control] : s.controlSeries });
+      const before = s.aim?.yours ?? null;
+      s.set({ series: [...s.series, sample], controlSeries: control ? [...s.controlSeries, control] : s.controlSeries, aim });
+      // the morning an aim is decided is said once, as a notice; the count is in the atlas
+      const now = aim.yours;
+      if (now && before && before.id === now.id && before.state === "open" && (now.state === "met" || now.state === "lost")) {
+        this.toast(`This world's aim was ${now.state} on day ${now.decidedDay ?? "?"}: ${now.text} The atlas has the count.`);
+      }
     };
     this.client.onError = (message) => useGame.getState().set({ error: message });
     document.addEventListener("visibilitychange", this.onVisibility);
@@ -554,6 +560,7 @@ export class GameController {
       controlSeries: twin,
       // the worker knows when the twin left; nothing here is inferred from the lengths of lists
       forkDay: ready.frame.forkTick >= 0 ? Math.floor(ready.frame.forkTick / TICKS_PER_DAY) : -1,
+      aim: null,
       compare: null,
       selection: null,
       agentDetail: null,
@@ -564,6 +571,22 @@ export class GameController {
     });
     renderer.select(null);
     renderer.camera()?.setAutoOrbit(vista ? 0.035 : 0);
+    if (!vista) void this.refreshAim();
+  }
+
+  /**
+   * Ask how the scenario's stated aim stands: when a world arrives, when the atlas is opened and
+   * when the observer's hand has just made a twin. (Otherwise the worker says so each morning.)
+   */
+  private async refreshAim(): Promise<void> {
+    if (!this.client) return;
+    const epoch = this.epoch;
+    try {
+      const aim = await this.client.aim();
+      if (this.epoch === epoch) useGame.getState().set({ aim });
+    } catch {
+      // the worker was replaced while the question was in flight: the next world asks again
+    }
   }
 
   /** The attract-mode world behind the title: a real simulation, slowly turning. */
@@ -970,6 +993,7 @@ export class GameController {
       const state = useGame.getState();
       state.set({ forkDay: state.forkDay >= 0 ? state.forkDay : Math.floor(result.forkTick / TICKS_PER_DAY), panel: "none" });
       this.toast("The timeline forked. The untouched world keeps running for comparison.");
+      void this.refreshAim();
       this.sound.cue("fork");
       this.advanceTutorial(3);
     } else {
@@ -1001,6 +1025,7 @@ export class GameController {
     if (next === "chronicle") this.advanceTutorial(2);
     if (next === "journal") state.set({ journalUnread: 0 });
     if (next === "history") void this.refreshBranches();
+    if (next === "atlas") void this.refreshAim();
   }
 
   updateSettings(patch: Partial<Settings>): void {

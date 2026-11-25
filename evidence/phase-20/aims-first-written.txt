@@ -1,0 +1,128 @@
+The aims on the scenario cards, counted in worlds nobody touches — 2026-11-25
+
+  $ pnpm exec tsx scripts/aims.ts --seeds 1-10 --first-written
+
+Development seeds 1-10, both kinds of baseline mind, one year and a day each, no intervention.
+Each row: the aim as it is now counted, and beside it what two of the aims asked for before they were reworded:
+how many people were lost to cold or hunger before spring ("lose no one", The Long Winter), and the first morning
+on which any grove or fishing water stood below its collapse threshold ("keep every commons above", Thin Commons).
+Both are counted in every scenario, to show that neither could be met anywhere.
+First Light — "See four in five through the first winter." — planner minds, nobody intervening: met 10
+  seed  1  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  2  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 4
+  seed  3  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  4  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 4
+  seed  5  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  6  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  7  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  8  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  9  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed 10  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+
+First Light — "See four in five through the first winter." — reflex minds, nobody intervening: met 10
+  seed  1  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  2  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  3  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 4
+  seed  4  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  5  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  6  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  7  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  8  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  9  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed 10  met on day 41    50 of 50 saw the winter out    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+
+The Long Winter — "Bring three in five through to spring." — planner minds, nobody intervening: lost 6, met 4
+  seed  1  lost on day 25   28 of 50 alive                 | lost to cold or hunger before spring: 22; a commons first below its threshold on morning 1
+  seed  2  met on day 29    34 of 50 saw the spring        | lost to cold or hunger before spring: 15; a commons first below its threshold on morning 1
+  seed  3  met on day 29    37 of 50 saw the spring        | lost to cold or hunger before spring: 13; a commons first below its threshold on morning 1
+  seed  4  lost on day 28   29 of 50 alive                 | lost to cold or hunger before spring: 21; a commons first below its threshold on morning 1
+  seed  5  met on day 29    34 of 50 saw the spring        | lost to cold or hunger before spring: 16; a commons first below its threshold on morning 4
+  seed  6  lost on day 28   25 of 50 alive                 | lost to cold or hunger before spring: 23; a commons first below its threshold on morning 2
+  seed  7  lost on day 23   16 of 50 alive                 | lost to cold or hunger before spring: 33; a commons first below its threshold on morning 4
+  seed  8  met on day 29    36 of 50 saw the spring        | lost to cold or hunger before spring: 13; a commons first below its threshold on morning 1
+  seed  9  lost on day 28   27 of 50 alive                 | lost to cold or hunger before spring: 21; a commons first below its threshold on morning 1
+  seed 10  lost on day 25   25 of 50 alive                 | lost to cold or hunger before spring: 25; a commons first below its threshold on morning 1
+
+The Long Winter — "Bring three in five through to spring." — reflex minds, nobody intervening: met 5, lost 5
+  seed  1  met on day 29    42 of 50 saw the spring        | lost to cold or hunger before spring:  8; a commons first below its threshold on morning 6
+  seed  2  met on day 29    35 of 50 saw the spring        | lost to cold or hunger before spring: 15; a commons first below its threshold on morning 1
+  seed  3  met on day 29    33 of 50 saw the spring        | lost to cold or hunger before spring: 17; a commons first below its threshold on morning 3
+  seed  4  lost on day 27   23 of 50 alive                 | lost to cold or hunger before spring: 26; a commons first below its threshold on morning 8
+  seed  5  lost on day 24   26 of 50 alive                 | lost to cold or hunger before spring: 22; a commons first below its threshold on morning 1
+  seed  6  met on day 29    37 of 50 saw the spring        | lost to cold or hunger before spring: 13; a commons first below its threshold on morning 3
+  seed  7  lost on day 22   12 of 50 alive                 | lost to cold or hunger before spring: 38; a commons first below its threshold on morning 6
+  seed  8  met on day 29    42 of 50 saw the spring        | lost to cold or hunger before spring:  8; a commons first below its threshold on morning 3
+  seed  9  lost on day 25   24 of 50 alive                 | lost to cold or hunger before spring: 25; a commons first below its threshold on morning 1
+  seed 10  lost on day 27   28 of 50 alive                 | lost to cold or hunger before spring: 20; a commons first below its threshold on morning 1
+
+Thin Commons — "See four in five through the year, on commons that can be stripped bare." — planner minds, nobody intervening: met 4, lost 6
+  seed  1  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  2  lost on day 39   25 of 50 alive                 | lost to cold or hunger before spring: 19; a commons first below its threshold on morning 3
+  seed  3  lost on day 36   5 of 50 alive                  | lost to cold or hunger before spring: 39; a commons first below its threshold on morning 1
+  seed  4  lost on day 35   6 of 50 alive                  | lost to cold or hunger before spring: 43; a commons first below its threshold on morning 2
+  seed  5  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  6  lost on day 39   26 of 50 alive                 | lost to cold or hunger before spring: 20; a commons first below its threshold on morning 2
+  seed  7  met on day 41    49 of 50 saw the year out      | lost to cold or hunger before spring:  1; a commons first below its threshold on morning 2
+  seed  8  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  9  lost on day 36   5 of 50 alive                  | lost to cold or hunger before spring: 45; a commons first below its threshold on morning 2
+  seed 10  lost on day 39   22 of 50 alive                 | lost to cold or hunger before spring: 20; a commons first below its threshold on morning 2
+
+Thin Commons — "See four in five through the year, on commons that can be stripped bare." — reflex minds, nobody intervening: met 5, lost 5
+  seed  1  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  2  met on day 41    42 of 50 saw the year out      | lost to cold or hunger before spring:  8; a commons first below its threshold on morning 1
+  seed  3  lost on day 39   24 of 50 alive                 | lost to cold or hunger before spring: 22; a commons first below its threshold on morning 1
+  seed  4  lost on day 37   1 of 50 alive                  | lost to cold or hunger before spring: 47; a commons first below its threshold on morning 1
+  seed  5  met on day 41    48 of 50 saw the year out      | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 1
+  seed  6  lost on day 39   25 of 50 alive                 | lost to cold or hunger before spring: 20; a commons first below its threshold on morning 2
+  seed  7  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  8  met on day 41    50 of 50 saw the year out      | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  9  lost on day 39   15 of 50 alive                 | lost to cold or hunger before spring: 24; a commons first below its threshold on morning 3
+  seed 10  lost on day 38   4 of 50 alive                  | lost to cold or hunger before spring: 42; a commons first below its threshold on morning 2
+
+Two Shores — "Narrow the gap in well-being between the shores." — planner minds, nobody intervening: reading 10
+  seed  1  reading          a gap of 3                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  2  reading          a gap of 14                    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  3  reading          a gap of 0                     | lost to cold or hunger before spring:  4; a commons first below its threshold on morning 3
+  seed  4  reading          a gap of 4                     | lost to cold or hunger before spring:  3; a commons first below its threshold on morning 5
+  seed  5  reading          a gap of 1                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  6  reading          a gap of 5                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  7  reading          a gap of 12                    | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  8  reading          a gap of 5                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  9  reading          a gap of 1                     | lost to cold or hunger before spring:  1; a commons first below its threshold on morning 2
+  seed 10  reading          a gap of 17                    | lost to cold or hunger before spring:  1; a commons first below its threshold on morning 2
+
+Two Shores — "Narrow the gap in well-being between the shores." — reflex minds, nobody intervening: reading 10
+  seed  1  reading          a gap of 4                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  2  reading          a gap of 1                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  3  reading          a gap of 1                     | lost to cold or hunger before spring:  4; a commons first below its threshold on morning 1
+  seed  4  reading          a gap of 23                    | lost to cold or hunger before spring: 21; a commons first below its threshold on morning 3
+  seed  5  reading          a gap of 2                     | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 4
+  seed  6  reading          a gap of 5                     | lost to cold or hunger before spring:  1; a commons first below its threshold on morning 2
+  seed  7  reading          a gap of 10                    | lost to cold or hunger before spring: 11; a commons first below its threshold on morning 1
+  seed  8  reading          a gap of 3                     | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 2
+  seed  9  reading          a gap of 5                     | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 3
+  seed 10  reading          a gap of 10                    | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 2
+
+Dry Year — "Keep four in five alive through the drought." — planner minds, nobody intervening: met 10
+  seed  1  met on day 19    49 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  2  met on day 25    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 4
+  seed  3  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  4  met on day 19    50 of 50 saw the drought out   | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 4
+  seed  5  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  6  met on day 26    50 of 50 saw the drought out   | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 3
+  seed  7  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 3
+  seed  8  met on day 26    50 of 50 saw the drought out   | lost to cold or hunger before spring:  4; a commons first below its threshold on morning 3
+  seed  9  met on day 23    50 of 50 saw the drought out   | lost to cold or hunger before spring:  6; a commons first below its threshold on morning 2
+  seed 10  met on day 25    50 of 50 saw the drought out   | lost to cold or hunger before spring:  2; a commons first below its threshold on morning 1
+
+Dry Year — "Keep four in five alive through the drought." — reflex minds, nobody intervening: met 10
+  seed  1  met on day 19    50 of 50 saw the drought out   | lost to cold or hunger before spring: 11; a commons first below its threshold on morning 3
+  seed  2  met on day 25    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  3  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  7; a commons first below its threshold on morning 4
+  seed  4  met on day 19    49 of 50 saw the drought out   | lost to cold or hunger before spring: 15; a commons first below its threshold on morning 1
+  seed  5  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 1
+  seed  6  met on day 26    50 of 50 saw the drought out   | lost to cold or hunger before spring: 19; a commons first below its threshold on morning 2
+  seed  7  met on day 28    50 of 50 saw the drought out   | lost to cold or hunger before spring:  0; a commons first below its threshold on morning 2
+  seed  8  met on day 26    50 of 50 saw the drought out   | lost to cold or hunger before spring: 19; a commons first below its threshold on morning 3
+  seed  9  met on day 23    50 of 50 saw the drought out   | lost to cold or hunger before spring:  3; a commons first below its threshold on morning 1
+  seed 10  met on day 25    50 of 50 saw the drought out   | lost to cold or hunger before spring: 21; a commons first below its threshold on morning 1

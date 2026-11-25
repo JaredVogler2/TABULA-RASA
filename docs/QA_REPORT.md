@@ -28,7 +28,7 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing | 0 | 0 | 9 | 10 | — | 18 | 1 |
+| Found while fixing (and, later, in phases 18–20) | 0 | 0 | 10 | 12 | — | 21 | 1 |
 
 ## Security review: finding by finding
 
@@ -117,6 +117,9 @@ Defects that neither review reported, found by the tests and measurements writte
 | Medium | A database connection lost while a transaction held it — an idle transaction ended by the server, a restart, a dropped network — would have ended the server process, and every request on it: the driver announces the loss as an event that the pool listens for only on idle connections | Writing the test that waits for a limit: the run died of "Connection terminated unexpectedly" | Every held connection has a listener; the loss fails the transaction it belongs to and nothing else (D-047). With the listener taken out, the tests fail |
 | Medium | The database limits were sent as settings when a connection is made. A transaction pooler — what the connection string of a hosted database points at — refuses such a connection: `unsupported startup parameter in options: statement_timeout`. The ledger could not have been reached on the first deployment | Reading the provider's documentation before deploying; then a pooler run here, which gave that exact refusal | The limits open every transaction instead, so nothing is asked for at connection time and nothing is kept between transactions. Every server suite, the ledger load test and the owner's browser flow pass through the pooler (D-047, `evidence/phase-16/pooler.txt`) |
 | Low | A phone rule for the "why" button was written above the rule it changes, and half of it was dead | `tests/unit/css-order.test.ts`, at the next run of the suite | Moved after its base rule |
+| Low | The laboratory's browser test still expected the page to open on the pilot bundle, which it had not done since the confirmatory batch was published; the test had not been run since | The first run of the whole suite in a clean checkout (phase 18) | The test checks the confirmatory bundle as what it is, then the pilot |
+| Medium | Two of the five aims on the scenario cards could not be met in any world measured: nobody lost to cold or hunger in The Long Winter, and every commons above its threshold in Thin Commons | Counting them, before building the reading that reports them (phase 20) | Reworded to aims that can go either way; all five are now counted (D-049) |
+| Low | A morning's worth of identical lines — "A root patch began to recover." six times — pushed everything else out of the Chronicle | Looking at the release's stills (phase 20) | One line with a count, which opens out again |
 
 ## What the phase asked to be examined, and where each is
 
@@ -269,7 +272,7 @@ On the working tree of this commit, 2026-11-25, Node 22.23.5, PostgreSQL 16:
 - Browser tests, run spec by spec while the fixes were made — the whole loop on the phone project, the
   keyboard on desktop, accessibility and target sizes on the phone project, both resilience tests, the owner's
   console on both projects (through the pooler). **The whole suite in one run, in a clean checkout,** is made
-  on this commit and recorded by the next one (`evidence/phase-16/e2e-run.txt`).
+  on this commit and recorded by the next one (the whole-suite log (next commit)).
 - The registered studies: 48 cells of the confirmatory batch and 24 of the pilot re-run and matched to the hash
   (`evidence/phase-16/*/verify.txt`).
 

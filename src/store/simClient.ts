@@ -5,6 +5,7 @@
 import type { Manifest, SimEvent, WorldConfig } from "@/engine";
 import type {
   AgentDetail,
+  AimPair,
   BranchView,
   CivicsView,
   CompareView,
@@ -37,7 +38,7 @@ export class SimClient {
   private next = 1;
   private readonly pending = new Map<number, Pending>();
   onFrame: ((frame: ViewFrame) => void) | null = null;
-  onDay: ((sample: DaySample, control: DaySample | null) => void) | null = null;
+  onDay: ((sample: DaySample, control: DaySample | null, aim: AimPair) => void) | null = null;
   onError: ((message: string) => void) | null = null;
 
   constructor() {
@@ -57,7 +58,7 @@ export class SimClient {
         this.onFrame?.(msg.frame);
         return;
       case "day":
-        this.onDay?.(msg.sample, msg.control);
+        this.onDay?.(msg.sample, msg.control, msg.aim);
         return;
       case "error": {
         const p = this.pending.get(msg.requestId);
@@ -149,6 +150,11 @@ export class SimClient {
 
   async civics(): Promise<CivicsView | null> {
     return (await this.request((requestId) => ({ type: "civics", requestId }), "civics")).view;
+  }
+
+  /** How the scenario's stated aim stands, in the world being lived and in its twin. */
+  async aim(): Promise<AimPair> {
+    return (await this.request((requestId) => ({ type: "aim", requestId }), "aim")).aim;
   }
 
   async compare(): Promise<CompareView | null> {

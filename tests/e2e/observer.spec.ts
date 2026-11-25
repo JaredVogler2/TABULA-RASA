@@ -133,6 +133,21 @@ test("the observer's instruments work: sound, what a citizen knows, atlas, alman
     expect(b.x, `${id}: left edge`).toBeGreaterThanOrEqual(0);
     expect(b.x + b.width, `${id}: right edge`).toBeLessThanOrEqual(viewport.width + 0.5);
   }
+  // ── the aim on this world's card, counted: in the card's own words, where it stands, and that nobody has touched this world
+  await expect(page.getByTestId("aim-text")).toHaveText("See four in five through the first winter.");
+  await expect(page.getByTestId("aim-yours")).toHaveAttribute("data-state", "open");
+  await expect(page.getByTestId("aim-yours-state")).toHaveText("Open");
+  await expect(page.getByTestId("aim-yours")).toContainText(/\d+ of the 50 who began are alive\. Four in five is 40\./);
+  await expect(page.getByTestId("aim-yours")).toContainText("The first winter ends on the morning of day 41.");
+  await expect(page.getByTestId("aim-no-twin")).toBeVisible();
+  await expect(page.getByTestId("aim-twin")).toHaveCount(0);
+  {
+    const b = (await page.getByTestId("aim").boundingBox())!;
+    expect(b.x, "aim: left edge").toBeGreaterThanOrEqual(0);
+    expect(b.x + b.width, "aim: right edge").toBeLessThanOrEqual(viewport.width + 0.5);
+  }
+  await page.getByTestId("aim").scrollIntoViewIfNeeded();
+  await shot(page, project, "32a-the-aim");
   await page.getByTestId("almanac-table-toggle").click();
   await expect(page.getByTestId("almanac-table").locator("tbody tr").first()).toBeVisible();
   await shot(page, project, "32-atlas");

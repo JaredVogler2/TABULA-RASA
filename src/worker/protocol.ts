@@ -328,6 +328,34 @@ export interface DaySample {
   structures: number;
 }
 
+export type AimState = "open" | "met" | "lost" | "reading";
+
+/**
+ * How the aim on a scenario's card stands, counted from the world's own state (`aims.ts`).
+ * "open" until its day of reckoning, then "met" or "lost"; "reading" for an aim that has no
+ * such day and so no verdict.
+ */
+export interface AimView {
+  /** The scenario's objective id. */
+  id: string;
+  /** The aim as the scenario's card states it. */
+  text: string;
+  state: AimState;
+  /** The day, as shown on screen (counting from 1), on which it was decided; null while open and for a reading. */
+  decidedDay: number | null;
+  /** The one figure the aim is about, for setting beside the twin's. */
+  figure: string;
+  /** Where it stands, in plain sentences. */
+  lines: string[];
+}
+
+export interface AimPair {
+  /** The world being lived. Null for a scenario with no aim. */
+  yours: AimView | null;
+  /** The same reading of the untouched twin, when there is one. */
+  twin: AimView | null;
+}
+
 export interface CompareView {
   /**
    * "intervention": the world the observer changed against its untouched twin.
@@ -507,6 +535,8 @@ export type ToWorker =
   | { type: "inspectAgent"; id: number; requestId: number }
   | { type: "inspectTile"; x: number; y: number; requestId: number }
   | { type: "compare"; requestId: number }
+  /** How the scenario's stated aim stands, in the world being lived and in its twin. */
+  | { type: "aim"; requestId: number }
   | { type: "civics"; requestId: number }
   /** `packed`: return the world gzip-compressed instead of as text (for storage). */
   | { type: "save"; packed?: boolean; requestId: number }
@@ -542,7 +572,8 @@ export type FromWorker =
   /** `ok` is true only if the re-lived world and its twin are, state for state, the ones that were loaded. */
   | { type: "rebuilt"; requestId: number; ok: boolean; ticks: number; ms: number; moments: number; series: DaySample[]; controlSeries: DaySample[]; events: SimEvent[] }
   | { type: "frame"; frame: ViewFrame }
-  | { type: "day"; sample: DaySample; control: DaySample | null }
+  | { type: "day"; sample: DaySample; control: DaySample | null; aim: AimPair }
+  | { type: "aim"; requestId: number; aim: AimPair }
   | { type: "agent"; requestId: number; detail: AgentDetail | null }
   | { type: "civics"; requestId: number; view: CivicsView | null }
   | { type: "tile"; requestId: number; detail: TileDetail | null }

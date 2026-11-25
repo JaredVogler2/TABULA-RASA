@@ -57,6 +57,8 @@ jobs:
       - run: pnpm gen:migrations --check
       - run: pnpm gen:prompts --check
       - run: pnpm gen:licenses --check
+      - name: Documents point at things that exist
+        run: pnpm check:links
       - name: Secret scan (tracked files)
         run: pnpm scan:secrets
       - name: Secret scan (every line any commit has added)

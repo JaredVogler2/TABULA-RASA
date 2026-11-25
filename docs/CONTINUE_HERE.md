@@ -11,7 +11,8 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
   measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (prepared and rehearsed; **nothing is
-  deployed** until the owner says so) · **next: 19, 20.**
+  deployed** until the owner says so) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
+  worked; what is left is the owner's: `docs/HANDOFF.md`.**
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
   new confirmatory result from seeds 9000–9031: they are spent.
@@ -59,12 +60,12 @@ pnpm release:check -- http://127.0.0.1:3299 --fast
 ```
 
 Expected at this commit: `pnpm check` exits 0 with 470 unit tests in 37 files (ten need PostgreSQL and are skipped
-without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout is made on this commit and recorded by the next one (`evidence/phase-16/e2e-run.txt`). `replay IDENTICAL`.
+without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout is made on this commit and recorded by the next one (the whole-suite log (next commit)). `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
 01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → 11 (partial) → 12 (partial) →
-13 (partial) → 14 ✔ → 15 (partial) → 16 ✔ → 17 (blocked) → 18 (blocked: prepared) → **19** → 20
+13 (partial) → 14 ✔ → 15 (partial) → 16 ✔ → 17 (blocked) → 18 (blocked: prepared) → 19 ✔ → 20 ✔
 
 ## Where things live
 
@@ -81,7 +82,9 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
 - `src/worker/sim.worker.ts` — owns the world, its twin and its history (moments, lines set aside, re-runs,
   rebuilding a loaded world's past, files, the event ledger); posts view frames of either world; plays
   recordings and checks them against the record; `protocol.ts` is the only contract with the page.
-  `sim.worker.test.ts` drives it through that protocol with no browser.
+  `sim.worker.test.ts` drives it through that protocol with no browser. `aims.ts` reads how the scenario's
+  stated aim stands from the world's state (D-049): **a new scenario needs a case there, and
+  `scripts/aims.ts` run on development seeds before its aim is written on a card.**
 - `src/engine/save/history.ts` — manifests, bundles (export/import with integrity checks), replay from a state.
   `src/engine/save/validate.ts` — every field of a restored world, checked (D-043): **a field added to the
   engine's state must be added there too**.
@@ -109,9 +112,11 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
    console, a database (a billable integration even at $0). Once given: create the project from `main`, run
    `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`
    and `PROGRESS.md`. Until then the phase is BLOCKED and nothing may say "deployed".
-2. **Phase 19** (scorecard) and **phase 20** (redesign and handoff). Candidates noted along the way: scenario
-   aims that are evaluated; a per-shore measure for Two Shores; a resources overlay; a whole-society view of
-   ties; a separate host for the owner console (D-039, D-042).
+2. **After the phases.** Recorded in `docs/HANDOFF.md` and not done, because each changes the engine's
+   behaviour (a new version, and for anything experimental a new registration on seeds 9032 and up): a
+   positive control that holds (D-044); planners that stop asking for the unreachable in a crowded famine
+   (D-046). Smaller, and safe on the frozen engine: a per-shore reading in Compare; a resources overlay; a
+   view of everyone's ties at once; a separate host for the owner's console (D-042).
 3. **Phase 17 is blocked on the owner.** What is needed, in order, is in `docs/COST.md` § First live call. The
    first authorized act is the smoke test, and the words that authorize it are the owner's to type.
 4. **What could not be done here** (needs the owner or a device): look at it on a real GPU and a real phone
