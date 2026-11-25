@@ -1,0 +1,48 @@
+# 2026-11-25T03:02:31Z node v22.23.5 pnpm 10.28.0 Linux 6.18.44-fc-v880
+$ pnpm lint
+
+> tabula-rasa@0.1.0 lint /home/user/TABULA-RASA
+> eslint
+
+$ pnpm typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+$ pnpm test
+
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 23ms
+ ✓ src/engine/core/core.test.ts (19 tests) 113ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  03:02:35
+   Duration  249ms (tests 61%, transform 22%, import 14%, worker 2%)
+
+$ pnpm gen:affordances --check
+docs/AFFORDANCES.md is up to date.
+$ pnpm build
+  Generating static pages using 3 workers (2/5) 
+  Generating static pages using 3 workers (3/5) 
+✓ Generating static pages using 3 workers (5/5) in 169ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /api/health
+└ ○ /diagnostics
+
+
+○  (Static)  prerendered as static content
+
+$ pnpm e2e
+
+Running 4 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (305ms)
+  ✓  2 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (23ms)
+  ✓  3 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (283ms)
+  ✓  4 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (28ms)
+
+  4 passed (2.5s)

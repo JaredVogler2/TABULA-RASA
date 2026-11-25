@@ -4,7 +4,18 @@
 
 An original, visually exceptional browser simulation/game and experimental laboratory in which autonomous agents discover how to survive, cooperate, specialize and invent institutions within a bounded virtual world. The player observes, investigates, intervenes and forks history. The actual consequences come from executable simulation rules, not an LLM's narrative claims.
 
-**Status:** this repository is an implementation prompt program, not a built game. No API calls or credits have been spent by the author of these prompts.
+**Status:** under active construction from the prompt program in [`prompts/`](prompts/). Honest, phase-by-phase status lives in [`docs/PROGRESS.md`](docs/PROGRESS.md) and [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md); evidence for every claim is in [`docs/EVIDENCE.md`](docs/EVIDENCE.md). **No Anthropic API calls have been made and no credits have been spent.**
+
+## Run it
+
+```bash
+pnpm install
+pnpm dev        # http://localhost:3000 — needs no keys, no database, no network
+pnpm check      # lint + typecheck + unit/property tests + build
+pnpm e2e        # Playwright against the production build (run `pnpm build` first)
+```
+
+Key documents: [charter](docs/CHARTER.md) · [experiment protocol (pre-registered)](docs/EXPERIMENT_PROTOCOL.md) · [affordance registry](docs/AFFORDANCES.md) · [architecture](docs/ARCHITECTURE.md) · [decisions](docs/DECISIONS.md) · [security](docs/SECURITY.md) · [cost](docs/COST.md) · [resume instructions](docs/CONTINUE_HERE.md).
 
 ## Start in Claude Code (Fable 5.2)
 
