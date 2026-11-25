@@ -25,7 +25,6 @@ export function emptyMetrics(): MetricsAcc {
     deathsByCause: {},
     proposals: 0,
     ratified: 0,
-    exchanges: 0,
     rejectedIntents: 0,
     utterances: 0,
     decisionsBySource: {},

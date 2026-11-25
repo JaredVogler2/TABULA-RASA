@@ -99,7 +99,8 @@ export function acceptPact(world: WorldState, sc: Scratch, agent: Agent, pactId:
   // an exchange honoured is remembered by both, a little
   a.mind.trust[agent.id] = Math.min(1000, (a.mind.trust[agent.id] as number) + 25);
   agent.mind.trust[a.id] = Math.min(1000, (agent.mind.trust[a.id] as number) + 25);
-  world.metrics.exchanges++;
+  world.metrics.pactTrades++;
+  world.metrics.pactUnits += pact.giveQty + pact.wantQty;
   emit(world, out, "pact_done", agent.id, { b: pact.a, x: agent.x, y: agent.y, d: { pact: pact.id, gave: pact.want, gaveQty: pact.wantQty, got: pact.give, gotQty: pact.giveQty } });
   return "done";
 }

@@ -80,7 +80,7 @@ export function emptyMind(cfg: WorldConfig, terrain: Terrain, nodes: Nodes, trus
     homeX: -1,
     homeY: -1,
     heading: 0,
-    cool: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    cool: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     coldNights: 0,
     hungerDays: 0,
     wintersSeen: 0,

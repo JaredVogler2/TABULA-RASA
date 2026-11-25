@@ -111,6 +111,20 @@ cooperation appears in these runs is thin: a few gifts per thousand person-days.
 **Stated plainly.** Institutions can be proposed, validated, signed, used, amended and dissolved, and baseline
 agents do all of that. No benefit of any institution to survival or well-being has been shown.
 
+## Phase 10 — economy and society (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Gini is 0 for equality, for no holdings and for n < 2, and (n−1)/n when one person holds everything | `pnpm test` (`society.test.ts`) | `evidence/phase-10/tests.txt` | pass | — |
+| Modularity matches hand calculation: two triangles joined by a tie → 2 communities, Q = 5/14; a clique → 1 community, Q = 0; weighted pairs stay apart | same | same | pass | Optimality of greedy agglomeration on large graphs (it is a heuristic). |
+| Reciprocity counts directed dyads answered within five days and only those; trade volume and cooperation use living agent-days from the ledger's own deaths | same | same | pass | — |
+| The E1–E4 ladder is read from events, by origin; a scripted charter is counted apart; member-days integrate membership over time | same | same | pass | — |
+| Influence concentration and exclusion are computed as defined | same | same | pass | — |
+| On a real 24-day run the tracker's gifts, exchanges, proposals, ratifications, active institutions, agent-days and cooperation rate equal the engine's own counters | same (› the tracker agrees…) | same | pass | — |
+| A drought leaves the commons poorer than in the untouched twin that shares its random draws | same (› a scarcity shock…) | same | pass | — |
+| Exchange: two agents value the same item differently by need; two planners with complementary surpluses on bare land strike and execute a pact unprompted, with the conservation audit clean every tick | `institutions.test.ts` › exchange among baseline agents | same | pass | That exchange is common in full worlds: it is not (next row). |
+| Society measures on development seeds | `pnpm exec tsx scripts/civics.ts --scenario first_light --seeds 1-6 --days 40 --modes off,grammar_search` | `evidence/phase-10/society-first-light-40d.txt` | hundreds of offers per run, a handful executed; cooperation a few per 1,000 agent-days | Any effect of exchange on outcomes. |
+
 ## Research inputs
 
 | Input | File | Status |

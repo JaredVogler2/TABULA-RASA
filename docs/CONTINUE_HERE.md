@@ -5,7 +5,7 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/1
-- **Phase:** 09 PASS. **Next: phase 10, economy and society measures** (D-001 order), then 06–08.
+- **Phase:** 10 PASS. **Next: phases 06–08** (Claude adapter, budget ledger and security, orchestration).
 - **Last verified commit:** see `git log -1`.
 - **Spend:** $0. No API key present. Live mode must stay disabled until the owner authorizes a capped run.
 
@@ -24,12 +24,12 @@ pnpm exec tsx scripts/civics.ts --scenario long_winter --seeds 1-4 --days 30   #
 node scripts/shots.mjs /tmp/shots vista closeup dusk night phone
 ```
 
-Expected at this commit: 155 unit/property tests pass; E2E 8 passed, 2 skipped (two tests are desktop-only);
+Expected at this commit: 166 unit/property tests pass; E2E 8 passed, 2 skipped (two tests are desktop-only);
 `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
-01 ✔ → 02 (partial) → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → **10** → 06 → 07 → 08 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20
+01 ✔ → 02 (partial) → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → **06** → 07 → 08 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 19 → 20
 
 ## Where things live
 
@@ -43,18 +43,20 @@ Expected at this commit: 155 unit/property tests pass; E2E 8 passed, 2 skipped (
 
 ## Next actions
 
-1. Phase 10: windowed reciprocity, network measures, exclusion and the other protocol measures; the emergence
-   ladder computed from the event log as a library function (it lives in `scripts/civics.ts` for now);
-   `docs/ODD.md`. Consider letting baseline agents use pacts (the capability is built and tested, unused).
-2. Phase 06–08: provider adapters behind `src/engine/mind/external.ts` (`observe`, `submitDecision`,
-   `dueForDecision`, `tapeFromEvents`, `replayTape` are the whole contract; `mock.ts` is the reference mind).
-   Observations already carry charters, standing, motions and offers (`Observation.civics`).
-3. Phase 14 must begin with a pilot that estimates the variance of paired differences (protocol §10, D-018).
-4. Engine notes:
-   - Institutions: `docs/INSTITUTIONS.md`; baselines: `docs/COGNITION.md`; ecology: D-014. Never tune on holdout
-     seeds (9000–9999); every tuning run so far used seeds 1–8.
+1. Phase 06: provider interface (Mock / Replay / Baseline / LiveAnthropic) behind `src/engine/mind/external.ts`
+   (`observe`, `submitDecision`, `dueForDecision`, `tapeFromEvents`, `replayTape` are the whole contract;
+   `mock.ts` is the reference mind); prompt templates and injection fixtures (S01); decision schema for
+   structured outputs. Read `docs/research/anthropic-api.md` first. No key, no call, no spend.
+2. Phase 07: Postgres/PGlite microdollar ledger with atomic reservation, owner auth, CSRF, kill switch, rate
+   limits, secret and bundle scans (D-007, D-008). Scripts named in `package.json` but not yet written:
+   `study`, `db:migrate`, `owner:hash`, `scan:secrets`, `scan:bundle`.
+3. Phase 08: schedulers and the resumable epoch route (D-009).
+4. Phase 14 must begin with a pilot that estimates the variance of paired differences (protocol §10, D-018).
+5. Engine notes:
+   - Model: `docs/ODD.md`; institutions: `docs/INSTITUTIONS.md`; baselines: `docs/COGNITION.md`; ecology: D-014;
+     society measures: `src/engine/metrics/society.ts`. Never tune on holdout seeds (9000–9999).
    - Snapshots at 500 agents are ~36 MiB (dense belief arrays): sparse encoding is a phase 15 item.
-5. Art items carried to phase 11 are listed in `docs/ART_BIBLE.md` § Known weaknesses.
+6. Art items carried to phase 11 are listed in `docs/ART_BIBLE.md` § Known weaknesses.
 
 ## Blockers
 

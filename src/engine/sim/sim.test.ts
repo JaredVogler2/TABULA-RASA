@@ -112,7 +112,7 @@ describe("phase 03 gate: fifty agents, a thousand ticks, deterministic replay", 
   it("pins the reference run of the planner baseline as well", () => {
     const world = createWorld(makeConfig("first_light", 1, { policy: "planner" }));
     run(world, 2 * TICKS_PER_DAY);
-    expect(worldDigest(world)).toMatchInlineSnapshot(`"a120669ba8c64cfc"`);
+    expect(worldDigest(world)).toMatchInlineSnapshot(`"d7e94493f6d53af6"`);
   });
 
   it("event streams are identical across replays, with sequential ids and valid causal parents", () => {

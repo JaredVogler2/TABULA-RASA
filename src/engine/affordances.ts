@@ -374,6 +374,15 @@ export const AFFORDANCES: readonly Affordance[] = [
     status: "implemented",
   },
   {
+    id: "base.exchange",
+    category: "baseline-cognition",
+    name: "Offering and taking exchanges",
+    what: "A planner agent values each kind of thing by its own present need (food by how much it holds, wood by whether it feels cold, stone and fibre by the tools it lacks). It may offer, to whoever is in earshot, something it can spare for something it lacks — when that looks cheaper than fetching it — and takes up an offer it has heard if, by the same reckoning, it would be better off.",
+    why: "A non-LLM source of exchange. There is no price or currency anywhere; the valuation rule is a designer prior, and two agents will usually value the same thing differently.",
+    knob: "institutions (off disables pacts)",
+    status: "implemented",
+  },
+  {
     id: "base.grammar-search",
     category: "baseline-cognition",
     name: "Institutional search (treatment)",

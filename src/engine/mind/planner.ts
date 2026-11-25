@@ -51,7 +51,7 @@ import { FOOD_NODE_KINDS, bestKnownNode, recall } from "./knowledge";
 import type { Plan } from "./reflex";
 import { visibleAgents, visiblePiles, type SeenAgent } from "./senses";
 import { sensesCold } from "./social";
-import { civicBusiness, civicDuty, civicLeisure, drawRation } from "./civic";
+import { civicBusiness, civicDuty, civicLeisure, drawRation, offerCandidate, offerMade } from "./civic";
 
 /** Slots of `mind.cool` (ticks until which a kind of act is held back). */
 export const COOL = { inform: 0, ask: 1, give: 2, gossip: 3, promise: 4, explore: 5, backoff: 6, rehome: 7 } as const;
@@ -845,12 +845,18 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
     consider(stash(c));
     consider(plot(c));
   }
+  // getting something by exchange is weighed against getting it oneself
+  const offer = offerCandidate(world, a, c.seen);
+  consider(offer);
   // the industrious will work for a smaller return than the idle
   const floor = 13 - c.industry / 10;
   const chosen = best as Candidate | null;
-  if (chosen && chosen.score >= floor) return chosen.plan;
+  if (chosen && chosen.score >= floor) {
+    if (offer && chosen.plan === offer.plan) offerMade(world, a);
+    return chosen.plan;
+  }
 
-  const civic = civicLeisure(world, a);
+  const civic = civicLeisure(world, a, c.seen);
   if (civic) return civic;
 
   const said = talk(c);

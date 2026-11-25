@@ -282,6 +282,8 @@ export function goalSentence(goal: string, why: string): string {
     hungry_and_empty_handed: "is hungry, with nothing in hand and no food known",
     night_is_coming: "the light is failing",
     undertook_to: "undertook to when they signed",
+    better_off: "reckons it leaves them better off",
+    has_spare_and_lacks: "has more of one thing than they need and too little of another",
     hungry_and_entitled: "is hungry and the charter allows it",
     entitled: "the charter allows it",
     seeking_founders: "it needs more signatures to come into force",
@@ -346,6 +348,8 @@ export function goalSentence(goal: string, why: string): string {
     propose: "Proposing a charter",
     leave: "Leaving an institution",
     feed_hearth: "Bringing wood to the common hearth",
+    trade: "Taking up an offer",
+    offer: "Offering an exchange",
     build_together: "Working on a shared building",
   };
   const g = goals[goal] ?? goal.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());

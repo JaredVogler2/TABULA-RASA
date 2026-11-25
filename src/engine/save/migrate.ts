@@ -45,15 +45,13 @@ const MIGRATIONS: Record<number, Migration> = {
       if (!Array.isArray(m.charters)) m.charters = [];
       if (!Array.isArray(m.pacts)) m.pacts = [];
       if (typeof m.src !== "string") m.src = "baseline";
-      if (Array.isArray(m.cool)) while (m.cool.length < 10) m.cool.push(0);
+      if (Array.isArray(m.cool)) while (m.cool.length < 11) m.cool.push(0);
     }
     for (const s of (env.state as unknown as { structures?: Record<string, unknown>[] }).structures ?? []) {
       // before builders were told apart from depositors, everyone on record counts as a builder
       if (!Array.isArray(s.builders)) s.builders = Array.from(new Set([s.founder as number, ...((s.contributors as number[]) ?? [])]));
       if (!Array.isArray(s.open)) s.open = (s.inv as number[]).map(() => 0);
     }
-    const metrics = (env.state as unknown as { metrics?: Record<string, unknown> }).metrics;
-    if (metrics && typeof metrics.exchanges !== "number") metrics.exchanges = 0;
     return { ...env, schema: 3 };
   },
 };

@@ -615,6 +615,7 @@ export function noteStoreUse(world: WorldState, agent: Agent, s: Structure, op: 
   if (op === "deposited") {
     m.dep[item] = (m.dep[item] as number) + counted;
   } else {
+    world.metrics.institutionTransfers++;
     // grants are spent before the period's quota
     const fromGrant = Math.min(counted, m.grants[item] as number);
     m.grants[item] = (m.grants[item] as number) - fromGrant;

@@ -1,0 +1,98 @@
+
+> tabula-rasa@0.1.0 check /home/user/TABULA-RASA
+> pnpm lint && pnpm typecheck && pnpm test && pnpm gen:affordances --check && pnpm build
+
+
+> tabula-rasa@0.1.0 lint /home/user/TABULA-RASA
+> eslint
+
+
+> tabula-rasa@0.1.0 typecheck /home/user/TABULA-RASA
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> tabula-rasa@0.1.0 test /home/user/TABULA-RASA
+> vitest run
+
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/engine/institutions/institutions.test.ts (33 tests) 6036ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (2)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1322ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1032ms
+     ✓ a proposer only puts forward what it would itself sign 403ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 1921ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 7504ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 3844ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 2230ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 7687ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1397ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 305ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 668ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 345ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 366ms
+     ✓ re-keying the branch gives an independent stochastic continuation 389ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 669ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 699ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1137ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 435ms
+ ✓ src/engine/core/core.test.ts (19 tests) 126ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 23ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 2738ms
+   ✓ the tracker agrees with the engine's own counters on a real run (1)
+     ✓ gifts, exchanges, proposals and agent-days match; every institution's rung is at most what its record allows 1660ms
+   ✓ a scarcity shock shows in the measures (1)
+     ✓ a drought leaves the commons poorer than in the untouched twin that shares its luck 875ms
+ ✓ src/engine/world/world.test.ts (28 tests) 1329ms
+
+ Test Files  8 passed (8)
+      Tests  166 passed (166)
+   Start at  07:05:37
+   Duration  9.25s (tests 97%, import 1%, transform 1%)
+
+
+> tabula-rasa@0.1.0 gen:affordances /home/user/TABULA-RASA
+> tsx scripts/gen-affordances.ts --check
+
+docs/AFFORDANCES.md is up to date.
+
+> tabula-rasa@0.1.0 build /home/user/TABULA-RASA
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 19ms
+- Cache Components enabled
+- Partial Prefetching enabled
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1231ms
+  Running TypeScript ...
+  Finished TypeScript in 4.7s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/6) ...
+  Generating static pages using 3 workers (1/6) 
+  Generating static pages using 3 workers (2/6) 
+  Generating static pages using 3 workers (4/6) 
+✓ Generating static pages using 3 workers (6/6) in 236ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /api/health
+├ ○ /diagnostics
+└ ○ /studio
+
+
+○  (Static)  prerendered as static content
+

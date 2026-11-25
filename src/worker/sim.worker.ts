@@ -134,7 +134,7 @@ function civicsView(w: WorldState): CivicsView {
   }
   charters.sort((a, b) => (a.state === "active" ? 0 : a.state === "proposed" ? 1 : 2) - (b.state === "active" ? 0 : b.state === "proposed" ? 1 : 2) || b.id - a.id);
   const motions = w.inst.motions.filter((m) => m.state === "open").map((m) => ({ id: m.id, institution: m.institution, by: m.by, what: describeMotion(m.body, name), yes: m.yes.length, no: m.no.length, closesIn: m.closes - w.tick }));
-  return { mode: w.config.institutions, charters, motions, exchanges: w.metrics.exchanges, openOffers: w.inst.pacts.filter((p) => p.state === "open").length };
+  return { mode: w.config.institutions, charters, motions, exchanges: w.metrics.pactTrades, openOffers: w.inst.pacts.filter((p) => p.state === "open").length };
 }
 
 function post(msg: FromWorker, transfer: Transferable[] = []): void {

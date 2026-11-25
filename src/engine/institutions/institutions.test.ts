@@ -579,7 +579,8 @@ describe("capability: voluntary exchange, mutual aid, and collectively funded in
     expect(b.inv[Item.berry]).toBe(bBerries + 3);
     expect(b.inv[Item.wood]).toBe(1);
     expect(pact.state).toBe("done");
-    expect(world.metrics.exchanges).toBe(1);
+    expect(world.metrics.pactTrades).toBe(1);
+    expect(world.metrics.pactUnits).toBe(4);
   });
 
   it("an offer nobody takes expires and everything comes back; one that cannot be met moves nothing", () => {
@@ -936,5 +937,78 @@ describe("grammar search and the civic mind", () => {
     const obs = observe(off, 0)!;
     expect(obs.civics).toBeUndefined();
     expect(obs.actions.some((o) => ["propose", "endorse", "vote", "pact_offer"].includes(o.k))).toBe(false);
+  });
+});
+
+import { valuation } from "../mind/civic";
+
+describe("exchange among baseline agents comes from differences in what things are worth to each", () => {
+  it("the same item is valued differently by someone short of it and someone with plenty", () => {
+    const world = huddle(2);
+    const [a, b] = world.agents as [Agent, Agent];
+    a.inv.fill(0);
+    b.inv.fill(0);
+    a.inv[Item.root] = 12; // well fed, no wood
+    b.inv[Item.wood] = 8; // no food at all, wood to spare
+    a.mind.tempEma = 30; // a feels the cold
+    b.mind.tempEma = 200;
+    expect(valuation(a, Item.wood).value).toBeGreaterThan(valuation(b, Item.wood).value * 2);
+    expect(valuation(b, Item.root).value).toBeGreaterThan(valuation(a, Item.root).value * 2);
+    expect(valuation(a, Item.root).spare).toBeGreaterThan(0);
+    expect(valuation(b, Item.wood).spare).toBeGreaterThan(0);
+    expect(valuation(b, Item.root).spare).toBe(0);
+  });
+
+  it("two planners with complementary surpluses strike and carry out a pact unprompted; nothing is created or lost", () => {
+    const world = createWorld(makeConfig("first_light", 33, { population: 2, illness: 0, startDay: 12, policy: "planner", institutions: "open" }));
+    const [a, b] = world.agents as [Agent, Agent];
+    // stand them side by side on dry land
+    b.x = b.px = a.x;
+    b.y = b.py = a.y;
+    for (const x of [a, b]) {
+      comfort(x);
+      for (let i = 0; i < ITEM_COUNT; i++) {
+        world.metrics.sinks[i] = (world.metrics.sinks[i] as number) + (x.inv[i] as number);
+        x.inv[i] = 0;
+      }
+      x.traits.fill(50);
+      x.mind.trust.fill(500);
+      x.mind.tempEma = 200;
+    }
+    grant(world, a, Item.root, 14);
+    grant(world, b, Item.wood, 8);
+    grant(world, b, Item.root, 1);
+    a.mind.tempEma = 30; // a wants wood; b, with almost no food, wants roots
+    world.climate.light = 1000;
+    indexAgents(world, scratchOf(world));
+    // the land around them is bare, so fetching what each lacks is not an option: asking around is
+    world.config.planting = false;
+    for (let n = 0; n < world.nodes.count; n++) {
+      if (Math.max(Math.abs((world.nodes.x[n] as number) - a.x), Math.abs((world.nodes.y[n] as number) - a.y)) <= 14) world.nodes.amount[n] = 0;
+    }
+    for (const x of [a, b]) {
+      x.mind.nodeAmt.fill(-1);
+      x.mind.nodeMax.fill(0);
+      x.mind.homeX = a.x;
+      x.mind.homeY = a.y;
+    }
+    let offered = false;
+    let done = false;
+    const out: SimEvent[] = [];
+    for (let t = 0; t < 60 && !done; t++) {
+      for (const x of [a, b]) comfort(x);
+      step(world, out);
+      for (const e of out) {
+        if (e.k === "pact") offered = true;
+        if (e.k === "pact_done") done = true;
+      }
+      out.length = 0;
+      expect(auditGoods(world)).toBeNull();
+    }
+    expect(offered).toBe(true);
+    expect(done).toBe(true);
+    expect(world.metrics.pactTrades).toBeGreaterThanOrEqual(1);
+    // each ended up with some of what it lacked
+    expect((a.inv[Item.wood] as number) + (b.inv[Item.root] as number)).toBeGreaterThan(1);
   });
 });

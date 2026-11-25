@@ -17,13 +17,14 @@ import { bestKnownNode } from "./knowledge";
 import { NodeKind } from "../model/constants";
 import { searchCharter } from "../institutions/search";
 import { foodEnergy, roomFor } from "../sim/inventory";
+import { sensesCold } from "./social";
 import type { Scratch } from "../sim/scratch";
 import { recall, remember } from "./knowledge";
 import type { Plan } from "./reflex";
 import type { SeenAgent } from "./senses";
 
 /** Extra slots of `mind.cool` used by the civic layer. */
-export const CIVIC_COOL = { announce: 8, search: 9 } as const;
+export const CIVIC_COOL = { announce: 8, search: 9, trade: 10 } as const;
 
 const DAILY = 310;
 
@@ -206,14 +207,123 @@ function search(world: WorldState, a: Agent): Plan | null {
   return plan("propose", trouble, { k: "propose", charter: found.charter });
 }
 
+// ───────────────────────── exchange
+
+const TRADEABLE: readonly number[] = [Item.berry, Item.root, Item.fish, Item.ration, Item.wood, Item.stone, Item.fiber];
+
+/**
+ * What one more unit of an item is worth to this agent now, and how many it could part with.
+ * This is the agent's own rough reckoning from its needs — there is no price anywhere in the
+ * world, and two agents will usually value the same thing differently. That difference is
+ * the only reason an exchange ever happens.
+ */
+export function valuation(a: Agent, item: number): { value: number; spare: number } {
+  const have = a.inv[item] as number;
+  const spec = ITEM_SPECS[item]!;
+  if (spec.energy > 0) {
+    const foodE = foodEnergy(a.inv);
+    const base = spec.energy / 10;
+    const m = foodE < DAILY * 0.5 ? 2.4 : foodE < DAILY * 1.5 ? 1.3 : foodE < DAILY * 3 ? 0.9 : 0.55;
+    // food can be spared only out of what exceeds a day and a half of eating
+    const spareE = Math.max(0, foodE - Math.round(DAILY * 1.5));
+    return { value: base * m, spare: Math.min(have, Math.floor(spareE / spec.energy)) };
+  }
+  const cold = sensesCold(a);
+  if (item === Item.wood) {
+    const want = cold > 0 ? 4 : 1;
+    return { value: spec.worth * (have < want ? (cold > 0 ? 2.6 : 1.2) : 0.6), spare: Math.max(0, have - want) };
+  }
+  if (item === Item.stone) {
+    const want = (a.inv[Item.spear] as number) === 0 || (a.inv[Item.axe] as number) === 0 ? 1 : 0;
+    return { value: spec.worth * (have < want ? 1.7 : 0.6), spare: Math.max(0, have - want) };
+  }
+  if (item === Item.fiber) {
+    const want = (a.inv[Item.basket] as number) === 0 ? 5 : 1;
+    return { value: spec.worth * (have < want ? 1.7 : 0.6), spare: Math.max(0, have - want) };
+  }
+  return { value: spec.worth, spare: 0 };
+}
+
+/** Take up an offer one has heard, if by one's own reckoning it leaves one better off. */
+function takeOffer(world: WorldState, a: Agent): Plan | null {
+  const m = a.mind;
+  for (const id of m.pacts) {
+    const p = world.inst.pacts.find((x) => x.id === id);
+    if (!p || p.state !== "open" || p.a === a.id || (p.b >= 0 && p.b !== a.id)) continue;
+    if ((a.inv[p.want] as number) < p.wantQty) continue;
+    const giveUp = valuation(a, p.want);
+    if (giveUp.spare < p.wantQty) continue;
+    const gain = valuation(a, p.give).value * p.giveQty - giveUp.value * p.wantQty;
+    if (gain <= 4) continue;
+    // go to where the offerer was last seen; the offer was made within earshot, so it is near
+    if ((m.metTick[p.a] as number) < 0) continue;
+    return plan("trade", "better_off", { k: "goto", x: m.metX[p.a] as number, y: m.metY[p.a] as number, near: 1 }, { k: "pact_accept", pact: id });
+  }
+  return null;
+}
+
+/**
+ * Offer what one can spare for what one lacks, to whoever is in earshot. Returned with a
+ * score so that the planner can weigh it against getting the thing oneself: an exchange is
+ * worth proposing when fetching it would cost more than the offer does.
+ */
+export function offerCandidate(world: WorldState, a: Agent, seen: readonly SeenAgent[]): { score: number; plan: Plan } | null {
+  if (world.config.institutions === "off") return null;
+  const m = a.mind;
+  if (world.tick < (m.cool[CIVIC_COOL.trade] as number)) return null;
+  if (!seen.some((s) => s.audible && !s.asleep)) return null;
+  if (world.inst.pacts.some((p) => p.state === "open" && p.a === a.id)) return null;
+  let best: { give: number; giveQty: number; want: number; wantQty: number; gain: number } | null = null;
+  for (const want of TRADEABLE) {
+    // ask for the foods anyone might be carrying, not the rarer ones
+    if (want === Item.fish || want === Item.ration) continue;
+    const w = valuation(a, want);
+    const wSpec = ITEM_SPECS[want]!;
+    const wBase = wSpec.energy > 0 ? wSpec.energy / 10 : wSpec.worth;
+    if (w.value <= wBase * 1.25) continue; // only ask for what is actually wanted
+    const wantQty = wSpec.energy > 0 ? 2 : want === Item.fiber ? 3 : 1;
+    if (roomFor(a, want) < wantQty) continue;
+    for (const give of TRADEABLE) {
+      if (give === want) continue;
+      const g = valuation(a, give);
+      const gSpec = ITEM_SPECS[give]!;
+      const gBase = gSpec.energy > 0 ? gSpec.energy / 10 : gSpec.worth;
+      if (g.spare < 1 || g.value >= gBase) continue; // only offer what is in surplus
+      // offer a little more than an even swap at plain worth, so that it is worth someone's walk —
+      // but never tie up more than half of what can be spared in one offer
+      const giveQty = Math.min(Math.max(1, Math.floor(g.spare / 2)), Math.max(1, Math.ceil((wBase * wantQty * 1.15) / gBase)));
+      const gain = w.value * wantQty - g.value * giveQty;
+      if (gain > 4 && (!best || gain > best.gain)) best = { give, giveQty, want, wantQty, gain };
+    }
+  }
+  if (!best) {
+    m.cool[CIVIC_COOL.trade] = world.tick + 24;
+    return null;
+  }
+  // the gain is in the agent's own units of worth (about a tenth of an energy unit); an offer costs a moment
+  // and is taken up perhaps one time in four
+  return { score: best.gain * 0.5, plan: plan("offer", "has_spare_and_lacks", { k: "pact_offer", to: -1, give: best.give, giveQty: best.giveQty, want: best.want, wantQty: best.wantQty }) };
+}
+
+/** Called when the planner adopts an offer, so that it is not repeated at once. */
+export function offerMade(world: WorldState, a: Agent): void {
+  // one offer a day: an offer nobody takes is not shouted again every few hours
+  a.mind.cool[CIVIC_COOL.trade] = world.tick + TICKS_PER_DAY;
+}
+
 /** Civic acts that come before one's own projects: weighing what is on offer and finding founders. */
 export function civicBusiness(world: WorldState, a: Agent, seen: readonly SeenAgent[]): Plan | null {
   if (world.config.institutions === "off") return null;
-  return consider(world, a) ?? announce(world, a, seen);
+  return consider(world, a) ?? takeOffer(world, a) ?? announce(world, a, seen);
 }
 
-/** With nothing better to do: look for an agreement worth proposing. */
-export function civicLeisure(world: WorldState, a: Agent): Plan | null {
+/** With nothing better to do: offer an exchange, or look for an agreement worth proposing. */
+export function civicLeisure(world: WorldState, a: Agent, seen: readonly SeenAgent[]): Plan | null {
   if (world.config.institutions === "off") return null;
+  const offer = offerCandidate(world, a, seen);
+  if (offer) {
+    offerMade(world, a);
+    return offer.plan;
+  }
   return search(world, a);
 }

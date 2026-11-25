@@ -38,7 +38,8 @@ function hold(a: Agent, intents: Intent[] = [{ k: "wait", ticks: 48 }]): void {
 
 /** A small daylight world whose people stand shoulder to shoulder on dry land near agent 0. */
 function huddle(population: number, seed = 21): WorldState {
-  const world = createWorld(makeConfig("first_light", seed, { population, illness: 0, startDay: 12 }));
+  // institutions off: these tests are about one mind's own repertoire, without charters or offers
+  const world = createWorld(makeConfig("first_light", seed, { population, illness: 0, startDay: 12, institutions: "off" }));
   const t = world.terrain;
   const a0 = world.agents[0]!;
   const spots: [number, number][] = [];

@@ -45,3 +45,7 @@ export { validateCharter } from "./institutions/validate";
 export { describeMotion, describeRule, describeTerms } from "./institutions/describe";
 export { institutionById, proposalById } from "./institutions/engine";
 
+// society measures, computed from the ledger
+export { SocietyTracker, modularity, RECIPROCITY_WINDOW, E3_EVENTS, E4_DAYS } from "./metrics/society";
+export type { InstitutionRecord, LadderCount, SocietyReport } from "./metrics/society";
+

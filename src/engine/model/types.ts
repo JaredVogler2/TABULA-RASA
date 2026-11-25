@@ -532,8 +532,6 @@ export interface MetricsAcc {
   deathsByCause: Record<string, number>;
   proposals: number;
   ratified: number;
-  /** Pacts carried out (two-way exchanges). */
-  exchanges: number;
   rejectedIntents: number;
   utterances: number;
   decisionsBySource: Record<string, number>;
