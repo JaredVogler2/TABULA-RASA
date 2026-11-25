@@ -1,0 +1,6 @@
+# 19-FABLE-BENCHMARK — Model capability evaluation and evidence ledger
+
+Read CLAUDE.md and prompts/00-MASTER.md. Implement this phase; record evidence, update progress, commit.
+
+Assess coding model with transparent evidence rather than code volume. Record development environment, actual model/config if observable, wall-clock, tokens/credits only if available, human interventions, commits, test counts, independent bugs, reverted architectures, accepted changes, benchmark results and screenshots. Score 0–100 using predeclared weights: simulation correctness 20, agent/institution sophistication 20, reproducibility/science 15, visuals/UX 15, performance 10, security/cost 10, autonomous engineering 10. Grade each criterion 0–4 anchored: absent, partial, works in isolated tests, integrated verified, independently stress-tested. Apply hard veto on secret leak, unauthorized paid calls, false evidence or broken replay. Distinguish Fable's development capability from runtime agent performance; compare same tasks, budgets, seeds and tests if later evaluating other coding models. No inferred score without evidence, no claiming maximal model capability from one application. 
+Gate: dated scorecard, reproducibility bundle, benchmark scripts and links to raw evidence; unresolved items prioritized, not obscured.

@@ -1,0 +1,6 @@
+# 04-PLAYABLE-SLICE — First complete playable offline slice
+
+Read CLAUDE.md and prompts/00-MASTER.md. Implement this phase; record evidence, update progress, commit.
+
+Implement a real loop: title → seed/scenario selection → 3D world → play/pause/step/speed → inspect a citizen and event → intervene in environment → save → reload → compare outcome/debrief. Use deterministic heuristic agents explicitly labeled BASELINE, capable of survival without Claude. Build small but beautiful first biome, animated citizens moving and performing actual actions, environmental resource feedback and readable tooltips. No static mockups pretending to play, no lorem ipsum, no dead navigation. Include an initial 50-citizen settlement-free world and a resource shock challenge. Use browser worker or bounded simulation step, interpolation separate from ticks, durable local saves and mobile touch controls. Keep first-run tutorial concise, contextual and skippable. Add keyboard navigation and reduced motion. 
+Gate: actual Playwright desktop and mobile walkthroughs using real clicks/taps, screenshots of live state at start and after meaningful evolution, offline replay, no missing asset or console errors, build green. Save evidence and identify gaps honestly before proceeding.

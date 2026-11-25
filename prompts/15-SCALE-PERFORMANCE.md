@@ -1,0 +1,6 @@
+# 15-SCALE-PERFORMANCE — Performance, scalability and resilience
+
+Read CLAUDE.md and prompts/00-MASTER.md. Implement this phase; record evidence, update progress, commit.
+
+Profile before optimizing. Benchmark fixed 50-agent reference scenario, stress 100/250/500 agents headlessly and 50/100 visible where feasible. Report CPU, device/browser, resolution, graphics preset, simulation ticks/second, p50/p95 frame time, worker latency, memory, save size, render draw calls, request duration and API cost. Use spatial indexes, compact arrays, instancing, incremental graph metrics and event compaction. Rust/WASM only after benchmark proves bottleneck and keep determinism across supported configs; don't promise cross-platform bit equality unless tested. Load test live orchestration with mocks, DB locks, queue expiry, retries, rate limits and budget ledger, bounded storage. Adaptive frame quality must not alter outcomes. Pause/step semantics remain correct under background tabs, mobile suspend, slow networks, refresh and multi-tab conflicts. Ensure partial state never corrupts a save. 
+Gate: reproducible benchmark commands and raw output, before/after measurements, no fabricated device tests, recorded thresholds plus graceful fallback. Do not optimize away actual simulation fidelity or render meaningful actions.
