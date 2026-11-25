@@ -85,6 +85,16 @@ let lastLoop = 0;
 let lastTickAt = 0;
 let frameHz = 30;
 let timer: ReturnType<typeof setInterval> | null = null;
+/**
+ * Frames sent that the page has not yet said it has taken. A frame is sent only when there are
+ * none: the world is lived at the pace asked whatever the page is doing, and a page that is slower
+ * than the world is shown it as it is when the page next looks. (Frames used to be sent thirty
+ * times a second regardless. A page that took longer than that over each one fell behind without
+ * limit: slowed twenty times, the picture ran on for 56 seconds after pause was pressed. D-050.)
+ */
+let untaken = 0;
+/** A frame came due while the last was still untaken: it is sent the moment that one is taken. */
+let frameOwed = false;
 /** Set when the world on hand could not be carried on: nothing more is asked of it. */
 let faulted = false;
 /** How far the world on hand can be vouched for (see HistoryView.provenance), and what the next adopted world will be. */
@@ -872,7 +882,23 @@ function frameOnce(): void {
     if (acc > owedAtMost) acc = owedAtMost;
   }
   if (rebuild) advanceRebuild(11);
+  if (untaken > 0) {
+    frameOwed = true;
+    return;
+  }
+  sendFrame();
+}
+
+/**
+ * Send the world as it is now. What a frame carries since the last one (the Chronicle's events,
+ * the lists that are sent when they change) is gathered when a frame is built, so a frame that
+ * was not sent loses nothing: the next one carries it.
+ */
+function sendFrame(): void {
+  if (!world) return;
   const frame = buildFrame(shown() ?? world, false);
+  untaken++;
+  frameOwed = false;
   post({ type: "frame", frame }, [frame.agents.buffer as ArrayBuffer, frame.nodeAmounts.buffer as ArrayBuffer]);
 }
 
@@ -1096,6 +1122,17 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         break;
       case "resync":
         resendLists();
+        break;
+      case "taken":
+        if (untaken > 0) untaken--;
+        // a frame that waited for this one to be taken is sent now, not at the next turn of the loop
+        if (frameOwed && untaken === 0 && world && !faulted) {
+          try {
+            sendFrame();
+          } catch (err) {
+            fault(err);
+          }
+        }
         break;
       case "view": {
         const next = msg.twin && control !== null;

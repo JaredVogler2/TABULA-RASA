@@ -1,0 +1,17 @@
+# The resilience browser tests with D-050 in place
+
+pnpm exec playwright test tests/e2e/resilience.spec.ts --project=desktop --trace off
+Run 2026-11-25 on the working tree that became the D-050 commit, against its own production build.
+4 x Intel Xeon 2.30GHz container; headless Chromium drawing through SwiftShader (software).
+
+
+Running 2 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/resilience.spec.ts:138:1 › two tabs share one autosave slot without overwriting each other, and an altered save is refused (3.2m)
+  ✓  2 [desktop] › tests/e2e/resilience.spec.ts:244:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world (4.7m)
+
+  Slow test file: [desktop] › tests/e2e/resilience.spec.ts (7.9m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  2 passed (7.9m)
+
+[exited with code 0]

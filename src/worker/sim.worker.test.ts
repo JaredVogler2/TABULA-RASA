@@ -27,10 +27,23 @@ const out: FromWorker[] = [];
 const mornings: Extract<FromWorker, { type: "day" }>[] = [];
 // messages cross the boundary by structured clone, as they do between a page and a real worker:
 // neither side can reach into the other's arrays
+/**
+ * The page on the other side. A real one answers every frame with `taken`, and the worker sends the
+ * next only then; this one does the same a moment later (never from inside the worker's own call,
+ * as a real page could not), unless a test is being a page that has not got round to it.
+ */
+const page = { taking: true };
+/** Every frame's events since it was last emptied, for the tests that count what frames carry. */
+const carried: { id: number; t: number }[] = [];
 const fake = {
   postMessage: (m: FromWorker) => {
     out.push(structuredClone(m));
     if (m.type === "day") mornings.push(structuredClone(m));
+    if (m.type === "frame") {
+      for (const e of m.frame.events) carried.push({ id: e.id, t: e.t });
+      if (carried.length > 40_000) carried.splice(0, 20_000);
+      if (page.taking) setTimeout(() => fake.onmessage?.({ data: { type: "taken" } }), 0);
+    }
     if (mornings.length > 400) mornings.splice(0, 200);
     if (out.length > 4000) out.splice(0, out.length - 2000);
   },
@@ -502,6 +515,156 @@ describe("worker: time is driven in many ways, the world in one", () => {
     send({ type: "pause" });
     // at two ticks a second, a second of running is a couple of ticks — not the twelve hundred the gap would be
     expect(b - a).toBeLessThanOrEqual(6);
+  });
+});
+
+describe("worker: the world is lived at its own pace, the picture sent at the page's", () => {
+  const config = makeConfig("first_light", 33, {});
+  const framesSent = (): ViewFrame[] => out.flatMap((m) => (m.type === "frame" ? [m.frame] : []));
+  /** Start a world and leave nothing owed: the frame the loop has sent is taken. */
+  function begin(): void {
+    page.taking = true;
+    ask((requestId) => ({ type: "init", config, requestId }), "ready");
+    // the rate frames are asked for at outlives a world (an earlier test left it at four a second)
+    send({ type: "frameRate", hz: 30 });
+    frame();
+    vi.advanceTimersByTime(1);
+    carried.length = 0;
+    out.length = 0;
+  }
+
+  it("a page that takes each frame at once is sent them at the rate asked", () => {
+    begin();
+    send({ type: "speed", tps: 128 });
+    send({ type: "play" });
+    vi.advanceTimersByTime(3000);
+    send({ type: "pause" });
+    // thirty a second (the loop turns every 33 ms: thirty turns and a part of one in each second)
+    expect(framesSent().length).toBeGreaterThanOrEqual(88);
+    expect(framesSent().length).toBeLessThanOrEqual(92);
+    send({ type: "frameRate", hz: 12 });
+    out.length = 0;
+    vi.advanceTimersByTime(3000);
+    expect(framesSent().length).toBeGreaterThanOrEqual(35);
+    expect(framesSent().length).toBeLessThanOrEqual(37);
+    send({ type: "frameRate", hz: 30 });
+  });
+
+  it("no second frame is sent until the first is taken; the world runs on; the frame sent then shows it as it is, with everything the missing ones would have carried", () => {
+    // what a page that keeps up is shown, to compare with: every event of the first days, and the world at their end
+    begin();
+    const until = 4 * TICKS_PER_DAY + 40;
+    stepTo(until);
+    vi.advanceTimersByTime(1);
+    const shown = carried.filter((e) => e.t <= until).map((e) => e.id);
+    const reference = save();
+    expect(reference.tick).toBe(until);
+    expect(shown.length).toBeGreaterThan(50);
+    expect(new Set(shown).size).toBe(shown.length);
+
+    // the same world, and a page that stops taking frames while it plays at the fastest speed
+    begin();
+    page.taking = false;
+    send({ type: "speed", tps: 128 });
+    send({ type: "play" });
+    vi.advanceTimersByTime(2400);
+    // one frame went, in the first turn of the loop, and none after it, for all of 2.4 seconds
+    expect(framesSent().length).toBe(1);
+    const first = framesSent()[0] as ViewFrame;
+    // the world did not wait for the page: more than two days have passed
+    const now = save().tick;
+    expect(now).toBeGreaterThan(2 * TICKS_PER_DAY);
+    expect(now).toBeGreaterThan(first.tick + 200);
+    expect(now).toBeLessThan(until);
+    send({ type: "pause" });
+
+    // the page takes the frame: the next is sent at once, not at the next turn of the loop, and it is the world as it is now
+    out.length = 0;
+    send({ type: "taken" });
+    expect(framesSent().length).toBe(1);
+    const next = framesSent()[0] as ViewFrame;
+    expect(next.tick).toBe(now);
+    expect(next.playing).toBe(false);
+    // a list that is sent when it changes (the day's worn paths) comes with it, having changed while nothing was sent
+    expect(next.traffic).not.toBeNull();
+    // and nothing more until that one is taken, however long the loop turns
+    vi.advanceTimersByTime(1000);
+    expect(framesSent().length).toBe(1);
+    page.taking = true;
+    send({ type: "taken" });
+    vi.advanceTimersByTime(100);
+    expect(framesSent().length).toBeGreaterThan(1);
+
+    // every event the page that kept up was shown, this one was shown too: in two frames instead of hundreds
+    const late = carried.filter((e) => e.t <= now).map((e) => e.id);
+    stepTo(until);
+    vi.advanceTimersByTime(1);
+    const all = carried.filter((e) => e.t <= until).map((e) => e.id);
+    expect(all).toEqual(shown);
+    expect(late).toEqual(shown.slice(0, late.length));
+    expect(late.length).toBeGreaterThan(30);
+    // and what the page did or did not look at changed nothing in the world
+    const lived = save();
+    expect(lived.tick).toBe(until);
+    expect(lived.hash).toBe(reference.hash);
+  });
+
+  it("a slow page is sent one frame for each it takes, and the world keeps the pace it would have kept", () => {
+    // a page that keeps up, for the pace
+    begin();
+    send({ type: "speed", tps: 128 });
+    send({ type: "play" });
+    vi.advanceTimersByTime(4000);
+    send({ type: "pause" });
+    const kept = save().tick;
+    expect(kept).toBeGreaterThan(400);
+
+    // a page that takes a frame every fifth of a second
+    begin();
+    page.taking = false;
+    send({ type: "speed", tps: 128 });
+    send({ type: "play" });
+    let taken = 0;
+    for (let ms = 0; ms < 4000; ms += 200) {
+      vi.advanceTimersByTime(200);
+      send({ type: "taken" });
+      taken++;
+    }
+    send({ type: "pause" });
+    expect(save().tick).toBe(kept);
+    // one sent at the start, and one for each taken
+    expect(framesSent().length).toBe(taken + 1);
+    // each showed the world as it was when it was sent: time on them only goes forward
+    const ticks = framesSent().map((f) => f.tick);
+    expect([...ticks].sort((a, b) => a - b)).toEqual(ticks);
+    expect(new Set(ticks).size).toBeGreaterThan(taken - 2);
+    page.taking = true;
+    send({ type: "taken" });
+    vi.advanceTimersByTime(1);
+  });
+
+  it("a `taken` that answers nothing changes nothing, and a new world is shown whatever was left untaken of the old one", () => {
+    begin();
+    // more answers than frames: no frame is sent for them, and they buy nothing — the next frame sent
+    // still has to be taken before another goes
+    out.length = 0;
+    for (let i = 0; i < 5; i++) send({ type: "taken" });
+    expect(framesSent().length).toBe(0);
+    page.taking = false;
+    vi.advanceTimersByTime(300);
+    expect(framesSent().length).toBe(1);
+    // that frame of this world is left untaken, and another world is asked for
+    const ready = ask((requestId) => ({ type: "init", config: makeConfig("first_light", 34, {}), requestId }), "ready");
+    out.length = 0;
+    vi.advanceTimersByTime(400);
+    expect(framesSent().length).toBe(0);
+    // the page answers the old world's frame (it answers every frame, whatever it does with it): the new world's first frame follows at once
+    send({ type: "taken" });
+    expect(framesSent().length).toBe(1);
+    expect((framesSent()[0] as ViewFrame).epoch).toBe(ready.frame.epoch);
+    page.taking = true;
+    send({ type: "taken" });
+    vi.advanceTimersByTime(1);
   });
 });
 

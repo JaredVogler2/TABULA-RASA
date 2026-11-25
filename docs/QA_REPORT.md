@@ -28,7 +28,7 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing (and, later, in phases 18–20) | 0 | 0 | 10 | 12 | — | 21 | 1 |
+| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 11 | 13 | — | 23 | 1 |
 
 ## Security review: finding by finding
 
@@ -120,6 +120,8 @@ Defects that neither review reported, found by the tests and measurements writte
 | Low | The laboratory's browser test still expected the page to open on the pilot bundle, which it had not done since the confirmatory batch was published; the test had not been run since | The first run of the whole suite in a clean checkout (phase 18) | The test checks the confirmatory bundle as what it is, then the pilot |
 | Medium | Two of the five aims on the scenario cards could not be met in any world measured: nobody lost to cold or hunger in The Long Winter, and every commons above its threshold in Thin Commons | Counting them, before building the reading that reports them (phase 20) | Reworded to aims that can go either way; all five are now counted (D-049) |
 | Low | A morning's worth of identical lines — "A root patch began to recover." six times — pushed everything else out of the Chronicle | Looking at the release's stills (phase 20) | One line with a count, which opens out again |
+| Medium | A page slower than its world fell behind it without limit: the worker sent thirty frames a second whether or not the page had dealt with the last. With the page slowed twenty times at 64×, "paused" was shown 31–39 seconds after pause was pressed and the page's own timers ran 17–27 seconds late | Following a browser test that failed once in CI back to its cause, then measuring (after phase 20) | The worker sends a frame only when the page has taken the last one (D-050): 0.7–0.9 seconds under the same slowing; four tests in `sim.worker.test.ts` |
+| Low | The two-tabs test demanded an autosave from an even day. The page asks for the autosave when it sees a second morning; at 64× a day lasts three quarters of a second, and on a slow machine the world kept is the next day's. A newer save than the test allowed failed it, once in CI and in five of ten runs here with the page slowed ten times | The failed run; `evidence/after-20/old-assertion.txt` | The test asserts what the game promises — a save from between the last second morning the page saw and where the world stopped — and says what the slot held when it fails |
 
 ## What the phase asked to be examined, and where each is
 

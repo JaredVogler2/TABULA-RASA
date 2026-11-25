@@ -1255,3 +1255,77 @@ rollback. Read this file before modifying any contract it mentions.
 - **Rollback.** `src/worker/aims.ts`, the `aim` messages in the protocol and the block in `Atlas.tsx`; the
   cards' sentences in `config.ts`.
 
+
+## D-050 — The world is lived at its own pace; the picture is sent at the page's (2026-11-25)
+
+- **Problem.** A browser test failed once in CI, after phase 20 was written up (run 45690303999, the desktop
+  job, commit `55dc9db`; the next commit's run was green). After playing at the fastest speed and pausing, the
+  two-tabs test asked for "an autosave of seed 7 from one of the last second mornings before day 9" and waited
+  thirty seconds for something that could no longer become true. Followed back to its cause, it was two things:
+  one in the test, one in the product.
+  - *The test asked for more than the game promises.* The page asks for the autosave when it sees that a
+    second morning has come; the worker keeps the world as it is when the request reaches it. At 64× a day
+    lasts three quarters of a second. On a machine where the page is shown the world that much late, the world
+    that is kept is the next day's — a newer save, and a good one — and the test demanded an even day. The log
+    of the failed run does not say what the slot held (the assertion printed only that a predicate was false;
+    that is fixed too). What is established is the mechanism, reproduced on the build of the commit after it
+    (the assertion and the autosave were the same in both) with the page slowed ten times: the old assertion
+    fails in five runs of ten, each time for a save from the very day the world stopped on
+    (`evidence/after-20/old-assertion.txt`).
+  - *A page slower than its world fell behind it without limit.* The worker sent a frame thirty times a second
+    whether or not the page had dealt with the last one. A page that needs longer than a thirtieth of a second
+    for each never catches up: with the page slowed twenty times and the world at 64×, the picture ran on for
+    2,079–3,359 ticks after pause was pressed, "paused" was shown 31–39 seconds later, and the page's own
+    timers fired 17–27 seconds late — which is what a click would have waited too
+    (`evidence/after-20/trail-before.md`). Slowed ten times or less, the page kept up: the queue either stays
+    short or grows for as long as time runs. Nothing in the suite had shown it, because nothing slowed a page
+    that much.
+- **Original proposal.** Phase 02: the worker owns the loop and posts a frame every turn of it. Phase 15 made
+  the worker keep the pace it is asked for (ticks owed are made up, not dropped); it did not ask what the page
+  does with what it is sent.
+- **Alternatives.** (a) Correct the test and leave the product: the test would pass, and a slow phone at 64×
+  would still be shown a world a minute old. (b) Have the page throw away frames that are stale: it still has
+  to receive every one, and receiving them is the cost. (c) Have the page ask for each frame from its drawing
+  loop: the flow of frames would then stop whenever the browser stops calling that loop (a hidden tab), and
+  the page learns that time has stopped, or that a world has arrived, from frames. (d) The page answers every
+  frame; the worker sends the next only when the last has been answered, and at once if one came due in the
+  meantime.
+- **Decision.** (d), and with it three smaller things.
+  - *One frame on its way at a time* (`src/worker/sim.worker.ts`: `untaken`, `frameOwed`, `sendFrame`; the
+    `taken` message in `src/worker/protocol.ts`; `src/store/simClient.ts` answers in a `finally`, whatever
+    becomes of the frame). The world is lived at the pace asked whatever the page does. What a frame carries
+    since the last one — the Chronicle's events, the lists sent when they change — is gathered when a frame is
+    built, so a frame that was not sent loses nothing: the next carries it.
+  - *The autosave is asked for by the first frame seen on or after a second morning* (`controller.ts`), not
+    only by one that falls on it: a page that is sent fewer frames may see none on a given day. While the
+    browser is still deciding which tab holds the slot, the morning stays owed instead of being counted as kept.
+  - *A frame that says time has started or stopped is shown at once*, not held back by the top bar's limit of
+    eight redraws a second. A slow page is sent two frames close together — one that waited for it, one made
+    the moment it took that — and the second, the one that says "paused", used to wait a turn.
+  - *The test asserts what is promised*: the slot holds this world from no earlier than the last second
+    morning the page had seen while time ran, and no later than where the world stopped. Neither bound
+    depends on how fast anything is. It now watches until the seventh morning, so the save cannot be the first
+    or the second ever written; and when it fails it says what the slot held.
+- **Evidence.** The same script against both builds on this machine (`scripts/trail.mjs`;
+  `evidence/after-20/trail-before.md`, `trail-after.md`). Page slowed twenty times, world at 64×: "paused"
+  shown after 0.7–0.9 s (was 31–39 s), the picture ran on 111–247 ticks (was 2,079–3,359), the page's timer
+  1.1–1.2 s late (was 17–27 s). Every other row is within what the same row varies by between runs: the
+  unslowed page trails by about a third of a second before and after, which is one turn of the software
+  rasterizer that draws it here. The world lived at the pace asked in every row of both tables.
+  `src/worker/sim.worker.test.ts` has four tests for the pacing (a page that takes each frame is sent thirty a
+  second at thirty and twelve at twelve; one that takes none is sent one, the world runs on, and the frame
+  sent when it does take one is the world as it is, carrying every event the missing frames would have; a
+  slow page is sent one for each it takes and the world keeps the tick it would have kept; surplus answers buy
+  nothing). Each of three deliberate breakages of the mechanism fails at least one of them. The browser tests
+  for this area pass (`evidence/after-20/e2e-resilience.txt`).
+- **Affected acceptance tests.** `tests/e2e/resilience.spec.ts` › the two-tabs test (rewritten assertions);
+  `src/worker/sim.worker.test.ts` (four new; the test's stand-in page now answers frames, as a page does).
+  `scripts/worker-pace.ts` answers frames too. Unchanged: every engine test, digest and study hash — what the
+  page looks at changes nothing in a world, and one of the new tests says so by comparing hashes.
+- **Cost / risks.** One small message from the page for every frame. A page that never answered would be sent
+  one frame and no more: the answer is given in one place, for every frame, in a `finally`. **Not measured on
+  any device**, like everything else about drawing: on a page that keeps up, frames are sent exactly as before
+  (the first of the four tests), and that is all that can be said from here. This bounds a queue; it does not
+  make a slow renderer fast — the picture still trails by one turn of the page.
+- **Rollback.** The `taken` message and the two variables in the worker bring back the old behaviour. The
+  autosave's "on or after" and the test's assertions do not depend on it and should stay.

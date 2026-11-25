@@ -1,0 +1,120 @@
+# The assertion that failed in CI, reproduced
+
+What was asked: after playing at the fastest speed until the top bar shows a tick past 200 and pausing, the
+autosave slot must hold this seed's world from an even day, at most three days before the day the world
+stopped on and not after it. (tests/e2e/resilience.spec.ts as it stood at commits 55dc9db and de2f0e1:
+`s.day % 2 === 0 && s.day >= Math.max(2, today - 3) && s.day <= today`.)
+
+Run 2026-11-25 against the production build of commit de2f0e1 (before D-050), ten times, with the page's
+main thread slowed ten times by Chromium's CPU throttling. 4 x Intel Xeon 2.30GHz container, Node v22.23.5,
+headless Chromium drawing through SwiftShader. The probe is printed in full at the end of this file; it is
+not kept in the repository, because the assertion it evaluates no longer exists.
+
+run  1: stopped at tick 1332 (day 13); the slot holds day 13 at tick 1279; the old assertion FAILS
+run  2: stopped at tick 1457 (day 15); the slot holds day 15 at tick 1457; the old assertion FAILS
+run  3: stopped at tick 2783 (day 28); the slot holds day 28 at tick 2783; the old assertion holds
+run  4: stopped at tick 1599 (day 16); the slot holds day 16 at tick 1599; the old assertion holds
+run  5: stopped at tick 1749 (day 18); the slot holds day 18 at tick 1749; the old assertion holds
+run  6: stopped at tick 1419 (day 14); the slot holds day 14 at tick 1419; the old assertion holds
+run  7: stopped at tick 1845 (day 19); the slot holds day 19 at tick 1845; the old assertion FAILS
+run  8: stopped at tick 1135 (day 11); the slot holds day 10 at tick 1042; the old assertion holds
+run  9: stopped at tick 2250 (day 23); the slot holds day 23 at tick 2250; the old assertion FAILS
+run 10: stopped at tick 1507 (day 15); the slot holds day 15 at tick 1507; the old assertion FAILS
+
+5 of 10 fail.
+
+Every failure is a save from the very day the world stopped on, when that day is odd: the newest save
+there could be, refused for the day it was made. In eight of the ten runs the save was made at the tick the
+world stopped at: the page asked for it on seeing a second morning, and by the time the request reached the
+worker the world had run to its stop. (Run 8 also stopped on an odd day; there the save was made during day
+10, before the world ran on into day 11, and the assertion held.)
+
+The CI run that failed (45690303999, desktop, commit 55dc9db) stopped on day 9. Its log does not say what
+the slot held. What D-050 asserts instead holds in every one of these ten runs, on their own numbers: each
+slot is from no earlier than the second morning the page had seen while time ran (`sawTarget.tick` below), and
+none is from after the world stopped (`stop`).
+
+## Raw output, one line a run
+
+{"rate":10,"playMs":12168,"sawTarget":{"tick":293,"afterMs":627},"clickMs":9575,"untilPausedShownMs":1936,"stop":1332,"today":13,"slot":["13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279","13@1279"],"oldPredicate":false,"errors":[]}
+{"rate":10,"playMs":9687,"sawTarget":{"tick":339,"afterMs":2254},"clickMs":10858,"untilPausedShownMs":2727,"stop":1457,"today":15,"slot":["15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457","15@1457"],"oldPredicate":false,"errors":[]}
+{"rate":10,"playMs":11996,"sawTarget":{"tick":304,"afterMs":1450},"clickMs":22834,"untilPausedShownMs":2399,"stop":2783,"today":28,"slot":["28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783","28@2783"],"oldPredicate":true,"errors":[]}
+{"rate":10,"playMs":9184,"sawTarget":{"tick":296,"afterMs":2244},"clickMs":13417,"untilPausedShownMs":2119,"stop":1599,"today":16,"slot":["16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599","16@1599"],"oldPredicate":true,"errors":[]}
+{"rate":10,"playMs":11424,"sawTarget":{"tick":274,"afterMs":589},"clickMs":14471,"untilPausedShownMs":2025,"stop":1749,"today":18,"slot":["18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749","18@1749"],"oldPredicate":true,"errors":[]}
+{"rate":10,"playMs":11363,"sawTarget":{"tick":207,"afterMs":877},"clickMs":10784,"untilPausedShownMs":2649,"stop":1419,"today":14,"slot":["14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419","14@1419"],"oldPredicate":true,"errors":[]}
+{"rate":10,"playMs":13417,"sawTarget":{"tick":329,"afterMs":1509},"clickMs":12928,"untilPausedShownMs":2321,"stop":1845,"today":19,"slot":["19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845","19@1845"],"oldPredicate":false,"errors":[]}
+{"rate":10,"playMs":10791,"sawTarget":{"tick":251,"afterMs":1584},"clickMs":7536,"untilPausedShownMs":2340,"stop":1135,"today":11,"slot":["10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042","10@1042"],"oldPredicate":true,"errors":[]}
+{"rate":10,"playMs":10722,"sawTarget":{"tick":327,"afterMs":630},"clickMs":19778,"untilPausedShownMs":2228,"stop":2250,"today":23,"slot":["23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250","23@2250"],"oldPredicate":false,"errors":[]}
+{"rate":10,"playMs":13453,"sawTarget":{"tick":303,"afterMs":769},"clickMs":12036,"untilPausedShownMs":2462,"stop":1507,"today":15,"slot":["15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507","15@1507"],"oldPredicate":false,"errors":[]}
+
+## The probe (node lag.cjs http://127.0.0.1:3298 10 200)
+
+// Scratch probe (not part of the suite): what the autosave slot holds after playing at the fastest speed
+// and pausing, when the page's main thread is slowed. Usage: node lag.cjs <baseURL> <rate> [target]
+const { chromium } = require("playwright");
+const base = process.argv[2];
+const rate = Number(process.argv[3] ?? 1);
+const target = Number(process.argv[4] ?? 200);
+
+function autosave(page) {
+  return page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const open = indexedDB.open("tabula-rasa");
+        open.onerror = () => resolve(null);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains("saves")) { db.close(); resolve(null); return; }
+          const get = db.transaction("saves", "readonly").objectStore("saves").get("autosave");
+          get.onerror = () => resolve(null);
+          get.onsuccess = () => { const r = get.result; db.close(); resolve(r ? { seed: r.seed, day: r.day, tick: r.tick } : null); };
+        };
+      }),
+  );
+}
+const tick = async (page) => Number(((await page.getByTestId("tick").textContent()) ?? "").replace(/\D+/g, ""));
+
+(async () => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto(`${base}/?q=low&pr=0.4`);
+  await page.getByTestId("begin").click();
+  await page.getByTestId("scenario-first_light").click();
+  await page.getByTestId("seed-input").fill("7");
+  await page.getByTestId("create-world").click();
+  await page.getByTestId("world-label").waitFor({ timeout: 60000 });
+  await page.getByTestId("coach-skip").click();
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate });
+  const t0 = Date.now();
+  await page.getByTestId("speed-5").click();
+  if ((await page.getByTestId("play-toggle").getAttribute("data-playing")) !== "true") await page.getByTestId("play-toggle").click();
+  const tPlay = Date.now();
+  let seen = 0;
+  for (;;) {
+    seen = await tick(page);
+    if (seen > target) break;
+    await new Promise((r) => setTimeout(r, 250));
+    if (Date.now() - tPlay > 240000) throw new Error("never got there");
+  }
+  const tSeen = Date.now();
+  await page.getByTestId("play-toggle").click();
+  const tClicked = Date.now();
+  await page.waitForFunction(() => document.querySelector('[data-testid="play-toggle"]')?.getAttribute("data-playing") === "false", null, { timeout: 120000 });
+  const tPaused = Date.now();
+  const stop = await tick(page);
+  const today = Math.floor(stop / 96);
+  const log = [];
+  for (let i = 0; i < 12; i++) {
+    const s = await autosave(page);
+    log.push(s ? `${s.day}@${s.tick}` : "none");
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  const final = await autosave(page);
+  const ok = final !== null && final.seed === 7 && final.day % 2 === 0 && final.day >= Math.max(2, today - 3) && final.day <= today;
+  console.log(JSON.stringify({ rate, playMs: tPlay - t0, sawTarget: { tick: seen, afterMs: tSeen - tPlay }, clickMs: tClicked - tSeen, untilPausedShownMs: tPaused - tClicked, stop, today, slot: log, oldPredicate: ok, errors }));
+  await browser.close();
+})().catch((e) => { console.error(e); process.exit(1); });

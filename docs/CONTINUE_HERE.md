@@ -5,8 +5,8 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
-  01–05, 09, 10) and 2 (phases 06–08, 11–14) were merged to `main` by the owner on 2026-11-25; phases 15–16
-  and the release preparation are in the pull request that follows them.
+  01–05, 09, 10), 2 (phases 06–08, 11–14) and 3 (phases 15–20) were merged to `main` by the owner on
+  2026-11-25. Pull request 4 holds what came after: the evidence for the whole-suite run, and D-050.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
@@ -16,7 +16,10 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
   new confirmatory result from seeds 9000–9031: they are spent.
-- **Last verified commit:** `de2f0e1` (phase 20), in a clean checkout: `pnpm check` and the whole of `pnpm e2e`. The commit after it adds that run's logs and stills and changes no code.
+- **Last commit verified as a whole:** `de2f0e1` (phase 20), in a clean checkout: `pnpm check` and the whole of
+  `pnpm e2e`. After it: that run's logs and stills; then D-050 (a page slower than its world), for which
+  `pnpm check` and the browser tests of the area it touches were run here and the whole suite by CI
+  (`evidence/after-20/`).
 - **Spend:** $0. No API key has ever been present. The application's authorized budget is zero, its ceiling
   is zero and its kill switch is on. **Nothing has been sent to the provider**: the request shape, the
   schema's acceptance and every cost figure are unverified against the real API. The smoke script's paid path
@@ -52,6 +55,7 @@ pnpm load                                              # the budget ledger under
 pnpm requests                                          # the server's own routes, timed (needs a build and TEST_DATABASE_URL)
 node scripts/perf.mjs http://127.0.0.1:3210 /tmp/perf  # in a browser (needs `pnpm build && pnpm exec next start -p 3210`)
 node scripts/topbar.mjs http://127.0.0.1:3210 /tmp/topbar   # the top bar at 25 widths, three ways
+node scripts/trail.mjs http://127.0.0.1:3210 /tmp/trail     # how far the picture trails the world when the page is slowed (D-050)
 node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low   # art stills
 # what is configured for live calls, and what is missing (makes no request, changes nothing)
 pnpm live:smoke
@@ -65,6 +69,10 @@ skipped by design and one timed out, in 39.7 minutes — the renderer-fallback t
 with nothing it asserts having failed. Its limit is ten minutes since the commit after, and it passes on its own
 in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
 (`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). `replay IDENTICAL`.
+
+With D-050 on top: `pnpm check` exits 0 with 495 unit tests in 40 files (four more, for the pacing of frames);
+`pnpm exec playwright test tests/e2e/resilience.spec.ts --project=desktop`: 2 passed
+(`evidence/after-20/`).
 
 ## Execution order (D-001)
 
@@ -84,8 +92,10 @@ in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
   (PostgreSQL or PGlite; every transaction opens with its own limits, so it works through a pooler: D-047).
   `db/migrations/*.sql` is the schema's source; run `pnpm gen:migrations` after changing it.
 - `src/worker/sim.worker.ts` — owns the world, its twin and its history (moments, lines set aside, re-runs,
-  rebuilding a loaded world's past, files, the event ledger); posts view frames of either world; plays
-  recordings and checks them against the record; `protocol.ts` is the only contract with the page.
+  rebuilding a loaded world's past, files, the event ledger); posts view frames of either world, one at a
+  time: the next is sent when the page has answered the last with `taken` (D-050; **anything that receives
+  frames must answer each one**, as `src/store/simClient.ts` does); plays recordings and checks them against
+  the record; `protocol.ts` is the only contract with the page.
   `sim.worker.test.ts` drives it through that protocol with no browser. `aims.ts` reads how the scenario's
   stated aim stands from the world's state (D-049): **a new scenario needs a case there, and
   `scripts/aims.ts` run on development seeds before its aim is written on a card.**

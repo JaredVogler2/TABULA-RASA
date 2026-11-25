@@ -1,0 +1,10 @@
+ 50 people, 64×64, 16×: asked 32 ticks a second, achieved 32 (29.8 frames a second sent)
+ 50 people, 64×64, 64×: asked 128 ticks a second, achieved 127.8 (29 frames a second sent)
+100 people, 64×64, 16×: asked 32 ticks a second, achieved 31.9 (29.7 frames a second sent)
+100 people, 64×64, 64×: asked 128 ticks a second, achieved 127.3 (26.9 frames a second sent)
+250 people, 96×96, 16×: asked 32 ticks a second, achieved 30.1 (27.2 frames a second sent)
+250 people, 96×96, 64×: asked 128 ticks a second, achieved 78 (20.7 frames a second sent)
+
+# Measured 2026-11-25 with D-050 in place: `pnpm exec tsx scripts/worker-pace.ts --seconds 12`. The stand-in page
+# answers every frame as soon as it comes, as a page that keeps up does. The phase 15 figures, measured the same
+# way before the change, are in evidence/phase-15/worker-pace.txt: 32 / 127.8 / 32 / 128 / 30.1 / 79.3.

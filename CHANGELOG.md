@@ -5,7 +5,24 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 3 — phases 15–20 (2026-11-25, open)
+## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, open)
+
+Engine 0.7.0, unchanged. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
+
+- The simulation sends the page a picture only when the page has taken the last one. A page that could not
+  keep up with a world at the fastest speed used to fall further and further behind it — pause could take
+  half a minute to show; now it is shown the world as it is when it next looks, and nothing in between is
+  lost from the Chronicle (D-050).
+- Pressing play or pause shows at once on a slow page, instead of a turn later.
+- The autosave is written at the first sight of the world on or after a second morning, so a page that sees
+  the world rarely still keeps every one.
+- The browser test that found this — it failed once in CI — now asserts what the game promises and says what
+  it found when it fails. `node scripts/trail.mjs <address> <folder>` measures the delay.
+- Evidence for the whole-suite run at the phase 20 commit; a ten-minute limit for the slowest browser test.
+
+**Not in it:** any call to a model; any deployment; a person or a device.
+
+## Pull request 3 — phases 15–20 (2026-11-25, merged)
 
 Engine 0.7.0, frozen. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
 

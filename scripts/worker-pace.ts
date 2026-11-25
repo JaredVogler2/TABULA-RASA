@@ -29,6 +29,8 @@ const fake = Object.assign(Object.create(globalThis) as Record<string, unknown>,
     if (m.type === "frame") {
       lastTick = m.frame.tick;
       frames++;
+      // a page that takes every frame as soon as it comes: the worker sends the next only then (D-050)
+      queueMicrotask(() => fake.onmessage?.({ data: { type: "taken" } }));
     }
   },
   onmessage: null as ((e: { data: ToWorker }) => void) | null,
