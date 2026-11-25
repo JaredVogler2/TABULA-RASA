@@ -60,8 +60,13 @@ export function decide(world: WorldState, sc: Scratch, a: Agent, out: EventOut):
   const urgent = urgentNeed(a);
   // the deliberate layer is consulted unless thirst, cold or exhaustion is pressing; it is
   // consulted in hunger because only it knows about stores, piles and asking
-  if (a.controller === "planner" && (urgent === "" || urgent === "eat")) {
+  // With a planning clock (config.planEvery > 0) the planner is consulted at most that often and
+  // the reflex layer carries the person in between; without one it is consulted whenever a plan runs out.
+  const every = world.config.planEvery;
+  if (a.controller === "planner" && (urgent === "" || urgent === "eat") && (every === 0 || world.tick >= a.mind.nextDeliberation)) {
     const plan = planDecide(world, sc, a);
+    world.metrics.deliberations++;
+    if (every > 0) a.mind.nextDeliberation = world.tick + every;
     // what was heard has now been weighed once; stale speech is not reconsidered forever
     pruneInbox(world, a);
     if (plan) {

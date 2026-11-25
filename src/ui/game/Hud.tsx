@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeftRight,
   BookOpen,
   Cloud,
   CloudLightning,
@@ -8,6 +9,7 @@ import {
   CloudSnow,
   Film,
   GitFork,
+  History as HistoryIcon,
   Map as MapIcon,
   Menu,
   Moon,
@@ -53,22 +55,49 @@ export function TopBar() {
   const condition = hud.climate.drought ? "Drought" : hud.climate.cold ? "Cold snap" : weatherName(hud.climate.weather);
   return (
     <header className={styles.topbar}>
-      <div className={`${styles.glass} ${styles.brand}`}>
+      <div className={`${styles.glass} ${styles.brand}`} data-testid="brand">
         <span className={styles.wordmark}>Tabula Rasa</span>
         <span className={styles.worldLabel} data-testid="world-label">
           {scenario.title} · seed {world.config.seed}
         </span>
       </div>
 
-      <div className={`${styles.glass} ${styles.status}`} role="status" aria-label="World status">
+      {/* the fork and its twin: one small pill of its own, so that it is never squeezed out of sight by the bars beside it */}
+      {forkDay >= 0 || hud.hasTwin ? (
+        <div className={`${styles.glass} ${styles.forkGroup}`} role="group" aria-label={forkDay >= 0 ? "This timeline and its untouched twin" : "The recording and the engine's own minds"} data-testid="fork-controls">
+          {forkDay >= 0 ? (
+            <button type="button" className={styles.forked} onClick={() => controller.openPanel("compare")} data-testid="forked-badge" title="This timeline has been changed by you. Open the comparison (K).">
+              <GitFork aria-hidden />
+              <span>
+                <span className={styles.forkWord}>Forked on </span>day {forkDay + 1}
+              </span>
+            </button>
+          ) : null}
+          {hud.hasTwin ? (
+            <button
+              type="button"
+              className={styles.forked}
+              aria-pressed={hud.viewing === "twin"}
+              onClick={() => controller.viewTwin(hud.viewing !== "twin")}
+              data-testid="view-twin"
+              title={hud.replay ? "Look at the same island with the engine's own minds deciding (X)" : "Look at the untouched twin: same island, same moment, without what you did (X)"}
+            >
+              <ArrowLeftRight aria-hidden />
+              <span className={styles.twinLabel}>{hud.viewing === "twin" ? "Back" : "Twin"}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className={`${styles.glass} ${styles.status}`} role="status" aria-label="World status" data-testid="status-bar">
         <div className={styles.stat} data-testid="stat-date">
           <b className="tnum">Day {hud.cal.day + 1}</b>
-          <span className={styles.statMuted}>{seasonName(hud.cal.season)}</span>
+          <span className={`${styles.statMuted} ${styles.statOptional}`}>{seasonName(hud.cal.season)}</span>
         </div>
         <span className={styles.divider} aria-hidden />
         <div className={styles.stat} title={`${condition}, ${(hud.climate.temp / 10).toFixed(0)}°C`}>
           <WeatherIcon weather={hud.climate.weather} night={night} />
-          <span>{condition}</span>
+          <span className={styles.statOptional}>{condition}</span>
         </div>
         <div className={styles.stat}>
           <Thermometer aria-hidden />
@@ -80,21 +109,15 @@ export function TopBar() {
           <b className="tnum">{hud.alive}</b>
           <span className={`${styles.statMuted} tnum`}>/ {hud.agentCount}</span>
         </div>
-        {forkDay >= 0 ? (
-          <button type="button" className={styles.forked} onClick={() => controller.openPanel("compare")} data-testid="forked-badge" title="This timeline has been changed by you. Open the comparison.">
-            <GitFork aria-hidden />
-            Forked on day {forkDay + 1}
-          </button>
-        ) : null}
       </div>
 
-      <nav className={`${styles.glass} ${styles.tools}`} aria-label="Panels">
+      <nav className={`${styles.glass} ${styles.tools}`} aria-label="Panels" data-testid="tools">
         <button type="button" className={styles.iconButton} aria-pressed={panel === "chronicle"} onClick={() => controller.openPanel("chronicle")} data-testid="open-chronicle" title="Chronicle (C)">
           <BookOpen aria-hidden />
           <span>Chronicle</span>
           {unread ? <i className={styles.badge} aria-hidden /> : null}
         </button>
-        <button type="button" className={styles.iconButton} aria-pressed={panel === "interventions"} onClick={() => controller.openPanel("interventions")} disabled={hud.replay !== null} data-testid="open-interventions" title={hud.replay ? "A recording shows what happened; it cannot be changed" : "Change the world (I)"}>
+        <button type="button" className={styles.iconButton} aria-pressed={panel === "interventions"} onClick={() => controller.openPanel("interventions")} disabled={hud.replay !== null || hud.viewing === "twin"} data-testid="open-interventions" title={hud.replay ? "A recording shows what happened; it cannot be changed" : hud.viewing === "twin" ? "The twin is never touched. Go back to your world to change it." : "Change the world (I)"}>
           <Sparkles aria-hidden />
           <span>Intervene</span>
         </button>
@@ -108,9 +131,13 @@ export function TopBar() {
             </b>
           ) : null}
         </button>
-        <button type="button" className={styles.iconButton} aria-pressed={panel === "compare"} onClick={() => controller.openPanel("compare")} disabled={forkDay < 0} data-testid="open-compare" title={forkDay < 0 ? "Compare becomes available after you intervene" : "Compare timelines (K)"}>
+        <button type="button" className={styles.iconButton} aria-pressed={panel === "compare"} onClick={() => controller.openPanel("compare")} disabled={forkDay < 0 && !hud.hasTwin} data-testid="open-compare" title={forkDay < 0 && !hud.hasTwin ? "Compare becomes available after you intervene" : "Compare timelines (K)"}>
           <GitFork aria-hidden />
-          <span>Compare</span>
+          <span className={styles.labelOptional}>Compare</span>
+        </button>
+        <button type="button" className={`${styles.iconButton} ${styles.toolTertiary}`} aria-pressed={panel === "history"} onClick={() => controller.openPanel("history")} data-testid="open-history" title="History: go back, world lines, files (H)">
+          <HistoryIcon aria-hidden />
+          <span className="sr-only">History</span>
         </button>
         <button type="button" className={styles.iconButton} aria-pressed={panel === "atlas"} onClick={() => controller.openPanel("atlas")} data-testid="open-atlas" title="Atlas and almanac (L)">
           <MapIcon aria-hidden />
@@ -141,7 +168,9 @@ export function TopBar() {
  */
 export function RecordingBar() {
   const replay = useGame((s) => s.hud?.replay ?? null);
-  if (!replay) return null;
+  const viewing = useGame((s) => s.hud?.viewing ?? "world");
+  // while the twin is on screen its own banner says what is being looked at
+  if (!replay || viewing === "twin") return null;
   const minds = replay.provider === "anthropic" ? `language model ${replay.model}` : replay.provider === "mock" ? "MOCK minds, a test double (not a language model)" : "baseline minds";
   const days = Math.max(1, Math.round(replay.endTick / 96));
   const day = Math.floor(replay.verifiedTick / 96);
@@ -162,6 +191,37 @@ export function RecordingBar() {
       <span className={styles.recordingState} data-testid="recording-state">
         {state}
       </span>
+    </div>
+  );
+}
+
+/**
+ * While the twin is on screen this says so, always: what is shown is not the world being
+ * lived (or not the recording), and nothing done here can change it.
+ */
+export function TwinBar() {
+  const controller = useController();
+  const viewing = useGame((s) => s.hud?.viewing ?? "world");
+  const replay = useGame((s) => s.hud?.replay ?? null);
+  const forkDay = useGame((s) => s.forkDay);
+  if (viewing !== "twin") return null;
+  return (
+    <div className={`${styles.glass} ${styles.recording}`} role="status" data-testid="twin-badge" data-state="twin">
+      <ArrowLeftRight aria-hidden />
+      <span>
+        {replay ? (
+          <>
+            <b>Not the recording</b> · the same island, people and weather, with the engine&apos;s own minds deciding instead of the recorded ones
+          </>
+        ) : (
+          <>
+            <b>The untouched twin</b> · the same island, people, weather and luck at the same moment, without anything you did since day {forkDay + 1}
+          </>
+        )}
+      </span>
+      <button type="button" className={styles.bannerButton} onClick={() => controller.viewTwin(false)} data-testid="twin-back">
+        {replay ? "Back to the recording" : "Back to your world"}
+      </button>
     </div>
   );
 }

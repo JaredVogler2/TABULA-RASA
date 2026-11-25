@@ -377,7 +377,7 @@ function Almanac() {
         {table ? "Hide the numbers" : "Show the numbers"}
       </button>
       {table ? (
-        <div className={styles.tableScroll}>
+        <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="The almanac as a table, one row a day">
           <table className={styles.table} data-testid="almanac-table">
             <caption className="sr-only">The last {rows.length} days of the almanac</caption>
             <thead>

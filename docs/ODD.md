@@ -135,7 +135,9 @@ None. Scheduled shocks, where a scenario has them, are drawn from the seed.
 - **Actions** (`sim/actions.ts`). 28 intent kinds; each is checked structurally, then against the world, takes
   ticks that depend on skill and tools, and either completes with events or is refused with a reason code.
 - **Minds** (`mind/`, `docs/COGNITION.md`). Reflex layer; bounded-rational planner; external decisions through
-  one observation, one action mask and one validation path.
+  one observation, one action mask and one validation path. Two clocks ration deliberation and are separate
+  settings: `cadence` for minds outside the engine, `planEvery` for the planner (0, the reference value, means
+  no clock).
 - **Social record** (`mind/social.ts`). Promises, trust changes, hearsay; see the table in `docs/COGNITION.md`.
 - **Institutions and pacts** (`institutions/`, `docs/INSTITUTIONS.md`).
 - **Measures** (`metrics/`). Definitions in protocol §4; the choices left open there are documented beside the

@@ -1,0 +1,140 @@
+# Phases 13–14 — pnpm check in a clean checkout of the commit (lint, typecheck, unit and property tests, generated-file checks, secret scan, build, bundle scan)
+# 2026-11-25 · TEST_DATABASE_URL=postgres://…/tabula_test (PostgreSQL 16). The one skipped test is the live smoke test, which prints NOT authorized.
+
+ RUN  v5.1.1 <checkout>
+
+ ✓ src/engine/institutions/institutions.test.ts (33 tests) 6395ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (2)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1176ms
+   ✓ decision rules are whatever the charter says (2)
+     ✓ majority, two thirds, unanimity, quorum and decision by a role each do what they say 314ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1218ms
+     ✓ a proposer only puts forward what it would itself sign 426ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 2120ms
+ ✓ src/engine/mind/cognition.test.ts (25 tests) 8022ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 4067ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 2385ms
+ ✓ src/engine/sim/sim.test.ts (42 tests) 8526ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1156ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 402ms
+   ✓ snapshots (4)
+     ✓ save → restore → continue equals an uninterrupted run 723ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 420ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 385ms
+     ✓ re-keying the branch gives an independent stochastic continuation 402ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 744ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 1112ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1053ms
+ ✓ src/server/api.test.ts (10 tests) 4843ms
+   ✓ the owner API (10)
+     ✓ signs the owner in with the passphrase, and slows down anyone guessing it 592ms
+     ✓ runs a mock society end to end through the API, and the published record can be verified by anyone 548ms
+     ✓ spends nothing until the owner authorizes an amount, releases the switch and approves a run in words 641ms
+ ✓ src/server/runs.test.ts (14 tests) 7121ms
+   ✓ server-side runs (in memory) (13)
+     ✓ a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world 560ms
+     ✓ a paid run reserves before every call, settles what each cost, and never exceeds what was previewed 807ms
+     ✓ refuses to create a paid run without approval that covers it 395ms
+     ✓ the kill switch stops a paid run mid-epoch; lifting it lets the run finish; nothing is asked twice 1065ms
+     ✓ a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice 378ms
+     ✓ an error no retry can fix fails the run at once and says why 449ms
+   ✓ server-side runs with two instances stepping at once (PostgreSQL server) (1)
+     ✓ two instances racing through a paid run commit every epoch once and pay for every call once 691ms
+ ✓ src/providers/wire.test.ts (16 tests) 996ms
+   ✓ answers are read into intents, deterministically (8)
+     ✓ every charter the grammar search can draw survives the wire unchanged 692ms
+ ✓ src/server/ledger.test.ts (19 tests) 7825ms
+   ✓ the budget ledger (PostgreSQL semantics, in memory) (12)
+     ✓ property: after any sequence of operations the books balance and no ceiling is exceeded 807ms
+   ✓ the budget ledger under real concurrency (PostgreSQL server) (5)
+     ✓ holds, settlements, releases and refusals interleaved from two instances leave the books exact 633ms
+   ✓ database plumbing (2)
+     ✓ migrations are applied once, in order, and are recorded 1528ms
+     ✓ a transaction that throws leaves nothing behind 1429ms
+ ✓ src/providers/prompt.test.ts (13 tests) 358ms
+ ✓ src/server/anthropic.test.ts (10 tests) 676ms
+ ✓ src/providers/run.test.ts (17 tests) 6234ms
+   ✓ a society of fifty minds outside the engine (mock provider, no cost) (6)
+     ✓ round_robin: fifty people decide independently over three days, and the record replays to the same world 1218ms
+     ✓ event: fifty people decide independently over three days, and the record replays to the same world 690ms
+     ✓ voi: fifty people decide independently over three days, and the record replays to the same world 549ms
+     ✓ mock minds that write and sign agreements leave them attributed to the mock, in the run and in its replay 784ms
+     ✓ a baseline arm runs through the same harness and is exactly the engine's own world 322ms
+   ✓ rationing deliberation fairly (6)
+     ✓ round_robin: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 424ms
+     ✓ event: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 396ms
+     ✓ voi: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 659ms
+     ✓ the three policies spend differently on the same world: round-robin fills every slot, the others ask only when there is cause 575ms
+ ✓ src/server/auth.test.ts (13 tests) 3927ms
+   ✓ the owner's passphrase (2)
+     ✓ is stored as a salted scrypt hash that only the passphrase opens 432ms
+   ✓ rate limiting, shared through the database (2)
+     ✓ refuses when it cannot count 1430ms
+ ✓ src/lab/analyse.test.ts (12 tests) 218ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 2980ms
+   ✓ the tracker agrees with the engine's own counters on a real run (1)
+     ✓ gifts, exchanges, proposals and agent-days match; every institution's rung is at most what its record allows 1814ms
+   ✓ a scarcity shock shows in the measures (1)
+     ✓ a drought leaves the commons poorer than in the untouched twin that shares its luck 919ms
+ ✓ src/engine/save/history.test.ts (14 tests) 4816ms
+   ✓ history: re-running a stretch of a world line (5)
+     ✓ a replay from an earlier snapshot, with the logged interventions re-applied at their ticks, ends byte-identical to the original 507ms
+     ✓ a replay from the very beginning does too 326ms
+     ✓ shocks scheduled by the scenario are applied once, by the engine, never twice by the replay 526ms
+   ✓ history: branches (4)
+     ✓ a branch with new luck starts from the same moment and then goes its own way 520ms
+   ✓ history: export, import and integrity (5)
+     ✓ a bundle opens to the same world and the same twin, with a manifest that says what they are 579ms
+     ✓ refuses a twin from another world or another moment, a truncated file, an empty file and a file that is something else 623ms
+     ✓ two manifests say how the worlds they describe were made differently 399ms
+ ✓ src/engine/core/core.test.ts (19 tests) 112ms
+ ✓ src/lab/cost.test.ts (8 tests) 325ms
+ ✓ src/lab/stats.test.ts (13 tests) 152ms
+ ✓ src/engine/institutions/formula.test.ts (6 tests) 120ms
+ ✓ src/engine/world/world.test.ts (28 tests) 1495ms
+ ✓ tests/unit/css-order.test.ts (3 tests) 21ms
+ ✓ src/server/live.integration.test.ts (2 tests | 1 skipped) 3ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 426ms
+ ✓ tests/unit/scans.test.ts (5 tests) 7ms
+ ✓ tests/unit/contrast.test.ts (10 tests) 5ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 24ms
+ ✓ src/engine/mind/clock.test.ts (5 tests) 868ms
+   ✓ the planner's deliberation clock (config.planEvery) (5)
+     ✓ a longer interval means fewer deliberations: the treatment really is applied 320ms
+ ✓ src/worker/sim.worker.test.ts (16 tests) 15058ms
+   ✓ worker: a world's own history (5)
+     ✓ keeps the start and every second morning as moments that can be returned to 783ms
+     ✓ an intervention forks an untouched twin at that tick, and the frame says so 843ms
+     ✓ an exact re-run does again what the observer did, when it was done, and arrives at the world that was left 1345ms
+     ✓ leaving from an earlier morning starts a new line without what was done later, and the old line can be returned to exactly 1130ms
+   ✓ worker: a saved world's past, lived again from its seed (5)
+     ✓ a loaded world has only its present in memory, and says its past can be rebuilt 1197ms
+     ✓ rebuilding re-lives every day, forks the twin where it was forked, and is kept because it arrives at exactly the loaded world 1629ms
+     ✓ a save whose record of interventions was edited does not survive the check, and nothing of the false past is kept 844ms
+     ✓ a line that took new luck cannot be rebuilt from the seed alone, and says why 829ms
+   ✓ worker: a file out and back in (1)
+     ✓ an exported world opens to the same state, and an altered one is refused without changing anything 1234ms
+   ✓ worker: a recording beside the engine's own minds (1)
+     ✓ a recording with outside minds gets a twin of the same seed with the built-in planner, and the comparison is named for what it is 473ms
+   ✓ worker: the event ledger (2)
+     ✓ a loaded world's ledger says it is partial, until its past has been lived again 561ms
+   ✓ worker: time is driven in many ways, the world in one (2)
+     ✓ single steps, long steps, play at any speed, any frame rate and any pauses arrive at the same world at the same tick 3459ms
+
+ Test Files  27 passed (27)
+      Tests  371 passed | 1 skipped (372)
+   Start at  12:21:32
+   Duration  29.84s (tests 95%, import 2%, transform 2%)
+
+docs/AFFORDANCES.md is up to date.
+src/server/migrations.generated.ts is up to date.
+docs/PROMPTS.md is up to date.
+scan:secrets passed: 315 tracked text files, 9 credential patterns, no env files tracked, template values empty, no secret-named public variables.
+✓ Compiled successfully in 6.0s
+scan:bundle passed: 157 client-facing files (2110 KB of text), 13 server-only markers, 4 credential shapes, 1 live secret value(s) checked.

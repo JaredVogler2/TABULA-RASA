@@ -35,11 +35,11 @@ import {
   type WorldState,
 } from "@/engine";
 import { priceOf, worstCaseCost } from "@/providers/prices";
-import { PAGE_LIMITS, PROMPT_VERSION, inputTokenBound, promptFeatures, requestHash, systemPrompt } from "@/providers/prompt";
-import { ask, commitEpoch, planEpoch, validateSpec, type AgentOutcome, type Asked, type RunSpec } from "@/providers/run";
+import { PROMPT_VERSION, requestHash } from "@/providers/prompt";
+import { ask, commitEpoch, planEpoch, plannedCalls, requestTokenBound, validateSpec, type AgentOutcome, type Asked, type RunSpec } from "@/providers/run";
 import { newSchedulerState, type SchedulerState, type TraceEntry } from "@/providers/schedule";
 import type { CallResult, DecisionCall, Provider } from "@/providers/types";
-import { WIRE_VERSION, decisionSchema } from "@/providers/wire";
+import { WIRE_VERSION } from "@/providers/wire";
 import { FATAL_CODES } from "./anthropic";
 import { num, type Db } from "./db";
 import { audit, type Ledger } from "./ledger";
@@ -136,14 +136,12 @@ function countExternal(cfg: WorldConfig): number {
 /** The most a run of this shape can cost. Makes no call and reserves nothing. */
 export async function previewRun(db: Db, cfg: WorldConfig, spec: RunSpec, model: string | null): Promise<CostPreview> {
   const externalAgents = countExternal(cfg);
-  const days = Math.ceil((spec.epochs * spec.epochTicks) / 96);
-  const callsPlanned = Math.min(spec.epochs * Math.min(spec.scheduler.callsPerEpoch, externalAgents), externalAgents * spec.scheduler.maxPerAgentPerDay * Math.max(1, days));
+  const callsPlanned = plannedCalls(spec, externalAgents);
   const paid = spec.provider === "anthropic";
   if (!paid) return { provider: spec.provider, model: spec.provider, paid: false, externalAgents, callsPlanned, inputTokenBound: 0, maxTokens: spec.maxTokens, perCallMicroUsd: 0, worstCaseMicroUsd: 0, measured: null };
   const price = model ? priceOf(model) : null;
   if (!model || !price) throw new Error("no priced model is configured for live calls");
-  const features = promptFeatures(cfg);
-  const bound = inputTokenBound({ promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context: spec.context, system: systemPrompt(features), user: "", schema: decisionSchema(features.civic && features.propose), shortened: 0 }) + PAGE_LIMITS.maxBytes;
+  const bound = requestTokenBound(cfg, spec.context);
   const perCall = worstCaseCost(price, bound, spec.maxTokens, "5m");
   const [m] = await db.query("SELECT COUNT(*) AS n, COALESCE(AVG(settled_microusd + overage_microusd), 0) AS mean, COALESCE(MAX(settled_microusd + overage_microusd), 0) AS max FROM reservations WHERE state = 'settled' AND model = $1 AND output_tokens IS NOT NULL", [model]);
   const calls = num(m?.n);

@@ -28,7 +28,10 @@ hear nothing.
    `planner` agents, and the labelled **fallback** of externally driven agents with no valid plan.
 2. **Planner** (`planner.ts`, BASELINE). Consulted when nothing is pressing (and in hunger, because only it knows
    about stores, food on the ground and asking). Weighs a fixed repertoire by expected benefit per tick and
-   queues the best project, at most six intents.
+   queues the best project, at most six intents. In the reference configuration it is consulted whenever a
+   plan runs out. `planEvery` (D-035) gives it a clock instead: at most one consultation per that many ticks,
+   reflex in between — the treatment of hypothesis H5. The engine counts consultations
+   (`metrics.deliberations`), whether or not a plan worth adopting was found.
 3. **External** (`external.ts`). A decision supplied from outside the engine — a mock, a language model, or a
    replay of recorded intents — validated and queued exactly like a baseline plan.
 

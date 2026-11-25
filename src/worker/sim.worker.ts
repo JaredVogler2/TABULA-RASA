@@ -10,6 +10,7 @@ import {
   NODE_SPECS,
   NodeKind,
   Skill,
+  SnapshotError,
   StructureKind,
   STRUCTURE_SPECS,
   TICKS_PER_DAY,
@@ -22,6 +23,9 @@ import {
   forkWorld,
   giniPermille,
   hasSeen,
+  manifestOf,
+  openBundle,
+  packBundle,
   replayTape,
   restoreWorld,
   scratchOf,
@@ -35,11 +39,13 @@ import {
   worthOf,
   type Agent,
   type DecisionRecord,
+  type Intervention,
   type SimEvent,
   type Structure,
   type WorldState,
 } from "@/engine";
-import { describeMotion, describeRule, describeTerms } from "@/engine";
+import { describeMotion, describeRule, describeTerms, type Manifest } from "@/engine";
+import { gunzipSync, gzipSync, strFromU8, strToU8 } from "fflate";
 import { describeIntent } from "./describe";
 import {
   ACTION_CODES,
@@ -47,10 +53,13 @@ import {
   AGENT_STRIDE,
   TOOL_BIT,
   type AgentDetail,
+  type BranchView,
   type CharterView,
   type CivicsView,
+  type CompareView,
   type DaySample,
   type FromWorker,
+  type HistoryView,
   type PileView,
   type Recording,
   type ReplayView,
@@ -91,6 +100,217 @@ let worldEpoch = 0;
 let rec: { view: ReplayView; tape: DecisionRecord[]; cursor: number; marks: Recording["epochs"]; mark: number } | null = null;
 /** Last few events per agent, for the inspector. */
 const recent = new Map<number, SimEvent[]>();
+
+// ───────────────────────── history: moments that can be returned to, and the lines set aside
+
+/** A stored moment of the line being lived: the world and its untouched twin, compressed, and how long the daily series were. */
+interface Keyframe {
+  tick: number;
+  world: Uint8Array;
+  control: Uint8Array | null;
+  seriesLen: number;
+  controlSeriesLen: number;
+}
+const KEY_EVERY = 2 * TICKS_PER_DAY;
+const MAX_KEYFRAMES = 24;
+let keyframes: Keyframe[] = [];
+
+interface BranchRecord {
+  view: BranchView;
+  /** The line's last state, kept while another line is lived (null for the one being lived). */
+  frozen: { world: Uint8Array; control: Uint8Array | null; series: DaySample[]; controlSeries: DaySample[] } | null;
+}
+let branches: BranchRecord[] = [];
+let branchSeq = 0;
+
+/** A stretch of this world's own past being re-run: what is still to be re-applied, and what the end must look like. */
+let rerun: { fromTick: number; untilTick: number; log: Intervention[]; next: number; digest: string; verified: boolean | null } | null = null;
+
+/** Recent events of every kind, by id, so that the recorded causes of one can be followed back. */
+const eventLog = new Map<number, SimEvent>();
+const EVENT_LOG_CAP = 40_000;
+
+/** True while the frames sent to the UI show the twin instead of the world being lived. Changes nothing in either. */
+let viewTwin = false;
+const shown = (): WorldState | null => (viewTwin && control ? control : world);
+/** True if anyone in the world being lived is decided for from outside the engine (their past is not in the world's own record). */
+let outsideMinds = false;
+
+/**
+ * The past of a loaded world, being lived again from its first tick: the same seed and
+ * configuration, the observer's interventions at their ticks, the twin forked where it was
+ * forked. It is done a few milliseconds at a time, and at the end the re-lived world must be,
+ * state for state, the one that was loaded — otherwise nothing of it is kept.
+ */
+let rebuild: {
+  w: WorldState;
+  c: WorldState | null;
+  log: Intervention[];
+  next: number;
+  untilTick: number;
+  frames: Keyframe[];
+  series: DaySample[];
+  controlSeries: DaySample[];
+  events: SimEvent[];
+  requestId: number;
+  started: number;
+} | null = null;
+
+const pack = (w: WorldState): Uint8Array => gzipSync(strToU8(serializeWorld(w)), { level: 4 });
+const unpack = (z: Uint8Array): WorldState => restoreWorld(strFromU8(gunzipSync(z)));
+
+/** Keep the start and the most recent eight; thin the middle to every other one. */
+function thin(frames: Keyframe[]): Keyframe[] {
+  let out = frames;
+  while (out.length > MAX_KEYFRAMES) {
+    const n = out.length;
+    out = out.filter((_, i) => i === 0 || i >= n - 8 || i % 2 === 0);
+  }
+  return out;
+}
+
+function takeKeyframe(): void {
+  if (!world || rec) return;
+  const last = keyframes[keyframes.length - 1];
+  if (last && last.tick === world.tick) return;
+  keyframes.push({ tick: world.tick, world: pack(world), control: control ? pack(control) : null, seriesLen: series.length, controlSeriesLen: controlSeries.length });
+  keyframes = thin(keyframes);
+}
+
+function currentBranch(): BranchRecord {
+  let b = branches.find((x) => x.view.current);
+  if (!b) {
+    b = { view: { id: world?.meta.branch.id ?? "main", parent: world?.meta.branch.parent ?? "", forkTick: -1, tipTick: 0, current: true, luck: "same", interventions: [], alive: 0, population: 0, sha256: "" }, frozen: null };
+    branches.push(b);
+  }
+  return b;
+}
+
+function branchViews(): BranchView[] {
+  const w = world;
+  return branches.map((b) =>
+    b.view.current && w
+      ? { ...b.view, tipTick: w.tick, alive: w.agents.filter((a) => a.alive).length, population: w.agents.length, interventions: w.interventions.filter((i) => i.origin !== "scenario").map((i) => ({ tick: i.tick, kind: i.kind })), sha256: "" }
+      : b.view,
+  );
+}
+
+/** Set the line being lived aside at its last moment, so that it can be returned to. */
+function freezeCurrent(): void {
+  if (!world) return;
+  const b = currentBranch();
+  const text = serializeWorld(world);
+  b.frozen = { world: gzipSync(strToU8(text), { level: 4 }), control: control ? pack(control) : null, series: series.slice(), controlSeries: controlSeries.slice() };
+  b.view = {
+    ...b.view,
+    current: false,
+    tipTick: world.tick,
+    alive: world.agents.filter((a) => a.alive).length,
+    population: world.agents.length,
+    interventions: world.interventions.filter((i) => i.origin !== "scenario").map((i) => ({ tick: i.tick, kind: i.kind })),
+    sha256: snapshotHash(text),
+  };
+}
+
+function historyView(): HistoryView | null {
+  if (!world || rec) return null;
+  // earlier moments are missing only when the world was opened from a save or a file
+  const partial = (keyframes[0]?.tick ?? 0) > 0;
+  const blocked: HistoryView["rebuildBlocked"] = !partial ? "" : world.meta.branch.rngEpoch !== 0 || (control !== null && control.meta.branch.rngEpoch !== 0) ? "new_luck" : outsideMinds ? "outside_minds" : "";
+  return {
+    branch: currentBranch().view.id,
+    keyTicks: keyframes.map((k) => k.tick),
+    rerun: rerun ? { fromTick: rerun.fromTick, untilTick: rerun.untilTick, pending: rerun.log.length - rerun.next, verified: rerun.verified } : null,
+    branches: branches.length,
+    rebuildable: partial && blocked === "" && rebuild === null && !(rerun && rerun.verified === null),
+    rebuildBlocked: blocked,
+    rebuilding: rebuild ? { tick: rebuild.w.tick, untilTick: rebuild.untilTick } : null,
+  };
+}
+
+/** What the observer did at exactly this tick of the world being re-lived, done again in the order it was done. */
+function rebuildDue(job: NonNullable<typeof rebuild>, sink: SimEvent[]): void {
+  while (job.next < job.log.length && (job.log[job.next] as Intervention).tick <= job.w.tick) {
+    const iv = job.log[job.next++] as Intervention;
+    if (iv.tick !== job.w.tick) continue;
+    if (!job.c) {
+      // the twin leaves at the first intervention, as it did then, sharing the world's luck
+      job.c = forkWorld(job.w, "control", true);
+      job.controlSeries = job.series.slice();
+    }
+    applyIntervention(job.w, scratchOf(job.w), sink, { tick: job.w.tick, kind: iv.kind, params: { ...iv.params }, origin: iv.origin });
+  }
+}
+
+function advanceRebuild(budgetMs: number): void {
+  const job = rebuild;
+  if (!job || !world) return;
+  const t0 = performance.now();
+  const sink: SimEvent[] = [];
+  const keep = (): void => {
+    for (const e of sink) job.events.push(e);
+    sink.length = 0;
+    if (job.events.length > EVENT_LOG_CAP + 4000) job.events.splice(0, job.events.length - EVENT_LOG_CAP);
+  };
+  while (job.w.tick < job.untilTick && performance.now() - t0 < budgetMs) {
+    rebuildDue(job, sink);
+    step(job.w, sink);
+    keep();
+    if (job.c) {
+      step(job.c, controlSink);
+      controlSink.length = 0;
+    }
+    if (job.w.tick % TICKS_PER_DAY === 0) {
+      job.series.push(sample(job.w));
+      if (job.c) job.controlSeries.push(sample(job.c));
+    }
+    if (job.w.tick % KEY_EVERY === 0) job.frames.push({ tick: job.w.tick, world: pack(job.w), control: job.c ? pack(job.c) : null, seriesLen: job.series.length, controlSeriesLen: job.controlSeries.length });
+  }
+  if (job.w.tick < job.untilTick) return;
+  // anything done at the very moment the world was left
+  rebuildDue(job, sink);
+  keep();
+  const same = worldDigest(job.w) === worldDigest(world) && (control === null) === (job.c === null) && (control === null || job.c === null || worldDigest(job.c) === worldDigest(control));
+  rebuild = null;
+  const ms = Math.round(performance.now() - job.started);
+  if (!same) {
+    post({ type: "rebuilt", requestId: job.requestId, ok: false, ticks: job.untilTick, ms, moments: 0, series: [], controlSeries: [], events: [] });
+    return;
+  }
+  // the re-lived past is the past: its moments can be returned to, and its record of causes can be followed
+  const present = keyframes.filter((k) => k.tick === job.untilTick);
+  keyframes = thin([...job.frames.filter((k) => k.tick < job.untilTick), ...(present.length ? present : job.frames.filter((k) => k.tick === job.untilTick))]);
+  takeKeyframe();
+  const later = [...eventLog.values()];
+  eventLog.clear();
+  for (const e of job.events) eventLog.set(e.id, e);
+  for (const e of later) eventLog.set(e.id, e);
+  series = job.series;
+  controlSeries = control ? job.controlSeries : [];
+  post({ type: "rebuilt", requestId: job.requestId, ok: true, ticks: job.untilTick, ms, moments: keyframes.length, series, controlSeries, events: job.events.filter((e) => UI_EVENTS.has(e.k)).slice(-1500) });
+}
+
+/**
+ * What the observer does to the world, done the same way whether it is done now or re-done
+ * in a re-run: the untouched twin is forked BEFORE the first intervention and shares the
+ * parent's random numbers, so the two timelines differ only by what the observer did.
+ */
+function applyObserver(kind: string, params: Record<string, number>, origin: Intervention["origin"] = "observer"): boolean {
+  if (!world) return false;
+  if (!control) {
+    control = forkWorld(world, "control", true);
+    forkTick = world.tick;
+    controlSeries = series.slice();
+  }
+  const before = world.interventions.length;
+  applyIntervention(world, scratchOf(world), scratchEvents, { tick: world.tick, kind, params, origin });
+  for (const e of scratchEvents) {
+    uiEvents.push(e);
+    eventLog.set(e.id, e);
+  }
+  scratchEvents.length = 0;
+  return world.interventions.length > before;
+}
 
 /** Event kinds forwarded to the UI (the Chronicle and world effects). */
 const UI_EVENTS = new Set<string>([
@@ -146,6 +366,74 @@ function civicsView(w: WorldState): CivicsView {
   charters.sort((a, b) => (a.state === "active" ? 0 : a.state === "proposed" ? 1 : 2) - (b.state === "active" ? 0 : b.state === "proposed" ? 1 : 2) || b.id - a.id);
   const motions = w.inst.motions.filter((m) => m.state === "open").map((m) => ({ id: m.id, institution: m.institution, by: m.by, what: describeMotion(m.body, name), yes: m.yes.length, no: m.no.length, closesIn: m.closes - w.tick }));
   return { mode: w.config.institutions, charters, motions, exchanges: w.metrics.pactTrades, openOffers: w.inst.pacts.filter((p) => p.state === "open").length };
+}
+
+/** The two worlds as they stand, counted the same way, and who is dead in only one of them. */
+function stateDiff(mine: WorldState, twin: WorldState): Pick<CompareView, "state" | "happened" | "deadOnlyYours" | "deadOnlyTwin"> {
+  const count = (w: WorldState) => {
+    const built = [0, 0, 0, 0];
+    let lit = 0;
+    for (const st of w.structures) {
+      if (st.removed || !st.complete) continue;
+      built[st.kind] = (built[st.kind] ?? 0) + 1;
+      if (st.kind === StructureKind.campfire && st.fuel > 0) lit++;
+    }
+    let bare = 0;
+    for (let n = 0; n < w.nodes.count; n++) if ((w.nodes.amount[n] as number) === 0 && (w.nodes.cap[n] as number) > 0) bare++;
+    return {
+      living: w.agents.filter((a) => a.alive).length,
+      people: w.agents.length,
+      hearths: built[StructureKind.campfire] ?? 0,
+      lit,
+      shelters: built[StructureKind.shelter] ?? 0,
+      stores: built[StructureKind.store] ?? 0,
+      plots: built[StructureKind.plot] ?? 0,
+      inForce: w.inst.institutions.filter((i) => i.ended < 0).length,
+      ratified: w.inst.institutions.length,
+      bare,
+      gifts: w.metrics.gives,
+      trades: w.metrics.pactTrades,
+    };
+  };
+  const a = count(mine);
+  const b = count(twin);
+  const state = [
+    { label: "People alive", yours: a.living, twin: b.living },
+    { label: "People who ever lived here", yours: a.people, twin: b.people },
+    { label: "Hearths built", yours: a.hearths, twin: b.hearths },
+    { label: "…of which lit now", yours: a.lit, twin: b.lit },
+    { label: "Shelters", yours: a.shelters, twin: b.shelters },
+    { label: "Stores", yours: a.stores, twin: b.stores },
+    { label: "Plots planted", yours: a.plots, twin: b.plots },
+    { label: "Agreements ever ratified", yours: a.ratified, twin: b.ratified },
+    { label: "…in force now", yours: a.inForce, twin: b.inForce },
+    { label: "Resource places stripped bare", yours: a.bare, twin: b.bare },
+    { label: "Gifts made", yours: a.gifts, twin: b.gifts },
+    { label: "Exchanges completed", yours: a.trades, twin: b.trades },
+  ];
+  const deadOnlyYours: number[] = [];
+  const deadOnlyTwin: number[] = [];
+  const n = Math.min(mine.agents.length, twin.agents.length);
+  for (let i = 0; i < n; i++) {
+    const m = mine.agents[i]!.alive;
+    const t = twin.agents[i]!.alive;
+    if (!m && t) deadOnlyYours.push(i);
+    else if (m && !t) deadOnlyTwin.push(i);
+  }
+  // what has happened in each, by kind, from the counters the engine keeps as it applies events
+  const ma = mine.metrics;
+  const mb = twin.metrics;
+  const happened = [
+    { label: "Deaths", yours: ma.deaths, twin: mb.deaths },
+    ...[...new Set([...Object.keys(ma.deathsByCause), ...Object.keys(mb.deathsByCause)])].sort().map((cause) => ({ label: `…of ${cause.replace(/_/g, " ")}`, yours: ma.deathsByCause[cause] ?? 0, twin: mb.deathsByCause[cause] ?? 0 })),
+    { label: "Units gathered from the land", yours: ma.gatheredUnits, twin: mb.gatheredUnits },
+    { label: "Things said aloud", yours: ma.utterances, twin: mb.utterances },
+    { label: "Building projects started", yours: ma.projectsStarted, twin: mb.projectsStarted },
+    { label: "…and finished", yours: ma.projectsCompleted, twin: mb.projectsCompleted },
+    { label: "Charters proposed", yours: ma.proposals, twin: mb.proposals },
+    { label: "Intents the engine refused", yours: ma.rejectedIntents, twin: mb.rejectedIntents },
+  ];
+  return { state, happened, deadOnlyYours, deadOnlyTwin };
 }
 
 function post(msg: FromWorker, transfer: Transferable[] = []): void {
@@ -352,7 +640,9 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
   const sendRoster = forceLists || n !== rosterCount;
   rosterCount = n;
 
-  const events = uiEvents.splice(0, uiEvents.length);
+  // the Chronicle follows the world being lived; while the twin is on screen its events wait
+  const twin = w !== world;
+  const events = twin ? [] : uiEvents.splice(0, uiEvents.length);
   return {
     epoch: worldEpoch,
     tick: w.tick,
@@ -381,9 +671,13 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     population: w.config.population,
     agentCount: n,
     roster: sendRoster ? roster(w) : null,
-    treated: w.interventions.some((i) => i.origin === "observer"),
+    treated: (world ?? w).interventions.some((i) => i.origin === "observer"),
     civic: civicCounts(w),
+    viewing: twin ? "twin" : "world",
+    hasTwin: control !== null,
+    forkTick: control ? forkTick : -1,
     replay: rec ? rec.view : null,
+    history: historyView(),
   };
 }
 
@@ -418,7 +712,26 @@ function sample(w: WorldState): DaySample {
 }
 
 function tickOnce(): void {
-  if (!world) return;
+  if (!world || rebuild) return;
+  if (rerun) {
+    if (rerun.verified !== null) {
+      // the re-run has ended and been checked: time is live again from here
+      rerun = null;
+    } else {
+      // re-do what the observer did at this very tick, in the order it was done
+      while (rerun.next < rerun.log.length && (rerun.log[rerun.next] as Intervention).tick <= world.tick) {
+        const iv = rerun.log[rerun.next++] as Intervention;
+        if (iv.tick === world.tick) applyObserver(iv.kind, { ...iv.params }, iv.origin);
+      }
+      if (world.tick >= rerun.untilTick) {
+        // back at the moment the re-run left from: the state must be the one that was left
+        rerun.verified = worldDigest(world) === rerun.digest;
+        playing = false;
+        acc = 0;
+        return;
+      }
+    }
+  }
   if (rec) {
     if (world.tick >= rec.view.endTick) {
       // the record is exhausted: what happened after it was never decided by anyone
@@ -439,6 +752,7 @@ function tickOnce(): void {
     if (world.tick >= rec.view.endTick && rec.view.state === "playing") rec.view = { ...rec.view, state: "ended" };
   }
   for (const e of scratchEvents) {
+    eventLog.set(e.id, e);
     if (UI_EVENTS.has(e.k)) uiEvents.push(e);
     if (e.a >= 0) {
       let list = recent.get(e.a);
@@ -452,6 +766,14 @@ function tickOnce(): void {
   }
   scratchEvents.length = 0;
   if (uiEvents.length > 4000) uiEvents.splice(0, uiEvents.length - 4000);
+  if (eventLog.size > EVENT_LOG_CAP) {
+    // a Map keeps insertion order: the first keys are the oldest events
+    let drop = eventLog.size - EVENT_LOG_CAP + 2000;
+    for (const id of eventLog.keys()) {
+      if (drop-- <= 0) break;
+      eventLog.delete(id);
+    }
+  }
   if (control) {
     step(control, controlSink);
     controlSink.length = 0;
@@ -467,6 +789,7 @@ function tickOnce(): void {
     }
     post({ type: "day", sample: s, control: c });
   }
+  if (world.tick % KEY_EVERY === 0) takeKeyframe();
 }
 
 function loop(): void {
@@ -487,8 +810,18 @@ function loop(): void {
     }
     if (acc > 8) acc = 0; // never let a backlog build up behind a slow device
   }
-  const frame = buildFrame(world, false);
+  if (rebuild) advanceRebuild(11);
+  const frame = buildFrame(shown() ?? world, false);
   post({ type: "frame", frame }, [frame.agents.buffer as ArrayBuffer, frame.nodeAmounts.buffer as ArrayBuffer]);
+}
+
+/** Lists that are sent only when they change must be sent again when the world on screen changes. */
+function resendLists(): void {
+  structureSig = "";
+  pileSig = "";
+  markSig = "?";
+  trafficDay = -1;
+  rosterCount = 0;
 }
 
 function restart(): void {
@@ -498,15 +831,34 @@ function restart(): void {
   timer = setInterval(loop, Math.round(1000 / frameHz));
 }
 
-function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySample[], requestId: number, recording: typeof rec = null): void {
+/**
+ * Make `w` the world being lived. `keepHistory` is for moves within one history (a rewind, a
+ * return to a line set aside): the list of lines is kept. Any other adoption — a new world, a
+ * loaded or imported one, a recording — starts a history of its own.
+ */
+function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySample[], requestId: number, recording: typeof rec = null, keepHistory = false, imported?: { manifest: Manifest; extras: Record<string, unknown> }): void {
   worldEpoch++;
   rec = recording;
   world = w;
   control = c;
+  viewTwin = false;
+  rebuild = null;
+  outsideMinds = w.agents.some((a) => a.controller === "external");
+  if (!keepHistory) {
+    branches = [];
+    branchSeq = 0;
+    rerun = null;
+    keyframes = [];
+    eventLog.clear();
+    const b = currentBranch();
+    b.view = { ...b.view, id: w.meta.branch.id, parent: w.meta.branch.parent, forkTick: w.meta.branch.forkTick, luck: w.meta.branch.rngEpoch === 0 ? "same" : "new" };
+  }
   forkTick = c ? c.meta.branch.forkTick : -1;
   series = s.slice();
   controlSeries = cs.slice();
   if (series.length === 0) series.push(sample(w));
+  // beside a recording, the twin has lived the same days from the start
+  if (recording && c && controlSeries.length === 0) controlSeries.push(sample(c));
   uiEvents.length = 0;
   recent.clear();
   structureSig = "";
@@ -517,8 +869,10 @@ function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySampl
   acc = 0;
   playing = false;
   lastTickAt = performance.now();
+  // the moment arrived at can itself be returned to
+  takeKeyframe();
   const frame = buildFrame(w, true);
-  post({ type: "ready", requestId, world: staticView(w), frame, series });
+  post({ type: "ready", requestId, world: staticView(w), frame, series, controlSeries, ...(imported ? { imported } : {}) });
   restart();
 }
 
@@ -588,7 +942,7 @@ function agentDetail(w: WorldState, id: number): AgentDetail | null {
     seen: m.seen.slice(),
     capacity: carryCapacity(a),
     load: carriedWeight(a),
-    recent: (recent.get(a.id) ?? []).slice().reverse(),
+    recent: w === world ? (recent.get(a.id) ?? []).slice().reverse() : [],
   };
 }
 
@@ -625,6 +979,8 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         break;
       }
       case "load": {
+        // a stored save carries the hash of its own text: storage that returns something else is not believed
+        if (msg.hash !== undefined && snapshotHash(msg.snapshot) !== msg.hash) throw new SnapshotError("corrupt", "this save does not match the hash it was stored with");
         const w = restoreWorld(msg.snapshot);
         const c = msg.control ? restoreWorld(msg.control) : null;
         adopt(w, c, msg.series, msg.controlSeries, msg.requestId);
@@ -638,12 +994,14 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         const marks = r.epochs.map((e) => ({ epoch: Number(e.epoch), toTick: Number(e.toTick), digest: String(e.digest) })).sort((p, q) => p.toTick - q.toTick);
         const endTick = marks[marks.length - 1]!.toTick;
         const view: ReplayView = { id: String(r.id).slice(0, 80), title: String(r.title ?? "").slice(0, 80), provider: String(r.provider).slice(0, 24), model: String(r.model).slice(0, 60), endTick, verifiedTick: 0, state: "playing", decisions: r.tape.length };
-        adopt(w, null, [], [], msg.requestId, { view, tape: r.tape, cursor: 0, marks, mark: 0 });
+        // the same island and the same people with the engine's own minds deciding in place of the recorded ones
+        const own = w.agents.some((a) => a.controller === "external") ? createWorld(validateConfig({ ...r.config, externalShare: 0 })) : null;
+        adopt(w, own, [], [], msg.requestId, { view, tape: r.tape, cursor: 0, marks, mark: 0 });
         break;
       }
       case "play":
         // a recording that has ended, or that this engine failed to reproduce, does not go on
-        playing = !(rec && rec.view.state !== "playing");
+        playing = !(rec && rec.view.state !== "playing") && rebuild === null;
         lastLoop = performance.now();
         break;
       case "pause":
@@ -658,17 +1016,49 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         if (world) restart();
         break;
       case "resync":
-        structureSig = "";
-        pileSig = "";
-        markSig = "?";
-        trafficDay = -1;
-        rosterCount = 0;
+        resendLists();
         break;
+      case "view": {
+        const next = msg.twin && control !== null;
+        if (next !== viewTwin) {
+          viewTwin = next;
+          resendLists();
+        }
+        break;
+      }
+      case "rebuild": {
+        if (!world) throw new Error("no world");
+        if (rec) throw new Error("a recording is rebuilt from its record every time it is played");
+        if (rebuild) throw new Error("its past is already being rebuilt");
+        const h = historyView();
+        if (!h || !h.rebuildable) throw new Error(h?.rebuildBlocked === "new_luck" ? "this line took new luck on the way: its earlier days cannot be made again from the seed alone" : h?.rebuildBlocked === "outside_minds" ? "some of its people were decided for from outside the engine, and those decisions are not in this world's record" : "every moment of this world is already in memory");
+        playing = false;
+        acc = 0;
+        const first = createWorld(world.config, { ...world.meta.branch });
+        rebuild = {
+          w: first,
+          c: null,
+          log: world.interventions.filter((i) => i.origin !== "scenario").map((i) => ({ tick: i.tick, kind: i.kind, params: { ...i.params }, origin: i.origin })),
+          next: 0,
+          untilTick: world.tick,
+          frames: [{ tick: 0, world: pack(first), control: null, seriesLen: 1, controlSeriesLen: 0 }],
+          series: [sample(first)],
+          controlSeries: [],
+          events: [],
+          requestId: msg.requestId,
+          started: performance.now(),
+        };
+        break;
+      }
       case "step": {
         playing = false;
         acc = 0;
         const n = Math.max(1, Math.min(TICKS_PER_DAY * 5, Math.floor(msg.ticks)));
-        for (let i = 0; i < n; i++) tickOnce();
+        for (let i = 0; i < n; i++) {
+          tickOnce();
+          // a re-run that has just arrived stops there, so that its verdict is seen before time goes on
+          if (rerun && rerun.verified !== null) break;
+        }
         break;
       }
       case "intervene": {
@@ -681,31 +1071,33 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
           post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: "recording" });
           break;
         }
-        // The untouched twin is forked BEFORE the first intervention and shares the parent's
-        // random numbers, so the two timelines differ only by what the observer did.
-        if (!control) {
-          control = forkWorld(world, "control", true);
-          forkTick = world.tick;
-          controlSeries = series.slice();
+        if (rerun && rerun.verified === null) {
+          // the past is being re-run as it was; to change it, leave from here on a new line
+          post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: "rerun" });
+          break;
         }
-        const before = world.interventions.length;
-        applyIntervention(world, scratchOf(world), scratchEvents, { tick: world.tick, kind: msg.kind, params: msg.params, origin: "observer" });
-        for (const e of scratchEvents) uiEvents.push(e);
-        scratchEvents.length = 0;
-        const ok = world.interventions.length > before;
+        if (rebuild || viewTwin) {
+          // nothing is changed in a world that is not on screen, or while its past is being checked
+          post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: rebuild ? "rebuild" : "twin" });
+          break;
+        }
+        const ok = applyObserver(msg.kind, msg.params);
         post({ type: "intervened", requestId: msg.requestId, ok, forkTick, ...(ok ? {} : { reason: "unknown_kind" }) });
         break;
       }
       case "inspectAgent": {
-        post({ type: "agent", requestId: msg.requestId, detail: world ? agentDetail(world, msg.id) : null });
+        const w = shown();
+        post({ type: "agent", requestId: msg.requestId, detail: w ? agentDetail(w, msg.id) : null });
         break;
       }
       case "inspectTile": {
-        post({ type: "tile", requestId: msg.requestId, detail: world ? tileDetail(world, msg.x, msg.y) : null });
+        const w = shown();
+        post({ type: "tile", requestId: msg.requestId, detail: w ? tileDetail(w, msg.x, msg.y) : null });
         break;
       }
       case "civics": {
-        post({ type: "civics", requestId: msg.requestId, view: world ? civicsView(world) : null });
+        const w = shown();
+        post({ type: "civics", requestId: msg.requestId, view: w ? civicsView(w) : null });
         break;
       }
       case "compare": {
@@ -717,13 +1109,136 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
           type: "compare",
           requestId: msg.requestId,
           view: {
+            kind: rec ? "recording" : "intervention",
             forkTick,
             forkDay: Math.floor(forkTick / TICKS_PER_DAY),
             interventions: world.interventions.filter((i) => i.origin === "observer").map((i) => ({ tick: i.tick, kind: i.kind })),
             treated: { summary: summarize(world), series },
             control: { summary: summarize(control), series: controlSeries },
+            ...stateDiff(world, control),
           },
         });
+        break;
+      }
+      case "rewind": {
+        if (!world) throw new Error("no world to go back in");
+        if (rec) throw new Error("a recording has its own controls");
+        if (rebuild) throw new Error("its past is being rebuilt: a moment");
+        const k = [...keyframes].reverse().find((kf) => kf.tick <= msg.tick);
+        if (!k) throw new Error("no stored moment that early");
+        const tipTick = world.tick;
+        if (msg.mode === "rerun") {
+          if (k.tick >= tipTick) throw new Error("that is the present moment: there is nothing to re-run");
+          // everything the observer did on this line, to be done again at the same ticks
+          const log = world.interventions.filter((i) => i.origin !== "scenario").map((i) => ({ tick: i.tick, kind: i.kind, params: { ...i.params }, origin: i.origin }));
+          const digest = worldDigest(world);
+          const w = unpack(k.world);
+          const c = k.control ? unpack(k.control) : null;
+          const s = series.slice(0, k.seriesLen);
+          const cs = c ? controlSeries.slice(0, k.controlSeriesLen) : [];
+          keyframes = keyframes.filter((kf) => kf.tick <= k.tick);
+          rerun = { fromTick: k.tick, untilTick: tipTick, log, next: w.interventions.filter((i) => i.origin !== "scenario").length, digest, verified: null };
+          adopt(w, c, s, cs, msg.requestId, null, true);
+        } else {
+          // the line being left is kept as it stands; a new line leaves from the stored moment
+          const parentId = currentBranch().view.id;
+          freezeCurrent();
+          const id = `line-${++branchSeq}`;
+          const newLuck = msg.mode === "branch_new_luck";
+          const w = forkWorld(unpack(k.world), id, !newLuck);
+          // with new luck there is no twin to compare with until the observer next intervenes
+          const c = !newLuck && k.control ? unpack(k.control) : null;
+          const s = series.slice(0, k.seriesLen);
+          const cs = c ? controlSeries.slice(0, k.controlSeriesLen) : [];
+          keyframes = keyframes.filter((kf) => kf.tick < k.tick);
+          rerun = null;
+          branches.push({ view: { id, parent: parentId, forkTick: k.tick, tipTick: k.tick, current: true, luck: newLuck ? "new" : "same", interventions: [], alive: 0, population: 0, sha256: "" }, frozen: null });
+          adopt(w, c, s, cs, msg.requestId, null, true);
+        }
+        break;
+      }
+      case "branches": {
+        post({ type: "branches", requestId: msg.requestId, list: branchViews() });
+        break;
+      }
+      case "switchBranch": {
+        if (!world) throw new Error("no world");
+        if (rebuild) throw new Error("its past is being rebuilt: a moment");
+        const target = branches.find((b) => b.view.id === msg.id && b.frozen);
+        if (!target || !target.frozen) throw new Error("there is no such line set aside");
+        freezeCurrent();
+        const f = target.frozen;
+        const w = unpack(f.world);
+        const c = f.control ? unpack(f.control) : null;
+        target.frozen = null;
+        target.view = { ...target.view, current: true, sha256: "" };
+        keyframes = [];
+        rerun = null;
+        adopt(w, c, f.series, f.controlSeries, msg.requestId, null, true);
+        break;
+      }
+      case "export": {
+        if (!world) throw new Error("no world to export");
+        if (rec) throw new Error("a recording is already a file: it is exported from where it was recorded");
+        const text = packBundle(world, control, { ...msg.extras, series, controlSeries });
+        post({ type: "exported", requestId: msg.requestId, text, manifest: manifestOf(world) });
+        break;
+      }
+      case "import": {
+        const opened = openBundle(msg.text);
+        const extras = opened.extras;
+        const daily = (v: unknown): DaySample[] => (Array.isArray(v) ? (v as DaySample[]).filter((d) => d && typeof d.day === "number").slice(0, 4000) : []);
+        adopt(opened.world, opened.control, daily(extras.series), opened.control ? daily(extras.controlSeries) : [], msg.requestId, null, false, { manifest: opened.manifest, extras });
+        break;
+      }
+      case "ledger": {
+        if (!world) throw new Error("no world");
+        // what is in memory, oldest first: an append-only list whose ids are consecutive from the engine's first event
+        const list = [...eventLog.values()].sort((p, q) => p.id - q.id);
+        const first = list[0];
+        const last = list[list.length - 1];
+        const complete = list.length === world.nextEvent && (first?.id ?? 0) === 0;
+        const header = {
+          format: "tabula-rasa/ledger",
+          version: 1,
+          engine: world.meta.engine,
+          schema: world.meta.schema,
+          affordances: world.meta.affordances,
+          scenario: world.config.scenario,
+          seed: world.config.seed,
+          configHash: world.meta.configHash,
+          branch: world.meta.branch,
+          tick: world.tick,
+          events: list.length,
+          firstId: first?.id ?? 0,
+          lastId: last?.id ?? -1,
+          eventsEverLogged: world.nextEvent,
+          complete,
+          fields: "id; t tick; k kind; a agent (-1 none); b other agent; n node; s structure; x, y tile; i item; q quantity; r reason; p ids of the events the engine recorded as causes; d detail",
+        };
+        const lines = [JSON.stringify(header)];
+        for (const e of list) lines.push(JSON.stringify(e));
+        post({ type: "ledger", requestId: msg.requestId, text: `${lines.join("\n")}\n`, events: list.length, firstTick: first?.t ?? world.tick, complete });
+        break;
+      }
+      case "trace": {
+        // follow the engine's own record of causes back from one event: parents, then theirs
+        const chain: SimEvent[] = [];
+        const seen = new Set<number>();
+        let frontier = [msg.id];
+        while (frontier.length && chain.length < 16) {
+          const next: number[] = [];
+          for (const id of frontier) {
+            if (seen.has(id)) continue;
+            seen.add(id);
+            const e = eventLog.get(id);
+            if (!e) continue;
+            chain.push(e);
+            for (const parent of e.p ?? []) next.push(parent);
+          }
+          frontier = next;
+        }
+        post({ type: "trace", requestId: msg.requestId, chain });
         break;
       }
       case "save": {

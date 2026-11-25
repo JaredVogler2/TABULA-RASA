@@ -50,6 +50,9 @@ export function structureName(kind: number | undefined): string {
 
 const CAUSES: Record<string, string> = { hunger: "hunger", thirst: "thirst", cold: "cold", exhaustion: "exhaustion", unknown: "unknown causes" };
 
+/** What each kind of change to the world's conditions is called in a list. */
+export const SHOCK_NAMES: Record<string, string> = { drought: "drought", cold_snap: "cold snap", blight: "blight", rain: "long rain", bounty: "bounty", windfall: "windfall", newcomers: "newcomers", hush: "hush" };
+
 const SHOCKS: Record<string, string> = {
   drought: "A drought set in: streams shrink to pools and bushes stop bearing",
   cold_snap: "A cold snap arrived",

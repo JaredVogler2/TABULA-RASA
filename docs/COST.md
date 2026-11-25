@@ -82,6 +82,16 @@ page about 2.9 KB).
 | `claude-sonnet-5-5` | $0.08 | 25 | 126 |
 | `claude-haiku-5-5` | $0.004 | 500 | 2,500 |
 
+The Laboratory page prices whole study designs the same way (`src/lab/cost.ts`, tested in
+`src/lab/cost.test.ts`), with one difference that makes its figures higher than the table above: it uses the
+*largest* page a mind can be shown (9,000 bytes, a 25,052-token bound for the reference world) rather than the
+pages measured in one run, because a ceiling for a study that has not been run cannot lean on its own
+measurements. On that basis one consultation holds $0.386 on Fable 5.2, $0.193 on Opus 5.5, $0.096 on Sonnet 5.5
+and $0.005 on Haiku 5.5; one forty-day world of fifty model-driven people at the default ration (1,280
+consultations) holds $494, $247, $123 and $6.17; and a two-condition contrast on the 32 seeds the baseline
+studies use holds $31,586, $15,793, $7,897 and $395. Against the mentioned $200, a forty-day two-condition
+contrast could be guaranteed on 16 seeds per condition with Haiku 5.5 and on none with the other three.
+
 **This is a bound, not an estimate.** The real cost of a call is expected to be several times lower — the byte
 count overstates tokens, cached reads of the rules text cost a fiftieth of the write price on Fable 5.2, and a
 decision need not use its whole output allowance — but how many times lower is not known and is not claimed.

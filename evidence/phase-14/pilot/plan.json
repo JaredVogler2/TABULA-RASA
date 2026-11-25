@@ -1,0 +1,80 @@
+{
+ "from": "evidence/phase-14/pilot",
+ "engine": "0.6.0",
+ "pilotSeeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16
+ ],
+ "plan": [
+  {
+   "contrast": "h1a",
+   "metric": "cooperation",
+   "sdDiff": 0.012063547018462965,
+   "targetHalfWidth": 0.004222241456462037,
+   "seeds": 32,
+   "pilotHalfWidth": 0.005911029467123687
+  },
+  {
+   "contrast": "h1b",
+   "metric": "cooperation",
+   "sdDiff": 0.012256800833278915,
+   "targetHalfWidth": 0.0042898802916476195,
+   "seeds": 32,
+   "pilotHalfWidth": 0.006005722097099169
+  },
+  {
+   "contrast": "h2",
+   "metric": "specialization",
+   "sdDiff": 0.01713038236584345,
+   "targetHalfWidth": 0.005995633828045206,
+   "seeds": 32,
+   "pilotHalfWidth": 0.008393733185821997
+  },
+  {
+   "contrast": "h3",
+   "metric": "e2",
+   "sdDiff": 0.6191391873668903,
+   "targetHalfWidth": 0.2166987155784116,
+   "seeds": 32,
+   "pilotHalfWidth": 0.30337262955709
+  },
+  {
+   "contrast": "h4",
+   "metric": "survival",
+   "sdDiff": 0.008850612031567843,
+   "targetHalfWidth": 0.003097714211048745,
+   "seeds": 32,
+   "pilotHalfWidth": 0.004336720239959959
+  },
+  {
+   "contrast": "h6a",
+   "metric": "survival",
+   "sdDiff": 0.12261049438499681,
+   "targetHalfWidth": 0.042913673034748884,
+   "seeds": 32,
+   "pilotHalfWidth": 0.060078038754198974
+  },
+  {
+   "contrast": "h6b",
+   "metric": "survival",
+   "sdDiff": 0.12489328778334459,
+   "targetHalfWidth": 0.043712650724170604,
+   "seeds": 32,
+   "pilotHalfWidth": 0.0611965869742488
+  }
+ ]
+}

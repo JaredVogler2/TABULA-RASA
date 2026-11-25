@@ -6,7 +6,7 @@
  * The only inputs that affect a world are: its config, time control, and observer
  * interventions (which are logged in the world's own ledger).
  */
-import type { DecisionRecord, SimEvent, Summary, WorldConfig } from "@/engine";
+import type { DecisionRecord, Manifest, SimEvent, Summary, WorldConfig } from "@/engine";
 
 /**
  * A recorded run: the world's configuration, every decision an outside mind made (the tape),
@@ -40,6 +40,49 @@ export interface ReplayView {
   /** playing · ended (the record is exhausted) · mismatch (this engine did not reproduce the record). */
   state: "playing" | "ended" | "mismatch";
   decisions: number;
+}
+
+/** Where the world being lived stands in its own history: the moments it can be returned to, and any re-run in progress. */
+export interface HistoryView {
+  /** Id of the world line being lived now. */
+  branch: string;
+  /** Ticks of this line that can be re-entered (the start, then every second day). */
+  keyTicks: number[];
+  /**
+   * Present while a stretch of this world's own past is being re-run: from a stored moment,
+   * with the observer's interventions re-applied at their ticks. `verified` becomes true or
+   * false when the re-run reaches the moment it left from and the state is compared.
+   */
+  rerun: { fromTick: number; untilTick: number; pending: number; verified: boolean | null } | null;
+  /** How many world lines exist (the one lived now and those set aside). */
+  branches: number;
+  /**
+   * True when earlier moments are not in memory (the world was opened from a save or a file)
+   * but can be made again: the world is deterministic, so its seed, its configuration and the
+   * record of what the observer did are enough to re-live it from the first tick.
+   */
+  rebuildable: boolean;
+  /** Why not, when it cannot be ("" when it can, or when there is nothing to rebuild). */
+  rebuildBlocked: "" | "new_luck" | "outside_minds";
+  /** Present while that is being done: how far it has got. */
+  rebuilding: { tick: number; untilTick: number } | null;
+}
+
+/** One world line: the one being lived, or one set aside at its last moment. */
+export interface BranchView {
+  id: string;
+  parent: string;
+  /** Tick at which it left its parent (-1 for the first line). */
+  forkTick: number;
+  tipTick: number;
+  current: boolean;
+  /** "same": the same weather and luck as its parent after the fork; "new": its own. */
+  luck: "same" | "new";
+  interventions: { tick: number; kind: string }[];
+  alive: number;
+  population: number;
+  /** Content hash of the line's last state (empty for the line being lived: it is still moving). */
+  sha256: string;
 }
 
 /** Floats per agent in ViewFrame.agents. */
@@ -216,8 +259,20 @@ export interface ViewFrame {
   treated: boolean;
   /** Charters currently on offer and institutions currently active (for the HUD badge). */
   civic: { proposals: number; institutions: number };
+  /**
+   * Which world this frame shows: the one being lived, or its twin (after an intervention, the
+   * untouched one; beside a recording, the same island with the engine's own minds deciding).
+   * Both are stepped together, so the two views are always of the same tick.
+   */
+  viewing: "world" | "twin";
+  /** True when there is a twin to look at. */
+  hasTwin: boolean;
+  /** The tick at which the untouched twin left this world (-1 if it has not been touched, or the twin never was this world). */
+  forkTick: number;
   /** Present while a recording is being watched. */
   replay: ReplayView | null;
+  /** The world's own history (absent while a recording is watched: that history is the recording). */
+  history: HistoryView | null;
 }
 
 /** One charter (proposal or institution) as the observer sees it. Rule sentences are generated from the validated charter. */
@@ -266,11 +321,24 @@ export interface DaySample {
 }
 
 export interface CompareView {
+  /**
+   * "intervention": the world the observer changed against its untouched twin.
+   * "recording": a recorded run against the same island with the engine's own minds deciding
+   * in place of the recorded ones (same seed, same people, same weather; a different way of deciding).
+   */
+  kind: "intervention" | "recording";
   forkTick: number;
   forkDay: number;
   interventions: { tick: number; kind: string }[];
   treated: { summary: Summary; series: DaySample[] };
   control: { summary: Summary; series: DaySample[] };
+  /** The two worlds as they stand, counted side by side. */
+  state: { label: string; yours: number; twin: number }[];
+  /** What has happened in each since the start, by kind, from the engine's own counters. */
+  happened: { label: string; yours: number; twin: number }[];
+  /** People who have died in one world and are alive in the other. */
+  deadOnlyYours: number[];
+  deadOnlyTwin: number[];
 }
 
 export interface IntentView {
@@ -386,7 +454,8 @@ export interface SavePayload {
 
 export type ToWorker =
   | { type: "init"; config: WorldConfig; requestId: number }
-  | { type: "load"; snapshot: string; control: string | null; series: DaySample[]; controlSeries: DaySample[]; requestId: number }
+  /** `hash` is the content hash recorded when the save was made; a snapshot that no longer hashes to it is refused. */
+  | { type: "load"; snapshot: string; control: string | null; series: DaySample[]; controlSeries: DaySample[]; hash?: string; requestId: number }
   | { type: "replay"; recording: Recording; requestId: number }
   | { type: "play" }
   | { type: "pause" }
@@ -398,12 +467,34 @@ export type ToWorker =
   | { type: "compare"; requestId: number }
   | { type: "civics"; requestId: number }
   | { type: "save"; requestId: number }
+  /** Go back to a stored moment of this world: re-run it exactly, or leave from there on a new line. */
+  | { type: "rewind"; tick: number; mode: "rerun" | "branch" | "branch_new_luck"; requestId: number }
+  | { type: "branches"; requestId: number }
+  | { type: "switchBranch"; id: string; requestId: number }
+  /** Pack the world (and its twin) with a manifest; `extras` is kept beside it untouched. */
+  | { type: "export"; extras: Record<string, unknown>; requestId: number }
+  | { type: "import"; text: string; requestId: number }
+  /** The recorded causes of an event: its parents, and theirs, as the engine logged them. */
+  | { type: "trace"; id: number; requestId: number }
+  /** The events the engine has logged for the world being lived, as held in memory: one JSON object per line. */
+  | { type: "ledger"; requestId: number }
+  /** Look at the twin instead of the world being lived (or back). Changes nothing in either. */
+  | { type: "view"; twin: boolean }
+  /** Make the earlier moments of a loaded world again from its seed, and check the result against it. */
+  | { type: "rebuild"; requestId: number }
   | { type: "frameRate"; hz: number }
   /** Ask for structures, piles, traffic and roster to be re-sent in the next frame (after a renderer rebuild). */
   | { type: "resync" };
 
 export type FromWorker =
-  | { type: "ready"; requestId: number; world: StaticWorldView; frame: ViewFrame; series: DaySample[] }
+  | { type: "ready"; requestId: number; world: StaticWorldView; frame: ViewFrame; series: DaySample[]; controlSeries: DaySample[]; imported?: { manifest: Manifest; extras: Record<string, unknown> } }
+  | { type: "branches"; requestId: number; list: BranchView[] }
+  | { type: "exported"; requestId: number; text: string; manifest: Manifest }
+  | { type: "trace"; requestId: number; chain: SimEvent[] }
+  /** `complete` is true only if the text holds every event since the first tick (ids 0 … n−1 with nothing dropped). */
+  | { type: "ledger"; requestId: number; text: string; events: number; firstTick: number; complete: boolean }
+  /** `ok` is true only if the re-lived world and its twin are, state for state, the ones that were loaded. */
+  | { type: "rebuilt"; requestId: number; ok: boolean; ticks: number; ms: number; moments: number; series: DaySample[]; controlSeries: DaySample[]; events: SimEvent[] }
   | { type: "frame"; frame: ViewFrame }
   | { type: "day"; sample: DaySample; control: DaySample | null }
   | { type: "agent"; requestId: number; detail: AgentDetail | null }

@@ -1,6 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { capture } from "./capture";
 
 /**
  * Phase 12: the observer's instruments, driven with real clicks and taps against the
@@ -8,12 +7,8 @@ import { join } from "node:path";
  * the two views of what a citizen knows, the record of what came of their intentions, the
  * atlas with its almanac, and the field journal that fills in from logged events.
  */
-const SHOTS = process.env.E2E_SHOTS ?? "test-results/shots";
 
-async function shot(page: Page, project: string, name: string): Promise<void> {
-  mkdirSync(join(SHOTS, project), { recursive: true });
-  await page.screenshot({ path: join(SHOTS, project, `${name}.jpg`), type: "jpeg", quality: 84 });
-}
+const shot = (page: Page, project: string, name: string): Promise<void> => capture(page, project, name);
 
 async function tick(page: Page): Promise<number> {
   const text = (await page.getByTestId("tick").textContent()) ?? "";

@@ -8,10 +8,10 @@ import type { Pick, Quality } from "@/render/WorldRenderer";
 import type { ChronicleEntry } from "@/ui/game/text";
 import type { SaveMeta } from "@/persist/saves";
 import type { JournalEntry } from "@/ui/game/journal";
-import type { AgentDetail, CalendarView, ClimateView, CivicsView, CompareView, DaySample, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
+import type { AgentDetail, BranchView, CalendarView, ClimateView, CivicsView, CompareView, DaySample, HistoryView, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
 
 export type Phase = "title" | "setup" | "loading" | "playing";
-export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about" | "recordings" | "atlas" | "journal";
+export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about" | "recordings" | "atlas" | "journal" | "history";
 export type QualitySetting = "auto" | Quality;
 
 export interface HudState {
@@ -25,8 +25,13 @@ export interface HudState {
   tps: number;
   treated: boolean;
   civic: { proposals: number; institutions: number };
+  /** Which world is on screen: the one being lived, or its twin. */
+  viewing: "world" | "twin";
+  hasTwin: boolean;
   /** Present while a recording is being watched. */
   replay: ReplayView | null;
+  /** The world's own history: stored moments, and any re-run of the past in progress. */
+  history: HistoryView | null;
 }
 
 export interface Settings {
@@ -67,6 +72,8 @@ export interface GameState {
   controlSeries: DaySample[];
   forkDay: number;
   compare: CompareView | null;
+  /** The world lines of this history (the one lived now and those set aside), refreshed when the History panel opens. */
+  branches: BranchView[];
   civics: CivicsView | null;
   panel: Panel;
   saves: SaveMeta[];
@@ -136,6 +143,7 @@ export const useGame = create<GameState>((set) => ({
   controlSeries: [],
   forkDay: -1,
   compare: null,
+  branches: [],
   civics: null,
   panel: "none",
   saves: [],

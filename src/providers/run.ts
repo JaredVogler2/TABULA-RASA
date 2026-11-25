@@ -13,10 +13,11 @@
  * Because the plan is a pure function of the world and the scheduler's state, an epoch that
  * was interrupted can be planned again and will choose the same minds.
  */
-import { replayRecord, step, submitDecision, tapeFromEvents, worldDigest, type DecisionRecord, type SimEvent, type WorldConfig, type WorldState } from "@/engine";
-import { buildRequest, promptFeatures, type PromptContext, type PromptFeatures } from "./prompt";
+import { TICKS_PER_DAY, replayRecord, step, submitDecision, tapeFromEvents, worldDigest, type DecisionRecord, type SimEvent, type WorldConfig, type WorldState } from "@/engine";
+import { PAGE_LIMITS, PROMPT_VERSION, buildRequest, inputTokenBound, promptFeatures, systemPrompt, type PromptContext, type PromptFeatures } from "./prompt";
 import { schedule, SCHEDULER_KINDS, type Activation, type Schedule, type SchedulerConfig, type SchedulerState, type TraceEntry } from "./schedule";
 import type { CallResult, CallStatus, DecisionCall, Effort, Provider, ProviderId } from "./types";
+import { WIRE_VERSION, decisionSchema } from "./wire";
 
 export interface RunSpec {
   provider: ProviderId;
@@ -48,6 +49,26 @@ export const DEFAULT_SPEC: RunSpec = {
   concurrency: 4,
   maxAttempts: 2,
 };
+
+/**
+ * The most calls a plan of this shape can make for `externalAgents` minds: the scheduler's
+ * limit per epoch and its limit per mind per day, whichever binds first. Pure arithmetic, so
+ * the owner's preview, the server's cap check and the laboratory's study estimate agree.
+ */
+export function plannedCalls(spec: Pick<RunSpec, "epochs" | "epochTicks" | "scheduler">, externalAgents: number): number {
+  const days = Math.ceil((spec.epochs * spec.epochTicks) / TICKS_PER_DAY);
+  return Math.min(spec.epochs * Math.min(spec.scheduler.callsPerEpoch, externalAgents), externalAgents * spec.scheduler.maxPerAgentPerDay * Math.max(1, days));
+}
+
+/**
+ * An upper bound on the input tokens of any one request in a world of this configuration: the
+ * rules text, the answer schema and the largest page a mind can be shown, counted in bytes
+ * (a token is at least a byte).
+ */
+export function requestTokenBound(cfg: WorldConfig, context: PromptContext): number {
+  const features = promptFeatures(cfg);
+  return inputTokenBound({ promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context, system: systemPrompt(features), user: "", schema: decisionSchema(features.civic && features.propose), shortened: 0 }) + PAGE_LIMITS.maxBytes;
+}
 
 const intIn = (name: string, v: unknown, lo: number, hi: number): number => {
   if (typeof v !== "number" || !Number.isInteger(v) || v < lo || v > hi) throw new Error(`${name} must be a whole number from ${lo} to ${hi}`);

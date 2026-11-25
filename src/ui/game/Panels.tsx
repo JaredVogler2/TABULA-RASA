@@ -2,7 +2,9 @@
 
 import {
   CloudRain,
+  FlaskConical,
   FolderOpen,
+  History as HistoryIcon,
   Info,
   Leaf,
   Map as MapIcon,
@@ -59,6 +61,7 @@ export function Chronicle() {
   const roster = useGame((s) => s.roster);
   const [filter, setFilter] = useState<"all" | ChronicleGroup>("all");
   const [onlySelected, setOnlySelected] = useState(false);
+  const [traced, setTraced] = useState<{ id: number; lines: string[] } | null>(null);
   const selectedAgent = selection?.type === "agent" ? selection.id : -1;
 
   const shown = useMemo(() => {
@@ -102,6 +105,26 @@ export function Chronicle() {
                       {cause ? <span className={styles.cause}>Recorded cause: {cause.text}</span> : null}
                     </span>
                   </button>
+                  {e.parents.length ? (
+                    <button
+                      type="button"
+                      className={styles.whyButton}
+                      aria-expanded={traced?.id === e.id}
+                      onClick={() => {
+                        if (traced?.id === e.id) setTraced(null);
+                        else void controller.trace(e).then((lines) => setTraced({ id: e.id, lines }));
+                      }}
+                      data-testid={`why-${e.id}`}
+                    >
+                      {traced?.id === e.id ? "Hide what led to this" : "What led to this?"}
+                    </button>
+                  ) : null}
+                  {traced?.id === e.id ? (
+                    <ol className={styles.trace} data-testid="trace">
+                      {traced.lines.length ? traced.lines.map((line, i) => <li key={i}>{line}</li>) : <li>The engine recorded causes for this, but they are older than it keeps.</li>}
+                      <li className={styles.traceNote}>These are links the engine recorded when it happened — who decided what, and what that led to. They are not inferences, and they are not the whole story.</li>
+                    </ol>
+                  ) : null}
                 </li>
               );
             })}
@@ -214,10 +237,19 @@ export function MenuPanel() {
               <MapIcon aria-hidden />
               Atlas
             </button>
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("history")} data-testid="menu-history">
+              <HistoryIcon aria-hidden />
+              History
+            </button>
             <button type="button" className={styles.button} onClick={() => controller.openPanel("affordances")} data-testid="open-affordances">
               <Info aria-hidden />
               What was designed
             </button>
+            {/* a new tab, so that the world being watched is still there afterwards */}
+            <a className={styles.button} href="/lab" target="_blank" rel="noopener" data-testid="menu-lab">
+              <FlaskConical aria-hidden />
+              Laboratory
+            </a>
             <button type="button" className={styles.button} onClick={() => void controller.toTitle()} data-testid="to-title">
               Leave to title
             </button>

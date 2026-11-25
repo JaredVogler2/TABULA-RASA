@@ -1,6 +1,6 @@
 # Observer experience: what is there, how it was checked, what nobody has tried
 
-Status: phase 12 (2026-11-25). This is a review by the builder from executed tests and screenshots of the
+Status: phases 12–14 (2026-11-25). This is a review by the builder from executed tests and screenshots of the
 running product. **No person other than the builder has played it, and nobody has used it with a screen
 reader, on a physical phone, or with sound through a speaker.** Those gaps are listed at the end and are the
 reason no criterion here is scored as verified with people.
@@ -19,7 +19,11 @@ reason no criterion here is scored as verified with people.
 | Almanac | seven daily measures (living, welfare, food held, wild food, commons health, inequality, things built) with the numbers as a table | one sample per simulated day | L |
 | Field journal | twenty-one questions, each answered by the first logged event of its kind (D-030) | the event stream | J |
 | Intervene | eight changes to conditions (weather, scarcity, abundance, arrivals, how far voices carry); never to minds; no forecast | logged in the world's own ledger; history forks | I |
-| Compare | your timeline against its untouched twin: charts with a marked fork day, deltas, the daily table | both worlds, same seed and luck | K |
+| Compare | your timeline against its untouched twin: charts with a marked fork day, the day-by-day difference, deltas, the two worlds counted side by side, what happened in each by kind, who is dead in only one, the daily table. Beside a recording: the record against the same island with the engine's own minds (D-034) | both worlds, same seed and luck | K |
+| The twin | the other world on screen, from the same camera at the same tick; a banner says which world is shown; nothing can be done to it | the worker steps both worlds together | X |
+| History | the start and every second morning as moments to return to: *watch it again* (exact, checked at the end), *leave from there* (a new line, same luck or new); world lines as a tree and a list; a loaded world's past lived again from its seed; export to a file with a manifest, import with an integrity check (D-033) | compressed keyframes in the worker; the engine's determinism | H |
+| Why | under a Chronicle entry, the causes the engine recorded for it, nearest first | parent links in the event ledger | — |
+| Laboratory | the registered studies as run: per-condition means with intervals, paired contrasts against the registered rule, the sizing of the confirmatory batch, raw tables to download, any cell re-run in this browser and compared by hash, and what a live version could cost at most (D-036) | a study bundle written by `pnpm study` | title screen |
 | Recordings | replay of a recorded run, checked against its record epoch by epoch | config + tape + digests | — |
 | Sound | weather, hour, season, nearby fire; tones for deaths, arrivals, agreements, forks | latest frame and camera (D-028) | M |
 
@@ -32,7 +36,9 @@ reason no criterion here is scored as verified with people.
 | charters in plain words with their origin | `play.spec.ts` (desktop) | the ledger reads as sentences and says "scripted control · not emergence" where true | comprehension |
 | sound off → on → slider to zero → off; three days of play; journal pages; outcomes list; both knowledge views; atlas, almanac table, click-to-look | `observer.spec.ts` | each instrument reads live state and responds; sound really produces signal and really goes quiet | how any of it sounds or feels |
 | a published run and the bundled recording replay and match their records; the banner never calls a mock a model; a sheet never covers the banner | `owner.spec.ts` | replay is exact and honestly labelled | — |
-| every screen and panel scanned with axe-core (WCAG 2.0/2.1 A and AA) | `a11y.spec.ts` | no serious or critical machine-detectable violation | anything a machine cannot detect |
+| play, intervene, look at the twin and back; watch five days again and arrive exactly; leave on a new line; return to the old one; compare; save, reload and live the past again from the seed; export; a tampered file refused and the true one opened; a recorded cause followed | `history.spec.ts` | going back never loses or silently changes anything, and the product says truthfully which world is on screen | whether the difference between a re-run and a new line is understood by a newcomer |
+| the Laboratory from the title screen: the bundle named for what it is, every contrast with its reading, the sizing table, a published cell re-run in the browser to the same hash, raw tables | `lab.spec.ts` | the page says what the bundle says; reproduction is real | whether a reader draws only the conclusions the page allows |
+| every screen and panel scanned with axe-core (WCAG 2.0/2.1 A and AA), now seventeen states, with History, Compare, the twin on screen and the Laboratory | `a11y.spec.ts` | no serious or critical machine-detectable violation | anything a machine cannot detect |
 
 ## Accessibility: what was checked and how
 
@@ -58,6 +64,17 @@ reason no criterion here is scored as verified with people.
   the phone capture. The fix comes with two guards: the flow test now measures the map and every chart against
   the viewport, and a unit test reads every stylesheet and fails on any responsive rule that a later
   unconditional rule cancels. Lesson kept: a passing flow is not a looked-at screen.
+- **A second one, older and worse.** Since phase 04 the "Forked on day N" badge had been partly hidden under
+  the tool buttons at 1366 px — the commonest laptop width — and cut off at the edge of a phone screen; every
+  flow test passed, because a test's click scrolls its target into view and a half-covered button is still
+  "visible". It surfaced in phase 13 only because a new button beside it could not be clicked at all. The top
+  bar was rebuilt around measured widths: the fork and its twin are a pill of their own; words give way in a
+  stated order (Compare's label, the season and the weather's name, "Twin", the remaining tool labels, the
+  world's label) before anything overlaps; below 1120 px the status takes its own row. `scripts/topbar.mjs`
+  drives the real game into its widest state and measures 25 window widths from 2560 to 320 px (no overlap and
+  nothing off screen at any of them; at one, 390 px, the status row still spilled by 22 px when the weather
+  had a long name — see `docs/EVIDENCE.md`, phase 13), and `history.spec.ts` asserts the same at several widths
+  on both projects.
 - **Motion and sound**: reduced motion (system setting or the menu) slows time-driven motion, stills the
   camera's easing and removes birds and fish rings; sound never starts on its own.
 - **Not colour alone**: chart lines are named and tabulated; agreement colours come with the agreement's name;
@@ -72,7 +89,7 @@ reason no criterion here is scored as verified with people.
 | Timebar, inspector, Chronicle, institution ledger | done | |
 | Settlement map; resource and population summaries | done | atlas and almanac |
 | Social network overlay | partly | one citizen's ties at a time; no whole-society graph |
-| Timeline scrub and replay; jump to moments and actors | partly | jump-to from Chronicle, journal and atlas; replay of recordings; **scrubbing a live world back in time is phase 13** |
+| Timeline scrub and replay; jump to moments and actors | done differently | jump-to from Chronicle, journal and atlas; replay of recordings; History returns to stored mornings (every second day, thinning to every fourth in long worlds) rather than to any tick — there is no continuous scrubber |
 | Filter by causal event, group or resource | partly | by event group and by citizen; not by resource |
 | What they know vs what the observer knows; rationale; witnessed events; intentions vs outcomes | done | D-029; outcomes list |
 | Interventions: shocks, resources, migration, communication; observer vs treatment distinguished; no forecast | done | eight kinds; forked badge; "the only honest forecast is to run it" |

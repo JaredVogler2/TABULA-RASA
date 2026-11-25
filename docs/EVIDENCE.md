@@ -210,6 +210,60 @@ captures. Performance scores 1 of 4 because the only numbers are from a software
 **Not done, and said so in `docs/OBSERVER_UX.md`:** no first-time player, no screen reader, no physical
 device, no ears. Scrubbing a live world back in time belongs to phase 13.
 
+## Phase 13 — history, branches, files, the twin (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Re-running a stretch of a world from an earlier state, with the observer's interventions re-applied at their ticks, ends byte-identical to the original (from a snapshot and from tick 0); leaving one out does not | `pnpm test` (`src/engine/save/history.test.ts`) | `evidence/phase-13/tests.txt` | pass | Worlds with model-driven minds (their replay is the recording path, phase 08). |
+| A branch is its parent at the fork and for as long as nothing is done to it; what is done to one never reaches the other; two branches share nothing writable; new luck diverges | same | same | pass | — |
+| A world file opens to the same world and twin; one altered character, an edited manifest, a foreign twin, a truncated or empty file are each refused | same | same | pass | Files from other engine versions beyond the migrations that exist. |
+| The same guarantees through the worker's message protocol, with no browser: moments kept, exact re-run verified on arrival and refusing interventions meanwhile, new line and return to the old one hash for hash, twin on screen at the same tick with nothing done to it | `pnpm test` (`src/worker/sim.worker.test.ts`) | same | pass | The renderer. |
+| A saved world's past is lived again from its seed and kept only because it arrives at exactly the loaded world and twin; a save whose intervention record was edited fails the check and nothing is kept; a stored save that no longer matches its hash is refused; a line that took new luck says why it cannot be rebuilt | same | same | pass | Saves from before this version carry no lineage: only the first line and same-luck branches can be rebuilt. |
+| The event ledger is consecutive from the first event, never runs backwards, and every recorded cause precedes its effect; a loaded world's ledger says it is partial until its past is rebuilt | same | same | pass | Events older than the 40,000 kept in memory. |
+| However time is driven — single steps, long steps, play at any speed and frame rate, pauses, a long suspension — the world at a given tick is the same world | same | same | pass (hash equal at tick 1,100) | Real browser timer throttling; this test drives a fake clock. |
+| A recording of outside minds gets a twin of the same seed with the engine's planner, and the comparison is named for what it is | same | same | pass, with the bundled **mock** recording | **A live recording: none exists.** |
+| All of it in the browser, with real clicks and taps: twin on screen and back; five days watched again, arriving exactly; a new line; a return; Compare with differences and event counts; save → reload → the past lived again → a re-run from a rebuilt morning arriving exactly; export; ledger download; a tampered file refused and the true one opened; a recorded cause | `pnpm e2e` (`tests/e2e/history.spec.ts`) | `evidence/phase-13/e2e-run.txt`, `evidence/phase-13/e2e/{desktop,mobile}/39…45.jpg` | pass on desktop 1366×768 and 390×844 phone emulation | Comprehension by a person. |
+| The top bar's parts never overlap, leave the screen or spill, from 2560 to 320 px, in its widest state | `node scripts/topbar.mjs <url> <dir>`; assertions in `history.spec.ts` | `evidence/phase-13/topbar.txt`, `evidence/phase-13/topbar-*.jpg` | **24 of 25 widths** on the clean checkout, after a rebuild of the bar (see `docs/OBSERVER_UX.md`: the fork badge had been half hidden at 1366 px since phase 04). No part overlaps another or leaves the screen at any width. At 390 px the status row's content was 22 px wider than the row: it scrolls sideways there, so nothing is lost, but that is not the intent. An earlier run of the same code passed all 25 — the weather's name happened to be shorter. The script measured whatever the weather was; it did not force the widest text. Both are corrected in the next commit | Browsers other than Chromium; text scaled by the user; the widest labels (until the next commit). |
+| A CI failure on the previous commit was a browser fault, not a product fault, and is handled at its cause | GitHub Actions runs 45602910761 (passed) and 45602902159 (failed) on the same commit, `8683652`: the failing run stopped at `page.screenshot: Protocol error (Page.captureScreenshot): Unable to capture screenshot` on the plain sign-in page | `tests/e2e/capture.ts` | every capture now goes through one helper that tries again and records the retry, and still fails the test if the screen can never be captured; no test or assertion was skipped or loosened. The browser suites now run as two parallel jobs, so that neither project starves the other's renderer | Whether it recurs: it has been seen once. |
+| No serious or critical machine-detectable accessibility violation on seventeen states, now including History, Compare, the twin on screen and the Laboratory | `pnpm e2e` (`a11y.spec.ts`) | `evidence/phase-13/a11y-desktop.json`, `a11y-mobile.json` | pass | What a machine cannot detect. |
+
+**Stated plainly.** "Offline and live recorded histories compare" is shown with a mock recording, because no
+live recording exists. Lines set aside live in the page's memory and are lost on reload unless saved or
+exported. There is no continuous scrubber: one can return to the start and to every second morning.
+
+## Phase 14 — the laboratory (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Every statistic has a fixture with a known answer: mean, SD, quantiles, paired differences, d_z, Cliff's δ, Holm (worked example), precision planning, difference in differences, Gini; the bootstrap is deterministic, narrows with n, and covers a known mean about as often as it claims | `pnpm test` (`src/lab/stats.test.ts`) | `evidence/phase-14/tests.txt` | pass | Coverage for distributions unlike the fixture's. |
+| The registered rule is applied to the interval and to nothing else: each kind of prediction on synthetic runs with known answers; fewer than eight paired seeds get no verdict; missing cells are listed and never silently paired; a pilot's table never states a verdict; the registry's thresholds are the protocol's | `pnpm test` (`src/lab/analyse.test.ts`) | `evidence/phase-14/tests.txt` | pass | — |
+| A confirmatory batch is the planned one or it is not run: the planned size, the first holdout seeds in order | same; enforced in `scripts/study.ts` | same | pass | The batch itself: **not run yet.** |
+| The society measures the studies report are computed correctly | `pnpm test` (`src/engine/metrics/society.test.ts`, phase 10) | `evidence/phase-10/` | pass | — |
+| 224 real offline runs across all 14 registered conditions on 16 development seeds, none missing, each with the SHA-256 of its final state | `pnpm study -- --study all --seeds 1-16 --out evidence/phase-14/pilot` (two shards) | `evidence/phase-14/pilot/` (`runs.*.jsonl`, `runs.csv`, `report.md`, `report.json`, `manifest.json`, `plan.json`) | done; engine 0.6.0 | **Anything about the hypotheses: these are development seeds.** |
+| Any run can be reproduced to the hash | `pnpm study -- --verify 12 --study all --seeds 1-16 --out evidence/phase-14/pilot` | `evidence/phase-14/verify.txt` | 12 of 12 reproduced | Other machines and runtimes (the browser check below is one other runtime). |
+| The same in a reader's browser, from the page | `pnpm e2e` (`tests/e2e/lab.spec.ts`): a published cell re-run in a worker, hash compared | `evidence/phase-13/e2e-run.txt` (one run for both phases), `evidence/phase-14/e2e/{desktop,mobile}/50…52.jpg` | reproduced on both projects | Browsers other than Chromium. |
+| The page says what the bundle is (a pilot that tests nothing), shows every contrast with the registered rule's reading marked as hypothetical, the sizing table, the raw files, and opens a cell as a world | same | same | pass | Whether a reader draws only the conclusions the page allows. |
+| The planner's clock is off by default, binds when set, and old snapshots and configurations open as having none | `pnpm test` (`src/engine/mind/clock.test.ts`) | `evidence/phase-14/tests.txt` | pass | — |
+| A live study's cost ceiling is the scheduler's call limit times the server's per-call bound, scales exactly with conditions and seeds, prices the largest outside-minded group, refuses an unpriced model, and sizes a design to a budget | `pnpm test` (`src/lab/cost.test.ts`) | same | pass | **What a call really costs: none has been made.** The ceilings assume no cache hit. |
+
+### What the pilot showed (development seeds 1–16; sizing only, no hypothesis tested)
+
+| Contrast | Paired estimate [95% interval] | What the registered rule would read |
+|---|---|---|
+| H1a cooperation, richness 0.7 − 1.3 | 0.0161 [0.0104, 0.0218] | supported |
+| H1b cooperation, richness 0.7 − 0.4 | 0.0113 [0.0054, 0.0171] | supported |
+| H2 specialization, movement cost 2.0 − 1.0 | 0.063 [0.055, 0.071] | supported |
+| H3 reached E2, hearing radius 9 − 2 | 0.13 [−0.19, 0.44] | falsified (interval includes zero) |
+| H4 survival after the blight, diversity 1.0 − 0.2 | −0.001 [−0.005, 0.003] | falsified — and uninformative: almost nobody dies in either condition |
+| H5a welfare ratio, cadence 48 / 12 | 1.050 [1.025, 1.066] | supported |
+| H5b deliberations ratio, cadence 48 / 12 | 0.483 [0.477, 0.488] | not supported: the manipulation is weaker than registered |
+| H6a survival, scripted control − off (The Long Winter) | −0.058 [−0.114, 0.000] | **falsified: the positive control does not help** |
+| H6b survival, grammar search − off | −0.041 [−0.101, 0.016] | reported (no prediction) |
+
+Sizing from these spreads: 32 holdout seeds per contrast, 448 runs (`plan.json`). **Nothing has been run on
+holdout seeds.** The confirmatory batch waits for the engine to be frozen (D-037). Not built: a wizard for
+starting studies in the browser, a hypothesis-suggesting agent, any live study.
+
 ## Research inputs
 
 | Input | File | Status |

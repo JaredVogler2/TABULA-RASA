@@ -551,6 +551,8 @@ export interface MetricsAcc {
   rejectedIntents: number;
   utterances: number;
   decisionsBySource: Record<string, number>;
+  /** Times a baseline planner was consulted (whether or not it found a plan worth adopting). */
+  deliberations: number;
   /**
    * Declared sources and sinks per item id. Invariant at every tick:
    *   sources[i] − sinks[i] === total units of item i held anywhere in the world.

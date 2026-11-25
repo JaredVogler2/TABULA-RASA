@@ -608,3 +608,176 @@ rollback. Read this file before modifying any contract it mentions.
   drawn as a beaten track and the grass is gone; lighter use only dulls and flattens the turf.
 - **Evidence.** `scripts`-level measurement recorded in `docs/EVIDENCE.md` (phase 11); `evidence/phase-11/paths.jpg`.
 - **Rollback.** Change the constant in `src/render/palette.ts`.
+
+## D-033 — History is moments and lines; nothing is rewritten, and a past is only trusted if re-living it arrives where it left (2026-11-25)
+
+- **Problem.** Phase 13 asks for an append-only ledger, time travel, branches with an identical past, integrity
+  checks, compaction and storage limits — in a browser, on phones, with worlds whose full state serializes to a
+  megabyte or more.
+- **Original proposal.** "Persist append-only event ledger, snapshot hashes … pure replay from snapshot and
+  recorded intents … clone a historical state with exact replay or launch new stochastic continuation."
+- **Alternatives.** (a) Persist every event and re-derive state by folding the log: the engine's events describe
+  what happened, not a complete state transition, so the log alone cannot rebuild a world. (b) Persist a keyframe
+  per day in IndexedDB: tens of megabytes per save, written by every autosave. (c) Keep compressed keyframes in
+  memory only, and rely on determinism for everything else.
+- **Evidence.** The engine is deterministic by construction (D-003): a world is a pure function of its
+  configuration, the observer's interventions with their ticks and, for outside minds, the decision tape. Unit
+  tests re-run from an earlier snapshot and from tick 0 and compare byte for byte (`history.test.ts`); the worker
+  does the same through its message protocol (`sim.worker.test.ts`). A gzip-compressed keyframe of the reference
+  world is 15–300 KB.
+- **Decision.** (c).
+  1. **Moments.** The worker keeps the start and every second morning as gzip keyframes of the world and its
+     twin, at most 24 (the start and the latest eight always; the middle thinned to every other one).
+  2. **Watch it again** restores a keyframe and re-applies the observer's interventions at the ticks they were
+     made; when it reaches the moment it left from, the state digest must equal the one that was left. The banner
+     says which; time is live again only after the verdict, and the past cannot be changed while it is re-run.
+  3. **Leave from there** forks a new line from a keyframe with the same random numbers, or with new ones; the
+     line being left is frozen with its content hash and can be returned to. A line set aside is a compressed
+     copy: lines share no mutable state.
+  4. **Saves hold no history.** A world opened from a save has only its present in memory; its past is offered
+     back by *living it again from the seed* — configuration, interventions, the twin forked where it was forked —
+     and is kept only if the result is, digest for digest, the loaded world and the loaded twin. A save whose
+     record was edited fails that check and nothing of the false past is kept (tested). A line that took new luck
+     cannot be rebuilt (its earlier epoch is not recorded) and says so; a world with outside minds refers to its
+     recording.
+  5. **Files.** A world leaves the browser as a bundle: the state, its twin, and a manifest (seed, configuration
+     and its hash, engine/schema/affordance versions, branch, every intervention with its tick and origin, the
+     SHA-256 of the state, minds and prompt versions when there were any). On the way in the state is hashed
+     again, the manifest must describe the world it travels with, and the twin must belong to it; anything else is
+     refused and the world on screen is untouched. Limit: 96 MB of text.
+  6. **Causes.** The Chronicle's "why" follows the engine's own parent links, nearest first, from a log of the
+     last 40,000 events. They are recorded causal edges, never inferred ones; the panel says so, and Compare says
+     that one pair of worlds is an anecdote.
+- **Affected acceptance tests.** S04-6; phase 13 gate.
+- **Cost / risks.** Memory: up to 24 keyframes × 2 worlds, a few megabytes. Rebuilding a long world's past takes
+  seconds (it is done in 11 ms slices and reports progress). Event history older than the log's cap cannot be
+  traced. The middle of a long history thins to four-day steps.
+- **Rollback.** `KEY_EVERY`, `MAX_KEYFRAMES` and the `rebuild` message in `src/worker/sim.worker.ts`.
+
+## D-034 — The twin can be looked at, and a recording gets one (2026-11-25)
+
+- **Problem.** "Synchronized camera views, tick alignment … offline and live recorded histories compare." The
+  comparison was numbers only: the untouched world existed in the worker but could not be seen, and a recorded
+  run of outside minds had nothing to be compared with.
+- **Alternatives.** A split screen (two renderers: twice the GPU cost, unusable on a phone); a second window; or
+  one renderer that can be pointed at either world.
+- **Decision.** One renderer, one camera, a switch (button, `X`, and a button in Compare). Both worlds are stepped
+  on the same ticks, so flipping changes only what differs. While the twin is on screen a banner says so, the
+  Chronicle and journal keep following the world being lived (the twin's frames carry no events), nothing can be
+  done to the twin, and the inspector shows the same person as they are in the other world. A **recording**
+  whose people were decided for from outside gets a twin made from the same configuration with `externalShare`
+  0: same seed, same land, same people, same weather, the engine's planner deciding instead. Compare names the
+  pair for what it is ("the recording" / "built-in minds") and repeats that one pair is an anecdote. The frame now
+  carries the fork tick, which fixed a wrong "Forked on day 1" after loading a forked save (the day had been
+  inferred from list lengths).
+- **Evidence.** `sim.worker.test.ts` (twin view, recording twin), `tests/e2e/history.spec.ts`,
+  `evidence/phase-13/`.
+- **Affected acceptance tests.** S04-6; phase 13 gate ("offline and live recorded histories compare" is proven
+  with a mock recording only: no live recording exists, because no spend is authorized).
+- **Cost / risks.** Replaying a recording now steps two worlds. The twin of a recording differs by who decides,
+  which is a bigger difference than one intervention; the panel's wording carries that.
+- **Rollback.** The `view` message and the `own` world in the `replay` handler.
+
+## D-035 — A clock for the planner, so that cadence is a treatment (2026-11-25)
+
+- **Problem.** The first pilot of H5 returned ratios of exactly 1: `cadence` was read only by outside minds, so
+  the registered treatment never reached the planner baseline.
+- **Alternatives.** Make `cadence` bind for the planner (changes the reference baseline every other study and the
+  ecology tuning of D-014 rest on); or add a separate setting whose reference value means "no clock".
+- **Decision.** `planEvery` (0–960 ticks, default 0 = deliberate whenever the plan runs out). With a clock, a
+  planner agent is consulted at most once per `planEvery` ticks and acts on reflex in between; the engine counts
+  consultations (`metrics.deliberations`). Engine 0.6.0, snapshot schema 5 with a migration, affordances
+  2026.11-h. The deviation is logged in the protocol; no holdout seed had been used.
+- **Evidence.** `src/engine/mind/clock.test.ts`: off by default; with a clock nobody deliberates twice within
+  the interval; a longer interval means fewer deliberations; snapshots and configurations from before the clock
+  open as having none and go on exactly as they would have. The pinned reference digests of `sim.test.ts` are
+  unchanged by the new setting at its default.
+- **Affected acceptance tests.** H5 (S04-9).
+- **Cost / risks.** One more knob. The pilot shows the manipulation is weaker than its nominal 4×: people do not
+  need a new plan every 12 ticks, so the consultation ratio is about 0.48, not 0.25 (reported; see D-037).
+- **Rollback.** Set `planEvery` to 0 everywhere; the migration is one-way but harmless.
+
+## D-036 — The laboratory: paired seeds, intervals before tests, and a runner that will not touch holdout seeds by accident (2026-11-25)
+
+- **Problem.** Phase 14: registered studies with honest uncertainty, reproducible exports, and at least 100 real
+  offline runs.
+- **Original proposal.** "Experiment wizard, hypotheses, variables, seed sets, run manifests, budget preview,
+  power/precision considerations … effect sizes and uncertainty, multiple comparisons warnings and missing-run
+  reporting."
+- **Decision.**
+  1. **Studies are data** (`src/lab/studies.ts`): each registered hypothesis is its conditions (configuration
+     overrides only), its measure, and the rule that would falsify it, transcribed from the protocol. The runner,
+     the analysis, the page and the in-browser check all read the same registry.
+  2. **Design.** Every condition runs on the same seeds, so contrasts are paired by seed (same land, people,
+     weather). Estimates are means over seeds with 95% percentile-bootstrap intervals (10,000 resamples, fixed
+     analysis seed, so a report is reproducible to the digit); ratios resample pairs. Effect sizes: d_z and
+     Cliff's δ. The verdict is the registered rule applied to the interval; p-values are a paired bootstrap test,
+     Holm-adjusted across the family, and shown second. Missing cells are listed and never silently dropped.
+  3. **Precision before power.** A pilot on development seeds estimates the spread of each paired difference; the
+     confirmatory seed count is the number at which the 95% interval is 0.35 of that spread wide on each side,
+     capped at 96 (`planFrom`). The plan is written to a file before any holdout seed is used.
+  4. **Seed discipline in code.** `pnpm study` refuses seeds 9000–9999 unless `--confirmatory --plan <file>` is
+     given, and then runs only the planned batch: exactly the planned number of seeds, the first holdout seeds
+     in order (no choosing seeds, no stopping early, no topping up after a look). A bundle is labelled pilot,
+     confirmatory or mixed from its seeds, and a pilot's verdict column reads "would read …", never a verdict.
+  5. **Reproducible to the hash.** Every run records the SHA-256 of its final state. The bundle carries the
+     hashes; `pnpm study --verify N` re-runs a sample; the Laboratory page re-runs any cell in the reader's own
+     browser and compares. Checkpointed JSONL, shardable (`--shard i/N`), resumable.
+  6. **No wizard for starting studies in the browser, and no hypothesis-suggesting agent.** A 448-run batch is
+     minutes of CPU on a desktop and far too long on a phone; studies are run from the command line and *read* in
+     the product. An agent that proposes experiments would need a model call, and nothing may be spent. Both are
+     recorded as not built rather than faked. Live studies are blocked with phase 17; the cost estimator they
+     would use is the one tested in phase 07.
+- **Evidence.** `src/lab/stats.test.ts` (hand-computed fixtures for every statistic, coverage of the bootstrap
+  interval on simulated data, Holm against a worked example); `src/lab/analyse.test.ts` (each verdict rule on
+  synthetic runs, missing cells, seed classes, the sizing rule, the confirmatory guard, and the registry's
+  thresholds against the protocol); `src/lab/cost.test.ts`; `evidence/phase-14/`.
+- **Affected acceptance tests.** S04-9; phase 14 gate.
+- **Cost / risks.** Percentile intervals are slightly narrow at 16 seeds (the pilot's purpose is sizing, not
+  inference). A binary outcome (E2 reached) has a coarse paired difference; its interval is wide and is shown.
+- **Rollback.** The lab is additive: `src/lab`, `scripts/study.ts`, `/lab`, `public/studies`.
+
+## D-037 — What the pilot showed, and what is not being done about it (2026-11-25)
+
+- **Problem.** The pilot (development seeds 1–16, 224 runs, engine 0.6.0) is unfavourable to parts of the
+  design: the scripted charter — the positive control — does not raise survival in *The Long Winter* (−0.058
+  [−0.114, 0.000]); H4's blight kills almost nobody in either condition (a ceiling); H3's interval spans zero;
+  H5's manipulation check reads 0.48 where the registered text says at most 0.35.
+- **Alternatives.** Retune the ecology or the control until the hypotheses pass on development seeds, then run
+  the confirmatory batch; or freeze the engine, run what was registered, and report it.
+- **Decision.** No test is altered and nothing is tuned toward a result. The confirmatory batch (32 holdout
+  seeds per contrast, 448 runs, `evidence/phase-14/pilot/plan.json`) is run once, after the engine is frozen
+  (phases 15–16 may still change it), on seeds 9000–9031, and is reported as it comes out — including a failed
+  positive control, in which case, as registered, institutional affordances have not been shown to be materially
+  useful in this world and no E5 claim can be made. Variants that would be informative (a harsher shock for H4, a
+  wider cadence gap for H5) are exploratory and will be labelled so if run.
+- **Evidence.** `evidence/phase-14/pilot/report.md`; the protocol's deviation log.
+- **Affected acceptance tests.** S04-9 and the scorecard: a product that reports its own null results.
+- **Cost / risks.** The headline finding may be "the control failed". That is the honest state of the model.
+- **Rollback.** Not applicable.
+
+## D-038 — The top bar is laid out from measurements, and the fork has a place of its own (2026-11-25)
+
+- **Problem.** Since phase 04 the "Forked on day N" badge sat at the end of the status bar, where at 1366 px it
+  slid half under the tool buttons and on a phone was cut off by the screen's edge. Every flow test passed: a
+  test's click scrolls its target into view, and a half-covered button is still "visible". Adding a second
+  control beside it (the twin) made the defect impossible to miss — it could not be clicked.
+- **Alternatives.** Shrink everything with one breakpoint; hide all tool labels below a wide-monitor width;
+  move the fork to a banner under the bar (a permanent row of chrome on phones).
+- **Decision.** The fork and its twin are a pill of their own between the name and the status. The status bar
+  never shrinks. Words give way in a fixed order as the window narrows — Compare's label and the season and
+  weather's name (below 1600 px), "Twin" (1440), the remaining tool labels (1340), the world's label (1200) —
+  and below 1120 px the status takes a row of its own, as on a phone. On the smallest phones the season and
+  weather's name go again (380 px), then "Forked on" (360), and History moves to the menu (340). The numbers
+  come from measuring the bar in its widest state; `scripts/topbar.mjs` re-measures 25 widths from 2560 to
+  320 px and exits non-zero on any overlap, anything off screen or anything spilling out of its bar, and the
+  history flow asserts the same at four desktop and three phone widths.
+- **Evidence.** `evidence/phase-13/topbar.txt` and `topbar-*.jpg`.
+- **Affected acceptance tests.** S04-10; `history.spec.ts`.
+- **Cost / risks.** Between 1340 and 1600 px three tools keep their labels and five are icons with tooltips; a
+  first-time player on a small laptop sees fewer words. Font scaling by the user is not measured. The script
+  measures the bar with whatever the weather happens to be called: on the clean checkout of this commit a
+  longer name made the status row 22 px wider than a 390 px screen (the row scrolls; found by the script, not
+  by a person). The next commit lets the weather's name give way on phones and measures with the widest text.
+- **Rollback.** The media queries under "the top bar on windows that are not wide" in `game.module.css`.
+

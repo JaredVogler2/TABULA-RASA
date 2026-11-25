@@ -362,7 +362,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     name: "Bounded-rational planner",
     what: "With no need pressing, weighs a fixed repertoire — gather for stock, smoke fish, make a basket, spear or axe, light or feed a fire, raise a shelter or a store, plant and reap, give, repay, tell — by expected benefit per tick under the agent's own beliefs, and queues the best. Every threshold is shifted by a named trait, skill or lived experience. It senses the season only from temperatures it has felt, looks one project ahead, and contains no institutional act.",
     why: "A strong non-LLM comparison. Its repertoire and its rules of thumb are hand-written and therefore a prior about sensible behaviour: that food should be stored, that crops are worth sowing, that favours are returned.",
-    knob: "policy, plannerShare",
+    knob: "policy, plannerShare, planEvery (0 = deliberates whenever a plan runs out; otherwise at most once per that many ticks, acting on reflex in between)",
     status: "implemented",
   },
   {

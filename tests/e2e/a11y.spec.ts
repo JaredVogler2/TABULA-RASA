@@ -80,6 +80,32 @@ test("no serious or critical accessibility violations on any screen or panel", a
     await expect(page.getByTestId(panel)).toHaveCount(0);
   }
 
+  // history, with a morning chosen so that the three ways of going back are on screen
+  await page.getByTestId("open-history").click();
+  await expect(page.getByTestId("history")).toBeVisible();
+  await page.getByTestId("moment-0").click();
+  await expect(page.getByTestId("rewind-branch")).toBeVisible();
+  await scan(page, "history", findings, incomplete);
+  await page.getByTestId("history-close").click();
+  await expect(page.getByTestId("history")).toHaveCount(0);
+
+  // a change to the world, so that there is a twin: the comparison with its tables open, then the twin on screen
+  await page.getByTestId("open-interventions").click();
+  await page.getByTestId("intervene-blight").click();
+  await expect(page.getByTestId("forked-badge")).toBeVisible();
+  await page.getByTestId("open-compare").click();
+  await expect(page.getByTestId("compare-table")).toBeVisible();
+  await expect(page.getByTestId("happened-table")).toBeVisible();
+  await page.getByTestId("toggle-series-table").click();
+  await expect(page.getByTestId("series-table")).toBeVisible();
+  await scan(page, "compare", findings, incomplete);
+  await page.getByTestId("compare-close").click();
+  await page.getByTestId("view-twin").click();
+  await expect(page.getByTestId("twin-badge")).toBeVisible();
+  await scan(page, "the twin on screen", findings, incomplete);
+  await page.getByTestId("twin-back").click();
+  await expect(page.getByTestId("twin-badge")).toHaveCount(0);
+
   await page.getByTestId("open-menu").click();
   await page.getByTestId("menu-journal").click();
   await expect(page.getByTestId("journal")).toBeVisible();
@@ -115,7 +141,13 @@ test("no serious or critical accessibility violations on any screen or panel", a
   await page.getByTestId("overlay-knowledge").click();
   await scan(page, "inspector", findings, incomplete);
 
-  const report = { project, rules: "axe-core, tags wcag2a wcag2aa wcag21a wcag21aa", screens: 13, violations: findings, couldNotDecide: incomplete };
+  // the laboratory is a page of its own: a published bundle with its charts and tables
+  await page.goto("/lab");
+  await expect(page.getByTestId("bundle-summary")).toBeVisible();
+  await expect(page.getByTestId("verify")).toBeVisible();
+  await scan(page, "laboratory", findings, incomplete);
+
+  const report = { project, rules: "axe-core, tags wcag2a wcag2aa wcag21a wcag21aa", screens: 17, violations: findings, couldNotDecide: incomplete };
   mkdirSync(OUT, { recursive: true });
   writeFileSync(join(OUT, `a11y-${project}.json`), `${JSON.stringify(report, null, 2)}\n`);
   await testInfo.attach("a11y", { body: JSON.stringify(report, null, 2), contentType: "application/json" });

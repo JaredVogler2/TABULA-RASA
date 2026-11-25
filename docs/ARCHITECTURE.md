@@ -33,11 +33,13 @@ src/
                  server and scripts: the answer schema and its translation (wire), the prompt (prompt),
                  the provider contract and the Mock / Replay / Baseline providers, schedulers, the
                  epoch runner (run), the dated price table and cost arithmetic (prices)
-  lab/           study definitions, batch runner (environment-agnostic), statistics
+  lab/           the registered studies as data, the cell runner, statistics, analysis and reports,
+                 and the ceiling on what a live study could cost
   render/        three.js world renderer (no React)
   audio/         procedural sound
-  worker/        Web Workers: simulation host, lab batch host, self-test
-  persist/       IndexedDB saves, ledgers, export/import
+  worker/        Web Workers: simulation host (the world, its twin, its history), the laboratory's
+                 re-run-one-cell check, self-test
+  persist/       IndexedDB saves
   store/         UI stores and the worker client
   ui/            React components
   server/        SERVER ONLY: environment (env), database and embedded migrations (db), budget ledger,
@@ -134,14 +136,17 @@ passes through the same validation, arbitration and application code.
 
 | Data | Free play | Live run |
 |---|---|---|
-| Snapshots (content-addressed) | IndexedDB, one per simulated day + on save | PostgreSQL: the latest only (gzip); earlier states are rebuilt by replaying the tape |
-| Event ledger | IndexedDB chunks (append-only) | Derivable by replay; decision log is authoritative |
+| Snapshots (content-addressed) | IndexedDB: one per named save and one autosave (every second day), each stored with its SHA-256 and refused on load if it no longer matches. In the worker's memory only: gzip keyframes of the line being lived (the start and every second morning, at most 24) and the last state of each line set aside | PostgreSQL: the latest only (gzip); earlier states are rebuilt by replaying the tape |
+| Event ledger | In memory: the most recent 40,000 events (about six weeks of the reference world), with causal parents; downloadable as JSON Lines. Earlier events are not stored: they are produced again by re-living the world from its seed | Derivable by replay; decision log is authoritative |
 | Decision log | In-engine for baseline policies; recorded for verification | PostgreSQL, append-only, with request hash, model, prompt version, usage |
-| Branch tree | IndexedDB (`parent`, `forkTick`, intervention provenance, RNG epoch) | Same schema, server side |
+| Branch tree | In the worker's memory for the session: parent, fork tick, same or new luck, interventions, content hash of each line set aside. Every world carries its own branch record (and travels with it in saves and files); lines set aside do **not** survive a reload unless saved or exported | A server run has one line |
+| A world as a file | A bundle: state, twin, and a manifest (seed, configuration and hash, versions, branch, interventions, SHA-256); verified on import (D-033) | A recording: configuration, decision tape, state digest per epoch |
 | Budget ledger | n/a | PostgreSQL, integer microdollars, transactional |
 
 Schema versions are embedded in every artifact; `src/engine/save/migrate.ts` upgrades old saves and refuses
-unknown future versions.
+unknown future versions. As first written (phase 02) this table promised daily snapshots, an event ledger and a
+branch tree in IndexedDB; what was built instead, and why, is D-033: the engine's determinism makes a world's
+past cheaper to re-live than to store.
 
 ## 9. Failure modes designed for
 
@@ -153,7 +158,7 @@ unknown future versions.
 | Malformed or unsafe model output | Rejected, logged with reason; the agent falls back to its labelled reflex policy. |
 | Function killed mid-epoch | Lease expires; the next step resumes from stored decisions without re-dispatching completed ones. |
 | Tab closed / phone suspended | The worker stops; saves are transactional, so the last committed day is intact. |
-| Two tabs on one save | A save carries a writer lease; the second tab opens read-only. |
+| Two tabs | Each tab has its own worker and its own world; named saves have unique ids and never collide. The autosave slot is shared: the last tab to autosave replaces it whole (a save is one transaction, never a mixture). No lease is taken — an earlier version of this document said one was; see phase 15. |
 | Corrupted or tampered import | Hash and schema checks fail and the import is refused with a specific reason. |
 | Unknown model or stale price table | Live mode refuses to start. |
 

@@ -11,7 +11,7 @@ import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings 
 import { SimClient } from "@/store/simClient";
 import { AF, AGENT_STRIDE, type CivicMark, type Recording, type StructureView, type ViewFrame } from "@/worker/protocol";
 import { JOURNAL, entryFrom, pageFor, type JournalEntry } from "./journal";
-import { chronicle, type ChronicleEntry } from "./text";
+import { chronicle, outcomeLine, tickLabel, type ChronicleEntry } from "./text";
 
 const CHRONICLE_CAP = 600;
 
@@ -251,7 +251,8 @@ export class GameController {
     if (frame.marks) this.marks = frame.marks;
     if (frame.traffic) {
       this.traffic = frame.traffic;
-      this.notePath(frame);
+      // the journal is of the world being lived: a path worn in the twin is not something witnessed here
+      if (frame.viewing === "world") this.notePath(frame);
     }
     this.renderer?.pushFrame(frame);
     const state = useGame.getState();
@@ -287,10 +288,17 @@ export class GameController {
           tps: frame.tps,
           treated: frame.treated,
           civic: frame.civic,
+          viewing: frame.viewing,
+          hasTwin: frame.hasTwin,
           replay: frame.replay,
+          history: frame.history,
         },
       };
-      if (frame.roster) patch.roster = frame.roster;
+      // the worker is the one that knows when the twin left (a re-run forks again at the tick it forked the first time)
+      const forkDay = frame.forkTick >= 0 ? Math.floor(frame.forkTick / TICKS_PER_DAY) : -1;
+      if (forkDay !== state.forkDay) patch.forkDay = forkDay;
+      // names in the Chronicle and the journal are those of the world being lived, whichever is on screen
+      if (frame.roster && frame.viewing === "world") patch.roster = frame.roster;
       // keep the Charters panel current while it is open
       const before = state.hud?.civic;
       if (state.panel === "civics" && (!before || before.proposals !== frame.civic.proposals || before.institutions !== frame.civic.institutions || frame.tick % 24 === 0)) void this.refreshCivics();
@@ -300,7 +308,7 @@ export class GameController {
         this.pendingChronicle = [];
       }
       state.set(patch);
-    } else if (frame.roster) {
+    } else if (frame.roster && frame.viewing === "world") {
       state.set({ roster: frame.roster });
     }
     if (state.selection && now - this.lastInspect > 280) {
@@ -397,7 +405,11 @@ export class GameController {
 
   // ───────────────────────── worlds
 
-  private async adopt(ready: Awaited<ReturnType<SimClient["init"]>>, vista: boolean): Promise<void> {
+  /**
+   * Show a world the worker has made ready. `sameHistory` is for moves within one history
+   * (a rewind, a return to a line set aside): journal pages up to the moment arrived at are kept.
+   */
+  private async adopt(ready: Awaited<ReturnType<SimClient["init"]>>, vista: boolean, sameHistory = false): Promise<void> {
     const renderer = this.ensureRenderer();
     renderer.setWorld(ready.world);
     this.epoch = ready.frame.epoch;
@@ -409,9 +421,12 @@ export class GameController {
     this.structures = ready.frame.structures ?? [];
     this.marks = ready.frame.marks ?? [];
     this.traffic = ready.frame.traffic;
+    const keptJournal = sameHistory ? useGame.getState().journal.filter((j) => j.tick <= ready.frame.tick) : [];
+    const twin = ready.controlSeries ?? [];
     useGame.getState().set({
-      journal: [],
+      journal: keptJournal,
       journalUnread: 0,
+      branches: [],
       world: ready.world,
       roster: ready.world.agents,
       hud: {
@@ -425,12 +440,16 @@ export class GameController {
         tps: 0,
         treated: ready.frame.treated,
         civic: ready.frame.civic,
+        viewing: ready.frame.viewing,
+        hasTwin: ready.frame.hasTwin,
         replay: ready.frame.replay,
+        history: ready.frame.history,
       },
       chronicle: [],
       series: ready.series,
-      controlSeries: [],
-      forkDay: -1,
+      controlSeries: twin,
+      // the worker knows when the twin left; nothing here is inferred from the lengths of lists
+      forkDay: ready.frame.forkTick >= 0 ? Math.floor(ready.frame.forkTick / TICKS_PER_DAY) : -1,
       compare: null,
       selection: null,
       agentDetail: null,
@@ -448,7 +467,14 @@ export class GameController {
     if (!this.client) return;
     const gen = ++this.generation;
     const config = makeConfig("first_light", 20261125 % 997, { startDay: 12 });
-    const ready = await this.client.init(config);
+    let ready: Awaited<ReturnType<SimClient["init"]>>;
+    try {
+      ready = await this.client.init(config);
+    } catch (err) {
+      // the visitor left the page (for the laboratory, say) while the island was still being shaped: nothing went wrong
+      if ((err as { code?: string }).code === "disposed") return;
+      throw err;
+    }
     if (gen !== this.generation) return; // the player already asked for another world
     await this.adopt(ready, true);
     // begin in the morning and let the day pass slowly, so the first impression is a lit, busy island
@@ -473,6 +499,17 @@ export class GameController {
     } catch (err) {
       useGame.getState().set({ phase: "setup", error: err instanceof Error ? err.message : String(err) });
     }
+  }
+
+  /**
+   * Open one cell of a registered study as a world. It is the world the laboratory ran: the
+   * same seed and configuration, so left untouched it reaches the published final state.
+   */
+  async openStudyCell(config: WorldConfig, label: string, days: number): Promise<void> {
+    await this.newWorld(config);
+    if (useGame.getState().phase !== "playing") return;
+    useGame.getState().set({ tutorialStep: -1 });
+    this.toast(`${label}: the world the laboratory ran. Left untouched for ${days} days it ends in the published state.`);
   }
 
   /**
@@ -509,6 +546,187 @@ export class GameController {
     } catch (err) {
       this.toast(err instanceof Error ? err.message : "That recording could not be opened.");
     }
+  }
+
+  // ───────────────────────── history: going back, world lines, files
+
+  /**
+   * Go back to a stored moment of this world. "rerun" plays those days again exactly as they
+   * went and checks the end against what was left; "branch" leaves from that moment on a new
+   * line (the present one is set aside, not lost); "branch_new_luck" does so with weather and
+   * chance drawn afresh.
+   */
+  async rewind(tick: number, mode: "rerun" | "branch" | "branch_new_luck"): Promise<void> {
+    if (!this.client) return;
+    const gen = ++this.generation;
+    try {
+      const ready = await this.client.rewind(tick, mode);
+      if (gen !== this.generation) return;
+      await this.adopt(ready, false, true);
+      useGame.getState().set({ phase: "playing", panel: "none" });
+      this.setSpeed(useGame.getState().speed);
+      const day = Math.floor(ready.frame.tick / TICKS_PER_DAY) + 1;
+      this.toast(
+        mode === "rerun"
+          ? `Back to the morning of day ${day}. Press play: these days will go exactly as they went.`
+          : mode === "branch"
+            ? `A new line from the morning of day ${day}. The line you left is kept in History.`
+            : `A new line from the morning of day ${day}, with new luck. The line you left is kept in History.`,
+      );
+      if (mode === "rerun") this.client.play();
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "That moment could not be returned to.");
+    }
+  }
+
+  async refreshBranches(): Promise<void> {
+    if (!this.client) return;
+    try {
+      useGame.getState().set({ branches: await this.client.branches() });
+    } catch {
+      useGame.getState().set({ branches: [] });
+    }
+  }
+
+  async switchBranch(id: string): Promise<void> {
+    if (!this.client) return;
+    const gen = ++this.generation;
+    try {
+      const ready = await this.client.switchBranch(id);
+      if (gen !== this.generation) return;
+      await this.adopt(ready, false, true);
+      useGame.getState().set({ phase: "playing", panel: "none" });
+      this.setSpeed(useGame.getState().speed);
+      this.toast("Returned to that line, at the moment it was left.");
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "That line could not be returned to.");
+    }
+  }
+
+  /** Download this world as a file that says exactly what it is and can be checked on the way back in. */
+  async exportWorld(): Promise<void> {
+    if (!this.client) return;
+    try {
+      const { text, manifest } = await this.client.exportWorld({ journal: useGame.getState().journal });
+      const name = `tabula-rasa-${manifest.scenario}-seed${manifest.seed}-day${manifest.day + 1}.json`;
+      const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      this.toast(`Exported ${name} · state ${manifest.snapshot.sha256.slice(0, 12)}…`);
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "This world could not be exported.");
+    }
+  }
+
+  /** Download the engine's event ledger for this world: every logged event in memory, with its recorded causes. */
+  async exportLedger(): Promise<void> {
+    if (!this.client) return;
+    try {
+      const world = useGame.getState().world;
+      const hud = useGame.getState().hud;
+      const r = await this.client.ledger();
+      const name = `tabula-rasa-${world?.config.scenario ?? "world"}-seed${world?.config.seed ?? 0}-day${(hud?.cal.day ?? 0) + 1}-ledger.jsonl`;
+      const url = URL.createObjectURL(new Blob([r.text], { type: "application/x-ndjson" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      const n = r.events.toLocaleString("en-US");
+      this.toast(r.complete ? `Ledger: ${n} events, every one since the first tick.` : `Ledger: ${n} events, from day ${Math.floor(r.firstTick / TICKS_PER_DAY) + 1} on. Earlier ones are not in memory.`);
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "The ledger could not be exported.");
+    }
+  }
+
+  /** Open a world file. Anything that is not exactly what was exported is refused, and nothing changes. */
+  async importWorld(file: File): Promise<void> {
+    if (!this.client) return;
+    if (file.size > 96 * 1024 * 1024) {
+      this.toast("That file is too large to be a world.");
+      return;
+    }
+    const gen = ++this.generation;
+    try {
+      const ready = await this.client.importWorld(await file.text());
+      if (gen !== this.generation) return;
+      await this.adopt(ready, false);
+      const journal = ready.imported?.extras.journal;
+      useGame.getState().set({ phase: "playing", panel: "none", tutorialStep: -1, journal: Array.isArray(journal) ? (journal as JournalEntry[]).filter((j) => j && typeof j.id === "string" && typeof j.tick === "number").slice(0, 64) : [] });
+      this.setSpeed(useGame.getState().speed);
+      const m = ready.imported?.manifest;
+      this.toast(m ? `Opened day ${m.day + 1} of seed ${m.seed}. Its contents match its manifest (${m.snapshot.sha256.slice(0, 12)}…).` : "Opened.");
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      this.toast(code === "corrupt" ? `Refused: ${err instanceof Error ? err.message : "the file is damaged"}.` : code === "schema" || code === "terrain_drift" ? "Refused: this file was made by an incompatible version." : `Refused: ${err instanceof Error ? err.message : "not a world file"}.`);
+    }
+  }
+
+  /**
+   * Look at the twin — the untouched world after an intervention, or the same island with the
+   * engine's own minds beside a recording — or back. The camera stays where it is and both
+   * worlds are at the same tick, so what changes on screen is exactly what differs.
+   */
+  viewTwin(on: boolean): void {
+    const hud = useGame.getState().hud;
+    if (!this.client || !hud || !hud.hasTwin || (hud.viewing === "twin") === on) return;
+    this.client.view(on);
+    this.lastInspect = 0;
+    useGame.getState().set({ panel: "none" });
+    this.toast(
+      on
+        ? hud.replay
+          ? "The same island and people with the engine's own minds deciding. Same day, same weather."
+          : "The untouched twin: the same island and people at the same moment, without what you did."
+        : hud.replay
+          ? "Back to the recording."
+          : "Back to your world.",
+    );
+  }
+
+  /**
+   * A world opened from a save has only its present in memory. It is deterministic, so its
+   * past can be lived again from its seed and the record of what the observer did; the result
+   * is kept only if it arrives at exactly the world that was loaded.
+   */
+  async rebuildPast(): Promise<void> {
+    if (!this.client) return;
+    try {
+      const r = await this.client.rebuild();
+      if (!r.ok) {
+        this.toast("Lived again from its seed, this world did NOT arrive where the save says it is. Nothing was kept: this save's past cannot be vouched for here.");
+        return;
+      }
+      const state = useGame.getState();
+      const have = new Set(state.chronicle.map((c) => c.id));
+      const older = r.events.map((e) => chronicle(e, state.world, state.roster)).filter((c): c is ChronicleEntry => c !== null && !have.has(c.id));
+      const merged = [...older, ...state.chronicle];
+      state.set({ series: r.series, controlSeries: r.controlSeries, chronicle: merged.length > CHRONICLE_CAP ? merged.slice(merged.length - CHRONICLE_CAP) : merged });
+      const days = Math.floor(r.ticks / TICKS_PER_DAY);
+      this.toast(`Lived again from the seed: ${days} day${days === 1 ? "" : "s"} in ${(r.ms / 1000).toFixed(1)} s, arriving at exactly this world. ${r.moments} moments can be returned to.`);
+      void this.refreshBranches();
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "Its past could not be rebuilt.");
+    }
+  }
+
+  /** The engine's recorded causes of a Chronicle entry, in plain sentences, nearest cause first. */
+  async trace(entry: ChronicleEntry): Promise<string[]> {
+    if (!this.client) return [];
+    const state = useGame.getState();
+    const chain = await this.client.trace(entry.id);
+    return chain
+      .slice(1)
+      .map((e) => outcomeLine(e, state.world, state.roster))
+      .filter((l): l is NonNullable<typeof l> => l !== null)
+      .map((l) => `${tickLabel(l.tick)} — ${l.text}`);
   }
 
   // ───────────────────────── time
@@ -597,6 +815,18 @@ export class GameController {
       return;
     }
     const result = await this.client.intervene(kind, params);
+    if (!result.ok && result.reason === "rerun") {
+      this.toast("These days are being re-run as they went. To change them, open History and leave from here on a new line.");
+      return;
+    }
+    if (!result.ok && result.reason === "twin") {
+      this.toast("You are looking at the untouched twin. Go back to your world to change it.");
+      return;
+    }
+    if (!result.ok && result.reason === "rebuild") {
+      this.toast("This world's past is being lived again. A moment.");
+      return;
+    }
     if (result.ok) {
       const state = useGame.getState();
       state.set({ forkDay: state.forkDay >= 0 ? state.forkDay : Math.floor(result.forkTick / TICKS_PER_DAY), panel: "none" });
@@ -631,6 +861,7 @@ export class GameController {
     if (next === "saves" || next === "menu") void this.refreshSaves();
     if (next === "chronicle") this.advanceTutorial(2);
     if (next === "journal") state.set({ journalUnread: 0 });
+    if (next === "history") void this.refreshBranches();
   }
 
   updateSettings(patch: Partial<Settings>): void {
@@ -694,11 +925,10 @@ export class GameController {
     try {
       const record = await getSave(id);
       if (!record) throw new Error("That save no longer exists.");
-      const ready = await this.client.load(record.snapshot, record.control, record.series, record.controlSeries);
+      const ready = await this.client.load(record.snapshot, record.control, record.series, record.controlSeries, record.hash);
       if (gen !== this.generation) return;
       await this.adopt(ready, false);
-      const forkDay = record.control ? Math.max(0, record.series.length - record.controlSeries.length) : -1;
-      useGame.getState().set({ phase: "playing", controlSeries: record.controlSeries, forkDay, tutorialStep: -1, journal: record.journal ?? [], journalUnread: 0 });
+      useGame.getState().set({ phase: "playing", tutorialStep: -1, journal: record.journal ?? [], journalUnread: 0 });
       this.setSpeed(useGame.getState().speed);
       this.toast(`Loaded “${record.name}”.`);
     } catch (err) {

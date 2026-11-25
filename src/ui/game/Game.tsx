@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cellConfig } from "@/lab/studies";
 import type { Quality } from "@/render/WorldRenderer";
 import { useGame } from "@/store/game";
 import { AtlasPanel } from "./Atlas";
@@ -10,7 +11,8 @@ import { ComparePanel } from "./Compare";
 import { ControllerContext } from "./context";
 import { GameController } from "./controller";
 import styles from "./game.module.css";
-import { Coach, RecordingBar, Timebar, Toast, TopBar } from "./Hud";
+import { Coach, RecordingBar, Timebar, Toast, TopBar, TwinBar } from "./Hud";
+import { HistoryPanel, RerunBar } from "./History";
 import { Inspector } from "./Inspector";
 import { JournalPanel } from "./Journal";
 import { AffordancesPanel, Chronicle, Interventions, MenuPanel } from "./Panels";
@@ -42,9 +44,13 @@ export function Game() {
     const pr = Number(new URLSearchParams(window.location.search).get("pr"));
     if (Number.isFinite(pr) && pr >= 0.4 && pr <= 3) controller.setPixelRatioCap(pr);
     controller.attach(canvas, overlay, nameTag);
-    // `?recording=<name>` opens straight into a recorded run instead of the title
-    const recording = new URLSearchParams(window.location.search).get("recording");
+    // `?recording=<name>` opens straight into a recorded run instead of the title;
+    // `?study=…&condition=…&seed=…` opens one cell of a registered study as a world to watch
+    const params = new URLSearchParams(window.location.search);
+    const recording = params.get("recording");
+    const cell = params.get("study") ? cellConfig((params.get("study") ?? "").slice(0, 40), (params.get("condition") ?? "").slice(0, 40), Number(params.get("seed"))) : null;
     if (recording) void controller.openRecording(recording.slice(0, 80));
+    else if (cell) void controller.openStudyCell(cell.config, `${cell.study.title.split(" — ")[0]} · ${cell.condition.label} · seed ${cell.config.seed}`, cell.study.days);
     else void controller.startVista();
     window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), soundLevel: () => controller.soundLevel() };
     return () => {
@@ -67,7 +73,7 @@ export function Game() {
         return;
       }
       if (state.phase !== "playing") return;
-      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings" || state.panel === "atlas" || state.panel === "journal";
+      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings" || state.panel === "atlas" || state.panel === "journal" || state.panel === "history";
       if (modal) return;
       const rig = controller.camera();
       switch (e.key) {
@@ -100,7 +106,11 @@ export function Game() {
           break;
         case "k":
         case "K":
-          if (state.forkDay >= 0) controller.openPanel("compare");
+          if (state.forkDay >= 0 || state.hud?.hasTwin) controller.openPanel("compare");
+          break;
+        case "x":
+        case "X":
+          if (state.hud?.hasTwin) controller.viewTwin(state.hud.viewing !== "twin");
           break;
         case "f":
         case "F":
@@ -109,6 +119,10 @@ export function Game() {
         case "l":
         case "L":
           controller.openPanel("atlas");
+          break;
+        case "h":
+        case "H":
+          controller.openPanel("history");
           break;
         case "j":
         case "J":
@@ -187,6 +201,8 @@ export function Game() {
           <div className={styles.hud}>
             <TopBar />
             <RecordingBar />
+            <RerunBar />
+            <TwinBar />
             {panel === "chronicle" ? <Chronicle /> : null}
             <Inspector />
             <Coach />
@@ -200,6 +216,7 @@ export function Game() {
         {playing && panel === "menu" ? <MenuPanel /> : null}
         {playing && panel === "atlas" ? <AtlasPanel /> : null}
         {playing && panel === "journal" ? <JournalPanel /> : null}
+        {playing && panel === "history" ? <HistoryPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
         {panel === "recordings" ? <RecordingsPanel /> : null}
         <Toast />

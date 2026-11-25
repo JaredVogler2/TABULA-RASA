@@ -1,6 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { capture } from "./capture";
 
 /**
  * Phase 04 gate: the complete offline loop with real clicks and taps.
@@ -14,13 +13,9 @@ import { join } from "node:path";
 
 // Screenshots go to the (untracked) test output folder unless a phase's evidence is being recorded:
 //   E2E_SHOTS=evidence/phase-04/e2e pnpm e2e
-const SHOTS = process.env.E2E_SHOTS ?? "test-results/shots";
 
-async function shot(page: Page, project: string, name: string): Promise<void> {
-  mkdirSync(join(SHOTS, project), { recursive: true });
-  // JPEG keeps the committed evidence small; the test asserts on the DOM, never on pixels
-  await page.screenshot({ path: join(SHOTS, project, `${name}.jpg`), type: "jpeg", quality: 84 });
-}
+// JPEG keeps the committed evidence small; the test asserts on the DOM, never on pixels
+const shot = (page: Page, project: string, name: string): Promise<void> => capture(page, project, name);
 
 async function tick(page: Page): Promise<number> {
   const text = (await page.getByTestId("tick").textContent()) ?? "";

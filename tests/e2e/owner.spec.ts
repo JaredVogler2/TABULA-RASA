@@ -1,6 +1,5 @@
 import { expect, test, type Cookie, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { capture } from "./capture";
 import { E2E_PASSPHRASE } from "./constants";
 
 /**
@@ -13,13 +12,9 @@ import { E2E_PASSPHRASE } from "./constants";
  * tests are skipped by name; the bundled recording needs nothing and always runs.
  */
 const HAS_DB = Boolean(process.env.TEST_DATABASE_URL) || Boolean(process.env.E2E_BASE_URL);
-const SHOTS = process.env.E2E_SHOTS ?? "test-results/shots";
 
-async function shot(page: Page, project: string, name: string, fullPage = false): Promise<void> {
-  mkdirSync(join(SHOTS, project), { recursive: true });
-  // whole-page captures of a long console are large at a phone's pixel density: a lower quality keeps the evidence small
-  await page.screenshot({ path: join(SHOTS, project, `${name}.jpg`), type: "jpeg", quality: fullPage ? 62 : 84, fullPage });
-}
+// whole-page captures of a long console are large at a phone's pixel density: a lower quality keeps the evidence small
+const shot = (page: Page, project: string, name: string, fullPage = false): Promise<void> => capture(page, project, name, { fullPage, quality: fullPage ? 62 : 84 });
 
 /** Click (or tap) a living citizen in the 3D world at its real on-screen position. */
 async function clickCitizen(page: Page, touch: boolean): Promise<void> {

@@ -141,13 +141,14 @@
   text-overflow: ellipsis;
 }
 
+/* the status never gives up room: when the bar is short, the world's label beside the name is what shortens */
 .status {
   display: flex;
   align-items: center;
   gap: 2px;
   padding: 4px 6px;
   margin-left: auto;
-  min-width: 0;
+  flex: none;
 }
 .stat {
   display: flex;
@@ -181,6 +182,7 @@
   display: flex;
   gap: 4px;
   padding: 4px;
+  flex: none;
 }
 
 .iconButton {
@@ -238,24 +240,42 @@
   box-shadow: 0 0 0 2px var(--ink-900);
 }
 
+/* the fork and its twin: a pill of its own between the name and the status */
+.forkGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  flex: none;
+  border-color: rgba(246, 197, 126, 0.45);
+}
 .forked {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 34px;
   padding: 0 11px;
   border-radius: 999px;
   border: 1px solid rgba(246, 197, 126, 0.45);
   background: rgba(246, 197, 126, 0.12);
   color: var(--ember-300);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 560;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
+.forked:hover {
+  background: rgba(246, 197, 126, 0.22);
+}
 .forked svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.forked[aria-pressed="true"] {
+  background: var(--ember-300);
+  border-color: var(--ember-300);
+  color: var(--ink-900);
 }
 
 /* ───────── recording banner ───────── */
@@ -296,6 +316,24 @@
 }
 .recording[data-state="mismatch"] {
   border-color: var(--berry-400);
+}
+.recording[data-state="twin"] {
+  border-color: var(--ember-300);
+  background: rgba(60, 40, 14, 0.86);
+}
+.bannerButton {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 197, 126, 0.55);
+  background: rgba(246, 197, 126, 0.14);
+  color: var(--ember-300);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bannerButton:hover {
+  background: rgba(246, 197, 126, 0.26);
 }
 .recording[data-state="mismatch"] .recordingState {
   color: #ffb3c0;
@@ -689,6 +727,7 @@
   color: var(--text-on-paper);
   font-size: 14px;
   font-weight: 560;
+  text-decoration: none;
   transition: background 0.16s var(--ease), border-color 0.16s var(--ease), transform 0.1s var(--ease);
 }
 .button:hover {
@@ -1280,6 +1319,54 @@
   font-weight: 600;
 }
 
+/* ───────── the top bar on windows that are not wide ─────────
+   Nothing in it may slide under its neighbour or spill out of its own bar. The breakpoints
+   come from measuring the bar in its widest state (forked on a two-digit day, twin available):
+   name 246 px (127 without the world's label), fork pill 239 (201 without "Twin"), status 369
+   (265 without the season and the weather's name), tools 684 (623 without "Compare", 438 as
+   icons). Words give way in this order, least needed first; each still has its icon and its
+   tooltip. `scripts/topbar.mjs` re-measures every width and is the test of this block. */
+
+@media (max-width: 1599px) {
+  .labelOptional,
+  .statOptional {
+    display: none;
+  }
+}
+@media (max-width: 1439px) {
+  .twinLabel {
+    display: none;
+  }
+}
+@media (max-width: 1339px) {
+  .tools .iconButton > span:not(:global(.sr-only)) {
+    display: none;
+  }
+}
+@media (max-width: 1199px) {
+  .worldLabel {
+    display: none;
+  }
+}
+/* too narrow for one row: the status takes a row of its own, as it does on a phone, and has room for its words again */
+@media (max-width: 1119px) {
+  .topbar {
+    flex-wrap: wrap;
+  }
+  .status {
+    margin-left: 0;
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .statOptional {
+    display: inline;
+  }
+  .tools {
+    margin-left: auto;
+  }
+}
+
 /* ───────── phones and narrow windows ───────── */
 
 @media (max-width: 880px) {
@@ -1305,6 +1392,13 @@
     justify-content: space-between;
     overflow-x: auto;
     scrollbar-width: none;
+  }
+  /* the fork pill sits beside the name on the first row; the tools take the second */
+  .forkGroup {
+    margin-left: auto;
+  }
+  .forked {
+    height: 38px;
   }
   .tools {
     margin-left: auto;
@@ -1397,6 +1491,32 @@
 }
 
 /* phones held upright: the clock gets its own row so that every speed stays reachable */
+/* the narrowest phones: the season and the weather's name go again, so that the status row needs no sideways scroll */
+@media (max-width: 380px) {
+  .statOptional {
+    display: none;
+  }
+}
+/* the smallest screens: tools at the least a finger can hit, the fork badge down to its day,
+   and below 340 px History reached from the menu instead of the bar */
+@media (max-width: 359px) {
+  .tools {
+    gap: 2px;
+  }
+  .tools .iconButton {
+    min-width: 44px;
+    padding: 0;
+  }
+  .forkWord {
+    display: none;
+  }
+}
+@media (max-width: 340px) {
+  .toolTertiary {
+    display: none;
+  }
+}
+
 @media (max-width: 560px) {
   /* the journal and the sound switch are in the menu here, to keep every remaining target a full finger wide */
   .toolSecondary {
@@ -1447,6 +1567,69 @@
   .titleMark {
     font-size: clamp(40px, 9vw, 72px);
   }
+}
+
+/* ───────── history ───────── */
+
+.lines {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 560px;
+  margin: 2px 0 10px;
+}
+.moments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.moment {
+  min-height: var(--touch);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(93, 67, 43, 0.35);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-on-paper);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.moment[aria-checked="true"] {
+  background: var(--umber-900);
+  border-color: var(--umber-900);
+  color: var(--paper-50);
+}
+.whyButton {
+  display: block;
+  margin: 0 0 4px 58px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--umber-700);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.trace {
+  margin: 0 0 8px 58px;
+  padding: 8px 12px 8px 28px;
+  border-left: 2px solid var(--ember-500);
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-on-paper);
+  display: grid;
+  gap: 4px;
+}
+.traceNote {
+  list-style: none;
+  margin-left: -16px;
+  font-size: 12px;
+  color: var(--text-on-paper-muted);
+  font-style: italic;
 }
 
 /* ───────── field journal ───────── */

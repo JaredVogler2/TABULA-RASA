@@ -28,6 +28,7 @@ export function emptyMetrics(): MetricsAcc {
     rejectedIntents: 0,
     utterances: 0,
     decisionsBySource: {},
+    deliberations: 0,
     sources: new Array<number>(ITEM_COUNT).fill(0),
     sinks: new Array<number>(ITEM_COUNT).fill(0),
   };

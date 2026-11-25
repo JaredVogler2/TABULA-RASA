@@ -78,6 +78,12 @@ export interface WorldConfig {
    */
   externalShare: number;
   cadence: number; // ticks between strategic deliberations (the least interval between two decisions by one mind)
+  /**
+   * Ticks a baseline planner waits between two deliberations; in between it acts on reflex.
+   * 0 (the reference setting) means it deliberates whenever its plan runs out. This is the
+   * registered "cognitive cadence" factor for the planner (protocol §3, deviation 2026-11-25).
+   */
+  planEvery: number;
 
   // affordance switches
   institutions: InstitutionMode;
@@ -123,6 +129,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   plannerShare: 1000,
   externalShare: 0,
   cadence: 24,
+  planEvery: 0,
   institutions: "grammar_search",
   escrow: true,
   lockableStores: true,
@@ -264,6 +271,9 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   intInRange("learningRate", cfg.learningRate, 0, 4000);
   intInRange("memoryCapacity", cfg.memoryCapacity, 4, 256);
   intInRange("cadence", cfg.cadence, 1, 960);
+  // configurations written before the planner had a clock (recordings, stored runs) mean "no clock"
+  if ((cfg as { planEvery?: number }).planEvery === undefined) cfg.planEvery = 0;
+  intInRange("planEvery", cfg.planEvery, 0, 960);
   if (cfg.spawn !== "dispersed" && cfg.spawn !== "clustered") throw new Error("config.spawn invalid");
   if (cfg.policy !== "reflex" && cfg.policy !== "planner") throw new Error("config.policy invalid");
   intInRange("plannerShare", cfg.plannerShare, 0, 1000);

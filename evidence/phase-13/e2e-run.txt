@@ -1,0 +1,48 @@
+# pnpm e2e — full suite, production build, clean checkout of the phase 13–14 commit, PostgreSQL 16 (schema e2e)
+# 2026-11-25T13:00Z · headless Chromium (software WebGL) · desktop 1366x768 and phone emulation 390x844
+# TEST_DATABASE_URL set; LIVE_ENABLED=false on the server; no provider reachable. WebServer log lines removed.
+# Skipped by design: on the phone project, the keyboard test, the charters test and the spend-authorization test (each runs once, on desktop).
+
+
+> tabula-rasa@0.1.0 e2e /tmp/claude-0/-home-user-TABULA-RASA/8acd06b1-6adc-5629-81f0-d4e4ae7e5445/scratchpad/verify
+> playwright test --trace off
+
+
+Running 28 tests using 1 worker
+
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:32:1 › no serious or critical accessibility violations on any screen or panel (3.8m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (225ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (22ms)
+[history desktop] 95s forked, top bar measured · 127s twin seen · 169s watched again · 204s new line, return, compare · 308s saved, reloaded, past rebuilt, re-run from it · 342s files out and in · 370s recorded cause
+  ✓   4 [desktop] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (6.2m)
+  ✓   5 [desktop] › tests/e2e/lab.spec.ts:27:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (19.4s)
+  ✓   6 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.4m)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (264ms)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.3s)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console (673ms)
+  ✓  10 [desktop] › tests/e2e/owner.spec.ts:192:1 › a visitor replays the published run from its record, and every epoch matches (10.8s)
+  ✓  11 [desktop] › tests/e2e/owner.spec.ts:217:1 › the bundled recording plays from the title screen and matches its record to the end (60.0s)
+  ✓  12 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.4m)
+  ✓  13 [desktop] › tests/e2e/play.spec.ts:182:1 › the keyboard alone can drive the game (23.1s)
+  ✓  14 [desktop] › tests/e2e/play.spec.ts:229:1 › charters are shown in plain words, with how they came about (1.2m)
+  ✓  15 [mobile] › tests/e2e/a11y.spec.ts:32:1 › no serious or critical accessibility violations on any screen or panel (3.4m)
+  ✓  16 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (262ms)
+  ✓  17 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (20ms)
+[history mobile] 83s forked, top bar measured · 116s twin seen · 163s watched again · 209s new line, return, compare · 309s saved, reloaded, past rebuilt, re-run from it · 341s files out and in · 372s recorded cause
+  ✓  18 [mobile] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (6.2m)
+  ✓  19 [mobile] › tests/e2e/lab.spec.ts:27:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (24.6s)
+  ✓  20 [mobile] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.3m)
+  ✓  21 [mobile] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (145ms)
+  ✓  22 [mobile] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.4s)
+  -  23 [mobile] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console
+  ✓  24 [mobile] › tests/e2e/owner.spec.ts:192:1 › a visitor replays the published run from its record, and every epoch matches (9.8s)
+  ✓  25 [mobile] › tests/e2e/owner.spec.ts:217:1 › the bundled recording plays from the title screen and matches its record to the end (46.2s)
+  ✓  26 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.0m)
+  -  27 [mobile] › tests/e2e/play.spec.ts:182:1 › the keyboard alone can drive the game
+  -  28 [mobile] › tests/e2e/play.spec.ts:229:1 › charters are shown in plain words, with how they came about
+
+  Slow test file: [mobile] › tests/e2e/history.spec.ts (6.2m)
+  Slow test file: [desktop] › tests/e2e/history.spec.ts (6.2m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  3 skipped
+  25 passed (33.1m)

@@ -28,6 +28,8 @@ export { scratchOf } from "./sim/scratch";
 export { hasSeen } from "./sim/pathfind";
 
 export { SnapshotError, cloneWorld, forkWorld, restoreWorld, serializeWorld, snapshotHash, worldDigest } from "./save/snapshot";
+export { MAX_BUNDLE_CHARS, diffManifests, manifestOf, openBundle, packBundle, replayTo } from "./save/history";
+export type { BundleExtras, Manifest, OpenedBundle, WorldBundle } from "./save/history";
 export { commonsHealthPermille, giniPermille, summarize } from "./metrics/accumulate";
 export type { Summary } from "./metrics/accumulate";
 
