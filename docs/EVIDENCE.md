@@ -328,3 +328,15 @@ sound, by ear; any request to the Anthropic API; any deployment. `docs/QA_REPORT
 | Verified bibliography | `docs/LITERATURE.md` | 57 entries, each verified by a research sub-agent against Crossref / arXiv / publisher records on 2026-11-25; corrections and omissions are noted in the file |
 | Vercel platform facts | `docs/research/vercel-platform.md` | compiled from official documentation on 2026-11-25; unconfirmed items listed at the end of the file; nothing tested live |
 | Anthropic API facts and prices | `docs/research/anthropic-api.md` | compiled from official documentation on 2026-11-25; **no API calls made**; discrepancies with cached references listed in the file |
+
+## Phase 18 — the release, prepared and not made (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| With no variable set at all, the production build serves the game on a desktop and a phone, refuses a stranger at every route that could spend or change anything, refuses another origin, replays the bundled recording to a match, sends the browser nothing that belongs on the server and asks nothing of any other origin | `pnpm release:check -- http://127.0.0.1:3299 --fast --out <dir>`, against `next start` in an empty environment | `evidence/phase-18/release-check-local.{txt,json}`, `local-*.jpg` | 25 of 25 checks; a first visit transfers 697 KB | **A deployment.** Vercel's build and runtime; a network; a real device. |
+| The platform facts the deployment document rests on are quotations | — | `docs/research/vercel-platform.md` (sources and dates beside each) | read 2026-11-25 | That they still hold on the day of deploying. |
+| No project for this repository exists in the owner's Vercel account, and the account can see the repository | a read-only look at the account | — | none on 2026-11-25; the repository is visible, public, default branch `main` | — |
+
+**Not run:** any deployment; any hosted database; any check against a deployed address. Phase 18 is BLOCKED on
+the owner's approval, and `docs/DEPLOYMENT.md` §12 is the checklist that will be filled in when it is given.
+

@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": "22.x"
   },
   "packageManager": "pnpm@10.28.0",
   "scripts": {
@@ -26,6 +26,7 @@
     "requests": "tsx scripts/requests.ts",
     "mutants": "tsx scripts/mutants.ts",
     "live:smoke": "tsx --conditions=react-server scripts/live-smoke.ts",
+    "release:check": "tsx scripts/release-check.ts",
     "db:migrate": "tsx --conditions=react-server scripts/db-migrate.ts",
     "owner:hash": "tsx --conditions=react-server scripts/owner-hash.ts",
     "scan:secrets": "tsx scripts/scan-secrets.ts",

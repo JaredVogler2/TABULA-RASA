@@ -1181,3 +1181,22 @@ rollback. Read this file before modifying any contract it mentions.
   the public list of recordings is the only route a stranger can make pay it.
 - **Rollback.** `openPostgres` in `src/server/db.ts`: restore the `options` string and `pool.query`. Do not
   roll back the listener.
+
+## D-048 — The site runs on the Node.js the tests ran on (2026-11-25)
+
+- **Problem.** `engines.node` said `>=22.12.0`. Vercel reads that field to choose the runtime, and a range
+  like it selects the newest major the platform offers — 26.x on the day its documentation was read
+  (`docs/research/vercel-platform.md` §2). Every test, benchmark, study and replay in this repository ran on
+  Node 22. The server replays worlds and compares digests; what it runs on should be what was tested.
+- **Original proposal.** `>=22.12.0`, from phase 02, when nothing was being deployed.
+- **Alternatives.** Leave the range and meet an untested runtime in production. Test on 26 as well and keep
+  the range: right, later; that version is not in the development container or in CI.
+- **Decision.** `"node": "22.x"`. The platform then deploys the latest 22.x; CI already pins 22.
+- **Evidence.** The platform's documentation, as quoted in the research file; `.github/workflows/ci.yml`
+  (`node-version: 22`); `evidence/*` (Node v22.23.5 in every recorded environment).
+- **Affected acceptance tests.** None.
+- **Cost / risks.** A developer on another major gets a warning from the package manager, not an error
+  (nothing here sets `engine-strict`). Node 22 will leave the platform's list one day: moving on means running
+  `pnpm check`, `pnpm e2e` and `pnpm study -- --verify` on the new major, then changing this one line.
+- **Rollback.** That line.
+

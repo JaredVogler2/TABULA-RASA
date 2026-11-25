@@ -4,13 +4,14 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Current state (2026-11-25)
 
-- **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/2
-  (pull request 1, phases 01–05, 09 and 10, was merged to `main` by the owner on 2026-11-25).
+- **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
+  01–05, 09, 10) and 2 (phases 06–08, 11–14) were merged to `main` by the owner on 2026-11-25; phases 15–16
+  and the release preparation are in the pull request that follows them.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
-  measurable here) · 17 BLOCKED (no spend authorized) · **next: 18** (release: prepare, then ask the owner
-  before deploying anything), 19, 20.
+  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (prepared and rehearsed; **nothing is
+  deployed** until the owner says so) · **next: 19, 20.**
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
   new confirmatory result from seeds 9000–9031: they are spent.
@@ -53,6 +54,8 @@ node scripts/topbar.mjs http://127.0.0.1:3210 /tmp/topbar   # the top bar at 25 
 node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low   # art stills
 # what is configured for live calls, and what is missing (makes no request, changes nothing)
 pnpm live:smoke
+# is a running site what a release should be? (a deployment's address, or a local `next start`; signs in nowhere)
+pnpm release:check -- http://127.0.0.1:3299 --fast
 ```
 
 Expected at this commit: `pnpm check` exits 0 with 470 unit tests in 37 files (ten need PostgreSQL and are skipped
@@ -61,7 +64,7 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
 ## Execution order (D-001)
 
 01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → 11 (partial) → 12 (partial) →
-13 (partial) → 14 ✔ → 15 (partial) → 16 ✔ → 17 (blocked) → **18** → 19 → 20
+13 (partial) → 14 ✔ → 15 (partial) → 16 ✔ → 17 (blocked) → 18 (blocked: prepared) → **19** → 20
 
 ## Where things live
 
@@ -72,7 +75,8 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
 - `src/server/**` — server only: `ledger.ts`, `auth.ts` + `http.ts` (the gate), `anthropic.ts` (live adapter
   and the guard around its `fetch`), `runs.ts` (lease, stored answers, recovery of interrupted calls, commit),
   `smoke.ts` (the live smoke test; `scripts/live-smoke.ts` is its only way in), `env.ts` (what live mode
-  needs, the ceiling), `api.ts` (the owner API as functions; routes in `src/app/api` only forward).
+  needs, the ceiling), `api.ts` (the owner API as functions; routes in `src/app/api` only forward), `db.ts`
+  (PostgreSQL or PGlite; every transaction opens with its own limits, so it works through a pooler: D-047).
   `db/migrations/*.sql` is the schema's source; run `pnpm gen:migrations` after changing it.
 - `src/worker/sim.worker.ts` — owns the world, its twin and its history (moments, lines set aside, re-runs,
   rebuilding a loaded world's past, files, the event ledger); posts view frames of either world; plays
@@ -98,10 +102,13 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
 
 ## Next actions
 
-1. **Phase 18, release.** Prepare everything that does not deploy: the deployment guide, the environment
-   variable list, the checks to run against a preview. **Then ask the owner** before creating a Vercel
-   project, a database or anything else that could be billed (`CLAUDE.md`: no paid infrastructure without
-   approval). If there is no access or no approval, write the exact steps and mark the phase unverified.
+1. **Phase 18, release: ask the owner, then deploy.** Everything that does not deploy is done:
+   `docs/DEPLOYMENT.md` (levels, costs, variables, steps, checks, rollback, privacy), `pnpm release:check`, and
+   a rehearsal of it against the production build with no variable set (`evidence/phase-18/`). What remains
+   needs the owner's word: creating the Vercel project (a public site under their account) and, for the
+   console, a database (a billable integration even at $0). Once given: create the project from `main`, run
+   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`
+   and `PROGRESS.md`. Until then the phase is BLOCKED and nothing may say "deployed".
 2. **Phase 19** (scorecard) and **phase 20** (redesign and handoff). Candidates noted along the way: scenario
    aims that are evaluated; a per-shore measure for Two Shores; a resources overlay; a whole-society view of
    ties; a separate host for the owner console (D-039, D-042).
@@ -120,7 +127,8 @@ without `TEST_DATABASE_URL`). E2E: the full run of the suite in a clean checkout
 
 ## Open questions for the owner (none of them blocks offline work)
 
-- **Whether to deploy at all**, and where the database would live (phase 18). Both may cost money.
+- **Whether to deploy**, and at which level (`docs/DEPLOYMENT.md` §1): the game alone needs nothing and costs
+  nothing on the Hobby plan, whose terms are "personal or non-commercial use"; the console needs a database.
 - **Which model?** `ANTHROPIC_MODEL` has no default. Per-call upper bounds are in `docs/COST.md`.
 - **A ceiling for the deployment** (`BUDGET_CEILING_USD`), **an amount for a smoke test** (at most $2), then
   separately for a pilot.
