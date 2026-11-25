@@ -27,7 +27,8 @@ import {
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { StaticWorldView } from "@/worker/protocol";
 import { valueNoise, type HeightField } from "./heightfield";
-import { CANOPY_BY_SEASON, CONIFER_BY_SEASON, GRASS_BY_SEASON, rand01 } from "./palette";
+import { type KnowledgeUniforms, veil } from "./overlays";
+import { CANOPY_BY_SEASON, CONIFER_BY_SEASON, GRASS_BY_SEASON, rand01, wearOf } from "./palette";
 
 const NODE = { berry: 0, root: 1, tree: 2, reed: 3, stone: 4, clay: 5, fish: 6 } as const;
 const BIOME = { shore: 1, wetland: 2, meadow: 3, forest: 4, scrub: 5, highland: 6 } as const;
@@ -144,7 +145,12 @@ function rockGeometry(seed: number, simple = false): BufferGeometry {
 }
 
 function clayGeometry(seed: number): BufferGeometry {
-  const g = blob(0.42, 1, seed, 0.36, 0.2).translate(0, 0.1, 0);
+  const g = mergeGeometries([
+    blob(0.24, 1, seed, 0.42, 0.22).translate(0, 0.035, 0),
+    blob(0.17, 1, seed + 3, 0.45, 0.22).translate(0.2, 0.025, 0.1),
+    blob(0.15, 0, seed + 6, 0.45, 0.2).translate(-0.17, 0.02, 0.13),
+    blob(0.12, 0, seed + 9, 0.5, 0.2).translate(-0.04, 0.02, -0.2),
+  ])!;
   const clay = new Color("#a8623f");
   return paint(g, (x, y, z, out) => {
     const band = 0.5 + 0.5 * Math.sin(y * 42 + x * 3);
@@ -265,6 +271,10 @@ export interface FloraParts {
   setSeason(yearPos: number, snow: number): void;
   /** World position and radius of a node's visual, for picking and focus. */
   nodeAnchor(node: number): { x: number; y: number; z: number };
+  /** Where the principal visible thing on a tile stands and how wide it is (null if the tile holds none). */
+  spotAt(tile: number): { x: number; z: number; r: number } | null;
+  /** Foot traffic per tile, once a simulated day: grass is trodden down where people really walk. */
+  setTraffic(traffic: Uint16Array): void;
   dispose(): void;
 }
 
@@ -279,7 +289,7 @@ interface NodeVisual {
   cap: number;
 }
 
-export function buildFlora(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high"): FloraParts {
+export function buildFlora(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high", know?: KnowledgeUniforms): FloraParts {
   const seed = view.config.seed;
   const uniforms: FloraUniforms = { uTime: { value: 0 }, uWind: { value: 1 } };
   const foliage = swayMaterial(uniforms, { sway: 1 });
@@ -287,6 +297,7 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
   const stiff = swayMaterial(uniforms, { sway: 0, rough: 0.9 });
   const grassMat = swayMaterial(uniforms, { sway: 2.2, flat: false, rough: 0.95 });
   const berryMat = new MeshStandardMaterial({ color: "#b3273f", roughness: 0.45, metalness: 0, emissive: "#3a0a12", emissiveIntensity: 0.35 });
+  if (know) for (const m of [foliage, wood, stiff, grassMat, berryMat]) veil(m, know);
 
   const simple = quality === "low";
   const geoms = {
@@ -313,6 +324,8 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
   const visuals: NodeVisual[] = [];
   const nodeCount = view.nodeKind.length;
   const { w, h } = view;
+  // the thing a person stands beside when working a tile: the last tree to fall, the bush, the largest rock
+  const spots = new Map<number, { x: number; z: number; r: number }>();
 
   const place = (v: NodeVisual, key: LayerKey, dx: number, dz: number, scale: number, threshold: number, rot: number, dy = 0): void => {
     const x = v.x + dx;
@@ -340,6 +353,8 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
         const conifer = biome === BIOME.highland || biome === BIOME.scrub || r(t * 7 + 5) < 0.16;
         // trees thin out as wood is taken: each tree disappears below its own stock threshold
         const threshold = t / trees;
+        // someone felling it stands out at the edge of the crown, where they can be seen from above
+        if (t === 0) spots.set(ty * w + tx, { x: v.x + dx, z: v.z + dz, r: 0.34 * s });
         if (conifer) {
           place(v, "trunkTall", dx, dz, s, threshold, rot);
           place(v, "conifer", dx, dz, s, threshold, rot);
@@ -354,6 +369,7 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
       const dz = jitter(2, 0.3);
       const s = 0.95 + 0.4 * r(3);
       place(v, "bush", dx, dz, s, -1, r(4) * 6.28);
+      spots.set(ty * w + tx, { x: v.x + dx, z: v.z + dz, r: 0.27 * s });
       const berries = 8;
       for (let b = 0; b < berries; b++) {
         const a = r(10 + b) * Math.PI * 2;
@@ -362,12 +378,16 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
       }
     } else if (kind === NODE.root) {
       for (let p = 0; p < 4; p++) place(v, "root", jitter(p * 3 + 1, 0.6), jitter(p * 3 + 2, 0.6), 0.85 + 0.5 * r(p * 3 + 3), p / 4, r(p + 9) * 6.28);
+      spots.set(ty * w + tx, { x: v.x + jitter(1, 0.6), z: v.z + jitter(2, 0.6), r: 0.1 });
     } else if (kind === NODE.reed) {
       for (let p = 0; p < 4; p++) place(v, "reed", jitter(p * 3 + 1, 0.65), jitter(p * 3 + 2, 0.65), 0.8 + 0.55 * r(p * 3 + 3), p / 4, r(p + 9) * 6.28);
+      spots.set(ty * w + tx, { x: v.x + jitter(1, 0.65), z: v.z + jitter(2, 0.65), r: 0.12 });
     } else if (kind === NODE.stone) {
       for (let p = 0; p < 3; p++) place(v, p === 1 ? "rock2" : "rock", jitter(p * 3 + 1, 0.5), jitter(p * 3 + 2, 0.5), 0.9 + 0.7 * r(p * 3 + 3), p / 3, r(p + 9) * 6.28);
+      spots.set(ty * w + tx, { x: v.x + jitter(1, 0.5), z: v.z + jitter(2, 0.5), r: 0.2 * (0.9 + 0.7 * r(3)) });
     } else if (kind === NODE.clay) {
       place(v, "clay", jitter(1, 0.2), jitter(2, 0.2), 1 + 0.3 * r(3), -1, r(4) * 6.28);
+      spots.set(ty * w + tx, { x: v.x + jitter(1, 0.2), z: v.z + jitter(2, 0.2), r: 0.2 * (1 + 0.3 * r(3)) });
     }
     visuals.push(v);
   }
@@ -389,7 +409,7 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
   });
 
   // ── grass (decoration by habitat)
-  const grassTiles: { x: number; z: number; s: number; rot: number }[] = [];
+  const grassTiles: { x: number; z: number; s: number; rot: number; tile: number; worn: number }[] = [];
   const perTile = quality === "low" ? 2 : quality === "medium" ? 4 : 6;
   for (let ty = 0; ty < h; ty++) {
     for (let tx = 0; tx < w; tx++) {
@@ -402,10 +422,33 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
         const x = tx + rand01(i, k + 20) - w / 2;
         const z = ty + rand01(i, k + 40) - h / 2;
         if (field.heightAt(x, z) < 0.12) continue;
-        grassTiles.push({ x, z, s: 0.55 + 0.75 * rand01(i, k + 60), rot: rand01(i, k + 80) * 6.28 });
+        grassTiles.push({ x, z, s: 0.55 + 0.75 * rand01(i, k + 60), rot: rand01(i, k + 80) * 6.28, tile: i, worn: 0 });
       }
     }
   }
+  // ── pebbles where fresh water meets its bank
+  const pebbleSpots: { x: number; z: number; s: number; rot: number; shade: number }[] = [];
+  const pebblesPerTile = quality === "low" ? 3 : 7;
+  for (let ty = 0; ty < h; ty++) {
+    for (let tx = 0; tx < w; tx++) {
+      const i = ty * w + tx;
+      for (let k = 0; k < pebblesPerTile * 3 && pebbleSpots.length < 6000; k++) {
+        const x = tx + rand01(i * 3 + seed, k + 300) - w / 2;
+        const z = ty + rand01(i * 5 + seed, k + 400) - h / 2;
+        const wet = field.wetAt(x, z);
+        // the strip between dry ground and the water's edge
+        if (wet < 0.08 || wet > 0.42) continue;
+        pebbleSpots.push({ x, z, s: 0.5 + 1.1 * rand01(i, k + 500) * rand01(i, k + 520), rot: rand01(i, k + 540) * 6.28, shade: 0.72 + 0.4 * rand01(i, k + 560) });
+      }
+    }
+  }
+  const pebbleGeometry = paint(new IcosahedronGeometry(0.055, 0).scale(1, 0.55, 0.8), (_x, _y, _z, out) => out.setScalar(1));
+  const pebbles = new InstancedMesh(pebbleGeometry, stiff, Math.max(1, pebbleSpots.length));
+  pebbles.count = pebbleSpots.length;
+  pebbles.receiveShadow = true;
+  pebbles.frustumCulled = false;
+  pebbles.name = "flora-pebbles";
+
   const grass = new InstancedMesh(geoms.grass, grassMat, Math.max(1, grassTiles.length));
   grass.count = grassTiles.length;
   grass.receiveShadow = true;
@@ -420,19 +463,46 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
   const nrm = { x: 0, y: 1, z: 0 };
   const tilt = new Quaternion();
   const nv = new Vector3();
-  for (let g = 0; g < grassTiles.length; g++) {
+  const placeTuft = (g: number): void => {
     const t = grassTiles[g]!;
     field.normalAt(t.x, t.z, nrm);
     nv.set(nrm.x, nrm.y, nrm.z);
     tilt.setFromUnitVectors(up, nv);
     q.setFromAxisAngle(up, t.rot).premultiply(tilt);
     p3.set(t.x, field.heightAt(t.x, t.z) - 0.01, t.z);
-    s3.set(t.s, t.s, t.s);
+    // trodden grass lies low and thin; on a beaten track there is none
+    const size = t.s * (1 - t.worn);
+    s3.set(size, size * (1 - 0.5 * t.worn), size);
     grass.setMatrixAt(g, m4.compose(p3, q, s3));
-  }
+  };
+  for (let g = 0; g < grassTiles.length; g++) placeTuft(g);
   grass.instanceMatrix.needsUpdate = true;
+  const setTraffic = (traffic: Uint16Array): void => {
+    let changed = false;
+    for (let g = 0; g < grassTiles.length; g++) {
+      const t = grassTiles[g]!;
+      // the same mapping as the ground's path tint, in five steps so little is rewritten
+      const worn = Math.round(Math.max(0, Math.min(1, (wearOf(traffic[t.tile] as number) - 0.2) / 0.55)) * 4) / 4;
+      if (worn === t.worn) continue;
+      t.worn = worn;
+      placeTuft(g);
+      changed = true;
+    }
+    if (changed) grass.instanceMatrix.needsUpdate = true;
+  };
 
   const tint = new Color();
+  const PEBBLE = new Color("#9c9684");
+  for (let g = 0; g < pebbleSpots.length; g++) {
+    const t = pebbleSpots[g]!;
+    q.setFromAxisAngle(up, t.rot);
+    p3.set(t.x, field.heightAt(t.x, t.z) + 0.004, t.z);
+    s3.set(t.s, t.s, t.s);
+    pebbles.setMatrixAt(g, m4.compose(p3, q, s3));
+    pebbles.setColorAt(g, tint.copy(PEBBLE).multiplyScalar(t.shade));
+  }
+  pebbles.instanceMatrix.needsUpdate = true;
+  if (pebbles.instanceColor) pebbles.instanceColor.needsUpdate = true;
   const writeItem = (v: NodeVisual, ratio: number): void => {
     for (const it of v.items) {
       const layer = layers[it.layer]!;
@@ -527,7 +597,7 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
   setSeason(0, 0);
 
   return {
-    objects: [...layers.map((l) => l.mesh), grass],
+    objects: [...layers.map((l) => l.mesh), grass, pebbles],
     uniforms,
     setAmounts,
     setSeason,
@@ -535,11 +605,15 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
       const v = visuals[node];
       return v ? { x: v.x, y: v.y, z: v.z } : { x: 0, y: 0, z: 0 };
     },
+    spotAt: (tile: number) => spots.get(tile) ?? null,
+    setTraffic,
     dispose() {
       for (const g of Object.values(geoms)) g.dispose();
       for (const m of [foliage, wood, stiff, grassMat, berryMat]) m.dispose();
       for (const l of layers) l.mesh.dispose();
       grass.dispose();
+      pebbleGeometry.dispose();
+      pebbles.dispose();
     },
   };
 }

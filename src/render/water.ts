@@ -19,7 +19,8 @@ import {
   type IUniform,
 } from "three";
 import { SUBDIV, type HeightField } from "./heightfield";
-import { FOAM, WATER_DEEP, WATER_MID, WATER_SHALLOW } from "./palette";
+import { type KnowledgeUniforms, VEIL_GLSL, buildKnowledge } from "./overlays";
+import { FOAM, FRESH_DEEP, WATER_DEEP, WATER_MID, WATER_SHALLOW } from "./palette";
 import { GLSL_NOISE } from "./terrain";
 
 export interface WaterUniforms {
@@ -46,7 +47,7 @@ export interface WaterParts {
 
 const vec = (c: Color) => `vec3(${c.r.toFixed(4)}, ${c.g.toFixed(4)}, ${c.b.toFixed(4)})`;
 
-export function buildWater(field: HeightField, quality: "low" | "medium" | "high" = "high"): WaterParts {
+export function buildWater(field: HeightField, quality: "low" | "medium" | "high" = "high", know?: KnowledgeUniforms): WaterParts {
   const defines: Record<string, string> = quality === "low" ? { TR_LOW: "" } : {};
   const { w, h, sw, sh } = field;
 
@@ -69,12 +70,20 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     uRain: { value: 0 },
     uIce: { value: 0 },
   };
+  // water lies under the same veil as the land when a citizen's knowledge is shown
+  const knowledge = know ?? buildKnowledge(w, h).uniforms;
+  uniforms.uKnown = knowledge.uKnown;
+  uniforms.uKnownMix = knowledge.uKnownMix;
+  uniforms.uKnownTone = knowledge.uKnownTone;
 
   const common = /* glsl */ `
     precision highp float;
     varying vec3 vW;
     uniform float uTime;
     uniform sampler2D uHeight;
+    uniform sampler2D uKnown;
+    uniform float uKnownMix;
+    uniform vec3 uKnownTone;
     uniform vec3 uWorld;
     uniform vec3 uSunDir;
     uniform vec3 uSunColor;
@@ -153,6 +162,10 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), clamp(foam, 0.0, 1.0) * 0.88);
         alpha = max(alpha, clamp(foam, 0.0, 1.0) * 0.9);
         gl_FragColor = vec4(col, alpha);
+        {
+          vec2 kuv = (vW.xz + uWorld.xy * 0.5) / uWorld.xy;
+          ${VEIL_GLSL}
+        }
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
@@ -166,6 +179,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   // ── fresh water: every height-field cell whose four corners carry a water surface
   const pos: number[] = [];
   const mask: number[] = [];
+  const pond: number[] = [];
   const idx: number[] = [];
   const vertexAt = new Int32Array(sw * sh).fill(-1);
   const addVertex = (sx: number, sy: number): number => {
@@ -175,6 +189,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     v = pos.length / 3;
     pos.push(sx / SUBDIV - w / 2, field.fresh[i] as number, sy / SUBDIV - h / 2);
     mask.push(field.wetMask[i] as number);
+    pond.push(field.pond[i] as number);
     vertexAt[i] = v;
     return v;
   };
@@ -196,6 +211,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   const freshGeometry = new BufferGeometry();
   freshGeometry.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
   freshGeometry.setAttribute("aMask", new BufferAttribute(new Float32Array(mask), 1));
+  freshGeometry.setAttribute("aPond", new BufferAttribute(new Float32Array(pond), 1));
   freshGeometry.setIndex(idx);
   const freshMaterial = new ShaderMaterial({
     transparent: true,
@@ -204,10 +220,13 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     uniforms,
     vertexShader: /* glsl */ `
       attribute float aMask;
+      attribute float aPond;
       varying vec3 vW;
       varying float vMask;
+      varying float vPond;
       void main() {
         vMask = aMask;
+        vPond = aPond;
         vec4 wp = modelMatrix * vec4(position, 1.0);
         vW = wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
@@ -215,6 +234,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     fragmentShader: /* glsl */ `
       ${common}
       varying float vMask;
+      varying float vPond;
       void main() {
         vec2 p = vW.xz;
         float t = uTime;
@@ -223,27 +243,44 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         float e = 1.0 / uWorld.x;
         float gx = texture2D(uHeight, uv + vec2(e, 0.0)).r - texture2D(uHeight, uv - vec2(e, 0.0)).r;
         float gz = texture2D(uHeight, uv + vec2(0.0, e)).r - texture2D(uHeight, uv - vec2(0.0, e)).r;
-        vec2 flow = -normalize(vec2(gx, gz) + vec2(1e-4));
-        float f1 = trNoise(p * 3.2 - flow * t * 0.9);
-        float f2 = trNoise(p * 7.0 - flow * t * 1.6 + 13.0);
-        vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(WATER_MID)}, 0.62 + 0.3 * f1);
-        col *= 0.82 + 0.22 * f2;
+        vec2 grad = vec2(gx, gz);
+        vec2 flow = -normalize(grad + vec2(1e-4));
+        // a stream runs, a pond lies still: how much the bed falls decides which this is
+        float running = smoothstep(0.05, 0.3, length(grad)) * (1.0 - smoothstep(0.15, 0.6, vPond));
+        vec2 q = vec2(dot(p, flow), dot(p, vec2(-flow.y, flow.x)));
+        // the current draws the surface out into streaks along its course
+        float streak = trNoise(vec2(q.x * 1.25 - t * 1.15, q.y * 6.5));
+        float still = trNoise(p * 1.7 + vec2(t * 0.07, -t * 0.05));
+        float f1 = mix(still, streak, running);
+        float f2 = trNoise(p * 7.0 - flow * t * 1.6 * running + vec2(13.0 + t * 0.06, t * 0.04));
+        // clear over the gravel at the edge, deepening to green-blue in mid-channel
+        float depth = smoothstep(0.44, 0.97, vMask);
+        vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(FRESH_DEEP)}, depth * (0.72 + 0.28 * f1));
+        col *= 0.9 + 0.16 * f2;
         vec3 n = normalize(vec3((f1 - 0.5) * 0.6, 1.0, (f2 - 0.5) * 0.6));
         vec3 V = normalize(cameraPosition - vW);
         vec3 H = normalize(uSunDir + V);
         float spec = pow(max(dot(n, H), 0.0), 70.0) * (1.0 - uNight);
         float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
         col *= uLight;
-        col = mix(col, uSky * 0.9, fres * 0.35);
+        col = mix(col, uSky * 0.8, fres * 0.22);
         col += uSunColor * spec * 0.9;
+        // riffles where the water runs shallow and fast
+        float riffle = running * smoothstep(0.7, 0.93, streak) * (1.0 - 0.6 * depth);
         float rim = 1.0 - smoothstep(0.45, 0.8, vMask);
         float lace = smoothstep(0.62, 0.9, f2 + rim * 0.3);
-        col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), rim * lace * 0.4);
+        col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), clamp(rim * lace * 0.3 + riffle * 0.42, 0.0, 1.0));
         // winter: a pale skin of ice
         col = mix(col, vec3(0.82, 0.9, 0.94) * (uLight * 0.95 + 0.03), uIce * (0.55 + 0.25 * f1));
         // the mesh extends past the bank; the visible edge is this smooth contour of the channel mask
-        float alpha = smoothstep(0.34, 0.5, vMask) * mix(0.62, 0.95, uIce);
+        float alpha = smoothstep(0.34, 0.5, vMask) * mix(mix(0.4, 0.9, depth), 0.95, uIce);
+        // a stream runs out into the sea rather than ending in steps at the shore
+        alpha *= smoothstep(-0.04, 0.08, vW.y);
         gl_FragColor = vec4(col, alpha);
+        {
+          vec2 kuv = (vW.xz + uWorld.xy * 0.5) / uWorld.xy;
+          ${VEIL_GLSL}
+        }
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,

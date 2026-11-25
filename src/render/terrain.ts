@@ -22,7 +22,8 @@ import {
 } from "three";
 import type { StaticWorldView } from "@/worker/protocol";
 import { type HeightField, SLAB_BOTTOM, SUBDIV, fbm2, valueNoise } from "./heightfield";
-import { BIOME_COLORS, PATH, ROCK_DARK, ROCK_LIGHT, SEABED_DEEP, SEABED_SHALLOW, SNOW } from "./palette";
+import { type KnowledgeUniforms, veil } from "./overlays";
+import { BIOME_COLORS, PATH, ROCK_DARK, ROCK_LIGHT, SEABED_DEEP, SEABED_SHALLOW, SNOW, STREAM_BED, WET_SOIL, wearOf } from "./palette";
 
 export const GLSL_NOISE = /* glsl */ `
 float trHash(vec2 p) {
@@ -101,7 +102,7 @@ function biomeColorAt(view: StaticWorldView, wx: number, wy: number, seed: numbe
   return out.setRGB(r, g, b);
 }
 
-export function buildTerrain(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high"): TerrainParts {
+export function buildTerrain(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high", know?: KnowledgeUniforms): TerrainParts {
   const { w, h } = view;
   const seed = view.config.seed;
   const sw = field.sw;
@@ -131,8 +132,12 @@ export function buildTerrain(view: StaticWorldView, field: HeightField, quality:
         // a sandy rim just above the waterline, and bare soil in stream beds
         const rim = Math.max(0, 1 - y / 0.22);
         if (rim > 0) tmp.lerp(SEABED_SHALLOW, rim * 0.85);
+        // fresh water: damp, darker earth on the banks, gravel in the bed
         const wet = field.wetMask[i] as number;
-        if (wet > 0) tmp.lerp(SEABED_SHALLOW, wet * 0.7);
+        if (wet > 0) {
+          tmp.lerp(WET_SOIL, Math.min(1, wet * 3) * 0.72);
+          if (wet > 0.45) tmp.lerp(STREAM_BED, Math.min(1, (wet - 0.45) * 2.2) * 0.85);
+        }
         // high ground thins from turf to bare rock
         const alpine = Math.max(0, Math.min(1, (y - 5.0) / 3.5));
         if (alpine > 0) tmp.lerp(ROCK_DARK, alpine * 0.7);
@@ -288,8 +293,11 @@ ${GLSL_NOISE}
   // footpaths worn by real traffic
   vec2 tuv = (p + uWorld.xy * 0.5) / uWorld.xy;
   float wear = texture2D(uTraffic, tuv).r;
-  float pathMask = smoothstep(0.1, 0.55, wear + (n3 - 0.5) * 0.25) * land * (1.0 - rock);
-  base = mix(base, vec3(${PATH.r.toFixed(4)}, ${PATH.g.toFixed(4)}, ${PATH.b.toFixed(4)}) * (0.85 + 0.2 * n2), pathMask * 0.8);
+  float worn = wear + (n3 - 0.5) * 0.2;
+  float pathMask = smoothstep(0.5, 0.8, worn) * land * (1.0 - rock);
+  // trampled turf first goes dull, then bare: a darker fringe around a pale beaten core
+  base = mix(base, base * vec3(0.78, 0.74, 0.62), smoothstep(0.12, 0.4, worn) * (1.0 - pathMask) * land * (1.0 - rock) * 0.85);
+  base = mix(base, vec3(${PATH.r.toFixed(4)}, ${PATH.g.toFixed(4)}, ${PATH.b.toFixed(4)}) * (0.82 + 0.26 * n2), pathMask * 0.9);
 
   // seabed: rippled sand and moving caustics in the shallows
   float under = 1.0 - land;
@@ -320,7 +328,8 @@ roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
       );
   };
   if (quality === "low") material.defines = { ...(material.defines ?? {}), TR_LOW: "" };
-  material.customProgramCacheKey = () => `tr-terrain-v2-${quality}`;
+  material.customProgramCacheKey = () => `tr-terrain-v3-${quality}`;
+  if (know) veil(material, know);
 
   const mesh = new Mesh(geometry, material);
   mesh.receiveShadow = true;
@@ -489,8 +498,7 @@ roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
   const setTraffic = (traffic: Uint16Array): void => {
     for (let i = 0; i < w * h; i++) {
       const t = traffic[i] as number;
-      // perceptual mapping: a few dozen passes already read as a faint trail
-      trafficData[i] = Math.min(255, Math.round(255 * (1 - Math.exp(-t / 60))));
+      trafficData[i] = Math.min(255, Math.round(255 * wearOf(t)));
     }
     trafficTexture.needsUpdate = true;
   };

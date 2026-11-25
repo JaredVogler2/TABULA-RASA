@@ -4,9 +4,10 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Current state (2026-11-25)
 
-- **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/1
-- **Phases:** 01–07, 09, 10 PASS · 08 PARTIAL (one item needs a model) · 17 BLOCKED (no spend authorized) ·
-  **next: 11–12** (art passes, observer UX).
+- **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/2
+  (pull request 1, phases 01–05, 09 and 10, was merged to `main` by the owner on 2026-11-25).
+- **Phases:** 01–07, 09, 10 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no device,
+  no human playtest) · 17 BLOCKED (no spend authorized) · **next: 13–14** (history and branches; the lab).
 - **Last verified commit:** see `git log -1`.
 - **Spend:** $0. No API key has ever been present. The application's authorized budget is zero and its kill
   switch is on. **Nothing has been sent to the provider**: the request shape, the schema's acceptance and every
@@ -29,17 +30,17 @@ pnpm record -- --id mock-first-light --seed 7 --days 6 # re-record the bundled m
 pnpm exec tsx scripts/mixed.ts --seeds 1-4 --days 40   # planners and reflex agents on one island
 pnpm exec tsx scripts/civics.ts --scenario long_winter --seeds 1-4 --days 30   # what institutions did, per mode
 # art stills (needs `pnpm build && pnpm exec next start -p 3210` in another shell)
-node scripts/shots.mjs /tmp/shots vista closeup dusk night phone
+node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low
 ```
 
-Expected at this commit: 290 unit/property tests pass and 1 is skipped by design (the live smoke test, which
-prints "NOT authorized"); without `TEST_DATABASE_URL` eleven more are skipped by name. E2E: 17 passed, 3 skipped
+Expected at this commit: 303 unit/property tests pass and 1 is skipped by design (the live smoke test, which
+prints "NOT authorized"); without `TEST_DATABASE_URL` eleven more are skipped by name. E2E: 21 passed, 3 skipped
 (desktop-only tests). `replay IDENTICAL`.
 
 ## Execution order (D-001)
 
-01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → **11** → 12 → 13 → 14 → 15 → 16 →
-17 (blocked) → 18 → 19 → 20
+01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → 11 (partial) → 12 (partial) →
+**13** → 14 → 15 → 16 → 17 (blocked) → 18 → 19 → 20
 
 ## Where things live
 
@@ -53,19 +54,23 @@ prints "NOT authorized"); without `TEST_DATABASE_URL` eleven more are skipped by
 - `src/worker/sim.worker.ts` — owns the world and its untouched twin; posts view frames; plays recordings and
   checks them against the record; `protocol.ts` is the only contract with the page.
 - `src/render/**` — imperative three.js (`WorldRenderer`); never imported by the engine, never imports React.
+  `citizens.ts` (figures, props, the faint shape of hidden people), `ambient.ts` (smoke, fish rises, birds),
+  `overlays.ts` (what a citizen knows; ties), `structures.ts` (buildings, agreements' posts and pennants).
+- `src/audio/soundscape.ts` — procedural sound; reads state, changes nothing; silent until asked for.
 - `src/ui/game/**` — React HUD and panels; `controller.ts` is the single place that talks to worker + renderer.
+  `Atlas.tsx` (map and almanac), `Journal.tsx` + `journal.ts` (field journal), `Inspector.tsx`.
   `src/ui/owner/Console.tsx` — the owner console at `/owner`.
 - `src/store/game.ts` — zustand view state; `src/persist/saves.ts` — IndexedDB saves.
 - `src/app/studio` + `scripts/shots.mjs` — capture harness for art QA (D-013).
 
 ## Next actions
 
-1. **Phases 11–12.** Art items carried from phase 04 are in `docs/ART_BIBLE.md` § Known weaknesses (citizens
-   beside nodes, stream banks, ambient life, sound, institution artifacts). Observer UX: knowledge and
-   social-network overlays, institution ledger, timeline scrub, accessibility pass. The recording banner and
-   the owner console are new surfaces that have had one visual pass only.
-2. **Phase 13**: persisted ledger, branch tree, export/import with integrity checks. A recording is already an
-   exportable, verifiable artifact; saves are not yet.
+1. **What phases 11–12 could not do here** (needs the owner or a device): look at it on a real GPU and a real
+   phone and record frame rates; listen to the sound; have someone who did not build it play the first
+   fifteen minutes; try a screen reader. `docs/ART_BIBLE.md` § Known weaknesses and `docs/OBSERVER_UX.md` list
+   what else is open.
+2. **Phase 13**: going back in a live world (keyframes, exact re-run, new lines), a tree of world lines,
+   export/import with integrity checks, recorded causal traces.
 3. **Phase 14** must begin with a pilot that estimates the variance of paired differences (protocol §10,
    D-018), and should treat "share of time on own plan" as a manipulation check (D-023).
 4. **Phase 17 is blocked on the owner.** What is needed, in order, is in `docs/COST.md` § First live call. The

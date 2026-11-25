@@ -2,6 +2,7 @@
 
 import { Info, MapPin, X } from "lucide-react";
 import { TICKS_PER_DAY } from "@/engine";
+import { dyeOf } from "@/render/dyes";
 import { useGame } from "@/store/game";
 import type { CharterView } from "@/worker/protocol";
 import { useController } from "./context";
@@ -46,7 +47,10 @@ function Charter({ c }: { c: CharterView }) {
     <article className={styles.charter} data-state={c.state} data-testid={`charter-${c.id}`}>
       <header className={styles.charterHead}>
         <div>
-          <h3>{c.name}</h3>
+          <h3>
+            {c.state === "active" || c.state === "ended" ? <i className={styles.dye} style={{ color: dyeOf(c.id) }} title="The colour of its pennant in the world" aria-hidden /> : null}
+            {c.name}
+          </h3>
           {c.purpose ? <p className={styles.charterPurpose}>“{c.purpose}”</p> : null}
         </div>
         <button type="button" className={styles.linkButton} onClick={() => controller.focusTile(c.x, c.y)} aria-label={`Show where ${c.name} sits`}>

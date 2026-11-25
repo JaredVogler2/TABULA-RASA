@@ -181,6 +181,35 @@ two server instances). Everything else: PGlite in memory.
 **Stated plainly.** The machinery for model-driven minds is built and tested without a model. Nothing here is
 evidence about what a model would do, what it would cost, or whether anything would emerge.
 
+## Phase 11 — art direction (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Five screenshot-led critique passes were made, each from a capture of the running product | `node scripts/shots.mjs …` against `next start` | `evidence/phase-11/cycles/` (captures of each pass, reduced), `docs/ART_BIBLE.md` § Phase 11 passes | done | Any judgement but the builder's. |
+| Final state at the vista, close up, at work, at dusk, at night, in winter, on a phone in both orientations and on the low preset | `SHOTS_FORMAT=jpeg node scripts/shots.mjs evidence/phase-11/shots …` | `evidence/phase-11/shots/*.jpg`, `evidence/phase-11/shots.txt` (draw calls, triangles, frame intervals per shot) | captured | How it looks or runs on a GPU or a phone: the renderer here is software. |
+| People stand beside what they work on, carry a load shaped by what it is, and show a tool only if they own one | captures `forager`, `woodcutter`, `fisher`, `builder`; the frame carries `tools` and `partner` per person from the engine's inventory and intent | same | seen in the captures (the fisher owns no spear and is drawn without one) | Every action in every pose; walking gait under load. |
+| A person hidden by scenery is still findable, and a visible person is drawn clean | captures `cycles/3-silhouette-smear.jpg` → `cycles/4-silhouette-clean.jpg` | same | fixed between passes 8 and 9 (D-027) | A GPU's stencil behaviour. |
+| A ratified agreement leaves a post, cords and pennants; a proposal leaves nothing | capture `charter` (Long Winter, scripted control, day 15) | `evidence/phase-11/shots/charter.jpg` | seen | Agreements written by anyone but the designers' control: none has been captured. |
+| Worn ground follows real traffic and the engine's own threshold | traffic measured on the reference world (seed 1): at most 17, 32 and 33 footfalls on any tile by days 6, 22 and 40; tiles past the old tint's half-way point: none | recorded here; mapping in `src/render/palette.ts` (`wearOf`) | recalibrated (D-032) | A striking image: in this world only a handful of tiles reach the threshold, and `paths.jpg` shows little. |
+| Sound is produced only after it is asked for, follows the controls and stops | `pnpm e2e` (`observer.spec.ts`): level exactly 0 before; above 0.0005 RMS after; below 0.0002 with the overall slider at zero | `evidence/phase-12/e2e-run.txt` | pass, desktop and phone emulation | What it sounds like. Nobody has listened to it. |
+
+**Stated plainly.** The rubric in `docs/ART_BIBLE.md` is the builder's own scoring of the builder's own
+captures. Performance scores 1 of 4 because the only numbers are from a software renderer.
+
+## Phase 12 — observer UX (2026-11-25)
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| Sound, the outcomes list, both knowledge views, the atlas, the almanac with its table and the field journal work from live state with real clicks and taps | `pnpm e2e` (`observer.spec.ts`) | `evidence/phase-12/e2e-run.txt`, `evidence/phase-12/e2e/{desktop,mobile}/30…32.jpg` | pass on desktop 1366×768 and 390×844 phone emulation | Comprehension by a person. |
+| Every instrument has a key; the menu is reachable and operable from the keyboard | `pnpm e2e` (`play.spec.ts` › the keyboard alone can drive the game) | same | pass (desktop) | Screen-reader use. |
+| No serious or critical machine-detectable accessibility violation on thirteen screens and panels | `pnpm e2e` (`a11y.spec.ts`, axe-core 4.x, WCAG 2.0/2.1 A and AA) | `evidence/phase-12/a11y-desktop.json`, `a11y-mobile.json` | pass after one fix (a scrollable page that could not take keyboard focus) | What a machine cannot detect. About five hundred text nodes could not be contrast-checked by the scanner (textured and translucent surfaces). |
+| Text contrast meets 4.5:1 on every surface, with the glass composited over snow and over night | `pnpm test` (`tests/unit/contrast.test.ts`) | `evidence/phase-12/tests.txt` | pass after two fixes (muted text on glass over snow was 3.4:1; the warning red on the darkest paper was 4.48:1) | Contrast inside the 3D scene. |
+| A sheet never covers the recording banner on a phone | `pnpm e2e` (`owner.spec.ts`, bounding-box assertion) | `evidence/phase-12/e2e-run.txt` | pass | — |
+| On a phone the atlas is one column and nothing in it runs off the screen | `pnpm e2e` (`observer.spec.ts`, bounding boxes of the map and the seven charts against the viewport); `pnpm test` (`tests/unit/css-order.test.ts`) | `evidence/phase-12/e2e-run.txt`, `evidence/phase-12/tests.txt`, `evidence/phase-12/e2e/mobile/32-atlas.jpg` | pass after one fix. The first full run **passed with the layout broken**: the phone screenshot showed the almanac as a second column cut off at the right edge, because the one-column rule was written above the rule it was meant to override. Found by looking at the capture, not by a test; the assertion and a stylesheet check that fails on any such dead override were added with the fix | Other layouts that only an eye would catch. |
+
+**Not done, and said so in `docs/OBSERVER_UX.md`:** no first-time player, no screen reader, no physical
+device, no ears. Scrubbing a live world back in time belongs to phase 13.
+
 ## Research inputs
 
 | Input | File | Status |

@@ -43,7 +43,7 @@ export interface ReplayView {
 }
 
 /** Floats per agent in ViewFrame.agents. */
-export const AGENT_STRIDE = 18;
+export const AGENT_STRIDE = 20;
 export const AF = {
   x: 0,
   y: 1,
@@ -63,7 +63,13 @@ export const AF = {
   ill: 15,
   target: 16,
   load: 17,
+  /** Bit set of tools owned (TOOL_BIT): a tool is drawn only for someone who has one. */
+  tools: 18,
+  /** The person being spoken to or given to (-1 if none): who to face. */
+  partner: 19,
 } as const;
+
+export const TOOL_BIT = { axe: 1, spear: 2, basket: 4, pot: 8 } as const;
 
 /** Action codes used in view frames (index = code). */
 export const ACTION_CODES = [
@@ -141,6 +147,22 @@ export interface PileView {
   item: number;
 }
 
+/**
+ * The physical trace of an agreement that was actually ratified: where it was made, how many
+ * people hold to it now, and which stores it governs. Nothing is drawn for a charter that
+ * was only proposed.
+ */
+export interface CivicMark {
+  id: number;
+  x: number;
+  y: number;
+  /** The institution has ended; its post stays where it stood. */
+  ended: boolean;
+  members: number;
+  /** Structure ids of the stores it governs. */
+  stores: number[];
+}
+
 export interface CalendarView {
   day: number;
   tickOfDay: number;
@@ -178,6 +200,8 @@ export interface ViewFrame {
   /** Present only when structures / piles changed since the previous frame. */
   structures: StructureView[] | null;
   piles: PileView[] | null;
+  /** Present only when ratified institutions changed since the previous frame. */
+  marks: CivicMark[] | null;
   /** Present once per simulated day. */
   traffic: Uint16Array | null;
   /** Events since the previous frame that the UI displays. */

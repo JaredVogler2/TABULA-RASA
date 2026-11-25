@@ -8,10 +8,11 @@ import {
   AdditiveBlending,
   BoxGeometry,
   BufferAttribute,
-  type BufferGeometry,
+  BufferGeometry,
   Color,
   ConeGeometry,
   CylinderGeometry,
+  DoubleSide,
   DynamicDrawUsage,
   IcosahedronGeometry,
   InstancedMesh,
@@ -26,8 +27,10 @@ import {
   type IUniform,
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import type { PileView, StructureView } from "@/worker/protocol";
+import type { CivicMark, PileView, StructureView } from "@/worker/protocol";
+import { dyeOf } from "./dyes";
 import type { HeightField } from "./heightfield";
+import { type KnowledgeUniforms, veil } from "./overlays";
 import { rand01 } from "./palette";
 
 const KIND = { campfire: 0, shelter: 1, store: 2, plot: 3 } as const;
@@ -71,32 +74,46 @@ function campfireGeometry(): BufferGeometry {
   return mergeGeometries(parts)!;
 }
 
+/** A flat triangle (a gable end), wound to face +Z or -Z. */
+function gable(halfWidth: number, height: number, z: number, facing: 1 | -1): BufferGeometry {
+  const g = new BufferGeometry();
+  const v = facing === 1 ? [-halfWidth, 0, z, halfWidth, 0, z, 0, height, z] : [halfWidth, 0, z, -halfWidth, 0, z, 0, height, z];
+  g.setAttribute("position", new BufferAttribute(new Float32Array(v), 3));
+  g.computeVertexNormals();
+  return g;
+}
+
 function shelterGeometry(): BufferGeometry {
   const parts: BufferGeometry[] = [];
-  // an A-frame of thatch over a ridge pole
-  const roofL = new BoxGeometry(0.62, 0.035, 1.05);
-  roofL.rotateZ(0.92);
-  roofL.translate(-0.2, 0.3, 0);
-  parts.push(tinted(roofL, "#b89a5a", 0.14, 1));
-  const roofR = new BoxGeometry(0.62, 0.035, 1.05);
-  roofR.rotateZ(-0.92);
-  roofR.translate(0.2, 0.3, 0);
-  parts.push(tinted(roofR, "#a88c50", 0.14, 2));
-  const ridge = new CylinderGeometry(0.025, 0.025, 1.15, 5);
-  ridge.rotateX(Math.PI / 2);
-  ridge.translate(0, 0.55, 0);
-  parts.push(tinted(ridge, "#5a3f2a", 0.1, 3));
-  for (const z of [-0.5, 0.5]) {
-    for (const x of [-0.38, 0.38]) {
-      const pole = new CylinderGeometry(0.022, 0.026, 0.62, 5);
-      pole.rotateZ(x < 0 ? -0.62 : 0.62);
-      pole.translate(x * 0.52, 0.28, z);
-      parts.push(tinted(pole, "#5a3f2a", 0.1, 4));
+  // a thatched A-frame: three overlapping courses of thatch on each slope, a dark ridge,
+  // crossed gable poles, an open front in shadow and a wattle back
+  const half = 0.43;
+  const ridgeY = 0.62;
+  const a = Math.atan2(ridgeY, half);
+  const slope = Math.hypot(half, ridgeY);
+  const shades = ["#a98c4f", "#bb9f5e", "#c9ae6c"];
+  for (const side of [-1, 1] as const) {
+    for (let k = 0; k < 3; k++) {
+      // each course lies a little proud of the one below it, like real thatch
+      const along = (k + 0.5) * (slope / 3);
+      const course = new BoxGeometry(slope / 3 + 0.07, 0.05, 1.08 - k * 0.03);
+      course.rotateZ(side === -1 ? a : -a);
+      const out = 0.012 + k * 0.016;
+      course.translate(side * (half - along * Math.cos(a) + out * Math.sin(a)), along * Math.sin(a) + out * Math.cos(a), 0);
+      parts.push(tinted(course, shades[k] as string, 0.13, 1 + k + (side === 1 ? 10 : 0)));
+    }
+    for (const z of [-0.53, 0.53]) {
+      const pole = new CylinderGeometry(0.02, 0.026, 0.94, 5);
+      pole.rotateZ(side === -1 ? -(Math.PI / 2 - a) : Math.PI / 2 - a);
+      pole.translate(side * (half - 0.47 * Math.cos(a)), 0.47 * Math.sin(a), z);
+      parts.push(tinted(pole, "#553b27", 0.1, 4));
     }
   }
-  const back = new BoxGeometry(0.5, 0.42, 0.03);
-  back.translate(0, 0.21, -0.5);
-  parts.push(tinted(back, "#9a8048", 0.12, 5));
+  const ridge = new BoxGeometry(0.1, 0.05, 1.12);
+  ridge.translate(0, ridgeY + 0.035, 0);
+  parts.push(tinted(ridge, "#6b5333", 0.12, 3));
+  parts.push(tinted(gable(half - 0.06, ridgeY - 0.07, 0.42, 1), "#241a12", 0.06, 6));
+  parts.push(tinted(gable(half - 0.03, ridgeY - 0.03, -0.5, -1), "#8a744a", 0.12, 5));
   return mergeGeometries(parts)!;
 }
 
@@ -161,6 +178,34 @@ function cairnGeometry(): BufferGeometry {
   return tinted(mergeGeometries(parts)!, "#8f897b", 0.12, 60);
 }
 
+/** A post set up where an agreement was ratified: carved timber with a cap stone. */
+function postGeometry(): BufferGeometry {
+  const shaft = new CylinderGeometry(0.042, 0.058, 0.92, 6).translate(0, 0.46, 0);
+  const collar = new CylinderGeometry(0.066, 0.066, 0.05, 6).translate(0, 0.86, 0);
+  const cap = new IcosahedronGeometry(0.07, 0).scale(1, 0.8, 1).translate(0, 0.96, 0);
+  return mergeGeometries([tinted(shaft, "#6b4a2e", 0.12, 70), tinted(collar, "#4f3a26", 0.1, 71), tinted(cap, "#a39d90", 0.12, 72)])!;
+}
+
+/** One cord tied round the post for each person who holds to the agreement. */
+function cordGeometry(): BufferGeometry {
+  return tinted(new CylinderGeometry(0.064, 0.064, 0.026, 6), "#e6dcc2", 0.1, 73);
+}
+
+/** A short pole beside a governed store. */
+function poleGeometry(): BufferGeometry {
+  return tinted(new CylinderGeometry(0.016, 0.02, 0.86, 5).translate(0, 0.43, 0), "#5a3f2a", 0.1, 74);
+}
+
+/** A pennant: a tapering strip of cloth hinged on its pole (the hinge is the Y axis). */
+function pennantGeometry(): BufferGeometry {
+  const g = new BufferGeometry();
+  const v = new Float32Array([0, 0.11, 0, 0, -0.11, 0, 0.36, 0, 0]);
+  g.setAttribute("position", new BufferAttribute(v, 3));
+  g.setAttribute("color", new BufferAttribute(new Float32Array([1, 1, 1, 0.92, 0.92, 0.92, 0.8, 0.8, 0.8]), 3));
+  g.computeVertexNormals();
+  return g;
+}
+
 const PILE_COLORS = ["#b3273f", "#c9a66b", "#9fb7c4", "#8a5a36", "#7a5a3a", "#8f897b", "#b9c27a", "#a8623f", "#7fd6cf", "#8f897b", "#8f897b", "#c9a66b", "#a8623f"].map((c) => new Color(c));
 
 export interface FireUniforms {
@@ -174,15 +219,19 @@ export interface StructureParts {
   setStructures(list: StructureView[]): void;
   setPiles(list: PileView[]): void;
   setCairns(list: { x: number; y: number; id: number }[]): void;
+  /** Posts and pennants for agreements that were actually ratified (and for the stores they govern). */
+  setMarks(list: CivicMark[]): void;
   /** Positions of lit fires (for lights and ambience). */
   litFires(): { x: number; y: number; z: number }[];
   /** Flicker the fire lights; `night` 0..1 scales how much they contribute. */
   animate(time: number, night: number): void;
   anchorOf(id: number): { x: number; y: number; z: number } | null;
+  /** Where the structure on a tile stands and how wide it is (null if the tile holds none). */
+  spotAt(tile: number): { x: number; z: number; r: number } | null;
   dispose(): void;
 }
 
-export function buildStructures(field: HeightField, quality: "low" | "medium" | "high"): StructureParts {
+export function buildStructures(field: HeightField, quality: "low" | "medium" | "high", know?: KnowledgeUniforms): StructureParts {
   const solid = new MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, flatShading: true });
   const geoms = {
     campfire: campfireGeometry(),
@@ -193,7 +242,13 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
     sprout: sproutGeometry(),
     pile: pileGeometry(),
     cairn: cairnGeometry(),
+    post: postGeometry(),
+    cord: cordGeometry(),
+    pole: poleGeometry(),
+    pennant: pennantGeometry(),
   };
+  const cloth = new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, side: DoubleSide });
+  if (know) for (const m of [solid, cloth]) veil(m, know);
   const mk = (g: BufferGeometry, name: string, capacity = MAX): InstancedMesh => {
     const m = new InstancedMesh(g, solid, capacity);
     m.count = 0;
@@ -213,7 +268,19 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
     sprout: mk(geoms.sprout, "sprouts"),
     pile: mk(geoms.pile, "piles"),
     cairn: mk(geoms.cairn, "cairns"),
+    post: mk(geoms.post, "charter-posts", 64),
+    cord: mk(geoms.cord, "charter-cords", 64 * 10),
+    pole: mk(geoms.pole, "charter-poles", 128),
   };
+  const pennants = new InstancedMesh(geoms.pennant, cloth, 192);
+  pennants.count = 0;
+  pennants.instanceMatrix.setUsage(DynamicDrawUsage);
+  pennants.castShadow = quality !== "low";
+  pennants.frustumCulled = false;
+  pennants.name = "charter-pennants";
+  /** Where each pennant hangs and which way it trails when the air is still. */
+  const flying: { x: number; y: number; z: number; yaw: number }[] = [];
+  let marks: CivicMark[] = [];
 
   // flames: two crossed quads per fire, animated in the shader
   const flameGeometry = (() => {
@@ -281,17 +348,23 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
   const p3 = new Vector3();
   const s3 = new Vector3();
   const tint = new Color();
+  const tilt = new Quaternion();
+  const lean = new Vector3(1, 0, 0);
   const anchors = new Map<number, { x: number; y: number; z: number }>();
+  const spots = new Map<number, { x: number; z: number; r: number }>();
+  const REACH = [0.3, 0.46, 0.5, 0.42];
   let fires: { x: number; y: number; z: number }[] = [];
 
   const setStructures = (list: StructureView[]): void => {
     const n = { campfire: 0, shelter: 0, store: 0, sack: 0, plot: 0, sprout: 0, flame: 0 };
     fires = [];
     anchors.clear();
+    spots.clear();
     for (const sv of list) {
       const c = field.tileCentre(sv.x, sv.y);
       const y = field.standAt(c.x, c.z);
       anchors.set(sv.id, { x: c.x, y, z: c.z });
+      spots.set(sv.y * field.w + sv.x, { x: c.x, z: c.z, r: REACH[sv.kind] ?? 0.4 });
       const rot = rand01(sv.id, 1) * Math.PI * 2;
       q.setFromAxisAngle(up, rot);
       p3.set(c.x, y - 0.01, c.z);
@@ -362,6 +435,85 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
       m.instanceMatrix.needsUpdate = true;
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
     }
+    // governed stores may have moved in the list: their pennants follow
+    layoutMarks();
+  };
+
+  const layoutMarks = (): void => {
+    let posts = 0;
+    let cords = 0;
+    let poles = 0;
+    flying.length = 0;
+    for (const mark of marks) {
+      if (posts >= 64) break;
+      const c = field.tileCentre(mark.x, mark.y);
+      // beside whatever stands on the tile, never inside it
+      const a = rand01(mark.id, 21) * Math.PI * 2;
+      const x = c.x + Math.cos(a) * 0.36;
+      const z = c.z + Math.sin(a) * 0.36;
+      const y = field.standAt(x, z) - 0.02;
+      p3.set(x, y, z);
+      // a post whose agreement has ended is left to lean
+      q.setFromAxisAngle(up, rand01(mark.id, 22) * 6.28);
+      if (mark.ended) q.multiply(tilt.setFromAxisAngle(lean, 0.34));
+      s3.set(1, 1, 1);
+      meshes.post.setMatrixAt(posts, m4.compose(p3, q, s3));
+      meshes.post.setColorAt(posts, tint.setScalar(mark.ended ? 0.72 : 1));
+      posts++;
+      if (mark.ended) continue;
+      const tied = Math.min(10, mark.members);
+      for (let k = 0; k < tied && cords < 640; k++) {
+        p3.set(x, y + 0.26 + k * 0.052, z);
+        q.identity();
+        meshes.cord.setMatrixAt(cords, m4.compose(p3, q, s3));
+        meshes.cord.setColorAt(cords, tint.set(k % 2 === 0 ? "#ffffff" : dyeOf(mark.id)));
+        cords++;
+      }
+      const dye = dyeOf(mark.id);
+      if (flying.length < 192) {
+        pennants.setColorAt(flying.length, tint.set(dye));
+        flying.push({ x, y: y + 0.76, z, yaw: rand01(mark.id, 23) * 6.28 });
+      }
+      for (const id of mark.stores) {
+        const at = anchors.get(id);
+        if (!at || poles >= 128 || flying.length >= 192) continue;
+        const b = rand01(id, 24) * Math.PI * 2;
+        const px = at.x + Math.cos(b) * 0.47;
+        const pz = at.z + Math.sin(b) * 0.47;
+        const py = field.standAt(px, pz) - 0.02;
+        p3.set(px, py, pz);
+        q.identity();
+        meshes.pole.setMatrixAt(poles++, m4.compose(p3, q, s3));
+        pennants.setColorAt(flying.length, tint.set(dye));
+        flying.push({ x: px, y: py + 0.72, z: pz, yaw: rand01(id, 25) * 6.28 });
+      }
+    }
+    meshes.post.count = posts;
+    meshes.cord.count = cords;
+    meshes.pole.count = poles;
+    pennants.count = flying.length;
+    for (const m of [meshes.post, meshes.cord, meshes.pole, pennants]) {
+      m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
+    wave(0);
+  };
+
+  /** Pennants trail and flutter about their poles. */
+  const wave = (time: number): void => {
+    for (let i = 0; i < flying.length; i++) {
+      const f = flying[i]!;
+      p3.set(f.x, f.y, f.z);
+      q.setFromAxisAngle(up, f.yaw + Math.sin(time * 2.3 + i * 1.7) * 0.32 + Math.sin(time * 5.1 + i) * 0.08);
+      s3.set(1, 1, 1);
+      pennants.setMatrixAt(i, m4.compose(p3, q, s3));
+    }
+    if (flying.length) pennants.instanceMatrix.needsUpdate = true;
+  };
+
+  const setMarks = (list: CivicMark[]): void => {
+    marks = list;
+    layoutMarks();
   };
 
   const setPiles = (list: PileView[]): void => {
@@ -404,6 +556,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
   };
 
   const animate = (time: number, night: number): void => {
+    wave(time);
     for (let i = 0; i < lights.length; i++) {
       const l = lights[i]!;
       const f = fires[i];
@@ -419,20 +572,24 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
   };
 
   return {
-    objects: [...Object.values(meshes), flames, ...lights],
+    objects: [...Object.values(meshes), pennants, flames, ...lights],
     uniforms,
     setStructures,
     setPiles,
     setCairns,
+    setMarks,
     litFires: () => fires,
     animate,
     anchorOf: (id: number) => anchors.get(id) ?? null,
+    spotAt: (tile: number) => spots.get(tile) ?? null,
     dispose() {
       for (const g of Object.values(geoms)) g.dispose();
       flameGeometry.dispose();
       flameMaterial.dispose();
       solid.dispose();
+      cloth.dispose();
       for (const m of Object.values(meshes)) m.dispose();
+      pennants.dispose();
       flames.dispose();
     },
   };

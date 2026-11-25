@@ -20,11 +20,13 @@ import {
 } from "three";
 import { dayLength } from "@/engine";
 import { AF, AGENT_STRIDE, type StaticWorldView, type ViewFrame } from "@/worker/protocol";
+import { buildAmbient, type AmbientParts } from "./ambient";
 import { buildAtmosphere, type AtmosphereParts } from "./atmosphere";
 import { CameraRig } from "./cameraRig";
 import { buildCitizens, type CitizenParts } from "./citizens";
 import { buildFlora, type FloraParts } from "./flora";
 import { HeightField } from "./heightfield";
+import { buildKnowledge, buildTies, type Knowledge, type Ties } from "./overlays";
 import { buildPost, type PostChain } from "./post";
 import { buildStructures, type StructureParts } from "./structures";
 import { buildTerrain, type TerrainParts } from "./terrain";
@@ -79,6 +81,9 @@ export class WorldRenderer {
   private citizens: CitizenParts | null = null;
   private structures: StructureParts | null = null;
   private atmosphere: AtmosphereParts | null = null;
+  private ambient: AmbientParts | null = null;
+  private knowledge: Knowledge | null = null;
+  private ties: Ties | null = null;
   private post: PostChain | null = null;
   private frame: ViewFrame | null = null;
   private frameArrival = 0;
@@ -101,6 +106,7 @@ export class WorldRenderer {
   private readonly tmp2 = new Vector3();
   private disposed = false;
   private glInfo = "unknown";
+  private dayBrightness = 1;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -108,7 +114,7 @@ export class WorldRenderer {
     private readonly options: RendererOptions,
   ) {
     this.quality = options.quality;
-    this.renderer = new WebGLRenderer({ canvas, antialias: options.quality === "low", alpha: false, powerPreference: "high-performance", stencil: false });
+    this.renderer = new WebGLRenderer({ canvas, antialias: options.quality === "low", alpha: false, powerPreference: "high-performance", stencil: true });
     // totals across every pass of a frame (shadow, scene, post), reset by hand in renderFrame
     this.renderer.info.autoReset = false;
     this.renderer.outputColorSpace = SRGBColorSpace;
@@ -144,20 +150,26 @@ export class WorldRenderer {
     this.field = field;
     const q = this.quality;
 
-    this.terrain = buildTerrain(view, field, q);
-    this.water = buildWater(field, q);
-    this.flora = buildFlora(view, field, q);
-    this.citizens = buildCitizens(field, view.agents.length + 32, q);
+    this.knowledge = buildKnowledge(view.w, view.h);
+    const know = this.knowledge.uniforms;
+    this.terrain = buildTerrain(view, field, q, know);
+    this.water = buildWater(field, q, know);
+    this.flora = buildFlora(view, field, q, know);
+    this.structures = buildStructures(field, q, know);
+    this.ties = buildTies();
+    this.scene.add(this.ties.object);
+    this.citizens = buildCitizens(field, view.agents.length + 32, q, (tile) => this.structures?.spotAt(tile) ?? this.flora?.spotAt(tile) ?? null);
     this.citizens.setRoster(view.agents);
-    this.structures = buildStructures(field, q);
     this.atmosphere = buildAtmosphere(Math.max(view.w, view.h), q);
     this.atmosphere.configure(this.renderer);
+    this.ambient = buildAmbient(view, field, q);
 
     this.scene.add(this.terrain.floor, this.terrain.plinth, this.terrain.skirt, this.terrain.mesh, this.water.sea, this.water.fresh);
     for (const o of this.flora.objects) this.scene.add(o);
     for (const o of this.citizens.objects) this.scene.add(o);
     for (const o of this.structures.objects) this.scene.add(o);
     for (const o of this.atmosphere.objects) this.scene.add(o);
+    for (const o of this.ambient.objects) this.scene.add(o);
 
     this.rig = new CameraRig(this.canvas, field, {
       reducedMotion: this.options.reducedMotion,
@@ -171,7 +183,7 @@ export class WorldRenderer {
   }
 
   private clearWorld(): void {
-    for (const part of [this.terrain, this.water, this.flora, this.citizens, this.structures, this.atmosphere]) part?.dispose();
+    for (const part of [this.terrain, this.water, this.flora, this.citizens, this.structures, this.atmosphere, this.ambient, this.knowledge, this.ties]) part?.dispose();
     const keep = new Set([this.ring]);
     for (const child of [...this.scene.children]) if (!keep.has(child as Mesh)) this.scene.remove(child);
     this.post?.dispose();
@@ -184,6 +196,9 @@ export class WorldRenderer {
     this.citizens = null;
     this.structures = null;
     this.atmosphere = null;
+    this.ambient = null;
+    this.knowledge = null;
+    this.ties = null;
     this.frame = null;
     for (const b of this.bubbles) b.el.remove();
     this.bubbles.length = 0;
@@ -194,13 +209,20 @@ export class WorldRenderer {
     this.frameArrival = performance.now();
     if (!this.view || !this.field) return;
     this.flora?.setAmounts(frame.nodeAmounts);
+    this.ambient?.setAmounts(frame.nodeAmounts);
     if (frame.roster) this.citizens?.setRoster(frame.roster);
     if (frame.structures) {
       this.structures?.setStructures(frame.structures);
       this.structureList = frame.structures.map((s) => ({ id: s.id, x: s.x, y: s.y }));
+      // smoke rises from the fires that are lit, and from nothing else
+      this.ambient?.setFires(this.structures?.litFires() ?? []);
     }
     if (frame.piles) this.structures?.setPiles(frame.piles);
-    if (frame.traffic) this.terrain?.setTraffic(frame.traffic);
+    if (frame.marks) this.structures?.setMarks(frame.marks);
+    if (frame.traffic) {
+      this.terrain?.setTraffic(frame.traffic);
+      this.flora?.setTraffic(frame.traffic);
+    }
     // cairns for the dead
     let key = "";
     const dead: { x: number; y: number; id: number }[] = [];
@@ -303,8 +325,17 @@ export class WorldRenderer {
       this.structures!.uniforms.uTime.value = time;
       this.structures!.animate(time, light.night);
       this.citizens!.update(frame, tickFraction, dt, time);
+      // a hidden citizen's shape: a hint across the whole island, plainer when you are close enough to care who it is
+      this.dayBrightness = 1 - light.night;
+      // (at night the shape is drawn fainter still: against a dark island even a hint glows)
+      this.citizens!.setGhost((0.13 + 0.2 * rig.closeness()) * (0.45 + 0.55 * this.dayBrightness));
+      // a world-space diameter at unit depth, in drawing-buffer pixels, for sprites that must keep their size in the world
+      const pointScale = 0.5 * this.canvas.clientHeight * this.pixelRatio * (rig.camera.projectionMatrix.elements[5] as number);
+      this.ambient!.update(dt, time, { daylight: 1 - light.night, weather: frame.climate.weather, light: light.skyColor, running: frame.tps > 0, reducedMotion: this.options.reducedMotion }, pointScale);
     }
 
+    this.knowledge?.update(dt, this.dayBrightness);
+    if (this.citizens && this.ties) this.ties.update((id, out) => this.citizens!.positionOf(id, out), this.tmp, this.tmp2);
     this.updateSelection(time);
     this.updateLabels(now);
 
@@ -567,6 +598,29 @@ export class WorldRenderer {
     if (this.tmp.z > 1 || Math.abs(this.tmp.x) > 1 || Math.abs(this.tmp.y) > 1) return null;
     const rect = this.canvas.getBoundingClientRect();
     return { x: rect.left + (this.tmp.x * 0.5 + 0.5) * rect.width, y: rect.top + (-this.tmp.y * 0.5 + 0.5) * rect.height };
+  }
+
+  /** Wash out everything the given citizen has never seen (a bit per tile), or pass null to lift the veil. */
+  setKnowledge(seen: Uint8Array | null): void {
+    this.knowledge?.set(seen);
+    if (!this.running) this.renderOnce();
+  }
+
+  /** Draw arcs from one citizen to the people they have dealt with, or pass null to remove them. */
+  setTies(from: number, ties: readonly { id: number; trust: number }[] | null): void {
+    this.ties?.set(from, ties);
+    if (!this.running) this.renderOnce();
+  }
+
+  /** What the camera is looking at, for the soundscape: a lit fire nearby, the sea nearby, how close in. */
+  ambience(): { fire: number; shore: number; closeness: number } {
+    const { rig, field } = this;
+    if (!rig || !field) return { fire: 0, shore: 0.5, closeness: 0 };
+    const closeness = rig.closeness();
+    let fire = 0;
+    for (const f of this.structures?.litFires() ?? []) fire = Math.max(fire, 1 - Math.hypot(f.x - rig.target.x, f.z - rig.target.z) / 9);
+    const ground = field.heightAt(rig.target.x, rig.target.z);
+    return { fire: Math.max(0, fire) * (0.25 + 0.75 * closeness), shore: Math.max(0, Math.min(1, 1 - ground / 1.2)), closeness };
   }
 
   // ───────────────────────── stats

@@ -516,3 +516,95 @@ rollback. Read this file before modifying any contract it mentions.
   160 KB compressed at 50 people and are rewritten every epoch.
 - **Rollback.** `stepRun` is a plain function; a workflow runner could call it unchanged.
 
+
+## D-027 — People hidden by the scenery show as a faint shape (2026-11-25)
+
+- **Problem.** The art bible says fifty citizens must be countable at the vista. Screenshots in phase 11 showed
+  they were not: anyone working in a wood stood under a canopy as tall as themselves, and a builder behind a
+  shelter was invisible from most angles (`evidence/phase-11/cycles/2-woodcutter-hidden.jpg`).
+- **Original proposal.** None: the prompts ask for "unobstructed labels" and readable silhouettes.
+- **Alternatives.** (a) Stand people outside the wood: tried first; crowns are wider than a tile, so it only
+  helped at the edges. (b) Cut away foliage above a selected citizen: helps one person, not fifty. (c) Dots
+  drawn on top of everything: robust, but they turn the diorama into a map. (d) Silhouettes: draw each
+  citizen's body and head again, faintly, only where something stands in front of them.
+- **Evidence.** A first version used a depth test alone and smeared over visible people wherever an arm, belt
+  or hat overlapped the body (`3-silhouette-smear.jpg`). The version kept adds a stencil mark written by every
+  drawn part of every citizen, so the faint shape appears only where no citizen's own surface shows
+  (`4-silhouette-clean.jpg`).
+- **Decision.** (d), in ember at 13% opacity from afar rising to 33% close in, so that it hints at the vista
+  and identifies at close range. The stencil buffer is enabled on the renderer and on the post chain's target.
+- **Affected tests.** None assert pixels. `play.spec.ts` and `observer.spec.ts` exercise the path on every run.
+- **Cost / risks.** Two more draw calls and a stencil attachment. Verified only on software rendering; a real
+  GPU could differ (MSAA with stencil is standard, but untested here). People hidden by *other people* are not
+  shown, by design.
+- **Rollback.** Remove the two ghost meshes in `src/render/citizens.ts`; nothing else depends on them.
+
+## D-028 — Sound is synthesized, follows state, and is silent until asked for (2026-11-25)
+
+- **Problem.** Phases 11 and 12 ask for original or licensed ambient sound, meaningful cues and no autoplay.
+- **Alternatives.** Licensed recordings (provenance to audit, megabytes to ship, loops that say nothing about
+  the world) or synthesis in the browser.
+- **Decision.** `src/audio/soundscape.ts`: wind, surf, rain, thunder, birds, crickets, fire, a quiet pad and
+  seven cue tones, all from oscillators and one noise buffer. What is heard is read from the frame and the
+  camera — weather, daylight, season, a lit fire near the point looked at, whether time is running. No audio
+  context exists until the visitor turns sound on with a click or a key; a returning visitor's preference is
+  honoured at their first gesture, never before one. Levels are four sliders in the menu.
+- **Evidence.** `observer.spec.ts`: level is exactly 0 before the switch, above 0.0005 RMS after it with the
+  world running, below 0.0002 with the overall slider at zero.
+- **Cost / risks.** Nobody has *listened* to it: this environment has no audio output, so its character and
+  balance are unjudged. The test shows that signal is produced and controlled, not that it sounds good.
+- **Rollback.** The controller's `sound` member is the only caller.
+
+## D-029 — What a citizen knows is shown by washing out what they have not seen (2026-11-25)
+
+- **Problem.** Phase 12: "see what they know vs what the observer knows". The inspector listed beliefs; the
+  world showed nothing.
+- **Alternatives.** A depth-reading post effect (needs a depth texture the multisampled chain does not have); a
+  translucent sheet over unknown ground (leaves trees and huts in full colour above it); or a per-material
+  shader patch.
+- **Decision.** `src/render/overlays.ts`. One texel per tile says whether the selected citizen has ever seen it;
+  terrain, flora, structures and both water shaders fade toward a pale parchment tone where it is zero. People
+  are left in colour: they are the observer's knowledge. The same toggle dims the atlas. A second view draws an
+  arc to each person the citizen has dealt with, warm for trust and cool for distrust.
+- **Evidence.** `evidence/phase-11/knowledge.jpg`; `observer.spec.ts` (toggles, and a legend that states how
+  many of the island's 4,096 tiles the citizen knows).
+- **Cost / risks.** One texture read in five materials. Belief *errors* (a bush believed full that is bare) are
+  still only in the inspector's list.
+- **Rollback.** `buildKnowledge`/`veil` are optional arguments of the four builders.
+
+## D-030 — A field journal of things witnessed, instead of objectives (2026-11-25)
+
+- **Problem.** Phase 12 asks for "optional challenge objectives, meaningful dilemmas, unlock knowledge through
+  observation not grind". An objective such as "have them found a council by day 20" would reward the player
+  for steering toward a designer's picture of civilization — the thing this project exists not to script.
+- **Decision.** `src/ui/game/journal.ts`: twenty-one questions an observer might bring ("Will anyone give
+  something away?", "Will a rule be broken, and seen to be?"). Each is answered only by the first engine-logged
+  event of that kind in this world, with the Chronicle's own sentence, the day and the place. Nothing is
+  scored, nothing is told to the citizens, and a question can stay open for good. The dilemmas remain the
+  interventions, whose consequences are never forecast.
+- **Affected tests.** `observer.spec.ts` (pages appear from play; seen + open = 21).
+- **Cost / risks.** Less of a "game" for players who want goals; that gap is recorded for the human playtest
+  that has not happened. A page says that something occurred, never what it proves.
+- **Rollback.** A panel and a list; remove both.
+
+## D-031 — Agreements leave a mark in the world only once ratified (2026-11-25)
+
+- **Problem.** Phase 11: "represent new institutions visually through physical artifacts only when actual
+  events justify them; no automatic epoch unlocks."
+- **Decision.** The frame carries a mark for each *ratified* institution: where it was ratified, how many hold
+  to it now, which stores it governs, whether it has ended. The renderer sets a post there with one cord per
+  member (up to ten), flies a pennant in the institution's colour on the post and beside each governed store,
+  and leaves the post leaning, without pennant or cords, when the institution ends. A charter that was only
+  proposed draws nothing. The same colour marks the charter in the Charters panel and the atlas.
+- **Evidence.** `evidence/phase-11/charter.jpg` (a scripted control charter, labelled as such in the product).
+- **Rollback.** `setMarks` in `src/render/structures.ts`.
+
+## D-032 — A path is drawn where the engine says there is one (2026-11-25)
+
+- **Problem.** Worn paths were invisible. Measured traffic never exceeds about 33 footfalls on any tile of the
+  reference world in 40 days, and the tint only saturated near 150.
+- **Decision.** One mapping, `wearOf`, shared by the ground shader, the grass and the atlas, calibrated to the
+  engine's own threshold: at 24 footfalls — where the engine makes a tile cheaper to cross — the ground is
+  drawn as a beaten track and the grass is gone; lighter use only dulls and flattens the turf.
+- **Evidence.** `scripts`-level measurement recorded in `docs/EVIDENCE.md` (phase 11); `evidence/phase-11/paths.jpg`.
+- **Rollback.** Change the constant in `src/render/palette.ts`.

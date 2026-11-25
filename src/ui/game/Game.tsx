@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Quality } from "@/render/WorldRenderer";
 import { useGame } from "@/store/game";
+import { AtlasPanel } from "./Atlas";
 import { CivicsPanel } from "./Civics";
 import { RecordingsPanel } from "./Recordings";
 import { ComparePanel } from "./Compare";
@@ -11,13 +12,14 @@ import { GameController } from "./controller";
 import styles from "./game.module.css";
 import { Coach, RecordingBar, Timebar, Toast, TopBar } from "./Hud";
 import { Inspector } from "./Inspector";
+import { JournalPanel } from "./Journal";
 import { AffordancesPanel, Chronicle, Interventions, MenuPanel } from "./Panels";
 import { Setup, Title } from "./Title";
 
 declare global {
   interface Window {
     /** Read-only handle for automated tests: what the renderer is doing, never a way to change the world. */
-    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null };
+    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null; soundLevel: () => number };
   }
 }
 
@@ -44,7 +46,7 @@ export function Game() {
     const recording = new URLSearchParams(window.location.search).get("recording");
     if (recording) void controller.openRecording(recording.slice(0, 80));
     else void controller.startVista();
-    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent) };
+    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), soundLevel: () => controller.soundLevel() };
     return () => {
       controller.detach();
       delete window.__tr;
@@ -65,7 +67,7 @@ export function Game() {
         return;
       }
       if (state.phase !== "playing") return;
-      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings";
+      const modal = state.panel === "interventions" || state.panel === "compare" || state.panel === "civics" || state.panel === "menu" || state.panel === "affordances" || state.panel === "recordings" || state.panel === "atlas" || state.panel === "journal";
       if (modal) return;
       const rig = controller.camera();
       switch (e.key) {
@@ -103,6 +105,26 @@ export function Game() {
         case "f":
         case "F":
           if (state.selection) controller.follow(!state.following);
+          break;
+        case "l":
+        case "L":
+          controller.openPanel("atlas");
+          break;
+        case "j":
+        case "J":
+          controller.openPanel("journal");
+          break;
+        case "m":
+        case "M":
+          void controller.setSound(!state.soundOn);
+          break;
+        case "v":
+        case "V":
+          if (state.selection?.type === "agent") controller.setOverlay({ knowledge: !state.overlay.knowledge });
+          break;
+        case "t":
+        case "T":
+          if (state.selection?.type === "agent") controller.setOverlay({ ties: !state.overlay.ties });
           break;
         case "ArrowLeft":
         case "a":
@@ -146,7 +168,7 @@ export function Game() {
   return (
     <ControllerContext.Provider value={controller}>
       <div className={styles.root} data-phase={phase} data-testid="game-root">
-        <canvas ref={canvasRef} className={styles.canvas} data-testid="world-canvas" tabIndex={playing ? 0 : -1} aria-label="The island. Drag to pan, right-drag or two-finger twist to orbit, scroll or pinch to zoom, click a citizen to inspect." />
+        <canvas ref={canvasRef} className={styles.canvas} data-testid="world-canvas" tabIndex={playing ? 0 : -1} role="application" aria-roledescription="view of the island" aria-label="The island. Drag to pan, right-drag or two-finger twist to orbit, scroll or pinch to zoom, click a citizen to inspect." />
         <div ref={overlayRef} className={styles.overlay} aria-hidden>
           <div ref={nameTagRef} className={styles.nameTag}>
             {selectedName}
@@ -176,6 +198,8 @@ export function Game() {
         {playing && panel === "compare" ? <ComparePanel /> : null}
         {playing && panel === "civics" ? <CivicsPanel /> : null}
         {playing && panel === "menu" ? <MenuPanel /> : null}
+        {playing && panel === "atlas" ? <AtlasPanel /> : null}
+        {playing && panel === "journal" ? <JournalPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
         {panel === "recordings" ? <RecordingsPanel /> : null}
         <Toast />

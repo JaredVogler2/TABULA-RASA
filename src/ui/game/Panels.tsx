@@ -5,13 +5,17 @@ import {
   FolderOpen,
   Info,
   Leaf,
+  Map as MapIcon,
   Megaphone,
+  NotebookPen,
   Save,
   Snowflake,
   Sprout,
   Sun,
   Trash2,
   UsersRound,
+  Volume2,
+  VolumeX,
   Waves,
   X,
 } from "lucide-react";
@@ -188,6 +192,7 @@ export function MenuPanel() {
   const settings = useGame((s) => s.settings);
   const world = useGame((s) => s.world);
   const replay = useGame((s) => s.hud?.replay ?? null);
+  const soundOn = useGame((s) => s.soundOn);
   const close = () => controller.openPanel("menu");
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
@@ -201,6 +206,14 @@ export function MenuPanel() {
                 Save this world
               </button>
             )}
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("journal")} data-testid="menu-journal">
+              <NotebookPen aria-hidden />
+              Field journal
+            </button>
+            <button type="button" className={styles.button} onClick={() => controller.openPanel("atlas")} data-testid="menu-atlas">
+              <MapIcon aria-hidden />
+              Atlas
+            </button>
             <button type="button" className={styles.button} onClick={() => controller.openPanel("affordances")} data-testid="open-affordances">
               <Info aria-hidden />
               What was designed
@@ -265,6 +278,34 @@ export function MenuPanel() {
           </div>
 
           <div className={styles.section}>
+            <div className={styles.sectionTitle}>
+              Sound <span>made in your browser from the weather, the hour and what you are looking at</span>
+            </div>
+            <div className={styles.formRow}>
+              <button type="button" className={styles.button} aria-pressed={soundOn} onClick={() => void controller.setSound(!soundOn)} data-testid="setting-sound">
+                {soundOn ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+                {soundOn ? "Sound is on" : "Turn sound on"}
+              </button>
+            </div>
+            <div className={styles.sliders}>
+              {(
+                [
+                  ["master", "Overall"],
+                  ["ambience", "Weather and wildlife"],
+                  ["music", "Music"],
+                  ["cues", "Event tones"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className={styles.slider}>
+                  <span>{label}</span>
+                  <input type="range" min={0} max={100} step={5} value={Math.round(settings.levels[key] * 100)} onChange={(e) => controller.setSoundLevels({ [key]: Number(e.target.value) / 100 })} data-testid={`level-${key}`} />
+                  <output className="tnum">{Math.round(settings.levels[key] * 100)}</output>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.sectionTitle}>About this run</div>
             <p className={styles.muted}>
               Engine {ENGINE_VERSION} · affordances {AFFORDANCE_VERSION}
@@ -292,7 +333,8 @@ export function AffordancesPanel() {
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && close()}>
       <section className={`${styles.paper} ${styles.sheet} ${styles.sheetWide}`} role="dialog" aria-modal="true" aria-labelledby="affordances-title" data-testid="affordances">
         <PanelHead kicker={`Registry ${AFFORDANCE_VERSION}`} title="What was designed" onClose={close} testId="affordances" />
-        <div className={styles.panelBody}>
+        {/* a long page of text with nothing in it to tab to: the page itself takes focus so the keyboard can scroll it */}
+        <div className={styles.panelBody} tabIndex={0} role="region" aria-label="Everything the designers supplied">
           <p className={styles.lede}>Everything the designers supplied. Whatever these citizens come to do, they do inside this space; they did not invent the space.</p>
           {order.map((cat) => {
             const entries = AFFORDANCES.filter((a) => a.category === cat);

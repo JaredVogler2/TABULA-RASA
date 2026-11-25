@@ -211,6 +211,24 @@ test("the keyboard alone can drive the game", async ({ page }, testInfo) => {
   await expect(page.getByTestId("interventions")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("interventions")).toHaveCount(0);
+  // the instruments added in phase 12 have keys of their own
+  for (const [key, panel] of [["g", "civics"], ["l", "atlas"], ["j", "journal"]] as const) {
+    await page.keyboard.press(key);
+    await expect(page.getByTestId(panel)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId(panel)).toHaveCount(0);
+  }
+  // sound by key: on, then off (nothing plays before the first press)
+  await page.keyboard.press("m");
+  await expect(page.getByTestId("toggle-sound")).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("m");
+  await expect(page.getByTestId("toggle-sound")).toHaveAttribute("aria-pressed", "false");
+  // the menu is reached by Tab and opened by Enter like any button
+  await page.getByTestId("open-menu").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("menu")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("menu")).toHaveCount(0);
 });
 
 test("charters are shown in plain words, with how they came about", async ({ page }, testInfo) => {

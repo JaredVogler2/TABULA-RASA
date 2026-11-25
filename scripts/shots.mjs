@@ -22,6 +22,17 @@ const SHOTS = {
   vista: { w: 1920, h: 1080, q: "?scenario=first_light&seed=1&days=2&ticks=22&q=high&az=0.62&polar=0.88" },
   vista_laptop: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=2&ticks=22&q=high&az=0.62&polar=0.88" },
   closeup: { w: 1920, h: 1080, q: "?scenario=first_light&seed=1&days=2&ticks=30&q=high&agent=7&az=0.9&polar=1.08&dist=13" },
+  // people at work, close enough to read a pose, a tool and a load
+  woodcutter: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=4&ticks=30&q=high&doing=gather_wood&az=0.7&polar=0.9&dist=8" },
+  forager: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=4&ticks=30&q=high&doing=gather_forage&az=2.2&polar=1.1&dist=7" },
+  fisher: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=2&ticks=25&q=high&doing=gather_fish&az=-0.6&polar=1.0&dist=8" },
+  builder: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=4&ticks=30&q=high&doing=build&az=2.6&polar=0.85&dist=9" },
+  // a ratified agreement and the stores it governs (scripted control: labelled as such in the product)
+  charter: { w: 1366, h: 768, q: "?scenario=long_winter&seed=1&days=14&ticks=30&q=high&inst=scripted_control&charter=1&az=0.5&polar=0.95&dist=11" },
+  // three weeks in: where people have really walked, the ground and the grass show it
+  paths: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=22&ticks=30&q=high&az=0.3&polar=0.62&dist=38" },
+  // what one citizen knows, against what the observer sees
+  knowledge: { w: 1366, h: 768, q: "?scenario=first_light&seed=1&days=6&ticks=30&q=high&agent=7&know=1&ties=1&az=0.62&polar=0.8&dist=70&settle=1800" },
   midday: { w: 1920, h: 1080, q: "?scenario=first_light&seed=1&days=3&ticks=26&q=high&az=-0.5&polar=0.98&dist=46&tx=30&ty=30" },
   dusk: { w: 1920, h: 1080, q: "?scenario=first_light&seed=1&days=3&ticks=47&q=high&az=1.9&polar=1.02&dist=58" },
   night: { w: 1920, h: 1080, q: "?scenario=first_light&seed=1&days=3&ticks=76&q=high&az=0.4&polar=0.95&dist=70" },
@@ -59,7 +70,15 @@ for (const name of names) {
   // SHOTS_FORMAT=jpeg keeps committed evidence small; PNG is the default for close inspection
   const jpeg = process.env.SHOTS_FORMAT === "jpeg";
   const file = join(out, `${name}.${jpeg ? "jpg" : "png"}`);
-  await page.screenshot(jpeg ? { path: file, type: "jpeg", quality: 88 } : { path: file });
+  try {
+    // a software renderer under load can take most of a minute to hand over one frame
+    await page.screenshot(jpeg ? { path: file, type: "jpeg", quality: 88, timeout: 180_000 } : { path: file, timeout: 180_000 });
+  } catch (err) {
+    console.error(`${name}: the screenshot could not be taken: ${err instanceof Error ? err.message.split("\n")[0] : err}`);
+    failed = true;
+    await context.close();
+    continue;
+  }
   console.log(`${name}: ${file} (${Date.now() - started} ms) ${JSON.stringify(stats)}${errors.length ? ` ERRORS ${JSON.stringify(errors.slice(0, 3))}` : ""}`);
   if (errors.length) failed = true;
   await context.close();

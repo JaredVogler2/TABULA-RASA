@@ -8,8 +8,10 @@ import {
   CloudSnow,
   Film,
   GitFork,
+  Map as MapIcon,
   Menu,
   Moon,
+  NotebookPen,
   Pause,
   Play,
   Sparkles,
@@ -18,6 +20,8 @@ import {
   Thermometer,
   ScrollText,
   Users,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { SPEEDS, useGame } from "@/store/game";
 import { scenarioById } from "@/engine";
@@ -41,6 +45,8 @@ export function TopBar() {
   const forkDay = useGame((s) => s.forkDay);
   const civic = useGame((s) => s.hud?.civic);
   const unread = useGame((s) => s.chronicle.length > 0 && s.panel !== "chronicle");
+  const soundOn = useGame((s) => s.soundOn);
+  const journalUnread = useGame((s) => s.journalUnread);
   if (!hud || !world) return null;
   const scenario = scenarioById(world.config.scenario);
   const night = hud.climate.light < 250;
@@ -106,6 +112,19 @@ export function TopBar() {
           <GitFork aria-hidden />
           <span>Compare</span>
         </button>
+        <button type="button" className={styles.iconButton} aria-pressed={panel === "atlas"} onClick={() => controller.openPanel("atlas")} data-testid="open-atlas" title="Atlas and almanac (L)">
+          <MapIcon aria-hidden />
+          <span className="sr-only">Atlas</span>
+        </button>
+        <button type="button" className={`${styles.iconButton} ${styles.toolSecondary}`} aria-pressed={panel === "journal"} onClick={() => controller.openPanel("journal")} data-testid="open-journal" title="Field journal (J)">
+          <NotebookPen aria-hidden />
+          <span className="sr-only">Field journal</span>
+          {journalUnread > 0 ? <i className={styles.badge} aria-hidden /> : null}
+        </button>
+        <button type="button" className={`${styles.iconButton} ${styles.toolSecondary}`} aria-pressed={soundOn} onClick={() => void controller.setSound(!soundOn)} data-testid="toggle-sound" title={soundOn ? "Sound is on (M)" : "Sound is off (M)"}>
+          {soundOn ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+          <span className="sr-only">{soundOn ? "Turn sound off" : "Turn sound on"}</span>
+        </button>
         <button type="button" className={styles.iconButton} aria-pressed={panel === "menu"} onClick={() => controller.openPanel("menu")} data-testid="open-menu" title="Menu">
           <Menu aria-hidden />
           <span className="sr-only">Menu</span>
@@ -168,7 +187,7 @@ export function Timebar() {
           </button>
         ))}
       </div>
-      <div className={styles.clock} aria-label={`Day ${hud.cal.day + 1}, ${clock(hud.cal.tickOfDay)}`}>
+      <div className={styles.clock} role="group" aria-label={`Day ${hud.cal.day + 1}, ${clock(hud.cal.tickOfDay)}`}>
         <div className={styles.clockText}>
           <strong className="tnum" data-testid="clock">
             {clock(hud.cal.tickOfDay)}

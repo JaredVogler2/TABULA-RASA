@@ -78,7 +78,8 @@ export interface PostChain {
 
 export function buildPost(renderer: WebGLRenderer, scene: Scene, camera: Camera, quality: "medium" | "high", reducedMotion: boolean): PostChain {
   const size = renderer.getDrawingBufferSize(new Vector2());
-  const target = new WebGLRenderTarget(size.x, size.y, { type: HalfFloatType, samples: quality === "high" ? 4 : 2 });
+  // the stencil buffer is what lets a hidden citizen show as a faint shape (see citizens.ts)
+  const target = new WebGLRenderTarget(size.x, size.y, { type: HalfFloatType, samples: quality === "high" ? 4 : 2, stencilBuffer: true });
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
   let bloom: UnrealBloomPass | null = null;

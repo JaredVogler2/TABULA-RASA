@@ -3,15 +3,28 @@
  * and the UI store. React components call its methods; it never exposes a way to
  * write simulation state other than time control and logged observer interventions.
  */
+import { Soundscape, type Cue, type SoundLevels } from "@/audio/soundscape";
 import { TICKS_PER_DAY, makeConfig, type WorldConfig } from "@/engine";
 import { AUTOSAVE_ID, deleteSave, getSave, listSaves, putSave, toRecord } from "@/persist/saves";
 import { WorldRenderer, type Pick, type Quality } from "@/render/WorldRenderer";
 import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings } from "@/store/game";
 import { SimClient } from "@/store/simClient";
-import { AF, AGENT_STRIDE, type Recording, type ViewFrame } from "@/worker/protocol";
+import { AF, AGENT_STRIDE, type CivicMark, type Recording, type StructureView, type ViewFrame } from "@/worker/protocol";
+import { JOURNAL, entryFrom, pageFor, type JournalEntry } from "./journal";
 import { chronicle, type ChronicleEntry } from "./text";
 
 const CHRONICLE_CAP = 600;
+
+/** World events that are marked by a tone when sound is on; the most consequential wins when several coincide. */
+const CUES: Record<string, { cue: Cue; rank: number }> = {
+  ratified: { cue: "ratified", rank: 6 },
+  dissolved: { cue: "dissolved", rank: 5 },
+  lapsed: { cue: "dissolved", rank: 5 },
+  death: { cue: "death", rank: 4 },
+  arrival: { cue: "arrival", rank: 3 },
+  season: { cue: "season", rank: 2 },
+  built: { cue: "built", rank: 1 },
+};
 
 const BUNDLED = /^[a-z0-9][a-z0-9-]{2,60}$/;
 const SERVER_RUN = /^run_[a-z0-9_]{6,40}$/;
@@ -85,6 +98,14 @@ export class GameController {
   private epoch = -1;
 
   private pixelRatioCap: number | undefined;
+  /** The lists a frame carries only when they change, kept for the atlas. */
+  private structures: StructureView[] = [];
+  private marks: CivicMark[] = [];
+  private traffic: Uint16Array | null = null;
+  private readonly sound = new Soundscape();
+  private lastSound = 0;
+  private lastCue = 0;
+  private wake: (() => void) | null = null;
 
   /** `?q=low|medium|high` forces a quality preset (used by automated tests on software renderers). */
   setQualityOverride(q: Quality | null): void {
@@ -114,14 +135,82 @@ export class GameController {
     };
     this.client.onError = (message) => useGame.getState().set({ error: message });
     void this.refreshSaves();
+    // someone who chose sound on an earlier visit gets it back at their first gesture, never before one
+    if (settings.sound) {
+      const wake = (): void => {
+        this.unwake();
+        void this.setSound(true);
+      };
+      this.wake = wake;
+      window.addEventListener("pointerdown", wake, { once: true });
+      window.addEventListener("keydown", wake, { once: true });
+    }
+  }
+
+  private unwake(): void {
+    if (!this.wake) return;
+    window.removeEventListener("pointerdown", this.wake);
+    window.removeEventListener("keydown", this.wake);
+    this.wake = null;
   }
 
   detach(): void {
+    this.unwake();
+    this.sound.dispose();
     this.client?.dispose();
     this.client = null;
     this.renderer?.dispose();
     this.renderer = null;
     if (this.toastTimer) clearTimeout(this.toastTimer);
+  }
+
+  // ───────────────────────── sound
+
+  /** Turn sound on or off. Call from a user gesture: browsers refuse to start audio otherwise. */
+  async setSound(on: boolean): Promise<void> {
+    this.unwake();
+    const state = useGame.getState();
+    if (on) {
+      this.sound.setLevels(state.settings.levels);
+      const ok = await this.sound.enable();
+      useGame.getState().set({ soundOn: ok });
+      if (!ok) this.toast("Sound could not be started in this browser.");
+      else this.feedSound(true);
+    } else {
+      this.sound.disable();
+      useGame.getState().set({ soundOn: false });
+    }
+    if (state.settings.sound !== on) this.updateSettings({ sound: on });
+  }
+
+  setSoundLevels(patch: Partial<SoundLevels>): void {
+    const levels = { ...useGame.getState().settings.levels, ...patch };
+    this.sound.setLevels(levels);
+    this.updateSettings({ levels });
+  }
+
+  /** What is being sent to the speakers (for tests and the level meter): 0 when off or silent. */
+  soundLevel(): number {
+    return this.sound.level();
+  }
+
+  /** Tell the soundscape what the world and the camera are like right now. */
+  private feedSound(force = false): void {
+    const frame = this.latest;
+    if (!frame || !this.sound.isEnabled()) return;
+    const now = performance.now();
+    if (!force && now - this.lastSound < 240) return;
+    this.lastSound = now;
+    const near = this.renderer?.ambience() ?? { fire: 0, shore: 0.5, closeness: 0 };
+    this.sound.update({
+      weather: frame.climate.weather,
+      daylight: Math.max(0, Math.min(1, frame.climate.light / 1000)),
+      season: frame.cal.season,
+      fire: near.fire,
+      shore: near.shore,
+      closeness: near.closeness,
+      running: frame.playing && frame.tps > 0,
+    });
   }
 
   private ensureRenderer(): WorldRenderer {
@@ -148,7 +237,7 @@ export class GameController {
     if (!world) return;
     const r = this.ensureRenderer();
     r.setWorld(world);
-    if (this.latest) r.pushFrame({ ...this.latest, structures: null, piles: null, traffic: null, roster: null, events: [] });
+    if (this.latest) r.pushFrame({ ...this.latest, structures: null, piles: null, marks: null, traffic: null, roster: null, events: [] });
     r.start();
     this.client?.resync();
   }
@@ -158,15 +247,32 @@ export class GameController {
   private onFrame(frame: ViewFrame): void {
     if (frame.epoch !== this.epoch) return;
     this.latest = frame;
+    if (frame.structures) this.structures = frame.structures;
+    if (frame.marks) this.marks = frame.marks;
+    if (frame.traffic) {
+      this.traffic = frame.traffic;
+      this.notePath(frame);
+    }
     this.renderer?.pushFrame(frame);
     const state = useGame.getState();
+    const now = performance.now();
     if (frame.events.length) {
+      let best: { cue: Cue; rank: number } | null = null;
       for (const e of frame.events) {
         const entry = chronicle(e, state.world, state.roster);
         if (entry) this.pendingChronicle.push(entry);
+        const c = CUES[e.k];
+        if (c && (!best || c.rank > best.rank)) best = c;
+        const page = state.vista ? null : pageFor(e);
+        if (page) this.witness(entryFrom(page, e, entry));
+      }
+      // one tone at a time, and none over the title's passing island
+      if (best && !state.vista && now - this.lastCue > 450) {
+        this.lastCue = now;
+        this.sound.cue(best.cue);
       }
     }
-    const now = performance.now();
+    this.feedSound();
     if (now - this.lastHud > 120) {
       this.lastHud = now;
       const patch: Partial<ReturnType<typeof useGame.getState>> = {
@@ -216,7 +322,10 @@ export class GameController {
     try {
       if (sel.type === "agent") {
         const detail = await this.client.inspectAgent(sel.id);
-        if (useGame.getState().selection === sel) useGame.getState().set({ agentDetail: detail, tileDetail: null });
+        if (useGame.getState().selection === sel) {
+          useGame.getState().set({ agentDetail: detail, tileDetail: null });
+          this.applyOverlays();
+        }
       } else {
         const detail = await this.client.inspectTile(sel.x, sel.y);
         if (useGame.getState().selection === sel) useGame.getState().set({ tileDetail: detail, agentDetail: null });
@@ -226,6 +335,64 @@ export class GameController {
     } finally {
       this.inspecting = false;
     }
+  }
+
+  // ───────────────────────── field journal
+
+  /** Enter something in the journal the first time it is seen (later sightings of the same kind are not news). */
+  private witness(entry: JournalEntry): void {
+    const state = useGame.getState();
+    if (state.journal.some((j) => j.id === entry.id)) return;
+    // the second half of a pair is only an answer once the first half has been asked
+    if (entry.id === "spring" && !state.journal.some((j) => j.id === "winter")) return;
+    if (entry.id === "recovered" && !state.journal.some((j) => j.id === "depleted")) return;
+    const def = JOURNAL.find((d) => d.id === entry.id);
+    if (!def) return;
+    state.set({ journal: [...state.journal, entry], journalUnread: state.panel === "journal" ? 0 : state.journalUnread + 1 });
+    this.toast(`Field journal · ${def.title}`);
+  }
+
+  /** A path is beaten once some tile has been walked as often as the engine needs to make it easier going (24). */
+  private notePath(frame: ViewFrame): void {
+    const traffic = frame.traffic;
+    const world = useGame.getState().world;
+    if (!traffic || !world || useGame.getState().vista) return;
+    let best = -1;
+    for (let t = 0; t < traffic.length; t++) if ((traffic[t] as number) >= 24 && (best < 0 || (traffic[t] as number) > (traffic[best] as number))) best = t;
+    if (best < 0) return;
+    const x = best % world.w;
+    const y = Math.floor(best / world.w);
+    this.witness({ id: "path", tick: frame.tick, text: "Enough feet have gone the same way that the ground shows it.", agents: [], x, y });
+  }
+
+  /** Go to where and whom a journal page is about. */
+  openJournalEntry(entry: JournalEntry): void {
+    if (entry.x !== undefined && entry.y !== undefined) this.renderer?.focusTile(entry.x, entry.y, 28);
+    const agent = entry.agents[0];
+    if (agent !== undefined && this.latest && (this.latest.agents[agent * AGENT_STRIDE + AF.alive] ?? 0) > 0.5) {
+      this.select({ type: "agent", id: agent });
+      if (entry.x === undefined) this.renderer?.focusAgent(agent, 26);
+    }
+  }
+
+  /** What the atlas draws: where everyone and everything is right now. Read-only views of the latest frame. */
+  mapData(): { agents: Float32Array; count: number; structures: StructureView[]; marks: CivicMark[]; traffic: Uint16Array | null } | null {
+    if (!this.latest) return null;
+    return { agents: this.latest.agents, count: this.latest.agentCount, structures: this.structures, marks: this.marks, traffic: this.traffic };
+  }
+
+  /** Show, or stop showing, what the selected citizen knows. The views follow the selection and the inspector's data. */
+  setOverlay(patch: Partial<{ knowledge: boolean; ties: boolean }>): void {
+    const state = useGame.getState();
+    state.set({ overlay: { ...state.overlay, ...patch } });
+    this.applyOverlays();
+  }
+
+  private applyOverlays(): void {
+    const { overlay, agentDetail, selection } = useGame.getState();
+    const detail = selection?.type === "agent" && agentDetail && agentDetail.id === selection.id && agentDetail.alive ? agentDetail : null;
+    this.renderer?.setKnowledge(detail && overlay.knowledge ? detail.seen : null);
+    this.renderer?.setTies(detail ? detail.id : -1, detail && overlay.ties ? detail.people : null);
   }
 
   // ───────────────────────── worlds
@@ -239,7 +406,12 @@ export class GameController {
     renderer.start();
     this.pendingChronicle = [];
     this.lastAutosaveDay = -1;
+    this.structures = ready.frame.structures ?? [];
+    this.marks = ready.frame.marks ?? [];
+    this.traffic = ready.frame.traffic;
     useGame.getState().set({
+      journal: [],
+      journalUnread: 0,
       world: ready.world,
       roster: ready.world.agents,
       hud: {
@@ -379,6 +551,8 @@ export class GameController {
     } else {
       state.set({ agentDetail: null, tileDetail: null });
     }
+    // the views belong to a selected citizen: they go when the selection does, and return with the next one
+    this.applyOverlays();
   }
 
   selectAgent(id: number, focus = true): void {
@@ -427,6 +601,7 @@ export class GameController {
       const state = useGame.getState();
       state.set({ forkDay: state.forkDay >= 0 ? state.forkDay : Math.floor(result.forkTick / TICKS_PER_DAY), panel: "none" });
       this.toast("The timeline forked. The untouched world keeps running for comparison.");
+      this.sound.cue("fork");
       this.advanceTutorial(3);
     } else {
       this.toast("That intervention could not be applied.");
@@ -455,6 +630,7 @@ export class GameController {
     if (next === "civics") void this.refreshCivics();
     if (next === "saves" || next === "menu") void this.refreshSaves();
     if (next === "chronicle") this.advanceTutorial(2);
+    if (next === "journal") state.set({ journalUnread: 0 });
   }
 
   updateSettings(patch: Partial<Settings>): void {
@@ -503,7 +679,7 @@ export class GameController {
       const stamp = Date.now();
       const saveId = id ?? `save-${stamp}`;
       const label = name ?? `${payload.scenario.replace(/_/g, " ")} · seed ${payload.seed} · day ${payload.day + 1}`;
-      await putSave(toRecord(saveId, label, payload, stamp));
+      await putSave(toRecord(saveId, label, payload, stamp, useGame.getState().journal));
       await this.refreshSaves();
       if (!quiet) this.toast(`Saved. Snapshot ${payload.hash.slice(0, 12)}…`);
     } catch (err) {
@@ -522,7 +698,7 @@ export class GameController {
       if (gen !== this.generation) return;
       await this.adopt(ready, false);
       const forkDay = record.control ? Math.max(0, record.series.length - record.controlSeries.length) : -1;
-      useGame.getState().set({ phase: "playing", controlSeries: record.controlSeries, forkDay, tutorialStep: -1 });
+      useGame.getState().set({ phase: "playing", controlSeries: record.controlSeries, forkDay, tutorialStep: -1, journal: record.journal ?? [], journalUnread: 0 });
       this.setSpeed(useGame.getState().speed);
       this.toast(`Loaded “${record.name}”.`);
     } catch (err) {

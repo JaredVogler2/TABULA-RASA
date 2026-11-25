@@ -45,6 +45,7 @@ import {
   ACTION_CODES,
   AF,
   AGENT_STRIDE,
+  TOOL_BIT,
   type AgentDetail,
   type CharterView,
   type CivicsView,
@@ -81,6 +82,7 @@ let series: DaySample[] = [];
 let controlSeries: DaySample[] = [];
 let structureSig = "";
 let pileSig = "";
+let markSig = "?";
 let rosterCount = 0;
 let trafficDay = -1;
 let worldEpoch = 0;
@@ -312,18 +314,25 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     buf[o + AF.health] = a.health;
     buf[o + AF.carry] = dominantItem(a.inv);
     buf[o + AF.ill] = a.ill > 0 ? 1 : 0;
-    // facing target for stationary actions (the node or structure being worked on)
+    // what a stationary action is directed at: the node or structure being worked on, or a person
     let target = -1;
+    let partner = -1;
     const intent = a.queue[0];
     if (act && act.k !== "step") {
       if (intent && intent.k === "gather") target = (w.nodes.y[intent.node] as number) * w.terrain.w + (w.nodes.x[intent.node] as number);
       else if (act.k === "work" || act.k === "supply" || act.k === "refuel" || act.k === "harvest" || act.k === "deposit" || act.k === "withdraw") target = act.y * w.terrain.w + act.x;
-      else if (intent && intent.k === "give") {
+      else if (intent && (intent.k === "give" || intent.k === "say")) {
         const t = w.agents[intent.to];
-        if (t) target = t.y * w.terrain.w + t.x;
+        if (t && t.alive) {
+          partner = t.id;
+          target = t.y * w.terrain.w + t.x;
+        }
       }
     }
     buf[o + AF.target] = target;
+    buf[o + AF.partner] = partner;
+    buf[o + AF.tools] =
+      ((a.inv[Item.axe] as number) > 0 ? TOOL_BIT.axe : 0) | ((a.inv[Item.spear] as number) > 0 ? TOOL_BIT.spear : 0) | ((a.inv[Item.basket] as number) > 0 ? TOOL_BIT.basket : 0) | ((a.inv[Item.pot] as number) > 0 ? TOOL_BIT.pot : 0);
     buf[o + AF.load] = Math.min(1, carriedWeight(a) / Math.max(1, carryCapacity(a)));
     if (a.alive) alive++;
   }
@@ -335,6 +344,9 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
   const sendPiles = forceLists || pSig !== pileSig;
   structureSig = sSig;
   pileSig = pSig;
+  const mSig = w.inst.institutions.map((i) => `${i.id}:${i.ended >= 0 ? 1 : 0}:${i.members.length}:${i.stores.join(".")}`).join("|");
+  const sendMarks = forceLists || mSig !== markSig;
+  markSig = mSig;
   const sendTraffic = forceLists || cal.day !== trafficDay;
   trafficDay = cal.day;
   const sendRoster = forceLists || n !== rosterCount;
@@ -362,6 +374,7 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     nodeAmounts: w.nodes.amount.slice(),
     structures: sendStructures ? w.structures.filter((s) => !s.removed).map(structureView) : null,
     piles: sendPiles ? pileViews(w) : null,
+    marks: sendMarks ? w.inst.institutions.map((i) => ({ id: i.id, x: i.seatX, y: i.seatY, ended: i.ended >= 0, members: i.members.length, stores: i.stores.filter((id) => w.structures[id] && !w.structures[id]!.removed) })) : null,
     traffic: sendTraffic ? w.traffic.slice() : null,
     events,
     alive,
@@ -498,6 +511,7 @@ function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySampl
   recent.clear();
   structureSig = "";
   pileSig = "";
+  markSig = "?";
   trafficDay = -1;
   rosterCount = 0;
   acc = 0;
@@ -646,6 +660,7 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       case "resync":
         structureSig = "";
         pileSig = "";
+        markSig = "?";
         trafficDay = -1;
         rosterCount = 0;
         break;

@@ -35,18 +35,18 @@
   --water-400: #6cc4c6;
   --water-500: #3f9ea6;
   --berry-400: #c75b6f;
-  --berry-500: #a8405a;
+  --berry-500: #9e3a54;
   --frost-300: #cfe0ea;
 
   /* semantic */
   --bg: var(--ink-950);
   --text-on-dark: #ece6d6;
-  --text-on-dark-muted: #a9b5a2;
+  --text-on-dark-muted: #b3beac;
   --text-on-paper: #2a2318;
   --text-on-paper-muted: #6b5f4a;
   --rule-on-paper: rgba(74, 58, 36, 0.22);
   --rule-on-dark: rgba(214, 226, 204, 0.14);
-  --glass: rgba(14, 24, 19, 0.72);
+  --glass: rgba(14, 24, 19, 0.8);
   --glass-strong: rgba(11, 19, 15, 0.88);
   --focus: var(--ember-400);
 
