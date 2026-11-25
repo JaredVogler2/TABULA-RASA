@@ -11,7 +11,7 @@ export { DEFAULT_CONFIG, SCENARIOS, configHash, makeConfig, scenarioById, valida
 export type { InstitutionMode, PolicyKind, ScenarioDef, ScheduledShock, ShockKind, SpawnMode, WorldConfig } from "./model/config";
 export * from "./model/types";
 
-export { seedFromString } from "./core/rng";
+export { Stream, below, seedFromString, u32 } from "./core/rng";
 export { sha256Hex, sha256Text, utf8 } from "./core/hash";
 export { canonicalJson, parseCanonical } from "./core/canonical";
 
@@ -34,15 +34,22 @@ export type { Summary } from "./metrics/accumulate";
 // minds: the contract for external decision makers, and the baselines' own tools
 export { buildObservation, carriedFoodEnergy, maskAllows, DECISION_LIMITS, OBSERVATION_VERSION } from "./mind/observe";
 export type { ActionOption, Observation, ObservedCivics } from "./mind/observe";
-export { cleanText, dueForDecision, observe, replayTape, submitDecision, tapeFromEvents } from "./mind/external";
-export type { DecisionOutcome, DecisionRecord, ExternalDecision } from "./mind/external";
+export { cleanText, dueForDecision, observe, replayRecord, replayTape, submitDecision, tapeFromEvents } from "./mind/external";
+export type { DecisionOutcome, DecisionRecord, Dropped, ExternalDecision } from "./mind/external";
+export { FEEDBACK_LIMITS } from "./mind/feedback";
 export { mockDecision } from "./mind/mock";
+export { urgentNeed } from "./mind/reflex";
 
 // institutions
 export { GRAMMAR_VERSION, LIMITS as INSTITUTION_LIMITS } from "./institutions/types";
 export type { Charter, Diagnostic, Expr, Institution, Motion, MotionBody, Origin, Pact, Proposal, Rule, Sanction } from "./institutions/types";
 export { validateCharter } from "./institutions/validate";
+export { FORMULA_MAX_CHARS, formatFormula, parseFormula } from "./institutions/formula";
+export type { FormulaResult } from "./institutions/formula";
+export { showExpr } from "./institutions/expr";
+export { controllerFor } from "./world/population";
 export { describeMotion, describeRule, describeTerms } from "./institutions/describe";
+export { sampleCharter } from "./institutions/search";
 export { institutionById, proposalById } from "./institutions/engine";
 
 // society measures, computed from the ledger

@@ -70,7 +70,14 @@ export interface WorldConfig {
   policy: PolicyKind;
   /** Permille of agents that deliberate when `policy` is "planner"; the rest are reflex-only (for mixed-population studies). */
   plannerShare: number;
-  cadence: number; // ticks between strategic deliberations for planner agents
+  /**
+   * Permille of agents whose deliberate decisions come from outside the engine (a language
+   * model, a mock, or a recorded tape). Who they are is drawn per person by seed. Between
+   * decisions, and whenever a decision is missing or refused, they act on the reflex layer,
+   * labelled as fallback. 0 = a baseline world.
+   */
+  externalShare: number;
+  cadence: number; // ticks between strategic deliberations (the least interval between two decisions by one mind)
 
   // affordance switches
   institutions: InstitutionMode;
@@ -114,6 +121,7 @@ export const DEFAULT_CONFIG: WorldConfig = {
   memoryCapacity: 48,
   policy: "planner",
   plannerShare: 1000,
+  externalShare: 0,
   cadence: 24,
   institutions: "grammar_search",
   escrow: true,
@@ -259,6 +267,7 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   if (cfg.spawn !== "dispersed" && cfg.spawn !== "clustered") throw new Error("config.spawn invalid");
   if (cfg.policy !== "reflex" && cfg.policy !== "planner") throw new Error("config.policy invalid");
   intInRange("plannerShare", cfg.plannerShare, 0, 1000);
+  intInRange("externalShare", cfg.externalShare, 0, 1000);
   if (!["off", "grammar_search", "scripted_control", "open"].includes(cfg.institutions)) {
     throw new Error("config.institutions invalid");
   }

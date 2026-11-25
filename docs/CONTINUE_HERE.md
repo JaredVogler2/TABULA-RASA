@@ -5,7 +5,10 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m` · PR: https://github.com/JaredVogler2/TABULA-RASA/pull/1
-- **Phase:** 10 PASS. **Next: phases 06–08** (Claude adapter, budget ledger and security, orchestration).
+- **Phase:** 10 PASS. **Phases 06–08 IN PROGRESS**: the server core is committed and tested (providers, wire
+  format, prompt p1, schedulers, epoch runner, ledger, owner auth, live adapter, run store, API routes, scans).
+  Still to do before they can be marked: owner console UI, recorded-run viewer in the game, E2E through the
+  real server, scheduler comparison evidence, docs (DECISIONS D-019+, COST, SECURITY, PROMPTS, EVIDENCE).
 - **Last verified commit:** see `git log -1`.
 - **Spend:** $0. No API key present. Live mode must stay disabled until the owner authorizes a capped run.
 

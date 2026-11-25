@@ -6,10 +6,10 @@ import { create } from "zustand";
 import type { Pick, Quality } from "@/render/WorldRenderer";
 import type { ChronicleEntry } from "@/ui/game/text";
 import type { SaveMeta } from "@/persist/saves";
-import type { AgentDetail, CalendarView, ClimateView, CivicsView, CompareView, DaySample, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
+import type { AgentDetail, CalendarView, ClimateView, CivicsView, CompareView, DaySample, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
 
 export type Phase = "title" | "setup" | "loading" | "playing";
-export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about";
+export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about" | "recordings";
 export type QualitySetting = "auto" | Quality;
 
 export interface HudState {
@@ -23,6 +23,8 @@ export interface HudState {
   tps: number;
   treated: boolean;
   civic: { proposals: number; institutions: number };
+  /** Present while a recording is being watched. */
+  replay: ReplayView | null;
 }
 
 export interface Settings {

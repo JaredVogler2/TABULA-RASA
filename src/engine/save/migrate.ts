@@ -18,6 +18,8 @@ type Migration = (env: SnapshotEnvelope) => SnapshotEnvelope;
  *        a per-node memory of the fullest each place has been seen.
  *  2 → 3 (engine 0.3.0): minds record which charters and pact offers they know of and where
  *        their current plan came from. No institution could exist before schema 3.
+ *  3 → 4 (engine 0.5.0): configurations say what share of people are driven from outside the
+ *        engine (every earlier world had none), and minds can hold a note to themselves.
  */
 const MIGRATIONS: Record<number, Migration> = {
   1: (env) => {
@@ -53,6 +55,15 @@ const MIGRATIONS: Record<number, Migration> = {
       if (!Array.isArray(s.open)) s.open = (s.inv as number[]).map(() => 0);
     }
     return { ...env, schema: 3 };
+  },
+  3: (env) => {
+    const cfg = (env.state as unknown as { config?: Record<string, unknown> }).config;
+    if (cfg && typeof cfg.externalShare !== "number") cfg.externalShare = 0;
+    for (const a of (env.state as unknown as { agents?: { mind?: Record<string, unknown> }[] }).agents ?? []) {
+      if (a.mind && typeof a.mind.note !== "string") a.mind.note = "";
+      if (a.mind && !Array.isArray(a.mind.feedback)) a.mind.feedback = [];
+    }
+    return { ...env, schema: 4 };
   },
 };
 

@@ -190,6 +190,14 @@ export interface Heard {
   text?: string;
 }
 
+/** A request the world refused: when, what kind of action, the engine's reason code, and any detail. */
+export interface Feedback {
+  t: number;
+  k: string;
+  r: string;
+  d?: string;
+}
+
 export interface Mind {
   /** Bitset over tiles: what this agent has ever seen. */
   seen: Uint8Array;
@@ -251,6 +259,14 @@ export interface Mind {
   droughtSeen: number;
   /** Earliest tick at which a planner-controlled agent may deliberate strategically again. */
   nextDeliberation: number;
+  /**
+   * A short private note an externally driven mind left for itself with its last decision
+   * (empty otherwise). It is shown back to that mind and to nobody else, and it has no effect
+   * on anything: it is memory the mind chose to keep, in its own words.
+   */
+  note: string;
+  /** What the world refused of an externally driven mind's last decision, and why (see mind/feedback.ts). */
+  feedback: Feedback[];
 }
 
 // ───────────────────────── agents

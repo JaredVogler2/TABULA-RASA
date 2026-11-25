@@ -9,6 +9,7 @@ import type {
   CompareView,
   DaySample,
   FromWorker,
+  Recording,
   SavePayload,
   StaticWorldView,
   TileDetail,
@@ -98,6 +99,12 @@ export class SimClient {
 
   async load(snapshot: string, control: string | null, series: DaySample[], controlSeries: DaySample[]): Promise<ReadyWorld> {
     const r = await this.request((requestId) => ({ type: "load", snapshot, control, series, controlSeries, requestId }), "ready");
+    return { world: r.world, frame: r.frame, series: r.series };
+  }
+
+  /** Watch a recorded run: the world is rebuilt from its configuration and its tape, consulting no mind. */
+  async replay(recording: Recording): Promise<ReadyWorld> {
+    const r = await this.request((requestId) => ({ type: "replay", recording, requestId }), "ready");
     return { world: r.world, frame: r.frame, series: r.series };
   }
 

@@ -39,7 +39,10 @@ export function Game() {
     const pr = Number(new URLSearchParams(window.location.search).get("pr"));
     if (Number.isFinite(pr) && pr >= 0.4 && pr <= 3) controller.setPixelRatioCap(pr);
     controller.attach(canvas, overlay, nameTag);
-    void controller.startVista();
+    // `?recording=<name>` opens straight into a recorded run instead of the title
+    const recording = new URLSearchParams(window.location.search).get("recording");
+    if (recording) void controller.openRecording(recording.slice(0, 80));
+    else void controller.startVista();
     window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent) };
     return () => {
       controller.detach();

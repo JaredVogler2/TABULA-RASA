@@ -22,6 +22,7 @@ import {
   forkWorld,
   giniPermille,
   hasSeen,
+  replayTape,
   restoreWorld,
   scratchOf,
   serializeWorld,
@@ -29,8 +30,11 @@ import {
   step,
   summarize,
   totalGoods,
+  validateConfig,
+  worldDigest,
   worthOf,
   type Agent,
+  type DecisionRecord,
   type SimEvent,
   type Structure,
   type WorldState,
@@ -47,6 +51,8 @@ import {
   type DaySample,
   type FromWorker,
   type PileView,
+  type Recording,
+  type ReplayView,
   type StaticAgentView,
   type StaticWorldView,
   type StructureView,
@@ -78,6 +84,9 @@ let pileSig = "";
 let rosterCount = 0;
 let trafficDay = -1;
 let worldEpoch = 0;
+
+/** A recording being watched: its tape, how far into it we are, and whether the world still matches it. */
+let rec: { view: ReplayView; tape: DecisionRecord[]; cursor: number; marks: Recording["epochs"]; mark: number } | null = null;
 /** Last few events per agent, for the inspector. */
 const recent = new Map<number, SimEvent[]>();
 
@@ -361,6 +370,7 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     roster: sendRoster ? roster(w) : null,
     treated: w.interventions.some((i) => i.origin === "observer"),
     civic: civicCounts(w),
+    replay: rec ? rec.view : null,
   };
 }
 
@@ -396,7 +406,25 @@ function sample(w: WorldState): DaySample {
 
 function tickOnce(): void {
   if (!world) return;
+  if (rec) {
+    if (world.tick >= rec.view.endTick) {
+      // the record is exhausted: what happened after it was never decided by anyone
+      if (rec.view.state === "playing") rec.view = { ...rec.view, state: "ended" };
+      playing = false;
+      return;
+    }
+    // the recorded decisions for this tick are offered to the world exactly as they were then
+    rec.cursor = replayTape(world, rec.tape, rec.cursor, scratchEvents);
+  }
   step(world, scratchEvents);
+  if (rec) {
+    const mark = rec.marks[rec.mark];
+    if (mark && world.tick === mark.toTick) {
+      rec.mark++;
+      if (rec.view.state !== "mismatch") rec.view = worldDigest(world) === mark.digest ? { ...rec.view, verifiedTick: world.tick } : { ...rec.view, state: "mismatch" };
+    }
+    if (world.tick >= rec.view.endTick && rec.view.state === "playing") rec.view = { ...rec.view, state: "ended" };
+  }
   for (const e of scratchEvents) {
     if (UI_EVENTS.has(e.k)) uiEvents.push(e);
     if (e.a >= 0) {
@@ -457,8 +485,9 @@ function restart(): void {
   timer = setInterval(loop, Math.round(1000 / frameHz));
 }
 
-function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySample[], requestId: number): void {
+function adopt(w: WorldState, c: WorldState | null, s: DaySample[], cs: DaySample[], requestId: number, recording: typeof rec = null): void {
   worldEpoch++;
+  rec = recording;
   world = w;
   control = c;
   forkTick = c ? c.meta.branch.forkTick : -1;
@@ -526,6 +555,8 @@ function agentDetail(w: WorldState, id: number): AgentDetail | null {
     phys: a.phys.slice(),
     skills: a.skills.slice(),
     controller: a.controller,
+    source: m.src,
+    note: m.note,
     goal: m.goal,
     why: m.why,
     action: act ? (act.k === "step" ? "walking" : act.k) : "idle",
@@ -585,8 +616,20 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         adopt(w, c, msg.series, msg.controlSeries, msg.requestId);
         break;
       }
+      case "replay": {
+        const r = msg.recording;
+        if (!r || r.format !== "tabula-rasa/recording" || r.version !== 1 || !Array.isArray(r.tape) || !Array.isArray(r.epochs) || r.epochs.length === 0) throw new Error("this is not a recording this version can play");
+        if (r.tape.length > 200_000 || r.epochs.length > 50_000) throw new Error("this recording is too large to play here");
+        const w = createWorld(validateConfig(r.config));
+        const marks = r.epochs.map((e) => ({ epoch: Number(e.epoch), toTick: Number(e.toTick), digest: String(e.digest) })).sort((p, q) => p.toTick - q.toTick);
+        const endTick = marks[marks.length - 1]!.toTick;
+        const view: ReplayView = { id: String(r.id).slice(0, 80), title: String(r.title ?? "").slice(0, 80), provider: String(r.provider).slice(0, 24), model: String(r.model).slice(0, 60), endTick, verifiedTick: 0, state: "playing", decisions: r.tape.length };
+        adopt(w, null, [], [], msg.requestId, { view, tape: r.tape, cursor: 0, marks, mark: 0 });
+        break;
+      }
       case "play":
-        playing = true;
+        // a recording that has ended, or that this engine failed to reproduce, does not go on
+        playing = !(rec && rec.view.state !== "playing");
         lastLoop = performance.now();
         break;
       case "pause":
@@ -616,6 +659,11 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       case "intervene": {
         if (!world) {
           post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: "no_world" });
+          break;
+        }
+        if (rec) {
+          // a recording is what happened; changing it would make the rest of its tape someone else's decisions
+          post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: "recording" });
           break;
         }
         // The untouched twin is forked BEFORE the first intervention and shares the parent's
@@ -665,6 +713,7 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
       }
       case "save": {
         if (!world) throw new Error("no world to save");
+        if (rec) throw new Error("a recording is watched, not saved");
         const snapshot = serializeWorld(world);
         const cal = calendarAt(world.config, world.tick);
         post({

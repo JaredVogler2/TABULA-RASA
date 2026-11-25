@@ -8,10 +8,53 @@ import { AUTOSAVE_ID, deleteSave, getSave, listSaves, putSave, toRecord } from "
 import { WorldRenderer, type Pick, type Quality } from "@/render/WorldRenderer";
 import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings } from "@/store/game";
 import { SimClient } from "@/store/simClient";
-import { AF, AGENT_STRIDE, type ViewFrame } from "@/worker/protocol";
+import { AF, AGENT_STRIDE, type Recording, type ViewFrame } from "@/worker/protocol";
 import { chronicle, type ChronicleEntry } from "./text";
 
 const CHRONICLE_CAP = 600;
+
+const BUNDLED = /^[a-z0-9][a-z0-9-]{2,60}$/;
+const SERVER_RUN = /^run_[a-z0-9_]{6,40}$/;
+
+/** Load a recording: a bundled file, or a run assembled page by page from this server. */
+export async function fetchRecording(ref: string): Promise<Recording> {
+  if (SERVER_RUN.test(ref)) {
+    const epochs: Recording["epochs"] = [];
+    const tape: Recording["tape"] = [];
+    interface RunHead {
+      id: string;
+      title: string;
+      provider: string;
+      model: string;
+      promptVersion: string;
+      config: Recording["config"];
+      epoch: number;
+    }
+    const page = async (from: number): Promise<{ run: RunHead; epochs: { epoch: number; toTick: number; digest: string; tape: Recording["tape"] }[] }> => {
+      const res = await fetch(`/api/runs/${ref}?from=${from}`, { credentials: "same-origin", cache: "no-store" });
+      if (res.status === 404) throw new Error("There is no published recording by that name.");
+      if (!res.ok) throw new Error("The recording could not be fetched.");
+      return (await res.json()) as { run: RunHead; epochs: { epoch: number; toTick: number; digest: string; tape: Recording["tape"] }[] };
+    };
+    let data = await page(0);
+    const run = data.run;
+    for (let guard = 0; guard < 2000 && data.epochs.length > 0; guard++) {
+      for (const e of data.epochs) {
+        epochs.push({ epoch: e.epoch, toTick: e.toTick, digest: e.digest });
+        tape.push(...e.tape);
+      }
+      const next = (data.epochs[data.epochs.length - 1] as { epoch: number }).epoch + 1;
+      if (next >= run.epoch) break;
+      data = await page(next);
+    }
+    if (epochs.length === 0) throw new Error("That run has no completed epochs to watch yet.");
+    return { format: "tabula-rasa/recording", version: 1, id: run.id, title: run.title, provider: run.provider, model: run.model, promptVersion: run.promptVersion, config: run.config, epochs, tape };
+  }
+  if (!BUNDLED.test(ref)) throw new Error("That is not the name of a recording.");
+  const res = await fetch(`/recordings/${ref}.json`, { cache: "force-cache" });
+  if (!res.ok) throw new Error("There is no recording by that name.");
+  return (await res.json()) as Recording;
+}
 
 function autoQuality(): Quality {
   if (typeof window === "undefined") return "medium";
@@ -138,6 +181,7 @@ export class GameController {
           tps: frame.tps,
           treated: frame.treated,
           civic: frame.civic,
+          replay: frame.replay,
         },
       };
       if (frame.roster) patch.roster = frame.roster;
@@ -157,8 +201,8 @@ export class GameController {
       this.lastInspect = now;
       void this.refreshInspector();
     }
-    // autosave every second simulated day while a real game is running
-    if (!state.vista && frame.playing && frame.cal.tickOfDay === 0 && frame.cal.day > 0 && frame.cal.day % 2 === 0 && frame.cal.day !== this.lastAutosaveDay) {
+    // autosave every second simulated day while a real game is running (a recording is never saved)
+    if (!state.vista && !frame.replay && frame.playing && frame.cal.tickOfDay === 0 && frame.cal.day > 0 && frame.cal.day % 2 === 0 && frame.cal.day !== this.lastAutosaveDay) {
       this.lastAutosaveDay = frame.cal.day;
       void this.save(AUTOSAVE_ID, "Autosave", true);
     }
@@ -209,6 +253,7 @@ export class GameController {
         tps: 0,
         treated: ready.frame.treated,
         civic: ready.frame.civic,
+        replay: ready.frame.replay,
       },
       chronicle: [],
       series: ready.series,
@@ -255,6 +300,42 @@ export class GameController {
       useGame.getState().set({ phase: "playing", tutorialStep: settings.tutorialDone ? -1 : 0 });
     } catch (err) {
       useGame.getState().set({ phase: "setup", error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  /**
+   * Watch a recorded run. The world is rebuilt here from the recording's configuration and
+   * its tape of decisions; no mind is consulted and nothing is sent anywhere. The worker
+   * checks the state against the recorded digest at the end of every epoch.
+   */
+  async watch(recording: Recording): Promise<void> {
+    if (!this.client) return;
+    const gen = ++this.generation;
+    useGame.getState().set({ phase: "loading", panel: "none" });
+    try {
+      const ready = await this.client.replay(recording);
+      if (gen !== this.generation) return;
+      await this.adopt(ready, false);
+      this.setSpeed(Math.max(useGame.getState().speed, 3));
+      useGame.getState().set({ phase: "playing", tutorialStep: -1 });
+      this.client.play();
+    } catch (err) {
+      useGame.getState().set({ phase: "title", error: err instanceof Error ? err.message : String(err) });
+      this.toast("That recording could not be played.");
+      await this.startVista();
+    }
+  }
+
+  /**
+   * Fetch a recording by reference and watch it: a bundled file name (`mock-…`) under
+   * /recordings, or the id of a run on this server (published, or the signed-in owner's own).
+   */
+  async openRecording(ref: string): Promise<void> {
+    try {
+      const recording = await fetchRecording(ref);
+      await this.watch(recording);
+    } catch (err) {
+      this.toast(err instanceof Error ? err.message : "That recording could not be opened.");
     }
   }
 
@@ -337,6 +418,10 @@ export class GameController {
 
   async intervene(kind: string, params: Record<string, number>): Promise<void> {
     if (!this.client) return;
+    if (useGame.getState().hud?.replay) {
+      this.toast("A recording shows what happened. Start a world of your own to change one.");
+      return;
+    }
     const result = await this.client.intervene(kind, params);
     if (result.ok) {
       const state = useGame.getState();

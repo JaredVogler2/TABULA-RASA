@@ -6,7 +6,41 @@
  * The only inputs that affect a world are: its config, time control, and observer
  * interventions (which are logged in the world's own ledger).
  */
-import type { SimEvent, Summary, WorldConfig } from "@/engine";
+import type { DecisionRecord, SimEvent, Summary, WorldConfig } from "@/engine";
+
+/**
+ * A recorded run: the world's configuration, every decision an outside mind made (the tape),
+ * and the state digest after each decision epoch. It is everything needed to rebuild the run
+ * tick for tick and to check that what is shown is what happened. It contains no prompt, no
+ * cost and nothing private.
+ */
+export interface Recording {
+  format: "tabula-rasa/recording";
+  version: 1;
+  id: string;
+  title: string;
+  /** "mock" (a deterministic test double), "anthropic" (a language model) or "baseline". */
+  provider: string;
+  model: string;
+  promptVersion: string;
+  config: WorldConfig;
+  epochs: { epoch: number; toTick: number; digest: string }[];
+  tape: DecisionRecord[];
+}
+
+/** Where a recording being watched stands. */
+export interface ReplayView {
+  id: string;
+  title: string;
+  provider: string;
+  model: string;
+  endTick: number;
+  /** The last tick at which the world matched the recorded digest. */
+  verifiedTick: number;
+  /** playing · ended (the record is exhausted) · mismatch (this engine did not reproduce the record). */
+  state: "playing" | "ended" | "mismatch";
+  decisions: number;
+}
 
 /** Floats per agent in ViewFrame.agents. */
 export const AGENT_STRIDE = 18;
@@ -158,6 +192,8 @@ export interface ViewFrame {
   treated: boolean;
   /** Charters currently on offer and institutions currently active (for the HUD badge). */
   civic: { proposals: number; institutions: number };
+  /** Present while a recording is being watched. */
+  replay: ReplayView | null;
 }
 
 /** One charter (proposal or institution) as the observer sees it. Rule sentences are generated from the validated charter. */
@@ -268,6 +304,10 @@ export interface AgentDetail {
   phys: number[];
   skills: number[];
   controller: string;
+  /** Where the plan being followed came from: baseline, fallback, mock, live or replay. */
+  source: string;
+  /** The note a model-driven mind left itself with its last decision (empty otherwise). */
+  note: string;
   goal: string;
   why: string;
   action: string;
@@ -323,6 +363,7 @@ export interface SavePayload {
 export type ToWorker =
   | { type: "init"; config: WorldConfig; requestId: number }
   | { type: "load"; snapshot: string; control: string | null; series: DaySample[]; controlSeries: DaySample[]; requestId: number }
+  | { type: "replay"; recording: Recording; requestId: number }
   | { type: "play" }
   | { type: "pause" }
   | { type: "speed"; tps: number }

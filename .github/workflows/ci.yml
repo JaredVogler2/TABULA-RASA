@@ -49,7 +49,12 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://tabula:tabula@localhost:5432/tabula_test
       - run: pnpm gen:affordances --check
+      - run: pnpm gen:migrations --check
+      - name: Secret scan (tracked files)
+        run: pnpm scan:secrets
       - run: pnpm build
+      - name: Client bundle scan (no server code or secrets sent to browsers)
+        run: pnpm scan:bundle
       - name: Install browser
         run: pnpm exec playwright install --with-deps chromium
       - name: End-to-end (desktop + phone emulation)

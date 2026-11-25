@@ -41,10 +41,10 @@ import { activeMemberships, institutionById, memberOf, proposalById } from "../i
 import { describeMotion, describeRule, describeTerms } from "../institutions/describe";
 import { duesOutstanding } from "../institutions/judge";
 
-export const OBSERVATION_VERSION = 1;
+export const OBSERVATION_VERSION = 2;
 
 /** Hard limits on one decision. */
-export const DECISION_LIMITS = { maxIntents: 6, maxRationaleChars: 240, maxTextChars: 160, maxGoalChars: 32 } as const;
+export const DECISION_LIMITS = { maxIntents: 6, maxRationaleChars: 240, maxTextChars: 160, maxGoalChars: 32, maxNoteChars: 200 } as const;
 
 const MAX_NODES = 14;
 const MAX_STRUCTURES = 10;
@@ -139,6 +139,8 @@ export interface Observation {
     skills: Record<string, number>;
     home: { x: number; y: number } | null;
     doing: string;
+    /** The note I left myself with my last decision, if any. */
+    note: string;
   };
   now: {
     daysLived: number;
@@ -162,8 +164,11 @@ export interface Observation {
   structures: ObservedStructure[];
   piles: { x: number; y: number; dist: number; items: Record<string, number> }[];
   memories: { kind: string; age: number; who?: string; item?: string; qty?: number; ref?: number; toldBy?: string }[];
-  heard: { from: number; name: string; direct: boolean; age: number; act: SpeechAct; text?: string }[];
+  /** `id` identifies the utterance, so that a reply can refer to it. */
+  heard: { id: number; from: number; name: string; direct: boolean; age: number; act: SpeechAct; text?: string }[];
   commitments: { direction: "i_owe" | "owed_to_me"; other: number; name: string; item: string; qty: number; dueIn: number }[];
+  /** What the world refused of my last decision, and why (reason codes; `detail` where there is one). */
+  feedback: { age: number; action: string; reason: string; detail?: string }[];
   /** Absent when the scenario has no institutional affordance. */
   civics?: ObservedCivics;
   actions: ActionOption[];
@@ -299,7 +304,7 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
       ...(item.src >= 0 ? { toldBy: name(item.src) } : {}),
     }));
 
-  const heard = m.inbox.map((h) => ({ from: h.from, name: name(h.from), direct: h.direct, age: tick - h.tick, act: h.act, ...(h.text ? { text: h.text } : {}) }));
+  const heard = m.inbox.map((h) => ({ id: h.utterance, from: h.from, name: name(h.from), direct: h.direct, age: tick - h.tick, act: h.act, ...(h.text ? { text: h.text } : {}) }));
 
   const commitments = m.commitments
     .filter((c) => !c.done)
@@ -332,6 +337,7 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
       skills: Object.fromEntries(SKILLS.map((s, i) => [s, a.skills[i] as number])),
       home: m.homeX >= 0 ? { x: m.homeX, y: m.homeY } : null,
       doing: m.goal,
+      note: m.note,
     },
     now: {
       daysLived: Math.floor(tick / TICKS_PER_DAY),
@@ -356,6 +362,7 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
     memories,
     heard,
     commitments,
+    feedback: m.feedback.map((f) => ({ age: tick - f.t, action: f.k, reason: f.r, ...(f.d ? { detail: f.d } : {}) })),
     ...(civics ? { civics } : {}),
     actions: [...actionMask(world, sc, a, people, nodes, structures, k), ...civicMask(world, a, people, civics)],
     limits: DECISION_LIMITS,

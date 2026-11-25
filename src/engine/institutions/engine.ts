@@ -14,6 +14,7 @@
 import { FOOD_ITEMS, ITEM_COUNT, NODE_KINDS, StructureKind, TICKS_PER_DAY, needBand } from "../model/constants";
 import type { Agent, Structure, WorldState } from "../model/types";
 import { calendarAt, sightRadius } from "../world/climate";
+import { noteFeedback } from "../mind/feedback";
 import { emit, type EventOut } from "../sim/events";
 import { dropOnGround, emptyInv, roomFor } from "../sim/inventory";
 import type { Scratch } from "../sim/scratch";
@@ -160,6 +161,7 @@ export function propose(world: WorldState, agent: Agent, rawCharter: unknown, ou
   const v = validateCharter(world, agent.id, rawCharter);
   if (!v.ok) {
     emit(world, out, "proposal_rejected", agent.id, { r: v.diagnostics[0]?.code ?? "invalid", d: { diagnostics: v.diagnostics.slice(0, 6) } });
+    for (const g of v.diagnostics.slice(0, 3)) noteFeedback(world, agent, "propose", g.code, `${g.path}: ${g.message}`);
     return "invalid_charter";
   }
   // consent is backed at once: whoever signs, the proposer first, posts the bond when they sign
@@ -414,6 +416,7 @@ export function moveMotion(world: WorldState, sc: Scratch, agent: Agent, instId:
   );
   if (!v.ok) {
     emit(world, out, "proposal_rejected", agent.id, { r: v.diagnostics[0]?.code ?? "invalid", d: { inst: inst.id, diagnostics: v.diagnostics.slice(0, 6) } });
+    for (const g of v.diagnostics.slice(0, 3)) noteFeedback(world, agent, "motion", g.code, `${g.path}: ${g.message}`);
     return "invalid_motion";
   }
   const body = v.value;
