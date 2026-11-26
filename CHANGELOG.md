@@ -5,7 +5,18 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, open)
+## Pull request 5 — a test that depended on where a fast world stops (2026-11-26, open)
+
+No product code. Engine 0.7.0, unchanged.
+
+- A second browser test that failed once in CI, the charters test, depended on where a world running at the
+  fastest speed happened to stop: in its world the scripted charter lapses and is offered again every three
+  and a quarter days, and for a quarter of a day in between nothing is live. It now steps the world to a known
+  moment and asserts the charter's state before reading its words.
+- Recorded: the whole browser suite with D-050 in place, here and on GitHub's runners; how the window the
+  failed run stopped in was worked out from the engine alone.
+
+## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, merged)
 
 Engine 0.7.0, unchanged. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
 
@@ -18,8 +29,6 @@ Engine 0.7.0, unchanged. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
   the world rarely still keeps every one.
 - The browser test that found this — it failed once in CI — now asserts what the game promises and says what
   it found when it fails. `node scripts/trail.mjs <address> <folder>` measures the delay.
-- A second browser test that failed once in CI, the charters test, depended on where a world running at the
-  fastest speed happened to stop. It now steps the world to a known moment.
 - Evidence for the whole-suite run at the phase 20 commit; a ten-minute limit for the slowest browser test.
 
 **Not in it:** any call to a model; any deployment; a person or a device.

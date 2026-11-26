@@ -25,4 +25,5 @@ trail-before.md for the first, charters-test.txt for the second. The desktop bro
 55dc9db and 31.5 on 8f120ac; the whole desktop job, set-up included, took 25.3 on b25d1b7. One run each, on
 machines that are not the same from run to run: noted, and nothing is claimed from it.
 
-The commit after b25d1b7 rewrites the charters test; its run is the next one on the pull request.
+Pull request 4 was merged at b25d1b7. The commit after it rewrites the charters test; its run is on the pull
+request that follows.

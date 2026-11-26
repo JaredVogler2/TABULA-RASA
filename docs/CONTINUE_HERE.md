@@ -5,8 +5,9 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
-  01–05, 09, 10), 2 (phases 06–08, 11–14) and 3 (phases 15–20) were merged to `main` by the owner on
-  2026-11-25. Pull request 4 holds what came after: the evidence for the whole-suite run, and D-050.
+  01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
+  D-050) were merged to `main` by the owner on 2026-11-25. Pull request 5 holds one rewritten browser test
+  and the evidence that came after D-050.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
