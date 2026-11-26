@@ -29,7 +29,7 @@ Said first, because the rest should be read in its light.
 | | State | What it waits for |
 |---|---|---|
 | A live call to Claude | **never made; $0 spent** | your authorization (below) |
-| A deployment | **nothing is deployed** | your approval to create the project (below) |
+| A deployment | **nothing is deployed** | approved by you on 2026-11-26; Vercel refused the assistant's call to create the project, so the import is yours to click (below) |
 | A person who has played it | none | a playtest |
 | A real device | none: no phone, no graphics chip | a look on your own hardware |
 | A screen reader, Firefox, Safari | not tried | — |
@@ -60,7 +60,7 @@ output is in `evidence/`.
 | 15 | Scale and performance | PARTIAL | frame rate on real hardware not measurable here |
 | 16 | Adversarial QA | PASS | two independent reviews; every finding fixed or accepted |
 | 17 | Live pilot | **BLOCKED** | needs your authorization to spend |
-| 18 | Vercel release | **BLOCKED** | needs your approval to deploy; prepared and rehearsed |
+| 18 | Vercel release | **BLOCKED** | approved by you; the assistant's connector may not create the project: yours to import |
 | 19 | Scorecard | PASS | a self-assessment: 68 of 100, no veto triggered, two incidents disclosed |
 | 20 | Redesign and handoff | PASS | this document; two improvements made, three recorded |
 
@@ -118,8 +118,10 @@ Then http://localhost:3000. Nothing else is needed. No subscription, key or data
 ### Deploy it
 
 [`DEPLOYMENT.md`](./DEPLOYMENT.md). The game alone needs no variable and costs nothing on Vercel's Hobby plan
-(whose terms are "personal or non-commercial use": your call). Say the word and the assistant creates the
-project and checks it; or do it yourself in three clicks. After any deployment:
+(whose terms are "personal or non-commercial use": your call). You approved this on 2026-11-26, and Vercel
+refused the assistant's call to create the project (its connector may read your projects, not create one). So
+it is three clicks of yours: vercel.com → Add New → Project → import `JaredVogler2/TABULA-RASA` → Deploy, with
+every setting as detected and no variables. After any deployment:
 
 ```bash
 pnpm release:check -- https://YOUR-SITE

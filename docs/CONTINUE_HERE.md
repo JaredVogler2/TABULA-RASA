@@ -11,8 +11,8 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
-  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (prepared and rehearsed; **nothing is
-  deployed** until the owner says so) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
+  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (approved by the owner on 2026-11-26; the
+  assistant may not create the Vercel project; **nothing is deployed** until the owner imports it) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
   worked; what is left is the owner's: `docs/HANDOFF.md`.**
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
@@ -124,13 +124,14 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 
 ## Next actions
 
-1. **Phase 18, release: ask the owner, then deploy.** Everything that does not deploy is done:
-   `docs/DEPLOYMENT.md` (levels, costs, variables, steps, checks, rollback, privacy), `pnpm release:check`, and
-   a rehearsal of it against the production build with no variable set (`evidence/phase-18/`). What remains
-   needs the owner's word: creating the Vercel project (a public site under their account) and, for the
-   console, a database (a billable integration even at $0). Once given: create the project from `main`, run
-   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`
-   and `PROGRESS.md`. Until then the phase is BLOCKED and nothing may say "deployed".
+1. **Phase 18, release: the owner's import, then the checks.** The owner approved deploying the game alone on
+   2026-11-26. The assistant's call to create the Vercel project was refused (403: the session's connector
+   may read the owner's projects and not create one); nothing was created, and no other route was tried.
+   What remains: the owner imports `JaredVogler2/TABULA-RASA` in the Vercel dashboard (no variables), or gives
+   a token through the session's secure form. Then: find the project's production address, run
+   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`,
+   `PROGRESS.md`, `ACCEPTANCE.md` and the README. Until then the phase is BLOCKED and nothing may say
+   "deployed". A database (level 2) has not been asked for and needs its own approval.
 2. **After the phases.** Recorded in `docs/HANDOFF.md` and not done, because each changes the engine's
    behaviour (a new version, and for anything experimental a new registration on seeds 9032 and up): a
    positive control that holds (D-044); planners that stop asking for the unreachable in a crowded famine
@@ -151,8 +152,8 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 
 ## Open questions for the owner (none of them blocks offline work)
 
-- **Whether to deploy**, and at which level (`docs/DEPLOYMENT.md` §1): the game alone needs nothing and costs
-  nothing on the Hobby plan, whose terms are "personal or non-commercial use"; the console needs a database.
+- **The import.** Deploying the game alone is approved; creating the project is the owner's to click
+  (`docs/DEPLOYMENT.md` §5). Whether to go on to the console, which needs a database, has not been asked.
 - **Which model?** `ANTHROPIC_MODEL` has no default. Per-call upper bounds are in `docs/COST.md`.
 - **A ceiling for the deployment** (`BUDGET_CEILING_USD`), **an amount for a smoke test** (at most $2), then
   separately for a pilot.

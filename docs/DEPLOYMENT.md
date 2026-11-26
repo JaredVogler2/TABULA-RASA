@@ -1,13 +1,19 @@
 # Deployment
 
-**Status: NOT DEPLOYED** (2026-11-25). No Vercel project exists for this repository, no hosted database has
-been made, and nothing below has been run against Vercel unless a line says it has. The owner's Vercel
-account was looked at, read-only: one team, no project for this repository; Vercel can see the repository
-(public, default branch `main`).
+**Status: NOT DEPLOYED** (2026-11-26). No Vercel project exists for this repository, no hosted database has
+been made, and nothing below has been run against Vercel unless a line says it has.
+
+**What happened on 2026-11-26.** The owner approved a level-1 deployment — the game alone: one project, no
+database, no key, no variable. The assistant made the one call that creates the project (`tabula-rasa`, on
+the owner's team, linked to this repository) and Vercel refused it: `403 forbidden — You don't have permission
+to create the project`. The connector the assistant's session has can read the team's projects and cannot
+create one. Nothing was created; the call was not retried and no other route was tried in its place. What
+remains is section 5 "From the dashboard" — three clicks, by the owner — or a token given through the
+session's secure form; after either, section 8 can be run against the address and its results written here.
 
 Creating a project publishes a public site under the owner's account, and a database is a billable
-integration even at $0. Both wait for the owner's word (`CLAUDE.md`; phase 18). This document is what that
-word would set in motion, written so that the owner can also do all of it without help.
+integration even at $0. The first has the owner's word for level 1; the second does not, and waits for it
+(`CLAUDE.md`; phase 18). This document is written so that the owner can do all of it without help.
 
 Platform facts are quoted, with their sources and the day they were read, in
 [`research/vercel-platform.md`](./research/vercel-platform.md). Where this page says "§n" it means that file.
@@ -100,9 +106,8 @@ the browser.
 
 ## 5. Level 1: the game
 
-The production branch is `main`. The work of phases 11–16 is on `claude/friendly-gauss-kejb2m`
-([pull request 2](https://github.com/JaredVogler2/TABULA-RASA/pull/2)); `main` is at phase 10. **Merge the pull
-request first**, or the site will be the phase-10 game.
+The production branch is `main`, and it holds everything: pull requests 1 to 4 are merged (phases 1–20 and
+D-050). What is deployed is whatever `main` is on the day; a later merge to `main` deploys itself.
 
 **From the dashboard.** vercel.com → Add New → Project → import `JaredVogler2/TABULA-RASA` → leave every
 setting as detected → Deploy. No variables.
@@ -123,9 +128,11 @@ vercel --prod
 
 The first deployment of a new project is a production deployment even without `--prod` (§11).
 
-**By the assistant**, once the owner says so: one call that creates a project named `tabula-rasa` on the
-owner's team, linked to this repository, which deploys what is on `main`; then `pnpm release:check` (section
-8) against the address Vercel returns, with the results written into this file and `EVIDENCE.md`.
+**By the assistant**: not as things stand. The one call that creates a project named `tabula-rasa` on the
+owner's team was made on 2026-11-26 with the owner's approval and refused by Vercel (403: the session's
+connector may not create projects). Once a project exists, however it was made, the assistant can find its
+address and run `pnpm release:check` (section 8) against it, and write the results into this file and
+`EVIDENCE.md`.
 
 ## 6. Level 2: the console
 
@@ -290,13 +297,13 @@ log, with `DELETE FROM audit_log`; everything, by dropping the schema or deletin
 
 ## 12. Release checklist
 
-| Gate | State on 2026-11-25 |
+| Gate | State on 2026-11-26 |
 |---|---|
 | Clean install, `pnpm check`, `pnpm e2e` at the commit to be deployed | see `CONTINUE_HERE.md` for the commit and its results |
 | CI green on that commit | see the pull request |
-| The pull request merged to `main` | **not yet: the owner's to merge** |
-| Owner's approval to create the project (and, for level 2, the database) | **not given** |
-| Project created; first production deployment built | NOT RUN |
+| The pull requests merged to `main` | done: 1 to 4, by the owner (2026-11-25). `main` is the tree CI passed on `b25d1b7` |
+| Owner's approval to create the project (and, for level 2, the database) | **given for level 1** on 2026-11-26; not asked and not given for a database |
+| Project created; first production deployment built | **attempted 2026-11-26 and refused by Vercel** (403: the assistant's connector may not create projects). NOT DONE: the owner's import remains |
 | Section 8 on the deployed address: health, headers, a stranger refused, the game on desktop and phone, the bundled recording | NOT RUN |
 | Level 2: database connected, owner values set, sign-in, a mock run published and replayed by a visitor | NOT RUN |
 | Level 3 | BLOCKED on the phase-17 authorization; not part of a release |

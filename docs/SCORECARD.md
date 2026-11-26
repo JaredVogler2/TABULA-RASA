@@ -225,8 +225,9 @@ version, seeds, configuration, hashes).
 1. **The live path has never run.** Phase 17 is blocked on the owner's authorization. Until a smoke test is
    made, every statement about model-driven minds, their cost and their behaviour is about code, not about
    what happens.
-2. **Nothing is deployed.** Phase 18 is blocked on the owner's approval; the first hosted database will be the
-   first real test of D-047.
+2. **Nothing is deployed.** Phase 18 was blocked on the owner's approval when this was written; since
+   2026-11-26 the approval for the game alone is given, and the block is that Vercel refuses the assistant's
+   call to create the project. The first hosted database will be the first real test of D-047.
 3. **No person and no device.** No playtest, no real phone, no graphics chip, no screen reader, no browser but
    Chromium, no ear. `docs/QA_REPORT.md` § Not run.
 4. **The positive control failed** (D-044). The experiment as designed cannot show that agreements help; a
