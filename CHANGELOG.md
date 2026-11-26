@@ -18,6 +18,8 @@ Engine 0.7.0, unchanged. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
   the world rarely still keeps every one.
 - The browser test that found this — it failed once in CI — now asserts what the game promises and says what
   it found when it fails. `node scripts/trail.mjs <address> <folder>` measures the delay.
+- A second browser test that failed once in CI, the charters test, depended on where a world running at the
+  fastest speed happened to stop. It now steps the world to a known moment.
 - Evidence for the whole-suite run at the phase 20 commit; a ten-minute limit for the slowest browser test.
 
 **Not in it:** any call to a model; any deployment; a person or a device.

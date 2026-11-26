@@ -1,0 +1,145 @@
+# The charters browser test that failed once in CI, and why
+
+CI run 45704267429 (2026-11-25, desktop job, commit 8f120ac: before D-050), `pnpm e2e --project=desktop`:
+
+  ✘  15 [desktop] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about (1.5m)
+
+    Error: expect(locator).toBeVisible() failed
+    Locator:  locator('[data-testid^="charter-"]').first()
+    Expected: visible
+    Received: hidden
+    Timeout:  30000ms
+      53 × locator resolved to <article data-state="lapsed" class="NweopG_charter" data-testid="charter-157">…</article>
+         - unexpected value "hidden"
+        at tests/e2e/play.spec.ts:363:25
+
+  1 failed, 16 passed (31.4m)
+
+The test played First Light, seed 1, with the scripted control at the fastest speed until the top bar counted a
+charter, pressed pause, opened the Charters panel and expected the first charter on the page to be visible.
+
+## What becomes of the scripted charter in that world
+
+The engine alone, no browser (the probes are printed below; they are not kept in the repository). First Light,
+seed 1, `institutions: "scripted_control"`, forty days:
+
+first offered at tick 601 day 6
+tick 889 (day 9): lapsed {"inst":36,"endorsers":1}
+tick 1201 (day 12): lapsed {"inst":90,"endorsers":1}
+tick 1513 (day 15): lapsed {"inst":157,"endorsers":1}
+tick 1825 (day 19): lapsed {"inst":235,"endorsers":1}
+tick 2137 (day 22): lapsed {"inst":307,"endorsers":1}
+tick 2449 (day 25): lapsed {"inst":357,"endorsers":1}
+tick 2761 (day 28): lapsed {"inst":401,"endorsers":1}
+tick 3073 (day 32): lapsed {"inst":462,"endorsers":1}
+tick 3189 (day 33): ratified {"inst":531,"name":"Hearth and larder","origin":"scripted","members":[42,24,15]}
+
+nothing live from tick 890 to 913 (23 ticks; day 9, tick of day 26)
+nothing live from tick 1202 to 1225 (23 ticks; day 12, tick of day 50)
+nothing live from tick 1514 to 1537 (23 ticks; day 15, tick of day 74)
+nothing live from tick 1826 to 1849 (23 ticks; day 19, tick of day 2)
+nothing live from tick 2138 to 2161 (23 ticks; day 22, tick of day 26)
+nothing live from tick 2450 to 2473 (23 ticks; day 25, tick of day 50)
+nothing live from tick 2762 to 2785 (23 ticks; day 28, tick of day 74)
+nothing live from tick 3074 to 3097 (23 ticks; day 32, tick of day 2)
+in all 184 ticks of 3239 after the first offer: 5.7%
+
+The charter is offered, lapses unsigned 288 ticks later, and is offered again 23 ticks after that, eight times,
+until it is signed on day 33. For those 23 ticks nothing is on offer or in force, and the panel shows the
+lapsed charter where it shows lapsed charters: folded away under "Lapsed and ended".
+
+Which window the failed run stopped in can be read off the charter it found. The panel lists charters in the
+order of the engine's books, and lapsed ones are dropped from the books five days after they lapse:
+
+from tick 890: on the books, in order: 36 (lapsed)
+from tick 1202: on the books, in order: 36 (lapsed), 90 (lapsed)
+from tick 1514: on the books, in order: 90 (lapsed), 157 (lapsed)
+from tick 1826: on the books, in order: 157 (lapsed), 235 (lapsed)
+from tick 2138: on the books, in order: 235 (lapsed), 307 (lapsed)
+from tick 2450: on the books, in order: 307 (lapsed), 357 (lapsed)
+from tick 2762: on the books, in order: 357 (lapsed), 401 (lapsed)
+from tick 3074: on the books, in order: 401 (lapsed), 462 (lapsed)
+
+`charter-157` is first, with nothing live above it, only from tick 1826 to tick 1849. The failed run stopped
+its world there: on day 19, more than 1,200 ticks — nine and a half seconds at that speed — after the charter
+was first offered. The panel did what it does; the test failed for where the world stopped.
+
+## What was changed
+
+The test no longer runs the world at speed. It steps it, a quarter of a day at a time, until the top bar counts
+a charter: steps land exactly on any machine, and in this world that is tick 624, with the charter offered at
+tick 601 on offer. It asserts that state (`data-state="proposed"`) before reading the charter's words.
+
+## The probes
+
+### scripted.ts — what becomes of the charter
+
+// Scratch: when is the scripted charter of First Light seed 1 offered, and what becomes of it?
+import { createWorld, makeConfig, step, type SimEvent } from "../../src/engine";
+const w = createWorld(makeConfig("first_light", 1, { institutions: "scripted_control" }));
+const out: SimEvent[] = [];
+const kinds = new Set(["proposed", "proposal_rejected", "ratified", "lapsed", "ended", "dissolved", "joined", "left"]);
+let joined = 0, left = 0;
+for (let t = 0; t < 96 * 40; t++) {
+  step(w, out);
+  for (const e of out) {
+    if (!kinds.has(e.k)) continue;
+    if (e.k === "joined") { joined++; continue; }
+    if (e.k === "left") { left++; continue; }
+    console.log(`tick ${e.t} (day ${Math.floor(e.t / 96)}): ${e.k} ${JSON.stringify(e.d ?? {}).slice(0, 120)}`);
+  }
+  out.length = 0;
+  if (t % 96 === 95) {
+    const live = w.inst.institutions.filter((i) => i.ended < 0).length;
+    const open = w.inst.proposals.filter((p) => p.state === "open").length;
+    const lapsed = w.inst.proposals.filter((p) => p.state === "lapsed").length;
+    if (live + open + lapsed > 0 && Math.floor(t / 96) % 2 === 0) console.log(`  end of day ${Math.floor(t / 96)}: ${live} in force, ${open} on offer, ${lapsed} lapsed; joined ${joined}, left ${left}`);
+  }
+}
+
+### scripted2.ts — when nothing is live
+
+// Scratch: for First Light seed 1 with the scripted control, the ticks at which no charter is live
+// (nothing on offer and nothing in force) although one has been offered before.
+import { createWorld, makeConfig, step, type SimEvent } from "../../src/engine";
+const w = createWorld(makeConfig("first_light", 1, { institutions: "scripted_control" }));
+const out: SimEvent[] = [];
+let first = -1;
+let gapStart = -1;
+const gaps: [number, number][] = [];
+for (let t = 0; t < 96 * 40; t++) {
+  step(w, out);
+  out.length = 0;
+  const live = w.inst.institutions.filter((i) => i.ended < 0).length + w.inst.proposals.filter((p) => p.state === "open").length;
+  const any = w.inst.institutions.length + w.inst.proposals.length;
+  if (first < 0 && any > 0) first = w.tick;
+  if (first >= 0) {
+    if (live === 0 && gapStart < 0) gapStart = w.tick;
+    if (live > 0 && gapStart >= 0) { gaps.push([gapStart, w.tick]); gapStart = -1; }
+  }
+}
+console.log("first offered at tick", first, "day", Math.floor(first / 96));
+for (const [a, b] of gaps) console.log(`nothing live from tick ${a} to ${b} (${b - a} ticks; day ${Math.floor(a / 96)}, tick of day ${a % 96})`);
+const total = gaps.reduce((s, [a, b]) => s + (b - a), 0);
+console.log(`in all ${total} ticks of ${96 * 40 - first} after the first offer: ${(100 * total / (96 * 40 - first)).toFixed(1)}%`);
+
+### scripted4.ts — which charters the panel lists in each such stretch
+
+// Scratch: in each stretch with nothing live, which charters are on the books, in the order the panel lists them?
+import { createWorld, makeConfig, step, type SimEvent } from "../../src/engine";
+const w = createWorld(makeConfig("first_light", 1, { institutions: "scripted_control" }));
+const out: SimEvent[] = [];
+let inGap = false;
+let seen = false;
+for (let t = 0; t < 96 * 34; t++) {
+  step(w, out);
+  out.length = 0;
+  const live = w.inst.institutions.filter((i) => i.ended < 0).length + w.inst.proposals.filter((p) => p.state === "open").length;
+  if (w.inst.proposals.length) seen = true;
+  if (!seen) continue;
+  if (live === 0 && !inGap) {
+    inGap = true;
+    console.log(`from tick ${w.tick}: on the books, in order: ${w.inst.proposals.map((p) => `${p.id} (${p.state})`).join(", ")}`);
+  }
+  if (live > 0) inGap = false;
+}

@@ -1,0 +1,65 @@
+# The whole browser suite, both projects, with D-050 in place
+
+pnpm e2e   (playwright test --trace off)
+Run 2026-11-25, from about 23:00 to 23:42 UTC, against the production build of commit b25d1b7. No other
+browser was running; a unit-test file, two type checks and three short engine probes were run beside it.
+4 x Intel Xeon 2.30GHz container; headless Chromium drawing through SwiftShader (software).
+
+One caution. The charters test (15) was being rewritten while this run went on, and what ran here was the
+version of commit b25d1b7, which plays at the fastest speed and presses pause. It passed, as it usually does;
+its rewritten form is in e2e-play.txt. Everything else here is the tree as committed.
+
+This is the first run of the whole suite on this machine in which nothing timed out: the renderer-fallback
+test (17), which ran out of 300 seconds in the run recorded in evidence/phase-20/e2e-run.txt, took 5.2 minutes
+under its ten-minute limit.
+
+> tabula-rasa@0.1.0 e2e /home/user/TABULA-RASA
+> playwright test --trace off
+
+Running 34 tests using 1 worker
+
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (3.7m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (249ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (23ms)
+[history desktop] 97s forked, top bar measured · 131s twin seen · 176s watched again · 215s new line, return, compare · 324s saved, reloaded, past rebuilt, re-run from it · 360s files out and in · 385s recorded cause
+  ✓   4 [desktop] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (6.4m)
+  ✓   5 [desktop] › tests/e2e/lab.spec.ts:40:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (15.4s)
+  ✓   6 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.0m)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (283ms)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.4s)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console (733ms)
+  ✓  10 [desktop] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (10.4s)
+  ✓  11 [desktop] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (41.7s)
+  ✓  12 [desktop] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (259ms)
+  ✓  13 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.3m)
+  ✓  14 [desktop] › tests/e2e/play.spec.ts:202:1 › the keyboard alone can drive the game: every key it reads, and never a pointer (1.7m)
+  ✓  15 [desktop] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about (1.2m)
+  ✓  16 [desktop] › tests/e2e/resilience.spec.ts:138:1 › two tabs share one autosave slot without overwriting each other, and an altered save is refused (3.5m)
+  ✓  17 [desktop] › tests/e2e/resilience.spec.ts:244:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world (5.2m)
+  ✓  18 [mobile] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (3.3m)
+  ✓  19 [mobile] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (195ms)
+  ✓  20 [mobile] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (21ms)
+[history mobile] 71s forked, top bar measured · 103s twin seen · 144s watched again · 182s new line, return, compare · 278s saved, reloaded, past rebuilt, re-run from it · 311s files out and in · 337s recorded cause
+  ✓  21 [mobile] › tests/e2e/history.spec.ts:63:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (5.6m)
+  ✓  22 [mobile] › tests/e2e/lab.spec.ts:40:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (19.3s)
+  ✓  23 [mobile] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.5m)
+  ✓  24 [mobile] › tests/e2e/owner.spec.ts:66:1 › a visitor without a session learns nothing and can change nothing (112ms)
+  ✓  25 [mobile] › tests/e2e/owner.spec.ts:103:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.5s)
+  -  26 [mobile] › tests/e2e/owner.spec.ts:161:1 › authorizing spend takes the words, and the kill switch works from the console
+  ✓  27 [mobile] › tests/e2e/owner.spec.ts:202:1 › a visitor replays the published run from its record, and every epoch matches (9.7s)
+  ✓  28 [mobile] › tests/e2e/owner.spec.ts:227:1 › the bundled recording plays from the title screen and matches its record to the end (45.5s)
+  ✓  29 [mobile] › tests/e2e/owner.spec.ts:265:1 › signing out ends every session, wherever its cookie was copied to (281ms)
+  ✓  30 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.0m)
+  -  31 [mobile] › tests/e2e/play.spec.ts:202:1 › the keyboard alone can drive the game: every key it reads, and never a pointer
+  -  32 [mobile] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about
+  -  33 [mobile] › tests/e2e/resilience.spec.ts:138:1 › two tabs share one autosave slot without overwriting each other, and an altered save is refused
+  -  34 [mobile] › tests/e2e/resilience.spec.ts:244:1 › a renderer that cannot keep up is simplified once, says so, and changes nothing in the world
+
+  Slow test file: [desktop] › tests/e2e/resilience.spec.ts (8.7m)
+  Slow test file: [desktop] › tests/e2e/history.spec.ts (6.4m)
+  Slow test file: [mobile] › tests/e2e/history.spec.ts (5.6m)
+  Slow test file: [desktop] › tests/e2e/play.spec.ts (5.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  5 skipped
+  29 passed (42.0m)
+exit 0

@@ -354,13 +354,41 @@ test("charters are shown in plain words, with how they came about", async ({ pag
   await expect(page.getByTestId("civics-empty")).toBeVisible();
   await page.getByTestId("civics-close").click();
 
-  await page.getByTestId("speed-5").click();
-  await page.getByTestId("play-toggle").click();
-  await expect(page.getByTestId("civics-count")).toBeVisible({ timeout: 300_000 });
-  await page.getByTestId("play-toggle").click();
+  // The world is taken to a known moment by single steps, a quarter of a day at a time, until the top bar
+  // counts a charter. Steps land exactly, on any machine: in this world that is tick 624, on the seventh day,
+  // with the charter that was offered at tick 601 still on offer.
+  //
+  // This used to play at the fastest speed until the count appeared and then press pause — and where a world
+  // stops then depends on how long the press takes. In this world the scripted charter lapses unsigned every
+  // three and a quarter days and is offered again a quarter of a day later, until it is signed on day 33; for
+  // those quarter days nothing is on offer or in force, and the lapsed charter is folded away under "Lapsed and
+  // ended". A slow runner once stopped the world inside one of them, on day 19, more than nine seconds after
+  // the first offer (CI run 45704267429: the first charter on the page was the lapsed `charter-157`, hidden;
+  // `evidence/after-20/charters-test.txt`), and the test failed for where the world happened to stop, not for
+  // anything the panel did.
+  //
+  // The step button is pressed from inside the page, a quarter of a day's presses at a time: one real press
+  // takes most of a second where the picture is drawn in software, and six hundred are wanted. (A real press of
+  // the same button, and of its key, is in the two tests above.)
+  const QUARTER_DAY = 24;
+  const stepQuarterDay = (): Promise<void> =>
+    page.evaluate((presses) => {
+      const button = document.querySelector<HTMLButtonElement>('[data-testid="step-tick"]');
+      if (!button) throw new Error("the step button is not on the page");
+      for (let i = 0; i < presses; i++) button.click();
+    }, QUARTER_DAY);
+  let stepped = await tick(page);
+  expect(stepped, "a new world starts paused at its first tick").toBe(0);
+  for (let quarters = 0; quarters < 4 * 12 && !(await page.getByTestId("civics-count").isVisible()); quarters++) {
+    await stepQuarterDay();
+    stepped += QUARTER_DAY;
+    await expect.poll(() => tick(page), { timeout: 60_000 }).toBe(stepped);
+  }
+  await expect(page.getByTestId("civics-count"), `a charter is counted by tick ${stepped}`).toBeVisible();
   await page.getByTestId("open-civics").click();
   const charter = page.locator('[data-testid^="charter-"]').first();
   await expect(charter).toBeVisible();
+  await expect(charter).toHaveAttribute("data-state", "proposed");
   await expect(charter).toContainText(/larder/i); // "Common larder", or "Hearth and larder" where a fire stands by the store
   await expect(charter).toContainText("Scripted control · not emergence");
   await expect(charter).toContainText("must put 1 food into the common stock");

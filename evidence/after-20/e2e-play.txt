@@ -1,0 +1,21 @@
+# The play tests on the desktop project, with the charters test rewritten
+
+pnpm exec playwright test tests/e2e/play.spec.ts --project=desktop --trace off
+Run 2026-11-25 on the working tree that became the commit after b25d1b7, against the production build of b25d1b7
+(the commit changes a test and documents, no product code). 4 x Intel Xeon 2.30GHz container; headless Chromium
+drawing through SwiftShader (software).
+
+The third test steps its world to tick 624 and asserts that the charter offered at tick 601 is on offer.
+As first rewritten it pressed the step key once for each tick; a real key press takes most of a second on this
+renderer, and that version ran out of its seven minutes at tick 480. That version was never committed.
+
+Running 3 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.4m)
+  ✓  2 [desktop] › tests/e2e/play.spec.ts:202:1 › the keyboard alone can drive the game: every key it reads, and never a pointer (1.6m)
+  ✓  3 [desktop] › tests/e2e/play.spec.ts:332:1 › charters are shown in plain words, with how they came about (1.4m)
+
+  Slow test file: [desktop] › tests/e2e/play.spec.ts (5.5m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  3 passed (5.5m)
+exit 0

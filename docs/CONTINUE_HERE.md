@@ -38,6 +38,8 @@ export TEST_DATABASE_URL=postgres://tabula:tabula@localhost:5432/tabula_test
 pnpm check        # lint, typecheck, unit, generated-file freshness (affordances, migrations, prompts, licences),
                   # secret scans (files and history), build, bundle scan
 pnpm e2e          # Playwright, production build, desktop + phone emulation (about 40 minutes on a CPU renderer; --project=desktop for one)
+                  # one Playwright run at a time on a machine: each run's set-up drops and recreates the `e2e` schema,
+                  # so a second run started beside it fails the first one's owner-console tests with "The server answered 500"
 pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 pnpm compare -- --seeds 1-4 --days 40                  # paired baselines, development seeds
 pnpm schedulers -- --seeds 1-4 --days 6 --slots 8      # activation policies on the same worlds, mock minds, no cost
@@ -70,9 +72,11 @@ with nothing it asserts having failed. Its limit is ten minutes since the commit
 in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
 (`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). `replay IDENTICAL`.
 
-With D-050 on top: `pnpm check` exits 0 with 495 unit tests in 40 files (four more, for the pacing of frames);
-`pnpm exec playwright test tests/e2e/resilience.spec.ts --project=desktop`: 2 passed
-(`evidence/after-20/`).
+With D-050 on top (`b25d1b7`): `pnpm check` exits 0 with 495 unit tests in 40 files (four more, for the pacing
+of frames); `pnpm e2e`: 29 passed, 5 skipped by design, none failed, in 42 minutes; the same commit is green on
+GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after it rewrites one browser test
+(the charters test steps its world to a known moment): `pnpm exec playwright test tests/e2e/play.spec.ts
+--project=desktop`, 3 passed (`evidence/after-20/e2e-play.txt`).
 
 ## Execution order (D-001)
 

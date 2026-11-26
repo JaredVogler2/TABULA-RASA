@@ -1317,7 +1317,8 @@ rollback. Read this file before modifying any contract it mentions.
   sent when it does take one is the world as it is, carrying every event the missing frames would have; a
   slow page is sent one for each it takes and the world keeps the tick it would have kept; surplus answers buy
   nothing). Each of three deliberate breakages of the mechanism fails at least one of them. The browser tests
-  for this area pass (`evidence/after-20/e2e-resilience.txt`).
+  for this area pass (`evidence/after-20/e2e-resilience.txt`), and so does the whole suite on both projects,
+  here and on GitHub's runners (`e2e-run.txt`, `ci.txt`).
 - **Affected acceptance tests.** `tests/e2e/resilience.spec.ts` › the two-tabs test (rewritten assertions);
   `src/worker/sim.worker.test.ts` (four new; the test's stand-in page now answers frames, as a page does).
   `scripts/worker-pace.ts` answers frames too. Unchanged: every engine test, digest and study hash — what the
