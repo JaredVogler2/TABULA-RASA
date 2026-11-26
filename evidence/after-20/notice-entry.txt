@@ -1,0 +1,97 @@
+# A notice was drawn half its width to the right while it faded in, then jumped to the centre
+
+Found on 2026-11-26 while reading the measurements in notice-over-time-bar.txt: one reading had caught a
+notice mid-entry, so its entry was looked at frame by frame.
+
+A notice is centred with a transform of its own (`left: 50%; transform: translateX(-50%)`). Its entry used the
+shared animation `rise`, which animates `transform` from `translateY(8px)` to `none` — and an animated
+transform replaces the element's own. So for the quarter second of the entry the centring was gone: the notice
+was drawn with its left edge at the centre of the screen, fading in, and when the animation ended it jumped
+half its width to the left. A still picture shows a notice at rest, which is why none ever showed this.
+
+Sampled on every frame from the moment the notice is added to the page (the probe is below; headless Chromium
+with a software renderer, which draws few frames: what matters is the first one and the last).
+
+Before — the live site, https://tabula-rasa-bay.vercel.app, built from fb6b535:
+
+  viewport 1366x768; 4 frames sampled
+    +  2 ms: left 683, right 931, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, 0, 8)
+    +  5 ms: left 683, right 931, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, 0, 8)
+    +401 ms: left 683, right 931, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, 0, 8)
+    +909 ms: left 559, right 807, top 640, opacity 1.00, transform matrix(1, 0, 0, 1, -123.758, 0)
+    centre of the notice: first frame 807, at rest 683, screen centre 683
+
+After — the production build of the tree with the change (an entry of the notice's own, `noticeRise`, from
+`translate(-50%, 8px)` to `translate(-50%, 0)`):
+
+  viewport 1366x768; 4 frames sampled
+    +  3 ms: left 559, right 807, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, -123.758, 8)
+    +  5 ms: left 559, right 807, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, -123.758, 8)
+    +331 ms: left 559, right 807, top 648, opacity 0.00, transform matrix(1, 0, 0, 1, -123.758, 8)
+    +790 ms: left 559, right 807, top 640, opacity 1.00, transform matrix(1, 0, 0, 1, -123.758, 0)
+    centre of the notice: first frame 683, at rest 683, screen centre 683
+
+  viewport 390x844:
+    centre of the notice: first frame 195.5, at rest 195.5, screen centre 195
+
+No other rule in the stylesheet combines this animation with a transform of its own.
+
+Held by: tests/e2e/play.spec.ts, "a new player can complete the whole loop offline", on both projects: the
+centre of a notice on the first frame it is drawn is within 2 px of the centre of the screen.
+
+  pnpm exec playwright test tests/e2e/play.spec.ts -g "whole loop" --trace off
+    ✓  1 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.2m)
+    ✓  2 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.0m)
+    2 passed (4.2m)
+
+How it looks to an eye on a device was not seen: this is geometry, measured.
+
+## The probe (node toastanim.cjs <address> [width height])
+
+// Scratch probe: where a notice is, frame by frame, from the moment it appears. node toastanim.cjs <base> [width height]
+const { chromium } = require("playwright");
+const base = process.argv[2];
+const w = Number(process.argv[3] || 1366), h = Number(process.argv[4] || 768);
+(async () => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const page = await context.newPage();
+  await page.goto(`${base}/?q=low&pr=0.4`);
+  await page.getByTestId("begin").click();
+  await page.getByTestId("scenario-first_light").click();
+  await page.getByTestId("seed-input").fill("7");
+  await page.getByTestId("create-world").click();
+  await page.getByTestId("world-label").waitFor({ state: "attached", timeout: 60000 });
+  await page.getByTestId("coach-skip").click();
+  await page.getByTestId("open-menu").click();
+  // watch for the notice from before it is raised, and sample its box on every frame for 700 ms
+  const samples = page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const out = [];
+        const obs = new MutationObserver(() => {
+          const el = document.querySelector('[data-testid="toast"]');
+          if (!el) return;
+          obs.disconnect();
+          const t0 = performance.now();
+          const tick = () => {
+            const r = el.getBoundingClientRect();
+            const cs = getComputedStyle(el);
+            out.push({ ms: Math.round(performance.now() - t0), left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), opacity: Number(cs.opacity).toFixed(2), transform: cs.transform });
+            if (performance.now() - t0 < 700) requestAnimationFrame(tick);
+            else resolve(out);
+          };
+          tick();
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+      }),
+  );
+  await page.getByTestId("save-game").click();
+  const got = await samples;
+  const first = got[0], last = got[got.length - 1];
+  console.log(`viewport ${w}x${h}; ${got.length} frames sampled`);
+  for (const s of [got[0], got[1], got[Math.floor(got.length / 2)], last].filter(Boolean)) console.log(`  +${String(s.ms).padStart(3)} ms: left ${s.left}, right ${s.right}, top ${s.top}, opacity ${s.opacity}, transform ${s.transform}`);
+  const centre = (s) => (s.left + s.right) / 2;
+  console.log(`  centre of the notice: first frame ${centre(first)}, at rest ${centre(last)}, screen centre ${w / 2}`);
+  await browser.close();
+})().catch((e) => { console.error(String(e).slice(0, 800)); process.exit(1); });

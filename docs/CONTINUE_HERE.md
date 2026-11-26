@@ -6,8 +6,10 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
   01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
-  D-050) were merged to `main` by the owner on 2026-11-25. Pull request 5 holds one rewritten browser test
-  and the evidence that came after D-050.
+  D-050) were merged to `main` by the owner on 2026-11-25, and 5 (the record of the deployment, D-051, the
+  phone notice, the charters test) on 2026-11-26. Pull request 6 holds the notice's entry and the check of the
+  live site after that merge. **A merge to `main` deploys itself to production**; a push to this branch makes
+  a preview on Vercel behind a login.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
@@ -81,7 +83,9 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 (the charters test steps its world to a known moment): `pnpm exec playwright test tests/e2e/play.spec.ts
 --project=desktop`, 3 passed (`evidence/after-20/e2e-play.txt`).
 
-After those: `pnpm test` is 496 tests (D-051 adds one). **Some unit tests draw their cases at random, and
+After those: `pnpm test` is 496 tests (D-051 adds one). **The development container loses its services when it
+sleeps:** if the database tests fail with `ECONNREFUSED 127.0.0.1:5432`, run `service postgresql start` (the
+role and the database are still there). **Some unit tests draw their cases at random, and
 differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when
 that happens the log prints a seed and a path. Replay them (`fc.check(property, { seed, path })`), find what
 the value shows, and fix that: the one such failure so far was a real edge (D-051). Do not run the job again

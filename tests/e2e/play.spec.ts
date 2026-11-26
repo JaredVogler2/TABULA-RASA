@@ -137,9 +137,35 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await page.getByTestId("open-interventions").click();
   await expect(page.getByTestId("interventions")).toBeVisible();
   await shot(page, project, "07-interventions");
+  // A notice is where it will stay from the first frame it is drawn. (Its entry used to draw it half its
+  // width to the right of the centre while it faded in, and it jumped to the middle when the fade was done;
+  // a still never shows that, so the first frame is measured.) No earlier notice may be on the page: one that
+  // only changes its words does not enter again.
+  await expect(page.getByTestId("toast")).toHaveCount(0, { timeout: 15_000 });
+  const firstFrame = page.evaluate(
+    () =>
+      new Promise<{ centre: number; screen: number }>((resolve) => {
+        const seen = (): boolean => {
+          const el = document.querySelector('[data-testid="toast"]');
+          if (!el) return false;
+          const box = el.getBoundingClientRect();
+          resolve({ centre: (box.left + box.right) / 2, screen: window.innerWidth / 2 });
+          return true;
+        };
+        const watch = new MutationObserver(() => {
+          if (seen()) watch.disconnect();
+        });
+        watch.observe(document.body, { childList: true, subtree: true });
+        // if no notice is ever added, say so instead of waiting for ever
+        setTimeout(() => resolve({ centre: -1, screen: -1 }), 60_000);
+      }),
+  );
   await page.getByTestId("intervene-blight").click();
   await expect(page.getByTestId("forked-badge")).toBeVisible();
   await expect(page.getByTestId("toast")).toContainText("forked");
+  const entered = await firstFrame;
+  expect(entered.screen, "the notice was seen being added to the page").toBeGreaterThan(0);
+  expect(Math.abs(entered.centre - entered.screen), `the notice enters at the centre (${entered.centre} of ${entered.screen})`).toBeLessThanOrEqual(2);
   // a notice is said above the time controls, never over them (on a phone the bar is two rows tall, and a
   // notice used to cover its step button and its clock, by 47 px)
   const notice = await page.getByTestId("toast").boundingBox();

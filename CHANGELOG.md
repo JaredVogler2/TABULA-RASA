@@ -5,7 +5,16 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 5 — the release, and what looking at it found (2026-11-26, open)
+## Pull request 6 — notices enter where they stay (2026-11-26, open)
+
+Engine 0.7.0, unchanged.
+
+- A notice no longer slides in from the right: while it faded in it was drawn half its width to the right of
+  the centre, and jumped to the middle when the fade ended. It now enters where it stays.
+- The live site was checked again after pull request 5 was merged and it had rebuilt: 25 of 25, and the
+  notice clears the time controls at every phone width.
+
+## Pull request 5 — the release, and what looking at it found (2026-11-26, merged)
 
 Engine 0.7.0: one line changed, no behaviour (D-051).
 

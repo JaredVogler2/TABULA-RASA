@@ -43,4 +43,18 @@ intervention's notice appears, its lower edge is at or above the time controls' 
     ✓  2 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.1m)
     2 passed (4.5m)
 
-The site that is deployed was built before this change: it shows the overlap until this is merged to `main`.
+The site that was deployed when this was measured had been built before the change. Pull request 5 was merged
+at 01:38 UTC on 2026-11-26 and the site rebuilt; measured again, against the live site
+(https://tabula-rasa-bay.vercel.app):
+
+  320x640: notice 434..495  time bar 507..630 (123 tall)  clear by 12px
+  360x740: notice 534..595  time bar 607..730 (123 tall)  clear by 12px
+  390x844: notice 638..699  time bar 711..834 (123 tall)  clear by 12px
+  430x932: notice 726..787  time bar 799..922 (123 tall)  clear by 12px
+  560x800: notice 613..655  time bar 667..790 (123 tall)  clear by 12px
+  561x800: notice 672..714  time bar 726..790 (64 tall)  clear by 12px
+  768x1024: notice 904..946  time bar 950..1014 (64 tall)  clear by 4px
+  1366x768: notice 640..682  time bar 696..758 (62 tall)  clear by 14px
+
+(The reading at 768 px caught the notice while it was still entering: it starts 8 px low and rises into place.
+At rest it clears by 12. Looking at that entry found something else: notice-entry.txt.)

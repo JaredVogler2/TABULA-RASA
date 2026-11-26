@@ -1188,6 +1188,19 @@
   white-space: nowrap;
 }
 
+/* A notice is centred by a transform of its own, so its entry has to carry that transform too. With the
+   shared `rise` it did not: for the quarter second it faded in, a notice was drawn half its width to the right
+   of the centre (124 px on a desktop), and then jumped to the middle. No still ever showed it. */
+@keyframes noticeRise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
 .toast {
   position: absolute;
   left: 50%;
@@ -1198,7 +1211,7 @@
   font-size: 13.5px;
   text-align: center;
   pointer-events: none;
-  animation: rise 0.25s var(--ease);
+  animation: noticeRise 0.25s var(--ease);
   z-index: 30;
 }
 
