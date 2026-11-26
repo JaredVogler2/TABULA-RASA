@@ -1,9 +1,12 @@
 # Observer experience: what is there, how it was checked, what nobody has tried
 
-Status: phases 12–14 (2026-11-25). This is a review by the builder from executed tests and screenshots of the
-running product. **No person other than the builder has played it, and nobody has used it with a screen
-reader, on a physical phone, or with sound through a speaker.** Those gaps are listed at the end and are the
-reason no criterion here is scored as verified with people.
+Status: phases 12–14 (2026-11-25), with what a phone showed on 2026-11-26. This is a review by the builder
+from executed tests and screenshots of the running product. **Until 2026-11-26 no person other than the builder
+had played it. On that day the owner opened the deployed game on their phone and reported two defects that
+every test and every still here had passed over; they are below. That is the only use by another person and
+the only use on a physical device that this repository knows of. Nobody is known to have used it with a screen
+reader or with sound through a speaker.** Those gaps are listed at the end and are the reason no criterion
+here is scored as verified with people.
 
 ## What the observer has
 
@@ -11,7 +14,8 @@ reason no criterion here is scored as verified with people.
 |---|---|---|---|
 | Time bar | play / pause, one tick, six speeds, hour and day | the worker's clock | Space, `.`, 1–6 |
 | Chronicle | notable logged events in plain sentences, not the whole ledger: the worker forwards 44 of the engine's 60 event kinds and 38 of them have a line (routine acts such as gathering, eating, sleeping, single decisions and refused intents are left out); the page keeps the latest 600 lines and the panel lists the newest 220 that pass the filter; filtered by six groups of kinds or by the selected citizen, with the engine's recorded cause; click to go there | the engine's event ledger, through `UI_EVENTS` in `src/worker/sim.worker.ts` | C |
-| Inspector | a citizen's needs, load, plan, **what they set out to do and what came of it** (refusals in plain words), what they believe against what is true, whom they know, what they remember, temperament, skills | on-demand read of the citizen | click, F to follow |
+| Inspector | a citizen's needs, load, plan, **what they set out to do and what came of it** (refusals in plain words), what they believe against what is true, whom they know, what they remember, temperament, skills. On a phone it is a card that opens drawn back to its head, with the citizen in sight above it (D-052) | on-demand read of the citizen | click, F to follow |
+| Follow | the camera stays on a citizen, drawn in the middle of the map the interface leaves uncovered; a pan, another choice or closing the card lets go; zoom, turn and tilt do not (D-052) | the renderer's own position of the citizen | F |
 | What they know | the land the selected citizen has never seen is washed out, in the world and on the atlas | the citizen's own seen-tiles set | V |
 | Who they know | arcs to the people they have dealt with, warm for trust, cool for distrust | the citizen's own record of others | T |
 | Charters | every agreement, its rules as sentences, how it came to be proposed, who signed, how often it was used; its pennant colour | the institution engine | G |
@@ -33,6 +37,8 @@ reason no criterion here is scored as verified with people.
 | Flow | Test | What it proves | What it does not |
 |---|---|---|---|
 | title → scenario and seed → world → step / play / speeds / pause → click a citizen in the 3D view → follow → Chronicle → intervene (fork) → compare → save → reload → continue | `play.spec.ts` | the loop works with real clicks and taps, with no network and no console errors | that a newcomer understands it |
+| within that flow: a tapped citizen is in sight above their card (phone); the card opens and draws back by its arrow and its head; the person followed is drawn in the middle of the uncovered map; a drag lets go and Follow brings the camera back; a zoom keeps the follow; with time running they are never under a bar or the card; choosing someone else lets go of the first, in the camera as on the button | `play.spec.ts`, by measuring where the citizen is drawn and what is on top at that point of the page (`tests/e2e/layout.ts`) | Follow is the camera moving and the person visible, not a button changing its word | how it feels under a finger; a real phone |
+| the Recordings sheet at four phone sizes and three wider ones; the lists of saved worlds, of world lines and of recordings wherever a flow meets them | `play.spec.ts`, `owner.spec.ts`, `history.spec.ts` | no name is squeezed and broken, nothing reaches past its list, no sheet scrolls sideways, no row is drawn over what is above it | a phone's own browser: only Chromium is installed here, and the picture of the defect came from what looks like an iPhone |
 | the same world driven by keyboard alone | `play.spec.ts` (desktop) | every control has a key or is reachable by Tab | screen-reader use |
 | charters in plain words with their origin | `play.spec.ts` (desktop) | the ledger reads as sentences and says "scripted control · not emergence" where true | comprehension |
 | sound off → on → slider to zero → off; three days of play; journal pages; outcomes list; both knowledge views; atlas, almanac table, click-to-look | `observer.spec.ts` | each instrument reads live state and responds; sound really produces signal and really goes quiet | how any of it sounds or feels |
@@ -86,6 +92,17 @@ reason no criterion here is scored as verified with people.
   it shows as many words as fit, in a stated order of giving way, and on a phone the status row and the fork
   pill shorten only as far as they must. The script measures 25 widths three ways — untouched, forked, and with
   the longest labels — and also fails on a squeezed name or a pill pushed onto a row of its own.
+- **A fourth and a fifth, found by the owner on a phone (2026-11-26, D-052).** *The Recordings sheet* — the
+  first thing a visitor can open — showed the name of the recording in a sliver at the left, one word to a
+  line, and the rest of the row running off the right edge. A row was a grid of "what is left" and "as wide as
+  its words", with the second forbidden to wrap: a long description took everything and the name got the
+  remainder. The flow test found the name, read its words and pressed it. *Follow* did not appear to follow:
+  the card is a sheet over the lower part of a phone's map, the camera drew whoever it followed at the middle
+  of the canvas, and the middle of the canvas was behind the sheet; closing the sheet to look ended the
+  follow. The flow test pressed Follow and read that the button said "Following". Both pass at a desk and both
+  are wrong in the hand. What is now measured is in the two rows added to the table of flows above; what was
+  found beside them, looking, is in `docs/QA_REPORT.md`. Lesson kept, again: a control that reports its own
+  state has not been tested until the thing it controls has been looked at.
 - **Motion and sound**: reduced motion (system setting or the menu) slows time-driven motion, stills the
   camera's easing and removes birds and fish rings; sound never starts on its own.
 - **Not colour alone**: chart lines are named and tabulated; agreement colours come with the agreement's name;
@@ -114,8 +131,11 @@ reason no criterion here is scored as verified with people.
    unknown. The coach marks were written by the person who built the game.
 2. **A screen reader.** Names, roles and live regions exist and pass the scan; whether the game can be
    followed by ear has not been tried.
-3. **A physical phone or tablet.** Touch targets, sheets and gestures are tested in emulation only. Frame rate
-   on a real phone is unmeasured (`docs/ART_BIBLE.md` § Performance).
+3. **A physical phone or tablet, by the builder.** Touch targets, sheets and gestures are tested in emulation
+   only, in Chromium only. The owner's phone is the one device the game is known to have been opened on; it
+   found two defects at once (above), which says how much emulation had been missing. Their fixes have not
+   been seen on a phone by the builder. Frame rate on a real phone is unmeasured (`docs/ART_BIBLE.md` §
+   Performance).
 4. **Ears.** The soundscape has been measured, not heard.
 5. **Colour-vision deficiency in the 3D scene.** Charts are checked; the diorama's reds (berries, madder
    pennants) against greens are not. State there is always also shown by shape, and in the panels by words.

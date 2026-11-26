@@ -111,7 +111,7 @@ running forks.
 | Orbit / tilt | Right-drag or Alt-drag; `Q` and `E` turn the view (no key tilts it) | Two-finger twist / two-finger vertical drag |
 | Pan | Left-drag, `W` `A` `S` `D` / arrows | One-finger drag |
 | Zoom | Wheel; `+` or `=` in, `-` or `_` out | Pinch |
-| Select / inspect | Click | Tap |
+| Select / inspect | Click | Tap: the view turns to what was tapped and its card opens drawn back to its head, so that both can be seen. A tap on the card's head, a pull up or its arrow opens the whole card |
 | Follow selected | `F` | Follow button in the bottom sheet |
 | What the selected citizen knows / whom they know | `V` / `T` | Buttons in the bottom sheet |
 | Play / pause | `Space` | Timebar button |
@@ -129,8 +129,16 @@ act while a world is being played and no panel other than the Chronicle is open:
 the title. Keys are ignored while typing in a field and while Ctrl, Alt or ⌘ is held; letters mean the same
 with Shift held or Caps Lock on. Apart from that handler, a focused chart in
 Compare reads `←` and `→`. The swipe is `src/ui/game/swipe.ts`: with touch or a pen, in windows up to 880 px
-wide, a panel can be dragged down by its header to close it. Its rule for when letting go closes the panel is
-unit-tested (`swipe.test.ts`); the gesture itself has not been run in a browser test or on a physical device.
+wide, a panel can be dragged down by its header to close it; the inspector's card, which opens drawn back
+there, is also opened by a pull up, and opened or drawn back by a tap on its header or by its arrow. The rules
+for when letting go closes or opens are unit-tested (`swipe.test.ts`), and the tap and the arrow are run in the
+phone project of `play.spec.ts`; the pulls themselves have not been run in a browser test, and none of it has
+been run on a physical device.
+
+**Following.** While a citizen is followed the camera stays on them, and they are drawn in the middle of the
+map that the interface leaves uncovered — on a phone, above their card. Moving the view across the ground lets
+go of them; so does choosing someone or somewhere else, closing their card, or pressing Follow again. Zooming,
+turning and tilting the view do not: none of them looks anywhere else (D-052).
 
 On touch devices every pressable target is at least 44 × 44 CSS px. Links inside a sentence are exempt, as
 they are in the guideline. This is measured, not asserted: the phone project of `tests/e2e/a11y.spec.ts`

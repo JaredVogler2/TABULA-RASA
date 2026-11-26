@@ -1,0 +1,117 @@
+Lists of rows on a phone: the repository's own check, against the deployed build and against this tree
+=======================================================================================================
+
+2026-11-26. Headless Chromium made the size of a phone; not a phone, and not the browser on one.
+
+What the check is: tests/e2e/layout.ts, rowProblems(page, list). For every row of a list it reports
+anything that reaches past the edges of the list, any row drawn over what is above it, a name broken
+over several lines while squeezed to under 120 px (or two fifths of its row), and a sheet that has to
+be scrolled sideways. The browser tests call it on every list a flow meets. Here it is called from a
+short script (printed at the end) so that it can be pointed at a build the tests were not run against.
+
+The report that led here, from the owner, on the deployed game on their phone:
+  "Minor formatting tweak needed with crowding words at opening of app"
+with a picture of the Recordings sheet: the name of the recording one word to a line at the left, the
+rest of the row running off the right edge. (The picture is not in the repository. It also showed the
+name drawn over the paragraph above it; Chromium does not draw that with the same styles, here or on
+the deployed build: see the last section.)
+
+
+1. The deployed build (https://tabula-rasa-bay.vercel.app, from main at 1bb4759)
+--------------------------------------------------------------------------------
+
+recordings 320x568: row 1: reaches 350px past the right edge of the list; row 1: its name is squeezed to 44px of a 636px row and broken over 5 lines; what holds the list scrolls sideways (652px of content in 318px)
+recordings 390x844: row 1: reaches 280px past the right edge of the list; row 1: its name is squeezed to 44px of a 636px row and broken over 5 lines; what holds the list scrolls sideways (652px of content in 388px)
+recordings 430x932: row 1: reaches 240px past the right edge of the list; row 1: its name is squeezed to 44px of a 636px row and broken over 5 lines; what holds the list scrolls sideways (652px of content in 428px)
+recordings 768x1024: whole
+recordings 1366x768: whole
+saved worlds 390x844: row 1: reaches 62px past the right edge of the list; row 1: its name is squeezed to 44px of a 418px row and broken over 7 lines; row 2: reaches 62px past the right edge of the list; what holds the list scrolls sideways (434px of content in 388px)
+world lines 390x844: whole
+
+
+2. A production build of this tree, served here
+-----------------------------------------------
+
+recordings 320x568: whole
+recordings 390x844: whole
+recordings 430x932: whole
+recordings 768x1024: whole
+recordings 1366x768: whole
+saved worlds 390x844: whole
+world lines 390x844: whole
+
+
+3. What this shows, and what it does not
+----------------------------------------
+
+- At every phone width the Recordings sheet had the fault the owner photographed: a name 44 px wide
+  on five lines, the row 240 to 350 px past its list, the sheet scrolling sideways. The list of saved
+  worlds had it too (44 px, seven lines, 62 px past). The list of world lines did not, with the words
+  it held. With the change none of the three has it at any size measured.
+- scripts/sight.mjs measures the same sheet a second way, with nothing taken from the tests
+  (evidence/after-20/sight-before.md, sight-after.md, and the stills beside them): on the deployed
+  build the name is also set on two lines at 1366 px, where it had 134 px of a 726 px row; with the
+  change it has the row.
+- NOT SHOWN: that the name is no longer drawn over the paragraph above it on the owner's phone. That
+  part of the picture was never reproduced here: in Chromium the squeezed name starts below the
+  paragraph on both builds. It is taken to come from the phone's browser aligning the row by the last
+  line of a five-line name; rows are no longer aligned by baseline at all, and a name is no longer
+  squeezed onto five lines. Only a look at the same sheet on the same phone can confirm it.
+
+
+4. The script
+-------------
+
+// The repository's own row check (tests/e2e/layout.ts › rowProblems), run against any address:
+//   pnpm exec tsx rowcheck.ts <address>
+// The Recordings sheet at five sizes; then, at 390×844, a world played for three days, changed once and saved:
+// the list of saved worlds in the menu and the list of world lines in History.
+import { chromium } from "@playwright/test";
+import { rowProblems } from "../../tests/e2e/layout";
+const base = process.argv[2]!;
+const say = (label: string, problems: string[]): void => console.log(`${label}: ${problems.length ? problems.join("; ") : "whole"}`);
+(async () => {
+  const browser = await chromium.launch();
+  for (const [w, h, mobile] of [[320, 568, true], [390, 844, true], [430, 932, true], [768, 1024, true], [1366, 768, false]] as const) {
+    const context = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
+    // (tsx wraps named functions in a helper the page does not have; the test runner does not)
+    await context.addInitScript("globalThis.__name = (f) => f");
+    const page = await context.newPage();
+    await page.goto(`${base}/?q=low&pr=0.4`);
+    await page.getByTestId("title-recordings").click();
+    await page.getByTestId("recordings-list").waitFor({ state: "visible", timeout: 30000 });
+    await page.waitForTimeout(500);
+    say(`recordings ${w}x${h}`, await rowProblems(page, "recordings-list"));
+    await context.close();
+  }
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  await context.addInitScript("globalThis.__name = (f) => f");
+  const page = await context.newPage();
+  const tick = async () => Number(((await page.getByTestId("tick").textContent()) ?? "").replace(/\D+/g, ""));
+  await page.goto(`${base}/?q=low&pr=0.4`);
+  await page.getByTestId("begin").click();
+  await page.getByTestId("scenario-first_light").click();
+  await page.getByTestId("seed-input").fill("7");
+  await page.getByTestId("create-world").click();
+  await page.getByTestId("world-label").waitFor({ state: "attached", timeout: 60000 });
+  await page.getByTestId("coach-skip").click();
+  await page.getByTestId("speed-4").click();
+  await page.getByTestId("play-toggle").click();
+  for (;;) { if ((await tick()) > 250) break; await page.waitForTimeout(400); }
+  await page.getByTestId("play-toggle").click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="play-toggle"]')?.getAttribute("data-playing") === "false");
+  await page.getByTestId("open-interventions").click();
+  await page.getByTestId("intervene-blight").click();
+  await page.waitForTimeout(800);
+  await page.getByTestId("open-menu").click();
+  await page.getByTestId("save-game").click();
+  await page.getByTestId("save-list").waitFor({ timeout: 10000 });
+  await page.waitForTimeout(400);
+  say("saved worlds 390x844", await rowProblems(page, "save-list"));
+  await page.getByTestId("menu-close").click();
+  await page.getByTestId("open-history").click();
+  await page.getByTestId("branches").waitFor({ timeout: 15000 });
+  await page.waitForTimeout(600);
+  say("world lines 390x844", await rowProblems(page, "branches"));
+  await browser.close();
+})().catch((e) => { console.error(String(e).slice(0, 900)); process.exit(1); });

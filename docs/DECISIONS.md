@@ -1359,3 +1359,88 @@ rollback. Read this file before modifying any contract it mentions.
   to do with it. That is the price of its finding things. Its log prints the seed: replay it; do not run it
   again and hope.
 - **Rollback.** The one line.
+
+## D-052 — On a phone, what the camera looks at is drawn where it can be seen (2026-11-26)
+
+- **Problem.** Two reports from the owner, on the deployed game, on their own phone: the first from a person
+  other than the builder, and from a physical device.
+  1. *"Crowding words at opening of app"*, with a picture of the Recordings sheet: the name of the recording
+     in a sliver at the left, one word to a line and drawn over the paragraph above it; the rest of the row
+     running off the right edge. A row was a grid of "what is left" and "as wide as its words", the second
+     forbidden to wrap. Measured on the deployed build at 320, 360, 390 and 430 px: the name 44 px wide on
+     five lines, the row 240 to 350 px past its list, the sheet scrolling sideways. Every list of rows
+     shared the style; the list of saved worlds showed the same fault (44 px, seven lines), the world lines
+     did not with the words they held.
+  2. *"Following a person doesn't seem to move the camera and track them."* It did not, to the eye. On a
+     narrow screen a citizen's card is a sheet over the lower part of the map; the camera drew whoever it
+     followed at the middle of the canvas; the middle of the canvas was behind the sheet. Measured at
+     390 × 844 on the deployed build: the person followed drawn at (195, 406), under their card, which
+     reached from 213 to 703; with time running, under it in 29 samples of 29. Closing the card to look
+     ended the follow, because closing it clears the selection. The browser test pressed Follow and read that the button said
+     "Following".
+  Looking at Follow turned up four more things, none of them reported:
+  3. A tapped citizen was hidden the same way from the moment their card opened.
+  4. Zooming, turning or tilting the view ended a follow without saying so: a pinch to see the person better
+     let go of them.
+  5. Choosing another citizen while following left the camera tracking the first, with the card and its
+     button about the second.
+  6. Each frame the camera was moved before the people, with a step capped at a tenth of a second: at the
+     few frames a second of a slow device it trailed a walker by a tile or more (on a desktop page here, at
+     8×, up to 64 px from where they were held on the deployed build and 13 px with the change; one run of
+     twelve seconds each).
+- **Original proposal.** `docs/CHARTER.md` §7: "Follow selected — Follow button in the bottom sheet", and
+  phase 12's bottom sheets on portrait phones. Nothing said where on the screen a followed person is drawn,
+  and nothing measured it.
+- **Alternatives.** (a) Make the sheet shorter or see-through: the person is still under it. (b) Close the
+  card while following and show a small "Following …" chip: the card is lost, and a second way to stop
+  following has to be invented. (c) Push the camera down by a fixed amount on phones: right on one screen.
+  (d) Measure what the interface covers and draw the camera's point of interest in the middle of the rest;
+  open a card drawn back, so that there is a rest. Chosen.
+- **Decision.**
+  1. *Rows.* A row is a name and what is said about it: side by side when both fit, the second below the
+     first when they do not; neither is squeezed and nothing is aligned by baseline. A row with a button at
+     its end (a saved world and its delete) keeps the button at the end at every width.
+  2. *What the interface covers is measured* on narrow screens (880 px and less, where panels are sheets):
+     every bar and sheet over the map, top or bottom by which half of the map its middle is in, whenever one
+     appears, goes or changes size (`controller.measureCover`, `ui/game/cover.ts`). The camera cuts its
+     picture from the same lens off-centre (`PerspectiveCamera.setViewOffset`), so that the point it looks at
+     is drawn in the middle of the uncovered band: eased, at once with reduced motion, never more than four
+     tenths of the height from the centre. On a wide screen panels are at the sides and nothing is moved.
+  3. *A card opens drawn back* on a narrow screen: its head, what the citizen is doing, who decided, and the
+     first buttons, in at most 34% of the height or 290 px. A tap on its head, a pull up or its arrow opens
+     it in full; the arrow or a tap draws it back; a pull down or the cross closes it. Following draws it
+     back. At the side of a wide screen it is always whole and has no arrow.
+  4. *On a narrow screen choosing a citizen or a place turns the camera to it*, without changing the zoom —
+     unless the camera was just sent somewhere on purpose (to where a Chronicle or journal entry happened).
+  5. *A follow ends* when the view is moved across the ground, when someone or somewhere else is chosen, when
+     the card is closed, or when Follow is pressed again. Zooming, turning and tilting do not end it.
+  6. *Each frame people take their places, then the camera moves*, and the camera's easing is given the time
+     that really passed (a second at most); what is animated keeps its tenth-of-a-second step.
+- **Evidence.** `evidence/after-20/sight-before.{md,json}` (the deployed build, from `main` at `1bb4759`)
+  against `sight-after.{md,json}` (this tree), both made by `scripts/sight.mjs`, with stills of each step:
+  on a phone the tapped person is at (195, 286) and the followed one at (195, 274), the map itself on top of
+  them, above a card drawn back to 416; a zoom keeps the follow; under something in 0 samples of 30.
+  `rows.txt`: the repository's row check against both builds. `follow.txt`: the 25 unit tests; seventeen
+  rules each broken on purpose and each noticed by a test; the old "camera keeps the first person" put back
+  and caught by the whole-loop test; `play.spec.ts` on both projects on this tree; the whole suite green on
+  GitHub's runners on the pull request's first commit (run 45752121337).
+- **Affected acceptance tests.** `tests/e2e/play.spec.ts`, whole loop, both projects: a tapped citizen is in
+  sight above their card (phone); the card opens and draws back by its arrow and its head; the person
+  followed is drawn in the middle of the uncovered map; a drag lets go and says so; Follow brings them back
+  to within 12 px of where they were held; a zoom keeps the follow; over a quarter of a day at 8× they are
+  never under a bar or the card and never more than 70 px from where they are held; choosing someone else
+  lets go of the first, in the camera as on the button. A new test measures the Recordings sheet at seven
+  sizes; the lists of saved worlds, world lines and recordings are measured wherever a flow meets them
+  (`tests/e2e/layout.ts`). Unit: `render/cameraRig.test.ts` (11), `render/pick.test.ts` (3),
+  `ui/game/swipe.test.ts` (2 more). The old assertion — the button says "Following" — is kept, beside the new
+  ones.
+- **Cost / risks.** On a phone a card now takes a second touch to read in full, and the map moves when
+  something is chosen and when a card opens or closes; neither was so before. With a card open in full at
+  390 × 844 only about 54 px of map is left, and a followed citizen is drawn in that strip; at 320 × 568 the
+  drawn-back card leaves about 74 px. The first report's picture also showed the name drawn *over* the
+  paragraph above it, which Chromium does not do with the same styles: it is taken to be the phone's engine
+  aligning a five-line name by its last line, the alignment is gone, and **that part is not verified** — no
+  such engine is installed here. Nothing in this decision has been seen on a physical phone by the builder.
+- **Rollback.** Remove the call to `useMapCover` (the camera is then told of no cover and draws at the
+  centre) and start `inspectorCompact` false on selection; restore `.row` to its grid. The camera's order of
+  work and its time step are independent of the rest.

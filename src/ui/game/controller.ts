@@ -11,6 +11,7 @@ import { WorldRenderer, type Pick, type Quality } from "@/render/WorldRenderer";
 import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings } from "@/store/game";
 import { SimClient } from "@/store/simClient";
 import { AF, AGENT_STRIDE, type CivicMark, type Recording, type StructureView, type ViewFrame } from "@/worker/protocol";
+import { coverOf } from "./coverOf";
 import { JOURNAL, entryFrom, pageFor, type JournalEntry } from "./journal";
 import { autoQuality, simplerOf, simplified } from "./quality";
 import { chronicle, outcomeLine, tickLabel, type ChronicleEntry } from "./text";
@@ -914,7 +915,8 @@ export class GameController {
     // A card opens drawn back to its head. (On a narrow screen the card is a sheet over the map: at its full
     // height it hid whoever had just been chosen.)
     const inspectorCompact = pick ? (same ? state.inspectorCompact : true) : false;
-    const following = same && state.following;
+    // (…as long as the camera still is following them: it has let go if it was just sent to a place)
+    const following = same && state.following && (this.renderer?.isFollowing() ?? false);
     state.set({ selection: pick, following, inspectorCompact, agentDetail: pick?.type === "agent" ? state.agentDetail : null, tileDetail: null });
     // (the renderer's camera lets go of whoever it followed when the selection passes to another)
     this.renderer?.select(pick);
@@ -975,17 +977,11 @@ export class GameController {
       this.renderer.setInsets(0, 0);
       return;
     }
-    const map = canvas.getBoundingClientRect();
-    const middle = (map.top + map.bottom) / 2;
-    let top = 0;
-    let bottom = 0;
-    for (const part of Array.from(hud.children)) {
-      const box = part.getBoundingClientRect();
-      if (box.width === 0 || box.height === 0) continue;
-      if ((box.top + box.bottom) / 2 < middle) top = Math.max(top, box.bottom - map.top);
-      else bottom = Math.max(bottom, map.bottom - box.top);
-    }
-    this.renderer.setInsets(top, bottom);
+    const cover = coverOf(
+      canvas.getBoundingClientRect(),
+      Array.from(hud.children, (part) => part.getBoundingClientRect()),
+    );
+    this.renderer.setInsets(cover.top, cover.bottom);
   }
 
   focusTile(x: number, y: number): void {

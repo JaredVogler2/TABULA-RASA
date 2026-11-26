@@ -92,7 +92,10 @@ export function useSwipeDown(onClose: () => void, more: SwipeMore = {}): SwipeHa
         d.sheet.style.transform = "";
         onClose();
       } else {
-        settle(d.sheet);
+        // a sheet that was pulled down settles back; one that was not moved is left its own transitions
+        // (a card that is tapped or pulled up eases open: `settle` would have it jump)
+        if (d.sheet.style.transform) settle(d.sheet);
+        else d.sheet.style.transition = "";
         if (opensOnRelease(dy)) more.onUp?.();
       }
     },

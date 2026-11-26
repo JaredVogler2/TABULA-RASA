@@ -2,14 +2,15 @@
 
 Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, then `docs/DECISIONS.md`.
 
-## Current state (2026-11-25)
+## Current state (2026-11-26)
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
   01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
   D-050) were merged to `main` by the owner on 2026-11-25, and 5 (the record of the deployment, D-051, the
-  phone notice, the charters test) on 2026-11-26. Pull request 6 holds the notice's entry and the check of the
-  live site after that merge. **A merge to `main` deploys itself to production**; a push to this branch makes
-  a preview on Vercel behind a login.
+  phone notice, the charters test) and 6 (a notice enters where it stays) on 2026-11-26. Pull request 7 holds
+  what the owner's phone showed that day — a crowded list and a Follow that did not appear to follow — and
+  what was found beside them (D-052). **A merge to `main` deploys itself to production**; a push to this
+  branch makes a preview on Vercel behind a login.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
@@ -62,6 +63,7 @@ pnpm requests                                          # the server's own routes
 node scripts/perf.mjs http://127.0.0.1:3210 /tmp/perf  # in a browser (needs `pnpm build && pnpm exec next start -p 3210`)
 node scripts/topbar.mjs http://127.0.0.1:3210 /tmp/topbar   # the top bar at 25 widths, three ways
 node scripts/trail.mjs http://127.0.0.1:3210 /tmp/trail     # how far the picture trails the world when the page is slowed (D-050)
+node scripts/sight.mjs http://127.0.0.1:3210 /tmp/sight     # can it be seen: lists of rows at six sizes; a citizen tapped, followed, zoomed on and walking (D-052)
 node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowledge dusk night phone low   # art stills
 # what is configured for live calls, and what is missing (makes no request, changes nothing)
 pnpm live:smoke
@@ -83,7 +85,14 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 (the charters test steps its world to a known moment): `pnpm exec playwright test tests/e2e/play.spec.ts
 --project=desktop`, 3 passed (`evidence/after-20/e2e-play.txt`).
 
-After those: `pnpm test` is 496 tests (D-051 adds one). **The development container loses its services when it
+After those: `pnpm test` is 496 tests (D-051 adds one).
+
+With D-052 (what the owner's phone showed): `pnpm check` exits 0 with 518 unit tests in 43 files — 22 more, for
+the camera rig, what counts as the same selection, a pull upwards on a card, and the arithmetic of what the
+interface covers. `pnpm exec playwright test tests/e2e/play.spec.ts`: 4 passed on the desktop project, 2 passed
+and 2 skipped by design on the phone project. The whole suite was green on GitHub's runners on the pull
+request's first commit, `7d8a306`; here a whole-suite run was stopped by hand after 12 of 36, all passing
+(`evidence/after-20/follow.txt`). **The development container loses its services when it
 sleeps:** if the database tests fail with `ECONNREFUSED 127.0.0.1:5432`, run `service postgresql start` (the
 role and the database are still there). **Some unit tests draw their cases at random, and
 differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when
@@ -125,9 +134,15 @@ and hope.
 - `src/render/**` — imperative three.js (`WorldRenderer`); never imported by the engine, never imports React.
   `citizens.ts` (figures, props, the faint shape of hidden people), `ambient.ts` (smoke, fish rises, birds),
   `overlays.ts` (what a citizen knows; ties), `structures.ts` (buildings, agreements' posts and pennants).
+  `cameraRig.ts` (pan, zoom, turn, follow; what ends a follow and what does not; the picture cut off-centre
+  so that what it looks at is drawn in the map the interface leaves uncovered — D-052), `timing.ts` (the step
+  animation takes, and the one the camera takes), `pick.ts` (when two selections are the same). **Each frame
+  people take their places before the camera moves**: turn that round and a followed walker is trailed.
 - `src/audio/soundscape.ts` — procedural sound; reads state, changes nothing; silent until asked for.
 - `src/ui/game/**` — React HUD and panels; `controller.ts` is the single place that talks to worker + renderer.
-  `fit.ts` (the top bar measures itself, D-045), `quality.ts` (which preset, and the fallback), `swipe.ts`.
+  `fit.ts` (the top bar measures itself, D-045), `quality.ts` (which preset, and the fallback), `swipe.ts`,
+  `cover.ts` (keeps the camera told what the interface covers on a narrow screen: every child of the element
+  marked `data-hud` counts, so **a new bar or sheet over the map belongs inside it**).
   `Atlas.tsx` (map and almanac), `Journal.tsx` + `journal.ts` (field journal), `Inspector.tsx`,
   `History.tsx` (moments, world lines, files), `Compare.tsx`.
   `src/ui/owner/Console.tsx` — the owner console at `/owner`.
@@ -139,7 +154,8 @@ and hope.
 1. **The release is made, at level 1.** https://tabula-rasa-bay.vercel.app, a Vercel project the owner created
    by importing the repository (the assistant's connector may read the owner's projects and may not create one
    or list a project's variables). A merge to `main` deploys itself; a push to another branch makes a preview
-   behind a Vercel login. After a merge that changes the product: `pnpm release:check -- https://tabula-rasa-bay.vercel.app`.
+   behind a Vercel login. After a merge that changes the product: `pnpm release:check -- https://tabula-rasa-bay.vercel.app`,
+   and for anything a phone shows, `node scripts/sight.mjs https://tabula-rasa-bay.vercel.app /tmp/sight`.
    **Not deployed:** the console (level 2) — it needs a database, a billable integration that has not been
    asked for and needs the owner's approval — and live minds (level 3, phase 17). Open on the deployment: which
    Node.js runs it was not observed (`docs/DEPLOYMENT.md` § Known unknowns).
@@ -152,7 +168,10 @@ and hope.
    first authorized act is the smoke test, and the words that authorize it are the owner's to type.
 4. **What could not be done here** (needs the owner or a device): look at it on a real GPU and a real phone
    and record frame rates; listen to the sound; have someone who did not build it play the first fifteen
-   minutes; try a screen reader; try Firefox and Safari. `docs/QA_REPORT.md` § Not run is the list.
+   minutes; try a screen reader; try Firefox and Safari. `docs/QA_REPORT.md` § Not run is the list. The owner's
+   first few minutes on a phone found two defects that everything here had passed (D-052): **a control that
+   reports its own state is not tested until what it controls has been looked at**. The fixes for those two
+   have been measured in Chromium at a phone's size, and not yet seen on a phone.
 5. Engine notes:
    - Model: `docs/ODD.md`; institutions: `docs/INSTITUTIONS.md`; baselines: `docs/COGNITION.md`; ecology: D-014;
      society measures: `src/engine/metrics/society.ts`. Never tune on holdout seeds (9000–9999).
