@@ -4,6 +4,11 @@
  *
  *   mouse   left-drag pan · right-drag / Alt-drag orbit · wheel zoom
  *   touch   one finger pan · pinch zoom · two-finger twist orbit · two-finger vertical drag tilt
+ *
+ * While someone is followed the rig looks at them. Moving the view across the ground lets go of them
+ * (the observer has said where they would rather look); zooming, turning and tilting do not, because
+ * none of them looks anywhere else. They used to: a pinch to see the person followed more closely
+ * ended the follow without a word.
  */
 import { PerspectiveCamera, Vector3 } from "three";
 import type { HeightField } from "./heightfield";
@@ -37,6 +42,15 @@ export class CameraRig {
   private pinch = { dist: 0, angle: 0, midY: 0 };
   private followFn: (() => Vector3 | null) | null = null;
   private autoOrbit = 0;
+  /**
+   * How much of the picture the interface covers from the top and from the bottom, in CSS pixels.
+   * What the rig looks at is drawn at the middle of what is left, not at the middle of the canvas:
+   * on a phone the inspector is a sheet over the lower half of the map, and a citizen held at the
+   * middle of the canvas was held behind it.
+   */
+  private readonly inset = { top: 0, bottom: 0 };
+  private readonly wantInset = { top: 0, bottom: 0 };
+  private readonly size = { w: 1, h: 1 };
   private readonly cleanup: (() => void)[] = [];
 
   constructor(
@@ -83,15 +97,16 @@ export class CameraRig {
       if (this.pointers.size === 1) {
         this.moved += Math.abs(dx) + Math.abs(dy);
         if (this.moved < 5) return;
-        this.userMoved();
         if (this.dragMode === "orbit") {
+          this.userTurned();
           this.wantAzimuth -= dx * 0.0052;
           this.wantPolar = clamp(this.wantPolar - dy * 0.004, MIN_POLAR, MAX_POLAR);
         } else {
+          this.userMoved();
           this.panPixels(dx, dy);
         }
       } else if (this.pointers.size === 2) {
-        this.userMoved();
+        this.userTurned();
         this.updatePinch();
       }
     });
@@ -112,7 +127,7 @@ export class CameraRig {
       "wheel",
       (e) => {
         e.preventDefault();
-        this.userMoved();
+        this.userTurned();
         const k = Math.exp(clamp(e.deltaY, -120, 120) * 0.0014);
         this.wantDistance = clamp(this.wantDistance * k, MIN_DIST, this.maxDist);
       },
@@ -120,10 +135,16 @@ export class CameraRig {
     );
   }
 
+  /** The observer moved the view across the ground: whoever was followed is let go. */
   private userMoved(): void {
     this.followFn = null;
     this.autoOrbit = 0;
     this.options.onUserMove();
+  }
+
+  /** The observer zoomed, turned or tilted the view: it stays on what it is on, and on whoever is followed. */
+  private userTurned(): void {
+    this.autoOrbit = 0;
   }
 
   private startPinch(): void {
@@ -174,15 +195,15 @@ export class CameraRig {
     this.panPixels(dx, dz);
   }
   rotate(delta: number): void {
-    this.userMoved();
+    this.userTurned();
     this.wantAzimuth += delta;
   }
   tilt(delta: number): void {
-    this.userMoved();
+    this.userTurned();
     this.wantPolar = clamp(this.wantPolar + delta, MIN_POLAR, MAX_POLAR);
   }
   zoom(factor: number): void {
-    this.userMoved();
+    this.userTurned();
     this.wantDistance = clamp(this.wantDistance * factor, MIN_DIST, this.maxDist);
   }
 
@@ -200,6 +221,36 @@ export class CameraRig {
 
   isFollowing(): boolean {
     return this.followFn !== null;
+  }
+
+  /** Tell the rig what the interface covers (CSS pixels from the top and from the bottom of the canvas). */
+  setInsets(top: number, bottom: number, snap = false): void {
+    this.wantInset.top = Math.max(0, top);
+    this.wantInset.bottom = Math.max(0, bottom);
+    if (snap || this.options.reducedMotion) {
+      this.inset.top = this.wantInset.top;
+      this.inset.bottom = this.wantInset.bottom;
+      this.applyInsets();
+    }
+  }
+
+  /** Where, in CSS pixels from the top of the canvas, the point the rig looks at is drawn. */
+  focusY(): number {
+    return this.size.h / 2 + this.shift();
+  }
+
+  /** How far down the picture is moved so that its middle falls in the middle of what is not covered. */
+  private shift(): number {
+    // never so far that the middle would leave the canvas, whatever it is told
+    const most = this.size.h * 0.4;
+    return clamp((this.inset.top - this.inset.bottom) / 2, -most, most);
+  }
+
+  private applyInsets(): void {
+    const dy = this.shift();
+    if (Math.abs(dy) < 0.5) this.camera.clearViewOffset();
+    // the canvas shows a window of the same size on a picture moved by `dy`: the same lens, looked through off-centre
+    else this.camera.setViewOffset(this.size.w, this.size.h, 0, -dy, this.size.w, this.size.h);
   }
 
   setAutoOrbit(speed: number): void {
@@ -229,10 +280,13 @@ export class CameraRig {
   }
 
   resize(width: number, height: number): void {
+    this.size.w = Math.max(1, width);
+    this.size.h = Math.max(1, height);
     this.camera.aspect = width / Math.max(1, height);
     // keep the whole island in view on tall, narrow screens
     this.camera.fov = this.camera.aspect < 0.8 ? 40 : this.camera.aspect < 1.2 ? 34 : 30;
     this.camera.updateProjectionMatrix();
+    this.applyInsets();
   }
 
   update(dt: number): void {
@@ -255,6 +309,12 @@ export class CameraRig {
     this.distance += (this.wantDistance - this.distance) * k;
     this.azimuth += (this.wantAzimuth - this.azimuth) * k;
     this.polar += (this.wantPolar - this.polar) * k;
+    if (this.inset.top !== this.wantInset.top || this.inset.bottom !== this.wantInset.bottom) {
+      const ease = (from: number, to: number): number => (Math.abs(to - from) < 0.5 ? to : from + (to - from) * k);
+      this.inset.top = ease(this.inset.top, this.wantInset.top);
+      this.inset.bottom = ease(this.inset.bottom, this.wantInset.bottom);
+      this.applyInsets();
+    }
     this.place();
   }
 

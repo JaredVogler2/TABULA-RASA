@@ -18,11 +18,12 @@ import { Inspector } from "./Inspector";
 import { JournalPanel } from "./Journal";
 import { AffordancesPanel, Chronicle, Fault, Interventions, MenuPanel } from "./Panels";
 import { Setup, Title } from "./Title";
+import { useMapCover } from "./cover";
 
 declare global {
   interface Window {
     /** Read-only handle for automated tests: what the renderer is doing, never a way to change the world. */
-    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null; soundLevel: () => number; perf: () => Promise<unknown> };
+    __tr?: { stats: () => unknown; phase: () => string; screenOf: (agent: number) => { x: number; y: number } | null; selected: () => { type: string; id?: number } | null; following: () => boolean; soundLevel: () => number; perf: () => Promise<unknown> };
   }
 }
 
@@ -49,6 +50,7 @@ export function Game() {
   const phase = useGame((s) => s.phase);
   const panel = useGame((s) => s.panel);
   const selectedName = useGame((s) => (s.selection?.type === "agent" ? (s.roster[s.selection.id]?.name ?? "") : ""));
+  useMapCover(controller);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,7 +73,7 @@ export function Game() {
     else if (cell) void controller.openStudyCell(cell.config, `${cell.study.title.split(" — ")[0]} · ${cell.condition.label} · seed ${cell.config.seed}`, cell.study.days);
     else if (direct) void controller.newWorld(direct);
     else void controller.startVista();
-    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), soundLevel: () => controller.soundLevel(), perf: () => controller.perf() };
+    window.__tr = { stats: () => controller.rendererStats(), phase: () => useGame.getState().phase, screenOf: (agent) => controller.screenOf(agent), selected: () => useGame.getState().selection, following: () => controller.cameraFollowing(), soundLevel: () => controller.soundLevel(), perf: () => controller.perf() };
     return () => {
       controller.detach();
       delete window.__tr;
@@ -221,7 +223,7 @@ export function Game() {
         ) : null}
 
         {playing ? (
-          <div className={styles.hud}>
+          <div className={styles.hud} data-hud>
             <TopBar />
             <RecordingBar />
             <RerunBar />

@@ -518,6 +518,11 @@
 .closeButton:hover {
   background: rgba(93, 67, 43, 0.1);
 }
+/* The arrow that opens a card in full or draws it back. Only where cards are sheets over the map (narrow
+   screens); at the side of a wide screen a card is always whole and there is nothing to open. */
+.sheetToggle {
+  display: none;
+}
 .closeButton svg {
   width: 19px;
   height: 19px;
@@ -647,23 +652,53 @@
   padding: 0;
   list-style: none;
 }
+/* A row is a name and what is said about it. The two sit side by side when both fit on one line, and the second
+   goes below the first when they do not: neither is ever squeezed, and nothing runs off the sheet.
+   (It was a grid of `1fr auto` with the second part forbidden to wrap. A long description took its whole
+   width, the name was left a sliver and broke one word to a line, and the rest ran off the edge of a phone:
+   the Recordings sheet, as the owner's phone showed it. Nothing is aligned by baseline any more either: one
+   engine drew a five-line name over the paragraph above it.) */
 .row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
   padding: 6px 0;
   border-bottom: 1px dashed rgba(93, 67, 43, 0.16);
   font-size: 13px;
 }
+.row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .row:last-child {
   border-bottom: 0;
 }
+/* A row with something to press at its end (a saved world and the button that deletes it). The button keeps
+   its place at the end of the row whatever the width; the name and what is said about it share what is left,
+   side by side when they fit and one below the other when they do not. */
+.rowWithAction {
+  flex-wrap: nowrap;
+}
+.rowMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+.rowMain > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rowAction {
+  flex: none;
+  justify-content: center;
+}
 .rowMeta {
+  min-width: 0;
   color: var(--text-on-paper-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 .stale {
   color: var(--berry-500);
@@ -1534,6 +1569,18 @@
     /* never taller than the space between the bars above and the timebar below */
     max-height: min(58dvh, 520px, 100%);
     border-radius: 20px 20px var(--radius-l) var(--radius-l);
+    transition: max-height 0.25s var(--ease);
+  }
+  /* A card opens drawn back to its head, what the citizen is doing and its first buttons, so that the map — and
+     whoever the card is about — can be seen above it; a tap on its head, a pull up or its arrow opens it in
+     full. At its full height it covered them: the camera held a followed citizen at the middle of the screen,
+     and the middle of a phone's screen was behind the sheet. (The camera now also draws what it looks at in
+     the middle of what is uncovered.) */
+  .side[data-compact="true"] {
+    max-height: min(34dvh, 290px, 100%);
+  }
+  .sheetToggle {
+    display: grid;
   }
   /* the bar at the top of a bottom sheet is an invitation to pull it down, and pulling works (swipe.ts) */
   .side::before,

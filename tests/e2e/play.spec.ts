@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { capture } from "./capture";
+import { rowProblems, selectedCitizen, sight } from "./layout";
 
 /**
  * Phase 04 gate: the complete offline loop with real clicks and taps.
@@ -116,10 +117,143 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await expect(page.getByTestId("inspector-goal")).not.toBeEmpty();
   await expect(page.getByTestId("inspector-body")).toContainText("BASELINE");
   await expect(page.getByTestId("inspector-body")).toContainText("believes");
-  await page.getByTestId("follow").click();
-  await expect(page.getByTestId("follow")).toHaveAttribute("aria-pressed", "true");
-  await page.waitForTimeout(900);
+  const who = await selectedCitizen(page);
+  expect(who, "the inspector is open on a citizen").not.toBeNull();
+  const seen = () => sight(page, who!);
+  /** Where the citizen is drawn once the camera has come to rest, having waited for nothing to stand over them. */
+  const atRest = async (): Promise<{ x: number; y: number }> => {
+    let last = { x: Number.NaN, y: Number.NaN };
+    await expect
+      .poll(
+        async () => {
+          const s = await seen();
+          const moved = s.at ? Math.hypot(s.at.x - last.x, s.at.y - last.y) : Number.NaN;
+          if (s.at) last = s.at;
+          return s.under === "" && moved < 1.5 ? "at rest in sight" : `under "${s.under}", moved ${moved}`;
+        },
+        { message: "the citizen comes to rest where they can be seen", timeout: 30_000, intervals: [500] },
+      )
+      .toBe("at rest in sight");
+    return last;
+  };
+  const away = (from: { x: number; y: number }, to: { x: number; y: number } | null): number => (to ? Math.hypot(to.x - from.x, to.y - from.y) : Number.POSITIVE_INFINITY);
+  if (touch) {
+    // On a phone the card is a sheet over the map. It opens drawn back to its head, and the camera turns to whoever
+    // was tapped: they are still to be seen, above their card. (The sheet used to open at its full height, over them.)
+    await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
+    await atRest();
+    await shot(page, project, "05a-tapped-in-sight");
+    // its arrow opens the whole card, and draws it back again; so does a tap on its head
+    await page.getByTestId("inspector-toggle").click();
+    await expect(page.getByTestId("inspector")).not.toHaveAttribute("data-compact", "true");
+    await expect(page.getByTestId("inspector-toggle")).toHaveAccessibleName("Draw the card back");
+    await page.getByTestId("inspector-toggle").click();
+    await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
+    await expect(page.getByTestId("inspector-toggle")).toHaveAccessibleName("Open the whole card");
+    await page.getByTestId("inspector-name").click();
+    await expect(page.getByTestId("inspector")).not.toHaveAttribute("data-compact", "true");
+  } else {
+    // at the side of a wide screen the card is always whole, and has no arrow
+    await expect(page.getByTestId("inspector-toggle")).toBeHidden();
+  }
+
+  // ── follow: the person followed is held where they can be seen, and stays there as they walk.
+  // (This is the owner's report from a real phone: "Following a person doesn't seem to move the camera and track
+  // them." The camera held whoever it followed at the middle of the canvas; on a phone the middle of the canvas
+  // was behind the card. The button said "Following" — which was all this test looked at.)
+  const follow = page.getByTestId("follow");
+  await follow.click();
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  // following is for watching: a card that was open in full draws back
+  if (touch) await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
+  const home = await atRest();
+  const held = await seen();
+  expect(held.under, "nothing stands over the person followed").toBe("");
+  expect(held.fromMiddle, `the person followed is drawn at the middle of the uncovered map (${JSON.stringify(held)})`).toBeLessThan(40);
   await shot(page, project, "05-inspect-citizen");
+
+  // Dragging the map away lets go of them, and the button says so…
+  await page.mouse.move(home.x, home.y + 30);
+  await page.mouse.down();
+  await page.mouse.move(home.x + 120, home.y + 30, { steps: 8 });
+  await page.mouse.up();
+  await expect(follow).toHaveAttribute("aria-pressed", "false");
+  await expect.poll(async () => away(home, (await seen()).at), { message: "the drag moved the map, and the person with it", timeout: 20_000 }).toBeGreaterThan(80);
+  // …and Follow brings the camera back to them: this is the camera moving, not a button changing its word
+  await follow.click();
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(async () => away(home, (await seen()).at), { message: "Follow brings the person back to where a followed person is held", timeout: 30_000 }).toBeLessThan(12);
+
+  // Zooming is not looking elsewhere: it keeps the follow (it used to end it without a word)
+  await page.mouse.move(home.x, home.y + 30);
+  await page.mouse.wheel(0, -240);
+  await page.waitForTimeout(1200);
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(async () => away(home, (await seen()).at), { message: "zoomed in, the person followed is still where they were held", timeout: 20_000 }).toBeLessThan(16);
+  const kept = await atRest();
+
+  // With time running they walk, and the camera goes with them: sampled for a quarter of a day, they are never
+  // under a bar or the card, and never far from where they are held.
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "true");
+  const walkedFrom = await tick(page);
+  const lost: string[] = [];
+  let samples = 0;
+  let furthest = 0;
+  while ((await tick(page)) < walkedFrom + 24 || samples < 8) {
+    const s = await seen();
+    const drift = away(kept, s.at);
+    samples++;
+    furthest = Math.max(furthest, drift);
+    if (s.under !== "" || drift > 70) lost.push(`tick ${await tick(page)}: ${s.at ? `drawn at (${Math.round(s.at.x)}, ${Math.round(s.at.y)}), ${Math.round(drift)}px from where they are held` : "not in the picture"}${s.under ? `, under "${s.under}"` : ""}`);
+    if (samples > 400) break;
+    await page.waitForTimeout(250);
+  }
+  await page.getByTestId("play-toggle").click();
+  await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "false");
+  testInfo.annotations.push({ type: "follow", description: `${project}: ${samples} samples over ${(await tick(page)) - walkedFrom} ticks at 8×; furthest from where they are held: ${Math.round(furthest)}px` });
+  expect(lost, "the person followed stays in sight, where they are held, while time runs").toEqual([]);
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  // what the button says is what the camera is doing
+  expect(await page.evaluate(() => window.__tr?.following()), "the camera is following").toBe(true);
+  await shot(page, project, "05b-followed-while-walking");
+
+  // Choosing someone else lets go of the first: the card, its button and the camera are all about the second.
+  // (The button went back to "Follow" and the camera went on tracking the first person.) Zoomed out — which
+  // keeps the follow — so that there is someone else to choose.
+  const held2 = (await seen()).at!;
+  await page.mouse.move(held2.x, held2.y + 30);
+  for (let i = 0; i < 10; i++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(80);
+  }
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  let other: number | null = null;
+  for (let attempt = 0; attempt < 12 && (other === null || other === who); attempt++) {
+    const target = await page.evaluate((first) => {
+      const canvas = document.querySelector('[data-testid="world-canvas"]');
+      const mine = window.__tr?.screenOf(first) ?? null;
+      for (let id = 0; id < 50; id++) {
+        if (id === first) continue;
+        const p = window.__tr?.screenOf(id);
+        if (!p || document.elementFromPoint(p.x, p.y) !== canvas) continue;
+        // well clear of the person followed, so that a tap cannot be taken for them
+        if (mine && Math.hypot(p.x - mine.x, p.y - mine.y) < 48) continue;
+        return p;
+      }
+      return null;
+    }, who!);
+    if (target) {
+      if (touch) await page.touchscreen.tap(target.x, target.y);
+      else await page.mouse.click(target.x, target.y);
+    }
+    await page.waitForTimeout(700);
+    other = await selectedCitizen(page);
+  }
+  expect(other, "someone else was chosen").not.toBeNull();
+  expect(other, "someone else was chosen").not.toBe(who);
+  await expect(follow).toHaveAttribute("aria-pressed", "false");
+  expect(await page.evaluate(() => window.__tr?.following()), "the camera has let go of the first person").toBe(false);
   await page.getByTestId("inspector-close").click();
   await expect(page.getByTestId("inspector")).toHaveCount(0);
 
@@ -204,6 +338,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await page.getByTestId("save-game").click();
   await expect(page.getByTestId("toast")).toContainText("Saved");
   await expect(page.getByTestId("save-list")).toBeVisible();
+  expect(await rowProblems(page, "save-list"), "the list of saved worlds is whole").toEqual([]);
   await shot(page, project, "09-menu-saved");
   await page.reload();
   await expect(page.getByTestId("title")).toBeVisible();
@@ -220,6 +355,27 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   expect(errors, "console errors").toEqual([]);
   expect(failed, "failed requests (missing assets)").toEqual([]);
   expect(external, "requests to other origins").toEqual([]);
+});
+
+test("lists of rows are whole from the smallest phone to a desktop: the Recordings sheet", async ({ page }, testInfo) => {
+  // The owner's phone showed this sheet with the name of the recording broken one word to a line in a sliver at
+  // the left, and the rest of the row running off the right edge. Every row list in the product shares the
+  // style; this one is on the title screen, the first thing a visitor can open.
+  const project = testInfo.project.name;
+  const sizes: [number, number][] = project === "mobile" ? [[320, 568], [360, 740], [390, 844], [430, 932]] : [[768, 1024], [1024, 768], [1366, 768]];
+  for (const [width, height] of sizes) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/?q=low&pr=0.4");
+    await page.getByTestId("title-recordings").click();
+    await expect(page.getByTestId("recordings-list")).toBeVisible();
+    expect(await rowProblems(page, "recordings-list"), `the Recordings list at ${width}×${height}`).toEqual([]);
+    // the name of a recording is something to press: it is in sight, inside the sheet
+    const entry = (await page.getByTestId("recording-mock-first-light").boundingBox())!;
+    const sheet = (await page.getByTestId("recordings").boundingBox())!;
+    expect(entry.x, "the name starts inside the sheet").toBeGreaterThanOrEqual(sheet.x);
+    expect(entry.x + entry.width, "the name ends inside the sheet").toBeLessThanOrEqual(sheet.x + sheet.width + 0.5);
+    if (width === 390 || width === 1366) await shot(page, project, `11-recordings-${width}`);
+  }
 });
 
 /** Press Tab until the element with this test id has the focus. No pointer is involved. */

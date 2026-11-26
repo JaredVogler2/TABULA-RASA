@@ -6,6 +6,7 @@
 import { Soundscape, type Cue, type SoundLevels } from "@/audio/soundscape";
 import { TICKS_PER_DAY, makeConfig, type WorldConfig } from "@/engine";
 import { AUTOSAVE_ID, deleteSave, getSave, listSaves, putSave, toRecord } from "@/persist/saves";
+import { samePick } from "@/render/pick";
 import { WorldRenderer, type Pick, type Quality } from "@/render/WorldRenderer";
 import { SPEEDS, loadSettings, saveSettings, useGame, type Panel, type Settings } from "@/store/game";
 import { SimClient } from "@/store/simClient";
@@ -496,7 +497,7 @@ export class GameController {
     if (entry.x !== undefined && entry.y !== undefined) this.renderer?.focusTile(entry.x, entry.y, 28);
     const agent = entry.agents[0];
     if (agent !== undefined && this.latest && (this.latest.agents[agent * AGENT_STRIDE + AF.alive] ?? 0) > 0.5) {
-      this.select({ type: "agent", id: agent });
+      this.select({ type: "agent", id: agent }, false);
       if (entry.x === undefined) this.renderer?.focusAgent(agent, 26);
     }
   }
@@ -575,6 +576,7 @@ export class GameController {
       agentDetail: null,
       tileDetail: null,
       following: false,
+      inspectorCompact: false,
       vista,
       error: null,
     });
@@ -894,11 +896,31 @@ export class GameController {
 
   // ───────────────────────── selection & camera
 
-  select(pick: Pick | null): void {
+  /** Whether panels are sheets that rise over the map (the width the stylesheet changes at). */
+  private narrow(): boolean {
+    return typeof window !== "undefined" && window.matchMedia("(max-width: 880px)").matches;
+  }
+
+  /**
+   * Choose a citizen or a place (or nothing). `reveal: false` when the camera has just been sent somewhere on
+   * purpose — to where a Chronicle entry happened — and must not be turned to the person instead.
+   */
+  select(pick: Pick | null, reveal = true): void {
     const state = useGame.getState();
     if (state.vista) return;
-    state.set({ selection: pick, following: false, agentDetail: pick?.type === "agent" ? state.agentDetail : null, tileDetail: null });
+    // Choosing again what is already chosen changes nothing: its card stays as the observer left it, and a
+    // citizen who is being followed goes on being followed.
+    const same = samePick(pick, state.selection);
+    // A card opens drawn back to its head. (On a narrow screen the card is a sheet over the map: at its full
+    // height it hid whoever had just been chosen.)
+    const inspectorCompact = pick ? (same ? state.inspectorCompact : true) : false;
+    const following = same && state.following;
+    state.set({ selection: pick, following, inspectorCompact, agentDetail: pick?.type === "agent" ? state.agentDetail : null, tileDetail: null });
+    // (the renderer's camera lets go of whoever it followed when the selection passes to another)
     this.renderer?.select(pick);
+    // …and on a narrow screen the camera turns to what was chosen, which is then drawn in the middle of the map
+    // that the sheet leaves uncovered. On a wide screen the card is at the side and nothing moves.
+    if (pick && reveal && !following && this.narrow()) this.renderer?.lookAt(pick);
     this.lastInspect = 0;
     if (pick) {
       void this.refreshInspector();
@@ -917,7 +939,53 @@ export class GameController {
 
   follow(on: boolean): void {
     this.renderer?.followSelection(on);
-    useGame.getState().set({ following: on && (this.renderer?.isFollowing() ?? false) });
+    const following = on && (this.renderer?.isFollowing() ?? false);
+    // Following is for watching: the card draws back to its head if it was open in full (on a narrow screen it
+    // is a sheet over the map, and at its full height the person followed was behind it). Nothing opens it again
+    // but the observer.
+    const state = useGame.getState();
+    state.set({ following, inspectorCompact: following ? true : state.inspectorCompact });
+  }
+
+  /** Open the card in full, or draw it back to its head (on a narrow screen; at the side of a wide one it is always whole). */
+  setInspectorCompact(compact: boolean): void {
+    const state = useGame.getState();
+    if (state.inspectorCompact !== compact) state.set({ inspectorCompact: compact });
+  }
+
+  toggleInspectorCompact(): void {
+    this.setInspectorCompact(!useGame.getState().inspectorCompact);
+  }
+
+  /**
+   * Tell the camera how much of the map the interface covers. On a narrow screen the bars stand over the top
+   * of the map and the time bar — and any sheet that has risen: the inspector, the Chronicle — over the bottom;
+   * what the camera looks at is drawn at the middle of what is left. On a wide screen the panels are at the
+   * sides and nothing is moved.
+   *
+   * Every part of the interface that stands on the map counts, whichever it is: each is a child of the element
+   * marked `data-hud`, and is taken to stand over the top or over the bottom by which half of the map its
+   * middle is in.
+   */
+  measureCover(): void {
+    const canvas = this.canvas;
+    if (!canvas || !this.renderer || typeof window === "undefined") return;
+    const hud = canvas.parentElement?.querySelector("[data-hud]") ?? null;
+    if (!hud || !window.matchMedia("(max-width: 880px)").matches) {
+      this.renderer.setInsets(0, 0);
+      return;
+    }
+    const map = canvas.getBoundingClientRect();
+    const middle = (map.top + map.bottom) / 2;
+    let top = 0;
+    let bottom = 0;
+    for (const part of Array.from(hud.children)) {
+      const box = part.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      if ((box.top + box.bottom) / 2 < middle) top = Math.max(top, box.bottom - map.top);
+      else bottom = Math.max(bottom, map.bottom - box.top);
+    }
+    this.renderer.setInsets(top, bottom);
   }
 
   focusTile(x: number, y: number): void {
@@ -928,7 +996,7 @@ export class GameController {
     const agent = entry.agents[0];
     if (entry.x !== undefined && entry.y !== undefined) this.renderer?.focusTile(entry.x, entry.y, 30);
     else if (agent !== undefined) this.renderer?.focusAgent(agent, 28);
-    if (agent !== undefined && this.latest && (this.latest.agents[agent * AGENT_STRIDE + AF.alive] ?? 0) > 0.5) this.select({ type: "agent", id: agent });
+    if (agent !== undefined && this.latest && (this.latest.agents[agent * AGENT_STRIDE + AF.alive] ?? 0) > 0.5) this.select({ type: "agent", id: agent }, false);
   }
 
   camera() {
@@ -975,6 +1043,11 @@ export class GameController {
 
   screenOf(agent: number) {
     return this.renderer?.screenOf(agent) ?? null;
+  }
+
+  /** Whether the camera itself is following someone (what the Follow button says is the store's `following`). */
+  cameraFollowing(): boolean {
+    return this.renderer?.isFollowing() ?? false;
   }
 
   // ───────────────────────── interventions & comparison

@@ -23,6 +23,8 @@ import { AF, AGENT_STRIDE, type StaticWorldView, type ViewFrame } from "@/worker
 import { buildAmbient, type AmbientParts } from "./ambient";
 import { buildAtmosphere, type AtmosphereParts } from "./atmosphere";
 import { CameraRig } from "./cameraRig";
+import { samePick } from "./pick";
+import { frameSteps } from "./timing";
 import { buildCitizens, type CitizenParts } from "./citizens";
 import { buildFlora, type FloraParts } from "./flora";
 import { HeightField } from "./heightfield";
@@ -108,6 +110,7 @@ export class WorldRenderer {
   private selection: Pick | null = null;
   private readonly ring: Mesh;
   private readonly resizeObserver: ResizeObserver;
+  private insets = { top: 0, bottom: 0 };
   private nameTag: HTMLElement | null = null;
   private readonly bubbles: Bubble[] = [];
   private deadKey = "";
@@ -190,6 +193,8 @@ export class WorldRenderer {
     if (q !== "low") this.post = buildPost(this.renderer, this.scene, this.rig.camera, q, this.options.reducedMotion);
     this.deadKey = "";
     this.resize();
+    // a rig made anew (another world, another preset) is told at once what the interface covers
+    this.rig.setInsets(this.insets.top, this.insets.bottom, true);
   }
 
   private clearWorld(): void {
@@ -263,12 +268,12 @@ export class WorldRenderer {
       if (!this.running) return;
       this.raf = requestAnimationFrame(loop);
       const interval = now - this.last;
-      const dt = Math.min(0.1, interval / 1000);
+      const step = frameSteps(interval);
       this.last = now;
       // the cadence that reaches the screen, including time the GPU process spent after our calls returned
       this.frameTimes.push(interval);
       if (this.frameTimes.length > 120) this.frameTimes.shift();
-      this.renderFrame(dt, now);
+      this.renderFrame(step.animation, now, step.camera);
     };
     this.raf = requestAnimationFrame(loop);
   }
@@ -283,17 +288,22 @@ export class WorldRenderer {
     this.renderFrame(0.016, performance.now());
   }
 
-  private renderFrame(dt: number, now: number): void {
+  /** `cameraDt`: the time that has really passed, for the camera's easing (see `frameSteps`). */
+  private renderFrame(dt: number, now: number, cameraDt = dt): void {
     const { rig, frame, view, field } = this;
     if (!rig || !view || !field) return;
     this.renderer.info.reset();
     this.time += this.options.reducedMotion ? dt * 0.35 : dt;
     const time = this.time;
 
-    rig.update(dt);
+    // People take their places for this frame before the camera is moved, so that it looks at where whoever it
+    // follows is drawn now and not at where they were drawn a frame ago. (Moved first, it trailed a walker by
+    // a frame of their walking: nothing at sixty frames a second, a tile or two at four.)
+    const tickFraction = frame && frame.tps > 0 ? Math.min(1, ((now - this.frameArrival + frame.sinceTickMs) * frame.tps) / 1000) : 0;
+    if (frame) this.citizens!.update(frame, tickFraction, dt, time);
+    rig.update(cameraDt);
 
     if (frame) {
-      const tickFraction = frame.tps > 0 ? Math.min(1, ((now - this.frameArrival + frame.sinceTickMs) * frame.tps) / 1000) : 0;
       const yearPos = frame.cal.yearPos;
       const light = this.atmosphere!.update(frame.cal.tickOfDay + tickFraction, dayLength(yearPos), yearPos, frame.climate, time, rig.target);
       this.renderer.toneMappingExposure = light.exposure;
@@ -334,7 +344,6 @@ export class WorldRenderer {
       this.flora!.setSeason(yearPos, frame.climate.snow / 1000);
       this.structures!.uniforms.uTime.value = time;
       this.structures!.animate(time, light.night);
-      this.citizens!.update(frame, tickFraction, dt, time);
       // a hidden citizen's shape: a hint across the whole island, plainer when you are close enough to care who it is
       this.dayBrightness = 1 - light.night;
       // (at night the shape is drawn fainter still: against a dark island even a hint glows)
@@ -488,8 +497,11 @@ export class WorldRenderer {
   // ───────────────────────── selection, labels, camera
 
   select(pick: Pick | null): void {
+    // The camera follows a selection: when the selection goes, or passes to someone or somewhere else, it lets
+    // go. (It used to let go only when nothing was selected: follow one citizen, choose another, and the card
+    // and its Follow button were about the second while the camera went on tracking the first.)
+    if (!samePick(pick, this.selection)) this.rig?.follow(null);
     this.selection = pick;
-    if (!pick) this.rig?.follow(null);
     if (!this.running) this.renderOnce();
   }
 
@@ -536,10 +548,32 @@ export class WorldRenderer {
     return this.rig?.isFollowing() ?? false;
   }
 
+  /**
+   * What the interface covers of the canvas, in CSS pixels from its top and from its bottom. The camera
+   * draws what it looks at — a followed citizen, a place jumped to — at the middle of what is left.
+   */
+  setInsets(top: number, bottom: number): void {
+    if (Math.abs(top - this.insets.top) < 0.5 && Math.abs(bottom - this.insets.bottom) < 0.5) return;
+    this.insets = { top, bottom };
+    this.rig?.setInsets(top, bottom);
+    if (!this.running) this.renderOnce();
+  }
+
   focusTile(x: number, y: number, distance = 34): void {
     if (!this.field || !this.rig) return;
     const c = this.field.tileCentre(x, y);
     this.rig.focus(c.x, c.z, distance);
+  }
+
+  /** Turn the camera to a citizen or a place, as near or as far as it already is. */
+  lookAt(pick: Pick): void {
+    if (!this.rig) return;
+    if (pick.type === "agent") {
+      if (this.citizens?.positionOf(pick.id, this.tmp)) this.rig.focus(this.tmp.x, this.tmp.z);
+    } else if (this.field) {
+      const c = this.field.tileCentre(pick.x, pick.y);
+      this.rig.focus(c.x, c.z);
+    }
   }
 
   focusAgent(id: number, distance = 30): void {

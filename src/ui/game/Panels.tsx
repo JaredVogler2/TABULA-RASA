@@ -337,17 +337,19 @@ export function MenuPanel() {
             ) : (
               <ul className={styles.rows} data-testid="save-list">
                 {saves.map((s) => (
-                  <li key={s.id} className={styles.row}>
-                    <button type="button" className={styles.linkButton} onClick={() => void controller.load(s.id)} data-testid={`load-${s.id}`}>
-                      <FolderOpen aria-hidden style={{ width: 14, height: 14, verticalAlign: "-2px", marginRight: 6 }} />
-                      {s.name}
-                    </button>
-                    <span className={styles.rowMeta}>
-                      {s.alive} alive{s.treated ? " · forked" : ""} · {new Date(s.savedAt).toLocaleString()} · {s.hash.slice(0, 8)}{" "}
-                      <button type="button" className={styles.linkButton} onClick={() => void controller.remove(s.id)} aria-label={`Delete ${s.name}`}>
-                        <Trash2 aria-hidden style={{ width: 14, height: 14, verticalAlign: "-2px" }} />
+                  <li key={s.id} className={`${styles.row} ${styles.rowWithAction}`}>
+                    <span className={styles.rowMain}>
+                      <button type="button" className={styles.linkButton} onClick={() => void controller.load(s.id)} data-testid={`load-${s.id}`}>
+                        <FolderOpen aria-hidden style={{ width: 14, height: 14, verticalAlign: "-2px", marginRight: 6 }} />
+                        {s.name}
                       </button>
+                      <span className={styles.rowMeta}>
+                        {s.alive} alive{s.treated ? " · forked" : ""} · {new Date(s.savedAt).toLocaleString()} · {s.hash.slice(0, 8)}
+                      </span>
                     </span>
+                    <button type="button" className={`${styles.linkButton} ${styles.rowAction}`} onClick={() => void controller.remove(s.id)} aria-label={`Delete ${s.name}`}>
+                      <Trash2 aria-hidden style={{ width: 14, height: 14 }} />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -456,7 +458,7 @@ export function AffordancesPanel() {
                 </div>
                 <ul className={styles.rows}>
                   {entries.map((a) => (
-                    <li key={a.id} className={styles.row} style={{ gridTemplateColumns: "1fr" }}>
+                    <li key={a.id} className={styles.row}>
                       <span>
                         <b>{a.name}.</b> {a.what} <span className={styles.muted}>{a.why}</span>
                         {a.status === "planned" ? <span className={styles.muted}> · not yet in the engine</span> : null}
