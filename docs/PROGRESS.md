@@ -33,7 +33,8 @@ was shown more than half a minute late): both are fixed and measured before and 
 depended on where a world running at the fastest speed happened to stop, and now steps its world to a known
 moment. A third failure, of a unit test on a commit that changed only documents, was a real edge of the engine's
 bounded copy (a negative zero; D-051). And the release check's own picture of the live site as a phone showed a
-notice sitting on the time controls: fixed, measured and held by a test. Evidence for all four:
+notice sitting on the time controls: fixed, measured and held by a test. Measuring that found a fifth: a
+notice was drawn half its width off-centre while it faded in, and jumped. Evidence for all five:
 `evidence/after-20/`. Phase 18 became PASS for the game alone (above); phase 15 stays PARTIAL for the reason
 it was — no device.
 
@@ -63,6 +64,11 @@ Everything the owner did or said, from the session's own record (times in UTC, 2
     its first production deployment from `main`.
 12. 2026-11-26, about 00:30 — "Deployed and still has stuff pending in pull request I think": said so. The
     address was found and checked; pull request 5 was open, its checks running.
+13. 2026-11-26, about 00:47 — "Pull request failed 2/5 pass": pointed at a failed check on pull request 5. It
+    was a unit test, and right to fail (D-051); fixed.
+14. 2026-11-26, about 00:55 — "Proceed with fable 5.2 max fast mode": a go-ahead, and a setting of theirs.
+15. 2026-11-26, 01:38 — merged pull request 5, seven minutes after its last check went green. The site
+    rebuilt by itself.
 
 No design direction, code, review, test result or decision came from a person beyond these. A deployment of
 the game alone was authorized, and made by the owner. No spend, key, database or other billable infrastructure

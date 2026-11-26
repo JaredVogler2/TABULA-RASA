@@ -7,9 +7,9 @@ The owner's console (level 2) and live minds (level 3) are not deployed.
 |---|---|
 | Address | https://tabula-rasa-bay.vercel.app (production; public) |
 | Made by | the owner, importing this repository in the Vercel dashboard on 2026-11-26 at about 00:25 UTC |
-| Built from | `main` at `41a4ffa` (pull request 4's merge: phases 1–20 and D-050), by Vercel, in 43 seconds, with pnpm 10.28.0 and Next.js 16.4.6 |
+| Built from | `main`, by Vercel, on every merge. First at `41a4ffa` (pull request 4's merge), in 43 seconds, with pnpm 10.28.0 and Next.js 16.4.6; then at `fb6b535` (pull request 5's merge, 2026-11-26 01:38 UTC), READY within two minutes |
 | Region | `iad1` |
-| Checked | `pnpm release:check`: **25 of 25**; section 8 by hand: every answer as written there (`evidence/phase-18/`) |
+| Checked | `pnpm release:check`: **25 of 25** on the first build, and **25 of 25** again on the build after pull request 5; section 8 by hand on the first: every answer as written there (`evidence/phase-18/`) |
 | Configured | nothing: the site answers as one with no owner (`signInPossible: false`; an attempt to sign in answers 503). Which variables the project has could not be listed by the assistant's connector |
 | Not observed | which Node.js runs it: the project's setting reads 26.x, `engines` says 22.x (see "Known unknowns") |
 
@@ -233,6 +233,11 @@ first.) What it checks, each of which can also be done by hand:
 table gave the answer written in it (`evidence/phase-18/deployed-by-hand.txt`). First visit: 717 KB over the
 network. The run was from a container without a graphics chip, in headless Chromium, with the game's simplest
 picture: it says the site works, not how it looks or moves on a device.
+
+**Run again after pull request 5 was merged and the site had rebuilt (`fb6b535`), the same day: 25 of 25**
+(`evidence/phase-18/release-check-after-merge.txt`). The fix that merge carried for phones — a notice placed
+above the time controls — was measured on the live site at eight widths: clear at every one
+(`evidence/after-20/notice-over-time-bar.txt`).
 
 Before that, on 2026-11-25, the same command against the production build on the development machine, started
 with no variable at all: 25 of 25 (`evidence/phase-18/release-check-local.txt`).
