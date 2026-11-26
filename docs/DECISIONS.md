@@ -1423,7 +1423,13 @@ rollback. Read this file before modifying any contract it mentions.
   `rows.txt`: the repository's row check against both builds. `follow.txt`: the 25 unit tests; seventeen
   rules each broken on purpose and each noticed by a test; the old "camera keeps the first person" put back
   and caught by the whole-loop test; `play.spec.ts` on both projects on this tree; the whole suite green on
-  GitHub's runners on the pull request's first commit (run 45752121337).
+  GitHub's runners on `7d8a306` (run 45752121337). `sight-live.{md,json}`: the deployed site measured again
+  after the merge — the row whole at six sizes, a followed citizen in sight in 35 samples of 35.
+- **How it reached `main`.** In two parts. The fixes and their tests were merged by the owner as pull request
+  7 (`7d8a306`) while this record was still being written. This record, the evidence and three small changes
+  made after that commit — a card that is tapped or pulled up eases open; the button does not say "Following"
+  when a Chronicle entry has just sent the camera elsewhere; the arithmetic of what is covered as a function
+  with tests — are pull request 8.
 - **Affected acceptance tests.** `tests/e2e/play.spec.ts`, whole loop, both projects: a tapped citizen is in
   sight above their card (phone); the card opens and draws back by its arrow and its head; the person
   followed is drawn in the middle of the uncovered map; a drag lets go and says so; Follow brings them back

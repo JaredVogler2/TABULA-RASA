@@ -1,0 +1,43 @@
+Release check, against the deployment, after pull request 7 was merged — 2026-11-26
+
+The site: https://tabula-rasa-bay.vercel.app. The owner merged pull request 7 (the two faults their phone had
+shown, and three found beside them: D-052) at 04:44 UTC, at `7d8a306`; `main` was then at bdcbd83. By 04:48 the
+site was serving the change: the same measurements that had shown both faults on it forty minutes earlier
+showed neither (evidence/after-20/sight-before.md against sight-live.md). What Vercel reported about that build was
+not looked at; that it is the new one is known from what it does.
+
+This run was started after those measurements. Run from the development container, over the internet, in
+headless Chromium with a software renderer (hence --fast, the game's simplest picture). The command exited 0.
+
+  $ pnpm release:check -- https://tabula-rasa-bay.vercel.app --fast --out <dir>
+
+release check — https://tabula-rasa-bay.vercel.app — level 1, simplest picture
+
+ok    health: the service answers, and says nothing of how it is configured — engine 0.7.0, schema 6, affordances 2026.11-i: the same as this checkout
+ok    security headers on the game's page — policy, framing, sniffing, referrer, permissions, opener and transport security
+ok    answers from the API are never stored by anything in between — Cache-Control: no-store
+ok    a stranger is refused by everything that could spend or change — 7 routes answer 401; a run that is not published is not found
+ok    a request from another origin is refused whatever it carries — 403
+ok    the owner's door: not configured, and it says so — signInPossible: false; an attempt answers 503
+ok    the public list of recordings — 0 published by the owner
+ok    the files a release ships — the bundled recording (78 KB), the studies, the licences
+ok    desktop: the title screen draws — 718 KB over the network for a first visit
+ok    desktop: a world is made and a day passes — day 11, tick 1002
+ok    desktop: the Chronicle has lines the engine logged — 218 lines
+ok    desktop: a save survives a reload, to the tick — Saved. Snapshot 5c9860e21207… Resumed at tick 1002
+ok    desktop: the bundled recording replays to its end and matches its record, with nobody consulted — ended: all 6 days matched the record (Recording · MOCK minds, a test double (not a language model) · 400 decisions replayed, nob)
+ok    desktop: the laboratory draws its studies — 6 studies
+ok    desktop: the owner's door says it is not configured
+ok    desktop: nothing was asked of any other origin
+ok    desktop: no page error
+ok    desktop: nothing the browser was sent belongs only on the server — 114 responses read
+ok    phone: the title screen draws — 718 KB over the network for a first visit
+ok    phone: a world is made and a day passes — day 10, tick 881
+ok    phone: the Chronicle has lines the engine logged — 218 lines
+ok    phone: a save survives a reload, to the tick — Saved. Snapshot 16decb9ba3dc… Resumed at tick 881
+ok    phone: nothing was asked of any other origin
+ok    phone: no page error
+ok    phone: nothing the browser was sent belongs only on the server — 47 responses read
+
+25 of 25 checks passed.
+Not checked by this: the signed-in console (docs/DEPLOYMENT.md §8 has the steps), a real phone, any browser but Chromium.

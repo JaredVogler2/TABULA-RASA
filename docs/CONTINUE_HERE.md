@@ -7,10 +7,11 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
   01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
   D-050) were merged to `main` by the owner on 2026-11-25, and 5 (the record of the deployment, D-051, the
-  phone notice, the charters test) and 6 (a notice enters where it stays) on 2026-11-26. Pull request 7 holds
-  what the owner's phone showed that day — a crowded list and a Follow that did not appear to follow — and
-  what was found beside them (D-052). **A merge to `main` deploys itself to production**; a push to this
-  branch makes a preview on Vercel behind a login.
+  phone notice, the charters test), 6 (a notice enters where it stays) and 7 (the fixes for what the owner's
+  phone showed that day: a crowded list, and a Follow that did not appear to follow, D-052) on 2026-11-26.
+  Pull request 8 holds the record of 7 — the decision, the evidence, the documents — and three small changes
+  made after it. **A merge to `main` deploys itself to production**; a push to this branch makes a preview
+  on Vercel behind a login.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
@@ -90,9 +91,10 @@ After those: `pnpm test` is 496 tests (D-051 adds one).
 With D-052 (what the owner's phone showed): `pnpm check` exits 0 with 518 unit tests in 43 files — 22 more, for
 the camera rig, what counts as the same selection, a pull upwards on a card, and the arithmetic of what the
 interface covers. `pnpm exec playwright test tests/e2e/play.spec.ts`: 4 passed on the desktop project, 2 passed
-and 2 skipped by design on the phone project. The whole suite was green on GitHub's runners on the pull
-request's first commit, `7d8a306`; here a whole-suite run was stopped by hand after 12 of 36, all passing
-(`evidence/after-20/follow.txt`). **The development container loses its services when it
+and 2 skipped by design on the phone project. The whole suite was green on GitHub's runners on `7d8a306`,
+which is what was merged as pull request 7; here a whole-suite run was stopped by hand after 12 of 36, all
+passing (`evidence/after-20/follow.txt`). After that merge both fixes were measured on the deployed site
+(`evidence/after-20/sight-live.md`) and the release check run again: 25 of 25. **The development container loses its services when it
 sleeps:** if the database tests fail with `ECONNREFUSED 127.0.0.1:5432`, run `service postgresql start` (the
 role and the database are still there). **Some unit tests draw their cases at random, and
 differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when

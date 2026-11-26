@@ -1,0 +1,182 @@
+{
+ "env": {
+  "date": "2026-11-26T04:51:17.942Z",
+  "base": "https://tabula-rasa-bay.vercel.app",
+  "node": "v22.23.5",
+  "label": "What can be seen on the deployed site after pull request 7 was merged (main at bdcbd83)"
+ },
+ "rows": [
+  {
+   "width": 320,
+   "height": 568,
+   "list": 286,
+   "nameWidth": 286,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  },
+  {
+   "width": 360,
+   "height": 740,
+   "list": 326,
+   "nameWidth": 326,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "list": 356,
+   "nameWidth": 356,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  },
+  {
+   "width": 430,
+   "height": 932,
+   "list": 396,
+   "nameWidth": 396,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "list": 734,
+   "nameWidth": 734,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  },
+  {
+   "width": 1366,
+   "height": 768,
+   "list": 726,
+   "nameWidth": 726,
+   "nameLines": 1,
+   "past": 0,
+   "over": 0,
+   "sideways": false
+  }
+ ],
+ "follow": [
+  {
+   "kind": "phone",
+   "view": {
+    "width": 390,
+    "height": 844
+   },
+   "steps": [
+    {
+     "what": "tapped",
+     "at": {
+      "x": 195,
+      "y": 286
+     },
+     "under": "",
+     "following": false,
+     "card": {
+      "top": 416,
+      "bottom": 703
+     }
+    },
+    {
+     "what": "Follow pressed",
+     "at": {
+      "x": 195,
+      "y": 274
+     },
+     "under": "",
+     "following": true,
+     "card": {
+      "top": 416,
+      "bottom": 703
+     }
+    },
+    {
+     "what": "zoomed in",
+     "at": {
+      "x": 195,
+      "y": 271
+     },
+     "under": "",
+     "following": true,
+     "card": {
+      "top": 416,
+      "bottom": 703
+     }
+    }
+   ],
+   "walked": {
+    "ticks": 234,
+    "samples": 35,
+    "hidden": 0,
+    "furthest": 17,
+    "stillFollowing": true
+   }
+  },
+  {
+   "kind": "desktop",
+   "view": {
+    "width": 1366,
+    "height": 768
+   },
+   "steps": [
+    {
+     "what": "tapped",
+     "at": {
+      "x": 667,
+      "y": 314
+     },
+     "under": "",
+     "following": false,
+     "card": {
+      "top": 74,
+      "bottom": 686
+     }
+    },
+    {
+     "what": "Follow pressed",
+     "at": {
+      "x": 683,
+      "y": 364
+     },
+     "under": "",
+     "following": true,
+     "card": {
+      "top": 74,
+      "bottom": 686
+     }
+    },
+    {
+     "what": "zoomed in",
+     "at": {
+      "x": 683,
+      "y": 360
+     },
+     "under": "",
+     "following": true,
+     "card": {
+      "top": 74,
+      "bottom": 686
+     }
+    }
+   ],
+   "walked": {
+    "ticks": 255,
+    "samples": 34,
+    "hidden": 0,
+    "furthest": 12,
+    "stillFollowing": true
+   }
+  }
+ ]
+}

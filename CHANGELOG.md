@@ -5,9 +5,24 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 7 — what the owner's phone showed (2026-11-26)
+## Pull request 8 — the record of what the phone showed (2026-11-26)
 
 Engine 0.7.0, unchanged. Written with the pull request: whether it has been merged is on GitHub, not here.
+
+- D-052: the two reports from the owner's phone, what each was, the four further faults of Follow found
+  beside them, what was decided, and how to undo it.
+- Both reports measured the same way against the deployed site before the fixes, against the fixed build, and
+  against the deployed site again once pull request 7 was merged: `node scripts/sight.mjs <address> <folder>`
+  (`evidence/after-20/sight-before.md`, `sight-after.md`, `sight-live.md`, with stills). They are live.
+- A card that is tapped or pulled up eases open instead of jumping.
+- The Follow button no longer says "Following" when a Chronicle or journal entry has just sent the camera
+  somewhere else.
+- The arithmetic of what the interface covers is a function of its own, with tests.
+- The documents now say that a person has used the game — once, on one phone — and what that found.
+
+## Pull request 7 — what the owner's phone showed (2026-11-26, merged)
+
+Engine 0.7.0, unchanged.
 
 **For someone playing, on a phone**
 - **Follow follows.** The person followed is drawn in the middle of the map that the bars and their card leave
@@ -29,7 +44,6 @@ Engine 0.7.0, unchanged. Written with the pull request: whether it has been merg
   frames a second.
 
 **Under it**
-- `node scripts/sight.mjs <address> <folder>` measures both reports against any build, deployed or local.
 - The browser tests measure where a citizen is drawn and what is on top of that point of the page, and every
   list of rows a flow meets (`tests/e2e/layout.ts`). Until now they read that a button said "Following".
 

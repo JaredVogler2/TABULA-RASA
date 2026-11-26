@@ -267,3 +267,25 @@ tree is CI's to run on the commit that carries this file.
   drawn back is found to open. Those are for a person to say.
 - A pull upwards on the card's head, as a gesture: its rule is unit-tested and the tap and the arrow
   are run in a browser; the drag itself is not.
+
+
+8. Afterwards (written the same hour)
+-------------------------------------
+
+The owner merged pull request 7 at 04:44 UTC, at 7d8a306: the fixes and their tests, the tree section 6
+calls "the first commit". This file, the rest of the evidence and the three small changes named in
+section 6 were pushed about a minute after that merge, and so are in pull request 8.
+
+The deployed site was then measured the same way as in section 1, starting three and a half minutes after
+the merge (sight-live.md / .json, and the stills beside them):
+  On a phone-sized page:
+    tapped           drawn at (195, 286)   on top there: the map     card 416..703 (drawn back)
+    Follow pressed   drawn at (195, 274)   the map                   button: Following
+    zoomed in        drawn at (195, 271)   the map                   button: Following
+    time at 8x       35 samples in twelve seconds: under something in 0; never more than 17 px from
+                     where they are held
+  On a desktop-sized page: in sight throughout; the follow kept through the zoom; never more than 12 px.
+  The Recordings row: the name on one line with the row to itself, at six sizes from 320 to 1366 px.
+The release check against the site, after that: 25 of 25 (evidence/phase-18/release-check-after-pr7.txt).
+
+Still not shown: any of it on a phone.
