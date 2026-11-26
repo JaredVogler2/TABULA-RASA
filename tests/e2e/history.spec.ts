@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { capture } from "./capture";
+import { rowProblems } from "./layout";
 
 /**
  * Phase 13: going back in a world's own history, world lines, files, and recorded causes —
@@ -148,6 +149,7 @@ test("history: an exact re-run, the twin on screen, a new line, a return, a rebu
   await expect(page.getByTestId("branches").locator("li")).toHaveCount(2);
   await expect(page.getByTestId("branches")).toContainText(`you: blight (day ${forkDay})`);
   await expect(page.getByTestId("branches")).toContainText("untouched");
+  expect(await rowProblems(page, "branches"), "the list of world lines is whole").toEqual([]);
   await expect(page.locator('[data-testid^="world-line-"]')).toHaveCount(2);
   await expect(page.getByTestId("world-lines")).toHaveAttribute("aria-label", /2 world lines\..*left on day 5/);
   await shot(page, project, "42-world-lines");
@@ -174,6 +176,7 @@ test("history: an exact re-run, the twin on screen, a new line, a return, a rebu
   await page.getByTestId("save-game").click();
   await expect(page.getByTestId("toast")).toContainText("Saved");
   await expect(page.getByTestId("save-list")).toBeVisible();
+  expect(await rowProblems(page, "save-list"), "the list of saved worlds is whole").toEqual([]);
   await page.reload();
   await expect(page.getByTestId("title")).toBeVisible();
   await page.getByTestId("continue").click();

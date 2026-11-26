@@ -1,6 +1,7 @@
 import { expect, test, type Cookie, type Page } from "@playwright/test";
 import { capture } from "./capture";
 import { E2E_PASSPHRASE } from "./constants";
+import { rowProblems } from "./layout";
 
 /**
  * Phases 06–08, through the real server: the owner console, a society of mock minds advanced
@@ -234,6 +235,8 @@ test("the bundled recording plays from the title screen and matches its record t
   const entry = page.getByTestId("recording-mock-first-light");
   await expect(entry).toBeVisible();
   await expect(page.getByTestId("recordings-list")).toContainText("MOCK minds · a deterministic test double, not a language model");
+  // with the published run beside the bundled one: no name squeezed, nothing off the edge of the sheet
+  expect(await rowProblems(page, "recordings-list"), "the Recordings list is whole").toEqual([]);
   await shot(page, project, "25-recordings-panel");
   await entry.click();
   const badge = page.getByTestId("recording-badge");

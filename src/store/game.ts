@@ -62,6 +62,13 @@ export interface GameState {
   speed: number;
   selection: Pick | null;
   following: boolean;
+  /**
+   * The inspector drawn back to its head, what the citizen is doing and its first buttons. On a narrow
+   * screen it is a sheet over the map, and at its full height it hides whoever it is about: it opens
+   * drawn back, following draws it back, and a tap on its head (or a pull up, or its arrow) opens it in
+   * full. On a wide screen it is a panel at the side and this changes nothing.
+   */
+  inspectorCompact: boolean;
   agentDetail: AgentDetail | null;
   tileDetail: TileDetail | null;
   chronicle: ChronicleEntry[];
@@ -138,6 +145,7 @@ export const useGame = create<GameState>((set) => ({
   speed: 2,
   selection: null,
   following: false,
+  inspectorCompact: false,
   agentDetail: null,
   tileDetail: null,
   chronicle: [],

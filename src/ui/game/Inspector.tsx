@@ -1,6 +1,7 @@
 "use client";
 
-import { Bed, Drumstick, Droplet, Eye, Flame, HeartPulse, LocateFixed, Waypoints, X } from "lucide-react";
+import { Bed, ChevronDown, ChevronUp, Drumstick, Droplet, Eye, Flame, HeartPulse, LocateFixed, Waypoints, X } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
 import { BIOMES, ITEMS, NODE_KINDS, PHYS, SKILLS, TRAITS, needBand } from "@/engine";
 import { NODE_LABEL } from "@/worker/describe";
 import { useGame } from "@/store/game";
@@ -49,9 +50,46 @@ export function mindSentence(controller: string, source: string, recorded: boole
   return "Acting on reflex until its mind is next consulted (labelled FALLBACK; not a language model).";
 }
 
+/**
+ * The head of a card: what it is about, and the buttons that open, draw back and close it.
+ *
+ * On a narrow screen the card is a sheet over the map and opens drawn back, so that the citizen or the
+ * place it is about can still be seen. Its head is its handle: a tap on it, a pull up, or the arrow
+ * opens the card in full; the arrow or another tap draws it back; a pull down or the cross closes it.
+ * At the side of a wide screen the card is always whole and there is no arrow.
+ */
+function CardHead({ kicker, title, titleStyle }: { kicker: ReactNode; title: string; titleStyle?: CSSProperties }) {
+  const controller = useController();
+  const compact = useGame((s) => s.inspectorCompact);
+  const swipe = useSwipeDown(() => controller.select(null), { onUp: () => controller.setInspectorCompact(false), onTap: () => controller.toggleInspectorCompact() });
+  return (
+    <div className={styles.panelHead} {...swipe}>
+      <div className={styles.panelTitle}>
+        <div className={styles.kicker}>{kicker}</div>
+        <h2 data-testid="inspector-name" style={titleStyle}>
+          {title}
+        </h2>
+      </div>
+      <button
+        type="button"
+        className={`${styles.closeButton} ${styles.sheetToggle}`}
+        onClick={() => controller.toggleInspectorCompact()}
+        // the whole card is on the page either way (a drawn-back card scrolls): the name of the button says which it does
+        aria-label={compact ? "Open the whole card" : "Draw the card back"}
+        title={compact ? "Open the whole card" : "Draw the card back"}
+        data-testid="inspector-toggle"
+      >
+        {compact ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
+      </button>
+      <button type="button" className={styles.closeButton} onClick={() => controller.select(null)} aria-label="Close inspector" data-testid="inspector-close">
+        <X aria-hidden />
+      </button>
+    </div>
+  );
+}
+
 function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
   const controller = useController();
-  const swipe = useSwipeDown(() => controller.select(null));
   const following = useGame((s) => s.following);
   const overlay = useGame((s) => s.overlay);
   const tiles = useGame((s) => (s.world ? s.world.w * s.world.h : 0));
@@ -66,15 +104,7 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
     .slice(0, 8);
   return (
     <>
-      <div className={styles.panelHead} {...swipe}>
-        <div className={styles.panelTitle}>
-          <div className={styles.kicker}>{detail.alive ? "Citizen" : "Died"}</div>
-          <h2 data-testid="inspector-name">{detail.name}</h2>
-        </div>
-        <button type="button" className={styles.closeButton} onClick={() => controller.select(null)} aria-label="Close inspector" data-testid="inspector-close">
-          <X aria-hidden />
-        </button>
-      </div>
+      <CardHead kicker={detail.alive ? "Citizen" : "Died"} title={detail.name} />
       <div className={styles.panelBody} data-testid="inspector-body">
         {detail.alive ? (
           <p className={styles.lede} data-testid="inspector-goal">
@@ -300,7 +330,6 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
 
 function TileCard({ detail }: { detail: TileDetail }) {
   const controller = useController();
-  const swipe = useSwipeDown(() => controller.select(null));
   const roster = useGame((s) => s.roster);
   const biome = BIOMES[detail.biome] ?? "land";
   const node = detail.node;
@@ -308,19 +337,15 @@ function TileCard({ detail }: { detail: TileDetail }) {
   const s = detail.structure;
   return (
     <>
-      <div className={styles.panelHead} {...swipe}>
-        <div className={styles.panelTitle}>
-          <div className={styles.kicker}>
+      <CardHead
+        kicker={
+          <>
             Place · {detail.x}, {detail.y}
-          </div>
-          <h2 data-testid="inspector-name" style={{ textTransform: "capitalize" }}>
-            {title}
-          </h2>
-        </div>
-        <button type="button" className={styles.closeButton} onClick={() => controller.select(null)} aria-label="Close inspector" data-testid="inspector-close">
-          <X aria-hidden />
-        </button>
-      </div>
+          </>
+        }
+        title={title}
+        titleStyle={{ textTransform: "capitalize" }}
+      />
       <div className={styles.panelBody} data-testid="inspector-body">
         {node ? (
           <>
@@ -417,17 +442,18 @@ export function Inspector() {
   const agent = useGame((s) => s.agentDetail);
   const tile = useGame((s) => s.tileDetail);
   const now = useGame((s) => s.hud?.tick ?? 0);
+  const compact = useGame((s) => s.inspectorCompact);
   if (!selection) return null;
   if (selection.type === "agent" && agent && agent.id === selection.id) {
     return (
-      <aside className={`${styles.paper} ${styles.side} ${styles.sideRight}`} aria-label={`Inspector: ${agent.name}`} data-testid="inspector">
+      <aside className={`${styles.paper} ${styles.side} ${styles.sideRight}`} aria-label={`Inspector: ${agent.name}`} data-testid="inspector" data-compact={compact ? "true" : undefined}>
         <AgentCard detail={agent} now={now} />
       </aside>
     );
   }
   if (selection.type !== "agent" && tile && tile.x === selection.x && tile.y === selection.y) {
     return (
-      <aside className={`${styles.paper} ${styles.side} ${styles.sideRight}`} aria-label="Inspector: place" data-testid="inspector">
+      <aside className={`${styles.paper} ${styles.side} ${styles.sideRight}`} aria-label="Inspector: place" data-testid="inspector" data-compact={compact ? "true" : undefined}>
         <TileCard detail={tile} />
       </aside>
     );

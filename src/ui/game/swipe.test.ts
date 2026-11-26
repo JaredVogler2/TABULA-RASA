@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SWIPE_CLOSE_PX, SWIPE_FLICK_PX, SWIPE_FLICK_SPEED, closesOnRelease } from "./swipe";
+import { SWIPE_CLOSE_PX, SWIPE_FLICK_PX, SWIPE_FLICK_SPEED, SWIPE_OPEN_PX, TAP_SLOP_PX, closesOnRelease, opensOnRelease } from "./swipe";
 
 describe("pulling a sheet down: when letting go closes it", () => {
   it("far enough closes it however slowly it was pulled", () => {
@@ -19,5 +19,21 @@ describe("pulling a sheet down: when letting go closes it", () => {
     expect(closesOnRelease(0, 80)).toBe(false);
     expect(closesOnRelease(-140, 60)).toBe(false);
     expect(closesOnRelease(3, 1)).toBe(false);
+  });
+});
+
+describe("pulling a drawn-back sheet up: when letting go opens it", () => {
+  it("opens when pulled up far enough, and not by a touch that barely moved or went down", () => {
+    expect(opensOnRelease(-SWIPE_OPEN_PX)).toBe(true);
+    expect(opensOnRelease(-200)).toBe(true);
+    expect(opensOnRelease(-SWIPE_OPEN_PX + 1)).toBe(false);
+    expect(opensOnRelease(0)).toBe(false);
+    expect(opensOnRelease(140)).toBe(false);
+  });
+
+  it("a tap is not a pull: what opens a sheet is further than what counts as a tap", () => {
+    expect(SWIPE_OPEN_PX).toBeGreaterThan(TAP_SLOP_PX);
+    // and a pull up never closes anything
+    expect(closesOnRelease(-SWIPE_OPEN_PX, 40)).toBe(false);
   });
 });
