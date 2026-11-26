@@ -150,8 +150,20 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
     await page.getByTestId("inspector-toggle").click();
     await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
     await expect(page.getByTestId("inspector-toggle")).toHaveAccessibleName("Open the whole card");
+    // …and a tap on its head, as a finger makes it, eases it open: the browser itself reports a transition of
+    // the card's height. (Letting go of the head used to put the card's own easing aside for a fifth of a
+    // second, so a tapped card jumped open while one opened by its arrow did not. No picture taken here could
+    // show the difference: this machine draws about four frames a second.)
+    await page.getByTestId("inspector").evaluate((el) => {
+      const seen: string[] = [];
+      (window as unknown as { __eased: string[] }).__eased = seen;
+      el.addEventListener("transitionrun", (e) => {
+        if (e.target === el) seen.push((e as TransitionEvent).propertyName);
+      });
+    });
     await page.getByTestId("inspector-name").tap();
     await expect(page.getByTestId("inspector")).not.toHaveAttribute("data-compact", "true");
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __eased: string[] }).__eased), { message: "a tapped card eases open: its height is in transition", timeout: 10_000 }).toContain("max-height");
   } else {
     // at the side of a wide screen the card is always whole, and has no arrow
     await expect(page.getByTestId("inspector-toggle")).toBeHidden();
@@ -264,6 +276,31 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   expect(await entries.count()).toBeGreaterThan(0);
   await shot(page, project, "06-chronicle");
   await entries.first().locator("button").click();
+  if (!touch) {
+    // An entry about a citizen chooses them. Follow them, then go to that entry again: the camera is sent to
+    // where it happened, so it is following nobody — and the button must not go on saying that it is. (For
+    // forty minutes between two merges it did: choosing the same citizen again had been made to keep the
+    // follow, without asking whether the camera still had them.)
+    const jump = page.getByTestId("chronicle-entries").locator('button[title="Go to where this happened"]');
+    let chosen: number | null = null;
+    let at = -1;
+    for (let i = 0; i < Math.min(await jump.count(), 30) && chosen === null; i++) {
+      await jump.nth(i).click();
+      await page.waitForTimeout(300);
+      chosen = await selectedCitizen(page);
+      at = i;
+    }
+    expect(chosen, "a Chronicle entry chose a citizen").not.toBeNull();
+    const followFromHere = page.getByTestId("follow");
+    await followFromHere.click();
+    await expect(followFromHere).toHaveAttribute("aria-pressed", "true");
+    expect(await page.evaluate(() => window.__tr?.following()), "the camera is following them").toBe(true);
+    await jump.nth(at).click();
+    await page.waitForTimeout(400);
+    expect(await selectedCitizen(page), "the same citizen is still chosen").toBe(chosen);
+    expect(await page.evaluate(() => window.__tr?.following()), "the camera was sent to the place: it is following nobody").toBe(false);
+    await expect(followFromHere, "and the button does not say that it is").toHaveAttribute("aria-pressed", "false");
+  }
   await page.getByTestId("chronicle-close").click();
   if (await page.getByTestId("inspector-close").count()) await page.getByTestId("inspector-close").click();
 

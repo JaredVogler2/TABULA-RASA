@@ -5,9 +5,22 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 8 — the record of what the phone showed (2026-11-26)
+## Pull request 9 — the record brought up to date (2026-11-26)
 
-Engine 0.7.0, unchanged. Written with the pull request: whether it has been merged is on GitHub, not here.
+Engine 0.7.0, unchanged. Nothing in the product changes. Written with the pull request: whether it has been
+merged is on GitHub, not here.
+
+- The whole-loop browser test now holds two things that pull request 8 mended. That a tapped card eases
+  open on a phone: the browser is asked whether the card's height is in transition. And that the Follow
+  button does not say "Following" after a Chronicle entry has sent the camera elsewhere: the camera and the
+  button are each asked. Each fails with its line as it was before pull request 8.
+- Recorded: the merges of pull requests 7 and 8; the checks of the live site after each; what was looked for
+  on it after 8 and found; and two faults that pull request 7 brought in and 8 mended, live for forty minutes
+  in between (`evidence/after-20/after-pr8.txt`, `docs/QA_REPORT.md`).
+
+## Pull request 8 — the record of what the phone showed (2026-11-26, merged)
+
+Engine 0.7.0, unchanged.
 
 - D-052: the two reports from the owner's phone, what each was, the four further faults of Follow found
   beside them, what was decided, and how to undo it.

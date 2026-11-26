@@ -50,7 +50,10 @@ drawn and what is on top of that point of the page. Evidence: `evidence/after-20
 deployed build) against `sight-after.md`, `rows.txt`, `follow.txt`. The owner merged the fixes as pull request
 7, and four minutes later the deployed site was measured the same way and showed neither fault
 (`evidence/after-20/sight-live.md`); the release check passed again, 25 of 25
-(`evidence/phase-18/release-check-after-pr7.txt`). Phases 11 and 12 stay PARTIAL: this was a few minutes of
+(`evidence/phase-18/release-check-after-pr7.txt`). The record, and three small changes made after the
+fixes, followed as pull request 8; after it was merged the site passed the release check once more and the
+two of those changes that can be seen were found on it (`evidence/after-20/after-pr8.txt`). Phases 11 and 12
+stay PARTIAL: this was a few minutes of
 one person on one phone, not a playtest or a pass over devices, and the fixes have been measured in Chromium
 at a phone's size, not seen on a phone by the builder.
 
@@ -100,6 +103,8 @@ Everything the owner did or said, from the session's own record (times in UTC, 2
 20. 2026-11-26, 04:44 — merged pull request 7, at its first commit (the fixes and their tests), twenty-seven
     minutes after its checks went green and about a minute before the second commit was pushed. The site
     rebuilt by itself; the record of the work became pull request 8.
+21. 2026-11-26, 05:24 — merged pull request 8, a minute after its checks went green. The site rebuilt by
+    itself.
 
 Items 17 and 18 are the only observations of the product by a person other than the builder. No design
 direction, code, review, test result or decision came from a person beyond what is listed. A deployment of the
