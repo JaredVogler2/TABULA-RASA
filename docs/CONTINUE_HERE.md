@@ -11,8 +11,9 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
-  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (approved by the owner on 2026-11-26; the
-  assistant may not create the Vercel project; **nothing is deployed** until the owner imports it) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
+  measurable here) · 17 BLOCKED (no spend authorized) · 18 PASS for the game alone (**deployed at
+  https://tabula-rasa-bay.vercel.app** by the owner's import on 2026-11-26; 25 of 25 release checks; the console and
+  live minds are not deployed) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
   worked; what is left is the owner's: `docs/HANDOFF.md`.**
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
@@ -64,6 +65,7 @@ node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowl
 pnpm live:smoke
 # is a running site what a release should be? (a deployment's address, or a local `next start`; signs in nowhere)
 pnpm release:check -- http://127.0.0.1:3299 --fast
+pnpm release:check -- https://tabula-rasa-bay.vercel.app --fast     # the deployment (--fast where there is no graphics chip)
 ```
 
 Expected at `de2f0e1`: `pnpm check` exits 0 with 491 unit tests in 40 files (ten need PostgreSQL and are skipped
@@ -124,14 +126,13 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 
 ## Next actions
 
-1. **Phase 18, release: the owner's import, then the checks.** The owner approved deploying the game alone on
-   2026-11-26. The assistant's call to create the Vercel project was refused (403: the session's connector
-   may read the owner's projects and not create one); nothing was created, and no other route was tried.
-   What remains: the owner imports `JaredVogler2/TABULA-RASA` in the Vercel dashboard (no variables), or gives
-   a token through the session's secure form. Then: find the project's production address, run
-   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`,
-   `PROGRESS.md`, `ACCEPTANCE.md` and the README. Until then the phase is BLOCKED and nothing may say
-   "deployed". A database (level 2) has not been asked for and needs its own approval.
+1. **The release is made, at level 1.** https://tabula-rasa-bay.vercel.app, a Vercel project the owner created
+   by importing the repository (the assistant's connector may read the owner's projects and may not create one
+   or list a project's variables). A merge to `main` deploys itself; a push to another branch makes a preview
+   behind a Vercel login. After a merge that changes the product: `pnpm release:check -- https://tabula-rasa-bay.vercel.app`.
+   **Not deployed:** the console (level 2) — it needs a database, a billable integration that has not been
+   asked for and needs the owner's approval — and live minds (level 3, phase 17). Open on the deployment: which
+   Node.js runs it was not observed (`docs/DEPLOYMENT.md` § Known unknowns).
 2. **After the phases.** Recorded in `docs/HANDOFF.md` and not done, because each changes the engine's
    behaviour (a new version, and for anything experimental a new registration on seeds 9032 and up): a
    positive control that holds (D-044); planners that stop asking for the unreachable in a crowded famine
@@ -152,8 +153,8 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 
 ## Open questions for the owner (none of them blocks offline work)
 
-- **The import.** Deploying the game alone is approved; creating the project is the owner's to click
-  (`docs/DEPLOYMENT.md` §5). Whether to go on to the console, which needs a database, has not been asked.
+- **Whether to go on to the console** (level 2), which needs a database: not asked yet. The game alone is
+  deployed.
 - **Which model?** `ANTHROPIC_MODEL` has no default. Per-call upper bounds are in `docs/COST.md`.
 - **A ceiling for the deployment** (`BUDGET_CEILING_USD`), **an amount for a smoke test** (at most $2), then
   separately for a pilot.

@@ -1,18 +1,27 @@
 # Deployment
 
-**Status: NOT DEPLOYED** (2026-11-26). No Vercel project exists for this repository, no hosted database has
-been made, and nothing below has been run against Vercel unless a line says it has.
+**Status: DEPLOYED AT LEVEL 1** (2026-11-26) — the game alone, at **https://tabula-rasa-bay.vercel.app**.
+The owner's console (level 2) and live minds (level 3) are not deployed.
 
-**What happened on 2026-11-26.** The owner approved a level-1 deployment — the game alone: one project, no
-database, no key, no variable. The assistant made the one call that creates the project (`tabula-rasa`, on
-the owner's team, linked to this repository) and Vercel refused it: `403 forbidden — You don't have permission
-to create the project`. The connector the assistant's session has can read the team's projects and cannot
-create one. Nothing was created; the call was not retried and no other route was tried in its place. What
-remains is section 5 "From the dashboard" — three clicks, by the owner — or a token given through the
-session's secure form; after either, section 8 can be run against the address and its results written here.
+| | |
+|---|---|
+| Address | https://tabula-rasa-bay.vercel.app (production; public) |
+| Made by | the owner, importing this repository in the Vercel dashboard on 2026-11-26 at about 00:25 UTC |
+| Built from | `main` at `41a4ffa` (pull request 4's merge: phases 1–20 and D-050), by Vercel, in 43 seconds, with pnpm 10.28.0 and Next.js 16.4.6 |
+| Region | `iad1` |
+| Checked | `pnpm release:check`: **25 of 25**; section 8 by hand: every answer as written there (`evidence/phase-18/`) |
+| Configured | nothing: the site answers as one with no owner (`signInPossible: false`; an attempt to sign in answers 503). Which variables the project has could not be listed by the assistant's connector |
+| Not observed | which Node.js runs it: the project's setting reads 26.x, `engines` says 22.x (see "Known unknowns") |
 
-Creating a project publishes a public site under the owner's account, and a database is a billable
-integration even at $0. The first has the owner's word for level 1; the second does not, and waits for it
+**How it went.** The owner approved a level-1 deployment — one project, no database, no key, no variable. The
+assistant made the one call that creates a project and Vercel refused it: `403 forbidden — You don't have
+permission to create the project` (the session's connector can read the team's projects and cannot create
+one; `evidence/phase-18/create-project-refused.txt`). The call was not retried and no other route was tried in
+its place. The owner then imported the repository in the dashboard, and the assistant found the address,
+ran section 8 against it and wrote the results here. **The assistant created nothing on Vercel and set
+nothing there.**
+
+A database is a billable integration even at $0: it has not been asked for and waits for the owner's word
 (`CLAUDE.md`; phase 18). This document is written so that the owner can do all of it without help.
 
 Platform facts are quoted, with their sources and the day they were read, in
@@ -106,8 +115,11 @@ the browser.
 
 ## 5. Level 1: the game
 
-The production branch is `main`, and it holds everything: pull requests 1 to 4 are merged (phases 1–20 and
-D-050). What is deployed is whatever `main` is on the day; a later merge to `main` deploys itself.
+**Done on 2026-11-26, from the dashboard.** The production branch is `main`, and it holds everything: pull
+requests 1 to 4 are merged (phases 1–20 and D-050). From now on a merge to `main` deploys itself to the
+production address, and a push to any other branch makes a preview deployment that asks for a Vercel login.
+The checks of section 8 were run against the deployment of `41a4ffa`; after a merge that changes the product
+they are worth running again.
 
 **From the dashboard.** vercel.com → Add New → Project → import `JaredVogler2/TABULA-RASA` → leave every
 setting as detected → Deploy. No variables.
@@ -128,10 +140,10 @@ vercel --prod
 
 The first deployment of a new project is a production deployment even without `--prod` (§11).
 
-**By the assistant**: not as things stand. The one call that creates a project named `tabula-rasa` on the
-owner's team was made on 2026-11-26 with the owner's approval and refused by Vercel (403: the session's
-connector may not create projects). Once a project exists, however it was made, the assistant can find its
-address and run `pnpm release:check` (section 8) against it, and write the results into this file and
+**By the assistant**: not possible. The one call that creates a project named `tabula-rasa` on the owner's
+team was made on 2026-11-26 with the owner's approval and refused by Vercel (403: the session's connector may
+not create projects). What the assistant could do, and did, once the owner had made the project: find its
+address, run `pnpm release:check` (section 8) against it, and write the results into this file and
 `EVIDENCE.md`.
 
 ## 6. Level 2: the console
@@ -216,9 +228,14 @@ first.) What it checks, each of which can also be done by hand:
 | Nothing leaves the site | the browser's network panel | no request to any other origin |
 | Nothing server-only reached the browser | — | the checker reads every script, style and page it was sent with the rules of `pnpm scan:bundle` |
 
-**Run against the production build on the development machine, started with no variable at all — the
-configuration of a level-1 deployment — on 2026-11-25: 25 of 25 checks passed (`evidence/phase-18/release-check-local.txt`).
-Not run against a deployment: there is none.**
+**Run against the deployment, https://tabula-rasa-bay.vercel.app, on 2026-11-26: 25 of 25 checks passed**
+(`evidence/phase-18/release-check-deployed.txt`, with nine stills beside it), and every by-hand check in the
+table gave the answer written in it (`evidence/phase-18/deployed-by-hand.txt`). First visit: 717 KB over the
+network. The run was from a container without a graphics chip, in headless Chromium, with the game's simplest
+picture: it says the site works, not how it looks or moves on a device.
+
+Before that, on 2026-11-25, the same command against the production build on the development machine, started
+with no variable at all: 25 of 25 (`evidence/phase-18/release-check-local.txt`).
 
 What the command does not do, and a release at level 2 needs by hand: sign in at `/owner`; see that live mode
 is unavailable and why; create a mock run of a few epochs, step it to the end and publish it; sign out; find
@@ -269,8 +286,10 @@ log, with `DELETE FROM audit_log`; everything, by dropping the schema or deletin
 
 ## 11. Known issues of a deployment
 
-1. **Nothing here has met Vercel or a hosted database.** The build, the pages and the functions are tested
-   against `next start` on the development machine and in CI.
+1. **Level 1 has met Vercel; nothing has met a hosted database.** The game, its pages and the routes a
+   stranger can reach are checked on the deployment (section 8). The console, the ledger and server-side runs
+   are tested against `next start` with PostgreSQL on the development machine and in CI, and against a real
+   pooler there (D-047) — not on Vercel.
 2. **One origin** for the game and the console (`SECURITY.md` § One origin). A separate host for the console
    would close it and is not built.
 3. **The in-memory rate limiter is per instance** and forgets when an instance is recycled; it bounds what
@@ -288,9 +307,15 @@ log, with `DELETE FROM audit_log`; everything, by dropping the schema or deletin
 
 ### Known unknowns to settle on the first build
 
-- Which pnpm the builder picks. The lockfile is version 9.0 and `packageManager` says 10.28.0. If the build
-  log shows another major version and the install fails, set `ENABLE_EXPERIMENTAL_COREPACK=1` so that
-  `packageManager` decides (Vercel documents this as experimental).
+- ~~Which pnpm the builder picks.~~ **Settled by the first build:** "Detected `pnpm-lock.yaml` version 9
+  generated by pnpm@10.x from package.json#packageManager pnpm@10.28.0 … Done in 13.8s using pnpm v10.28.0".
+- **Which Node.js runs it: not observed.** The project's setting reads 26.x, the platform's default for a new
+  project; `engines.node` is `22.x`, which Vercel's documentation says overrides the setting (§2, D-048). The
+  build log does not print the version and nothing the site serves tells. To make both say the same: Project
+  Settings → Build and Deployment → Node.js Version → 22.x, then redeploy.
+- **A header the platform adds:** `access-control-allow-origin: *` on what it serves from its cache as static
+  content — the pages and `/api/health`. All of that is public. The functions do not carry it, and a request
+  from another origin that would change anything is refused with 403 (`evidence/phase-18/deployed-by-hand.txt`).
 - Whether the provider's connection string carries options this driver does not know (`channel_binding`, for
   one). Unknown options are ignored by the driver; if a connection is refused, the direct string
   (`DATABASE_URL_UNPOOLED`) set as `DATABASE_URL` is the fallback, and works too.
@@ -303,7 +328,7 @@ log, with `DELETE FROM audit_log`; everything, by dropping the schema or deletin
 | CI green on that commit | see the pull request |
 | The pull requests merged to `main` | done: 1 to 4, by the owner (2026-11-25). `main` is the tree CI passed on `b25d1b7` |
 | Owner's approval to create the project (and, for level 2, the database) | **given for level 1** on 2026-11-26; not asked and not given for a database |
-| Project created; first production deployment built | **attempted 2026-11-26 and refused by Vercel** (403: the assistant's connector may not create projects). NOT DONE: the owner's import remains |
-| Section 8 on the deployed address: health, headers, a stranger refused, the game on desktop and phone, the bundled recording | NOT RUN |
+| Project created; first production deployment built | **done by the owner** on 2026-11-26 at about 00:25 UTC, by importing the repository (the assistant's own call had been refused, 403). Built from `41a4ffa` in 43 s; READY |
+| Section 8 on the deployed address: health, headers, a stranger refused, the game on desktop and phone, the bundled recording | **PASS: 25 of 25** on 2026-11-26 (`evidence/phase-18/release-check-deployed.txt`); by hand, every answer as written (`deployed-by-hand.txt`) |
 | Level 2: database connected, owner values set, sign-in, a mock run published and replayed by a visitor | NOT RUN |
 | Level 3 | BLOCKED on the phase-17 authorization; not part of a release |

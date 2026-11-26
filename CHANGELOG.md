@@ -15,6 +15,9 @@ No product code. Engine 0.7.0, unchanged.
   moment and asserts the charter's state before reading its words.
 - Recorded: the whole browser suite with D-050 in place, here and on GitHub's runners; how the window the
   failed run stopped in was worked out from the engine alone.
+- **The game is deployed: https://tabula-rasa-bay.vercel.app** — a Vercel project made by the owner's import, from
+  `main` at `41a4ffa`. The release check passes against it, 25 of 25. The owner's console and live minds are
+  not deployed.
 
 ## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, merged)
 

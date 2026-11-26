@@ -1,0 +1,70 @@
+The checks of docs/DEPLOYMENT.md section 8, by hand, against the deployment — 2026-11-26
+
+curl, from the development container, against https://tabula-rasa-bay.vercel.app. Nothing here signs in or
+sends a secret. (Three lines that change with every request — the date, the cache age and the platform's
+request id — are left out of the header listings.)
+
+== GET /api/health
+{"ok":true,"service":"tabula-rasa","engine":"0.7.0","schema":6,"affordances":"2026.11-i"}
+
+== GET /api/owner/status
+{"signedIn":false,"signInPossible":false}
+
+== GET /api/recordings
+{"ok":true,"recordings":[]}
+
+== POST /api/runs, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/runs/preview, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/runs/x/step, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/runs/x/control, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/owner/budget, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/owner/kill, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+== POST /api/owner/reconcile, as the site's own origin: 401 {"ok":false,"error":"not_signed_in"}
+
+== POST /api/runs, from another origin: 403 {"ok":false,"error":"cross_origin"}
+
+== HEAD /api/health (headers)
+
+HTTP/2 200 
+accept-ranges: bytes
+access-control-allow-origin: *
+cache-control: no-store
+content-disposition: inline
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+content-type: application/json
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+etag: "35acfdffc4e361a2e5989c0fb90947cc"
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()
+referrer-policy: strict-origin-when-cross-origin
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-matched-path: /api/health
+x-vercel-cache: HIT
+content-length: 89
+
+== GET /api/owner/status (a function): headers
+HTTP/2 200 
+cache-control: no-store
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+content-type: application/json; charset=utf-8
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()
+referrer-policy: strict-origin-when-cross-origin
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-matched-path: /api/owner/status
+x-vercel-cache: MISS
+
+== the same, asked from another origin
+HTTP/2 200 
+
+== POST /api/owner/login from another origin
+HTTP/2 403 
+{"ok":false,"error":"cross_origin"}

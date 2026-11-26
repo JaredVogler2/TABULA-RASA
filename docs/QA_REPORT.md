@@ -300,7 +300,8 @@ Stated so that nothing above is read as more than it is.
 - **No sound heard.** The soundscape is checked by its signal level, not by an ear.
 - **No request to the Anthropic API, ever.** $0 spent; no key has been present. The live adapter, the smoke
   script's paid path and the cost of a real call are unmeasured.
-- **No deployment.** Nothing has run on Vercel or against a hosted database.
+- **No deployment of the console.** Since 2026-11-26 the game alone runs on Vercel and passes the release check
+  there (`docs/DEPLOYMENT.md`); nothing has run against a hosted database.
 
 ## Remaining risks, in order
 

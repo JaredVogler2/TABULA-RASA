@@ -147,7 +147,7 @@ the provider's usage report. Provider-side guardrails that do not depend on this
 
 | Component | Needed for | Cost status |
 |---|---|---|
-| Static hosting and functions | The public game; the owner API | **Not deployed.** On Vercel's Hobby plan: $0 inside its monthly allowances, and a project that exceeds them is paused, not billed; the plan is for personal or non-commercial use (`docs/DEPLOYMENT.md` §2, read 2026-11-25). Nothing is deployed without authorization. |
+| Static hosting and functions | The public game; the owner API | **Deployed for the game alone** since 2026-11-26, in a Vercel project the owner made (`docs/DEPLOYMENT.md`). On Vercel's Hobby plan: $0 inside its monthly allowances, and a project that exceeds them is paused, not billed; the plan is for personal or non-commercial use (§2, read 2026-11-25). Which plan the owner's team is on was not read. |
 | PostgreSQL | The owner console, server-side runs, the budget ledger | **Not provisioned.** Needs the owner's approval: a Marketplace database is a billable integration even on its free plan ($0 a month, 100 compute-hours and 1 GB a project, asleep after five minutes: `docs/DEPLOYMENT.md` §2 and §6). The public game, and the bundled recording, need no database. |
 | Anything else (queues, workflow services, identity providers, analytics, asset CDNs) | — | **Not used.** |
 

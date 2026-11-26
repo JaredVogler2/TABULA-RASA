@@ -329,7 +329,7 @@ sound, by ear; any request to the Anthropic API; any deployment. `docs/QA_REPORT
 | Vercel platform facts | `docs/research/vercel-platform.md` | compiled from official documentation on 2026-11-25; unconfirmed items listed at the end of the file; nothing tested live |
 | Anthropic API facts and prices | `docs/research/anthropic-api.md` | compiled from official documentation on 2026-11-25; **no API calls made**; discrepancies with cached references listed in the file |
 
-## Phase 18 — the release, prepared and not made (2026-11-25)
+## Phase 18 — the release: prepared (2026-11-25), made by the owner and checked (2026-11-26)
 
 | Claim | Command | Raw output | Result | Not shown by this evidence |
 |---|---|---|---|---|
@@ -337,8 +337,13 @@ sound, by ear; any request to the Anthropic API; any deployment. `docs/QA_REPORT
 | The platform facts the deployment document rests on are quotations | — | `docs/research/vercel-platform.md` (sources and dates beside each) | read 2026-11-25 | That they still hold on the day of deploying. |
 | No project for this repository exists in the owner's Vercel account, and the account can see the repository | a read-only look at the account | — | none on 2026-11-25; the repository is visible, public, default branch `main` | — |
 
-**Not run:** any deployment; any hosted database; any check against a deployed address. Phase 18 is BLOCKED on
-the owner's approval, and `docs/DEPLOYMENT.md` §12 is the checklist that will be filled in when it is given.
+| The assistant could not create the project: Vercel refused the one call, and nothing else was tried | the session's Vercel connector, once | `evidence/phase-18/create-project-refused.txt` | `403 forbidden — You don't have permission to create the project` | — |
+| The owner's import made a production deployment of `main` at `41a4ffa`, built with the pinned pnpm | read-only calls to the owner's Vercel account | `evidence/phase-18/deployment.txt` (the build's own log lines) | READY; built in 43 s; pnpm 10.28.0; Next.js 16.4.6; 17 static pages; region `iad1` | **Which Node.js runs it** (the project's setting reads 26.x, `engines` says 22.x); the project's variables (the connector may not list them) |
+| The deployed site is what a release should be | `pnpm release:check -- https://tabula-rasa-bay.vercel.app --fast --out <dir>` | `evidence/phase-18/release-check-deployed.{txt,json}`, nine stills `deployed-*.jpg` | **25 of 25**: health and versions; security headers; `no-store` on the API; a stranger refused at 7 routes; another origin refused; the owner's door not configured; public files; on a desktop and as a phone a world is made, a day passes, the Chronicle has 218 lines, a save survives a reload; the bundled recording replays to a match; nothing asked of another origin; no page error; nothing server-only in 161 responses; 717 KB for a first visit | How it looks or moves on a device: run from a container without a graphics chip, in headless Chromium, with the game's simplest picture. The signed-in console: not deployed |
+| The same by hand, as section 8 of the deployment document writes them | `curl` | `evidence/phase-18/deployed-by-hand.txt` | every answer as written: health; `{"signedIn":false,"signInPossible":false}`; no recordings; seven 401s; one 403; the headers. The platform adds `access-control-allow-origin: *` to what it serves as static content, and not to the functions | — |
+
+**Not run:** the console or anything else on a hosted database; live minds. Phase 18 is PASS for the game
+alone, and `docs/DEPLOYMENT.md` §12 is the checklist as it now stands.
 
 ## Phase 19 — scorecard (2026-11-25)
 
@@ -377,5 +382,6 @@ software rasterizer.
 | The browser tests for this area pass with it | `pnpm exec playwright test tests/e2e/resilience.spec.ts --project=desktop` | `evidence/after-20/e2e-resilience.txt` | 2 passed (two tabs 3.2 m; the fallback 4.7 m) | — |
 | The whole suite passes with it, here and on GitHub's runners | `pnpm e2e`; CI run 45717983573 on `b25d1b7` | `evidence/after-20/e2e-run.txt`, `ci.txt` | here: 29 passed, 5 skipped by design, none failed, in 42.0 m — the first whole-suite run on this machine in which nothing timed out. On GitHub: check, phone and desktop all green | The charters test in that local run was its earlier version (it was being rewritten meanwhile); its rewritten form is the row above |
 
-**Not run, in any phase:** a request to a model; a deployment; a person; a physical device.
+**Not run, in any phase:** a request to a model; a deployment of the console or of anything that needs a
+database; a person; a physical device.
 

@@ -34,7 +34,7 @@ compared with any bill and their cost is not known here.
 | CI on GitHub | 22 runs: 19 passed, 1 failed (a transient screenshot capture; fixed forward), 1 cancelled by a newer push, 1 in progress when listed |
 | Tests at this commit | 470 unit, property, differential and fuzz tests in 37 files; 17 browser tests in 8 files, each run on a desktop and a phone project; a seeded mutation run of 20 mutants |
 | Decisions on record | 48 (`docs/DECISIONS.md`), each with its problem, alternatives, evidence and rollback |
-| Spend | **$0.00.** No key has ever been present. Nothing is deployed |
+| Spend | **$0.00.** No key has ever been present. Nothing was deployed when this was scored; the game alone has been since 2026-11-26 (below) |
 
 Size, for context and not as merit: 42,754 lines of source in 180 files and 12,131 lines of tests in 45
 (`evidence/phase-19/code-size.txt`).
@@ -225,9 +225,10 @@ version, seeds, configuration, hashes).
 1. **The live path has never run.** Phase 17 is blocked on the owner's authorization. Until a smoke test is
    made, every statement about model-driven minds, their cost and their behaviour is about code, not about
    what happens.
-2. **Nothing is deployed.** Phase 18 was blocked on the owner's approval when this was written; since
-   2026-11-26 the approval for the game alone is given, and the block is that Vercel refuses the assistant's
-   call to create the project. The first hosted database will be the first real test of D-047.
+2. **Nothing was deployed when this was scored.** Since 2026-11-26 the game alone is, at
+   https://tabula-rasa-bay.vercel.app, by the owner's import, and it passes the release check (25 of 25). The
+   scores above are not revised for it: they were given without it. The console is not deployed, and the first
+   hosted database will be the first real test of D-047.
 3. **No person and no device.** No playtest, no real phone, no graphics chip, no screen reader, no browser but
    Chromium, no ear. `docs/QA_REPORT.md` § Not run.
 4. **The positive control failed** (D-044). The experiment as designed cannot show that agreements help; a
