@@ -7,9 +7,9 @@ The owner's console (level 2) and live minds (level 3) are not deployed.
 |---|---|
 | Address | https://tabula-rasa-bay.vercel.app (production; public) |
 | Made by | the owner, importing this repository in the Vercel dashboard on 2026-11-26 at about 00:25 UTC |
-| Built from | `main`, by Vercel, on every merge. First at `41a4ffa` (pull request 4's merge), in 43 seconds, with pnpm 10.28.0 and Next.js 16.4.6; then at `fb6b535` (pull request 5's merge, 2026-11-26 01:38 UTC), READY within two minutes; and after each merge since (pull requests 6 and 7, the same day) |
+| Built from | `main`, by Vercel, on every merge. First at `41a4ffa` (pull request 4's merge), in 43 seconds, with pnpm 10.28.0 and Next.js 16.4.6; then at `fb6b535` (pull request 5's merge, 2026-11-26 01:38 UTC), READY within two minutes; and after each merge since (pull requests 6, 7 and 8, the same day) |
 | Region | `iad1` |
-| Checked | `pnpm release:check`: **25 of 25** on the first build, and **25 of 25** again on the builds after pull requests 5 and 7; section 8 by hand on the first: every answer as written there (`evidence/phase-18/`) |
+| Checked | `pnpm release:check`: **25 of 25** on the first build, and **25 of 25** again on the builds after pull requests 5, 7 and 8; section 8 by hand on the first: every answer as written there (`evidence/phase-18/`) |
 | Configured | nothing: the site answers as one with no owner (`signInPossible: false`; an attempt to sign in answers 503). Which variables the project has could not be listed by the assistant's connector |
 | Not observed | which Node.js runs it: the project's setting reads 26.x, `engines` says 22.x (see "Known unknowns") |
 
@@ -246,6 +246,11 @@ minutes after it (`evidence/after-20/sight-before.md`, `evidence/after-20/sight-
 squeezed and off the edge at every phone width, then whole at six sizes; a followed citizen under their own
 card in 29 samples of 29, then in sight in 35 of 35. (A run after pull request 6 was merged was also 25 of 25;
 its output was not kept.)
+
+**And after pull request 8 was merged (05:24 UTC the same day): 25 of 25**
+(`evidence/phase-18/release-check-after-pr8.txt`). Of its three small changes, the two that can be seen were
+looked for on the site and found: a card tapped on its head eases open, and the Follow button agrees with the
+camera after a jump from the Chronicle (`evidence/after-20/after-pr8.txt`).
 
 Before that, on 2026-11-25, the same command against the production build on the development machine, started
 with no variable at all: 25 of 25 (`evidence/phase-18/release-check-local.txt`).

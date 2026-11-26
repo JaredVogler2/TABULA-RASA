@@ -28,7 +28,7 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 12 | 19 | — | 30 | 1 |
+| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 12 | 21 | — | 32 | 1 |
 | Reported by the owner from their phone (2026-11-26) | 0 | 0 | 2 | 0 | — | 2 | 0 |
 
 ## Security review: finding by finding
@@ -140,6 +140,8 @@ Defects that neither review reported, found by the tests and measurements writte
 | Medium | Choosing another citizen while one was being followed left the camera tracking the first: the card and its Follow button were about the second. On every screen, since Follow was written | Reading how a follow ends, after the owner's report (D-052) | The camera lets go when the selection passes to someone or somewhere else; the flow test asks the camera itself whether it is following, beside reading the button. Reverting the one line fails that test (`evidence/after-20/follow.txt`) |
 | Low | Zooming, turning or tilting the view ended a follow without saying so: a pinch to see the person better let go of them | The same reading | Only moving the view across the ground lets go; `cameraRig.test.ts`, and the flow test zooms while following |
 | Low | The camera was moved before the people each frame, and with its step capped at a tenth of a second: at a few frames a second it trailed a walker it was following by a tile or more | Measuring how far a followed citizen strays from where they are held, for the flow test's tolerance (`evidence/after-20/sight-before.md` against `sight-after.md`) | People take their places first, and the camera is given the time that really passed; `cameraRig.test.ts` holds the step, the flow test the straying |
+| Low | For the forty minutes between the merges of pull requests 7 and 8, on the deployed site: a card tapped on its head jumped open instead of easing. Pull request 7 had made the head something to tap, and letting go of it after any touch still put the card's own easing aside for a fifth of a second | Reading the first commit's diff again before the second (D-052); measured afterwards by the browser's own transition events on a build with the old line (`evidence/after-20/after-pr8.txt`) | A touch that did not move the card leaves it its own transitions. The whole-loop test asks the browser whether a tapped card's height is in transition, and fails with the old line |
+| Low | For the same forty minutes: with a citizen being followed, going from the Chronicle to an entry about that same citizen sent the camera to where it had happened and left the button saying "Following". Pull request 7 had made choosing the same citizen again keep the follow, without asking whether the camera still had them | The same reading | The button says "Following" only while the camera is following; looked for on the deployed site after pull request 8 and found to agree (`evidence/after-20/after-pr8.txt`). The whole-loop test now makes that jump on the desktop project and asks both; it fails with the old line |
 
 ## What the phase asked to be examined, and where each is
 

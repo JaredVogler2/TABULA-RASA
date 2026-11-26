@@ -1,0 +1,278 @@
+What pull request 8 changed, looked for on the deployed site after it was merged
+================================================================================
+
+2026-11-26. The owner merged pull request 8 at 05:24 UTC (main then at 156c327). Everything below is
+https://tabula-rasa-bay.vercel.app or a build made here, in headless Chromium at a phone's size (390 x 844)
+and at a desktop's. Not a phone. This machine has no graphics chip and draws about four frames a second.
+
+
+1. A tapped card eases open
+---------------------------
+
+On a phone a citizen's card opens drawn back and is opened in full by a tap on its head. Before pull request 8,
+letting go of the head after any touch set a transition for the card's position on the element itself, and
+for a fifth of a second that put aside the rule that eases the card's height.
+
+What was asked of the browser: its own transition events on the card (transitionrun, -start, -end) from just
+before each touch, and the card's height at every frame it then drew.
+
+The deployed site, after the merge (node ease.cjs https://tabula-rasa-bay.vercel.app; the script is in 4):
+
+  a tap on its head: 287px -> 490px; the browser's own events: transitionrun:max-height, transitionstart:max-height, transitionend:max-height; heights at the frames drawn: 287 287 490 490 490 (0 in between)
+  its arrow: 490px -> 287px; the browser's own events: transitionrun:max-height, transitionstart:max-height, transitionend:max-height; heights at the frames drawn: 490 490 287 287 287 (0 in between)
+  a tap on its head: 287px -> 490px; the browser's own events: transitionrun:max-height, transitionstart:max-height, transitionend:max-height; heights at the frames drawn: 287 287 490 490 490 (0 in between)
+
+A build of this tree with the one line of src/ui/game/swipe.ts put back as it was before pull request 8:
+
+  a tap on its head: 287px -> 490px; the browser's own events: none; heights at the frames drawn: 490 490 490 490 490 (0 in between)
+  its arrow: 490px -> 287px; the browser's own events: transitionrun:max-height, transitionstart:max-height, transitionend:max-height; heights at the frames drawn: 490 490 287 287 (0 in between)
+  a tap on its head: 287px -> 490px; the browser's own events: none; heights at the frames drawn: 490 490 490 490 490 (0 in between)
+
+So: with the old line a tap on the head ran no transition and the card was at its full height at the first
+reading, while the arrow — a button, which the old line never touched — eased. On the deployed site both
+ease. The heights "at the frames drawn" show nothing in between in either case: a quarter-second transition
+falls between two frames here. That the easing is SEEN is therefore not shown by this file; that the browser
+runs it, and did not, is.
+
+The browser test now holds it (tests/e2e/play.spec.ts, whole loop, phone project: the card's height must be
+in transition after a tap on its head). Against the build with the old line:
+
+  Running next.config.ts took 26ms
+  
+  Running 1 test using 1 worker
+  
+    ✘  1 [mobile] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (1.4m)
+  
+  
+    1) [mobile] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline ─────
+  
+      Error: a tapped card eases open: its height is in transition
+  
+      a tapped card eases open: its height is in transition
+  
+      expect(received).toContain(expected) // indexOf
+  
+      Expected value: "max-height"
+
+Against a build of this tree:
+
+  Running next.config.ts took 23ms
+  
+  Running 1 test using 1 worker
+  
+    ✓  1 [mobile] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (2.7m)
+  
+    1 passed (2.7m)
+  exit 0
+
+A first attempt at this measurement was wrong, and is recorded because it nearly led to a change that was not
+needed: asked for its running animations a moment after the touch, the browser listed none, on any build —
+the transition had already finished by the time the question arrived. The events do not depend on when they
+are read.
+
+
+2. The Follow button agrees with the camera after a jump from the Chronicle
+---------------------------------------------------------------------------
+
+Before pull request 8, going from the Chronicle to an entry about the citizen being followed sent the camera
+to where it had happened and left the button saying "Following".
+
+The deployed site, two minutes after the merge (node after8.cjs https://tabula-rasa-bay.vercel.app; in 4):
+
+  phone: card drawn back before the tap: true; open after it: true; inline transition left on the card by the tap: "" (empty means it eases open by its own rule)
+  desktop: following citizen 14: button true, camera true; after going to an entry about the same citizen: button says following: false, camera following: false — they agree
+
+The browser test now holds this too (tests/e2e/play.spec.ts, whole loop, desktop project: a citizen is chosen
+through a Chronicle entry and followed, the same entry is gone to again, and the camera and the button are
+each asked). Against a build with the one line of src/ui/game/controller.ts put back as it was in pull
+request 7:
+
+  Running next.config.ts took 22ms
+  
+  Running 1 test using 1 worker
+  
+    ✘  1 [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (2.7m)
+  
+  
+    1) [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline ────
+  
+      Error: and the button does not say that it is
+  
+      expect(locator).toHaveAttribute(expected) failed
+  
+      Locator:  getByTestId('follow')
+      Expected: "false"
+      Received: "true"
+      Timeout:  30000ms
+  
+      Call log:
+        - and the button does not say that it is getByTestId('follow') with timeout 30000ms
+        - waiting for getByTestId('follow')
+          48 × locator resolved to <button type="button" aria-pressed="true" data-testid="follow" class="NweopG_button" title="Keep the camera on this citizen (F)">…</button>
+
+The line before the one that fails asked the camera, which answered that it was following nobody; the button
+went on saying "Following". Against a build of this tree:
+
+  Running next.config.ts took 27ms
+  
+  Running 1 test using 1 worker
+  
+    ✓  1 [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (3.4m)
+  
+    1 passed (3.4m)
+  exit 0
+
+
+3. The rest
+-----------
+
+The third change of that pull request, the arithmetic of what the interface covers as a function of its own,
+changes nothing that can be seen; its tests are src/ui/game/coverOf.test.ts.
+
+The release check against the site after the merge: 25 of 25 (evidence/phase-18/release-check-after-pr8.txt).
+The whole suite on pull request 8's head, 1a00bf3, on GitHub's runners: run 45758359951 — check, e2e (mobile)
+and e2e (desktop) all green — a minute before it was merged.
+
+Not shown: any of this on a phone.
+
+
+4. The scripts
+--------------
+
+ease.cjs
+
+// Scratch: does a tapped card ease open, or jump? Its height, frame by frame, after a tap on its head. node ease.cjs <base>
+const { chromium } = require("playwright");
+const base = process.argv[2];
+(async () => {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  const tick = async () => Number(((await page.getByTestId("tick").textContent()) ?? "").replace(/\D+/g, ""));
+  await page.goto(`${base}/?q=low&pr=0.5`);
+  await page.getByTestId("begin").click();
+  await page.getByTestId("scenario-first_light").click();
+  await page.getByTestId("seed-input").fill("7");
+  await page.getByTestId("create-world").click();
+  await page.getByTestId("world-label").waitFor({ state: "attached", timeout: 60000 });
+  await page.getByTestId("coach-skip").click();
+  await page.getByTestId("speed-3").click();
+  await page.getByTestId("play-toggle").click();
+  for (;;) { if ((await tick()) > 130) break; await page.waitForTimeout(300); }
+  await page.getByTestId("play-toggle").click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="play-toggle"]')?.getAttribute("data-playing") === "false");
+  const target = await page.evaluate(() => { const w = window.innerWidth, h = window.innerHeight; for (let id = 0; id < 50; id++) { const p = window.__tr?.screenOf(id); if (p && p.x > w * 0.12 && p.x < w * 0.88 && p.y > h * 0.26 && p.y < h * 0.72) return p; } return null; });
+  await page.touchscreen.tap(target.x, target.y);
+  await page.getByTestId("inspector-name").waitFor({ timeout: 8000 });
+  await page.waitForTimeout(1500);
+  // what the browser says of its own transitions on the card, and the card's height at every frame it draws
+  await page.getByTestId("inspector").evaluate((el) => {
+    window.__log = [];
+    for (const type of ["transitionrun", "transitionstart", "transitionend", "transitioncancel"]) el.addEventListener(type, (e) => { if (e.target === el) window.__log.push(`${type}:${e.propertyName}`); });
+    new MutationObserver(() => {
+      const t0 = performance.now();
+      window.__heights = [];
+      const read = () => { window.__heights.push(Math.round(el.getBoundingClientRect().height)); if (performance.now() - t0 < 700) requestAnimationFrame(read); };
+      read();
+    }).observe(el, { attributes: true, attributeFilter: ["data-compact"] });
+  });
+  for (const how of ["a tap on its head", "its arrow", "a tap on its head"]) {
+    await page.evaluate(() => { window.__log = []; window.__heights = []; });
+    const before = await page.getByTestId("inspector").evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    if (how === "its arrow") await page.getByTestId("inspector-toggle").tap(); else await page.getByTestId("inspector-name").tap();
+    await page.waitForTimeout(1500);
+    const r = await page.evaluate(() => ({ log: window.__log, heights: window.__heights }));
+    const after = await page.getByTestId("inspector").evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    const between = [...new Set(r.heights)].filter((h) => h !== before && h !== after);
+    console.log(`${how}: ${before}px -> ${after}px; the browser's own events: ${r.log.join(", ") || "none"}; heights at the frames drawn: ${r.heights.join(" ")} (${between.length} in between)`);
+  }
+  await browser.close();
+})().catch((e) => { console.error(String(e).slice(0, 900)); process.exit(1); });
+
+
+after8.cjs
+
+// Scratch: what pull request 8 changed, looked for on a running site. node after8.cjs <base>
+const { chromium } = require("playwright");
+const base = process.argv[2];
+(async () => {
+  const browser = await chromium.launch();
+  // 1. phone: a tap on the card's head leaves the card its own transition (it eases open)
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+    const page = await context.newPage();
+    const tick = async () => Number(((await page.getByTestId("tick").textContent()) ?? "").replace(/\D+/g, ""));
+    await page.goto(`${base}/?q=low&pr=0.5`);
+    await page.getByTestId("begin").click();
+    await page.getByTestId("scenario-first_light").click();
+    await page.getByTestId("seed-input").fill("7");
+    await page.getByTestId("create-world").click();
+    await page.getByTestId("world-label").waitFor({ state: "attached", timeout: 60000 });
+    await page.getByTestId("coach-skip").click();
+    await page.getByTestId("speed-3").click();
+    await page.getByTestId("play-toggle").click();
+    for (;;) { if ((await tick()) > 130) break; await page.waitForTimeout(300); }
+    await page.getByTestId("play-toggle").click();
+    await page.waitForFunction(() => document.querySelector('[data-testid="play-toggle"]')?.getAttribute("data-playing") === "false");
+    const target = await page.evaluate(() => { const w = window.innerWidth, h = window.innerHeight; for (let id = 0; id < 50; id++) { const p = window.__tr?.screenOf(id); if (p && p.x > w * 0.12 && p.x < w * 0.88 && p.y > h * 0.26 && p.y < h * 0.72) return p; } return null; });
+    await page.touchscreen.tap(target.x, target.y);
+    await page.getByTestId("inspector-name").waitFor({ timeout: 8000 });
+    await page.waitForTimeout(1500);
+    const compactBefore = await page.getByTestId("inspector").getAttribute("data-compact");
+    await page.getByTestId("inspector-name").tap();
+    const inline = await page.getByTestId("inspector").evaluate((el) => el.style.transition);
+    await page.waitForTimeout(600);
+    const compactAfter = await page.getByTestId("inspector").getAttribute("data-compact");
+    console.log(`phone: card drawn back before the tap: ${compactBefore === "true"}; open after it: ${compactAfter !== "true"}; inline transition left on the card by the tap: ${JSON.stringify(inline)} (empty means it eases open by its own rule)`);
+    await context.close();
+  }
+  // 2. desktop: follow someone, then go to where a Chronicle entry about them happened: the button and the camera agree
+  {
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await context.newPage();
+    const tick = async () => Number(((await page.getByTestId("tick").textContent()) ?? "").replace(/\D+/g, ""));
+    await page.goto(`${base}/?q=low&pr=0.5`);
+    await page.getByTestId("begin").click();
+    await page.getByTestId("scenario-first_light").click();
+    await page.getByTestId("seed-input").fill("7");
+    await page.getByTestId("create-world").click();
+    await page.getByTestId("world-label").waitFor({ state: "attached", timeout: 60000 });
+    await page.getByTestId("coach-skip").click();
+    await page.getByTestId("speed-4").click();
+    await page.getByTestId("play-toggle").click();
+    for (;;) { if ((await tick()) > 300) break; await page.waitForTimeout(300); }
+    await page.getByTestId("play-toggle").click();
+    await page.waitForFunction(() => document.querySelector('[data-testid="play-toggle"]')?.getAttribute("data-playing") === "false");
+    // through the Chronicle: an entry selects who did it
+    await page.keyboard.press("c");
+    await page.getByTestId("chronicle").waitFor({ timeout: 8000 });
+    const entries = page.getByTestId("chronicle-entries").locator('button[title="Go to where this happened"]');
+    const n = await entries.count();
+    let found = false;
+    for (let i = 0; i < Math.min(n, 40) && !found; i++) {
+      await entries.nth(i).click();
+      found = await page.getByTestId("inspector-name").waitFor({ state: "visible", timeout: 1500 }).then(() => true).catch(() => false);
+    }
+    if (!found) throw new Error("no Chronicle entry selected a citizen");
+    const who = await page.evaluate(() => window.__tr.selected()?.id ?? null);
+    await page.getByTestId("follow").click();
+    await page.waitForTimeout(800);
+    const before = { button: await page.getByTestId("follow").getAttribute("aria-pressed"), camera: await page.evaluate(() => window.__tr.following()) };
+    // an entry about the same citizen, somewhere: "Only <name>" narrows the list to them
+    const only = page.getByRole("button", { name: /^Only / });
+    if (await only.count()) await only.click();
+    await page.waitForTimeout(400);
+    const mine = page.getByTestId("chronicle-entries").locator('button[title="Go to where this happened"]');
+    let same = false;
+    for (let i = 0; i < Math.min(await mine.count(), 30) && !same; i++) {
+      await mine.nth(i).click();
+      await page.waitForTimeout(500);
+      same = (await page.evaluate(() => window.__tr.selected()?.id ?? null)) === who;
+      if (same) break;
+    }
+    const after = { button: await page.getByTestId("follow").getAttribute("aria-pressed"), camera: await page.evaluate(() => window.__tr.following()) };
+    console.log(`desktop: following citizen ${who}: button ${before.button}, camera ${before.camera}; after going to an entry about ${same ? "the same citizen" : "someone (no entry about the same citizen was found)"}: button says following: ${after.button}, camera following: ${after.camera} — ${String(after.camera) === after.button ? "they agree" : "THEY DISAGREE"}`);
+    await context.close();
+  }
+  await browser.close();
+})().catch((e) => { console.error(String(e).slice(0, 900)); process.exit(1); });

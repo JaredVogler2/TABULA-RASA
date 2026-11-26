@@ -1429,7 +1429,10 @@ rollback. Read this file before modifying any contract it mentions.
   7 (`7d8a306`) while this record was still being written. This record, the evidence and three small changes
   made after that commit — a card that is tapped or pulled up eases open; the button does not say "Following"
   when a Chronicle entry has just sent the camera elsewhere; the arithmetic of what is covered as a function
-  with tests — are pull request 8.
+  with tests — were merged as pull request 8 (`1a00bf3`), green on GitHub's runners (run 45758359951) and
+  looked for on the site afterwards (`evidence/after-20/after-pr8.txt`). The first two of those three mended
+  faults that the first part had itself brought in, and which were live for the forty minutes between the two
+  merges (`docs/QA_REPORT.md` § Found while fixing).
 - **Affected acceptance tests.** `tests/e2e/play.spec.ts`, whole loop, both projects: a tapped citizen is in
   sight above their card (phone); the card opens and draws back by its arrow and its head; the person
   followed is drawn in the middle of the uncovered map; a drag lets go and says so; Follow brings them back

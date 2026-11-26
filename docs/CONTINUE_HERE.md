@@ -4,14 +4,17 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Current state (2026-11-26)
 
-- **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
+- **Branch:** `claude/friendly-gauss-kejb2m`, brought up to `main` after each merge. Pull requests 1 (phases
   01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
-  D-050) were merged to `main` by the owner on 2026-11-25, and 5 (the record of the deployment, D-051, the
-  phone notice, the charters test), 6 (a notice enters where it stays) and 7 (the fixes for what the owner's
-  phone showed that day: a crowded list, and a Follow that did not appear to follow, D-052) on 2026-11-26.
-  Pull request 8 holds the record of 7 — the decision, the evidence, the documents — and three small changes
-  made after it. **A merge to `main` deploys itself to production**; a push to this branch makes a preview
-  on Vercel behind a login.
+  D-050) were merged to `main` by the owner on 2026-11-25, and on 2026-11-26: 5 (the record of the
+  deployment, D-051, the phone notice, the charters test), 6 (a notice enters where it stays), 7 (the fixes
+  for what the owner's phone showed that day: a crowded list, and a Follow that did not appear to follow,
+  D-052) and 8 (the record of 7, and three small changes made after it). Whether anything later is open or
+  merged is on GitHub, not here: `CHANGELOG.md` has an entry for each pull request, written with it. **A
+  merge to `main` deploys itself to production**; a push to this branch makes a preview on Vercel behind a
+  login. **The owner merges within minutes of a green check, sometimes before a second commit is pushed:**
+  after pushing, look at the pull request's state before pushing again, and open a new one for what was left
+  out.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
@@ -94,7 +97,13 @@ interface covers. `pnpm exec playwright test tests/e2e/play.spec.ts`: 4 passed o
 and 2 skipped by design on the phone project. The whole suite was green on GitHub's runners on `7d8a306`,
 which is what was merged as pull request 7; here a whole-suite run was stopped by hand after 12 of 36, all
 passing (`evidence/after-20/follow.txt`). After that merge both fixes were measured on the deployed site
-(`evidence/after-20/sight-live.md`) and the release check run again: 25 of 25. **The development container loses its services when it
+(`evidence/after-20/sight-live.md`) and the release check run again: 25 of 25. The whole suite was green
+again on `1a00bf3`, which is what was merged as pull request 8; the site was checked after that merge too —
+25 of 25, and the two of its changes that can be seen were looked for and found
+(`evidence/after-20/after-pr8.txt`). The whole-loop test has since gained two assertions: that a tapped card
+eases open (phone project), and that the Follow button agrees with the camera after a jump from the Chronicle
+(desktop project). Each was run against a build with its old line, where it fails, and against the tree,
+where it passes; the whole suite runs in CI on every push, and GitHub has its result. **The development container loses its services when it
 sleeps:** if the database tests fail with `ECONNREFUSED 127.0.0.1:5432`, run `service postgresql start` (the
 role and the database are still there). **Some unit tests draw their cases at random, and
 differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when
