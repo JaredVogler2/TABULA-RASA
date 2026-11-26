@@ -31,8 +31,11 @@ re-run; each was followed to its cause. The first asked for more than the game p
 slower than its world could fall behind it without limit (slowed twenty times at the fastest speed, "paused"
 was shown more than half a minute late): both are fixed and measured before and after (D-050). The second
 depended on where a world running at the fastest speed happened to stop, and now steps its world to a known
-moment. Evidence for both: `evidence/after-20/`. No phase's status changes: phase 15 stays PARTIAL for the
-reason it was — no device.
+moment. A third failure, of a unit test on a commit that changed only documents, was a real edge of the engine's
+bounded copy (a negative zero; D-051). And the release check's own picture of the live site as a phone showed a
+notice sitting on the time controls: fixed, measured and held by a test. Evidence for all four:
+`evidence/after-20/`. Phase 18 became PASS for the game alone (above); phase 15 stays PARTIAL for the reason
+it was — no device.
 
 ## Spend
 

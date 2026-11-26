@@ -1330,3 +1330,32 @@ rollback. Read this file before modifying any contract it mentions.
   make a slow renderer fast — the picture still trails by one turn of the page.
 - **Rollback.** The `taken` message and the two variables in the worker bring back the old behaviour. The
   autosave's "on or after" and the test's assertions do not depend on it and should stay.
+
+## D-051 — The bounded copy holds no negative zero (2026-11-26)
+
+- **Problem.** CI's unit job failed on a commit that changed only documents (run 45730650133, `0e2fbc9`). A
+  property test in `src/engine/core/bounded.test.ts` tries 400 values a run, drawn at random and differently
+  every run; this run drew a negative zero. `boundedCopy` kept it, `JSON.stringify` writes it as `0`, and so a
+  copy written to a decision record and read back was not the copy. The function promises plain JSON data — it
+  is what makes a model's charter safe to keep before the validator has judged it — and for this one value
+  the promise did not hold. Replayed with the seed and path the log printed, it fails the same way.
+- **Why this is a decision.** `bounded.ts` is engine code, and the engine is frozen at 0.7.0.
+- **Alternatives.** (a) Have the test treat the two zeros alike: the gap between the function and its promise
+  stays, unseen. (b) Refuse a negative zero as out of bounds: a whole charter would be thrown away because a
+  model wrote `-0` where it meant nought. (c) Keep it as `0`, which is what JSON does to it and what the
+  engine's canonical form already writes.
+- **Decision.** (c): one line, `return v === 0 ? 0 : v;`. The engine's version stays 0.7.0.
+- **Why the version stays.** No digest, snapshot hash or study hash can move. They are made from the engine's
+  canonical text, which already writes a negative zero as `0` (`core/canonical.ts`) — and that line is the
+  only place in the engine that tells the two zeros apart: no other `Object.is`, no sign test, no division by
+  a value that could be one. The copy is applied to charters and motions that arrive from minds outside the
+  engine (`mind/external.ts`) and to stored worlds being checked. Of the published worlds only the bundled
+  recording has outside minds, and it replays to its recorded digests.
+- **Evidence.** `evidence/after-20/negative-zero.txt`: the failure; its replay with CI's seed before the change
+  (fails, counterexample `-0`) and after (passes); 20,000 further cases; `pnpm test`, 496 of 496.
+- **Affected acceptance tests.** `bounded.test.ts`: one new test for the case, and the property now tries the
+  values that failed on every run, whatever else chance offers it.
+- **Cost / risks.** None known. A test that draws its cases at random can fail on a commit that has nothing
+  to do with it. That is the price of its finding things. Its log prints the seed: replay it; do not run it
+  again and hope.
+- **Rollback.** The one line.

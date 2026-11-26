@@ -140,6 +140,13 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await page.getByTestId("intervene-blight").click();
   await expect(page.getByTestId("forked-badge")).toBeVisible();
   await expect(page.getByTestId("toast")).toContainText("forked");
+  // a notice is said above the time controls, never over them (on a phone the bar is two rows tall, and a
+  // notice used to cover its step button and its clock, by 47 px)
+  const notice = await page.getByTestId("toast").boundingBox();
+  const timeControls = await page.getByRole("group", { name: "Time controls" }).boundingBox();
+  expect(notice, "the notice is on the page").not.toBeNull();
+  expect(timeControls, "the time controls are on the page").not.toBeNull();
+  expect((notice?.y ?? 0) + (notice?.height ?? 0), "the notice ends above the time controls").toBeLessThanOrEqual(timeControls?.y ?? 0);
 
   // ── let both timelines run, then compare them
   await page.getByTestId("speed-5").click();

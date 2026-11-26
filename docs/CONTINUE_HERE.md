@@ -81,6 +81,12 @@ GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after i
 (the charters test steps its world to a known moment): `pnpm exec playwright test tests/e2e/play.spec.ts
 --project=desktop`, 3 passed (`evidence/after-20/e2e-play.txt`).
 
+After those: `pnpm test` is 496 tests (D-051 adds one). **Some unit tests draw their cases at random, and
+differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when
+that happens the log prints a seed and a path. Replay them (`fc.check(property, { seed, path })`), find what
+the value shows, and fix that: the one such failure so far was a real edge (D-051). Do not run the job again
+and hope.
+
 ## Execution order (D-001)
 
 01 ✔ → 02 ✔ → 03 ✔ → 04 ✔ → 05 ✔ → 09 ✔ → 10 ✔ → 06 ✔ → 07 ✔ → 08 (partial) → 11 (partial) → 12 (partial) →

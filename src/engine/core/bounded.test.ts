@@ -124,6 +124,22 @@ describe("boundedCopy: structured data from outside the engine", () => {
     expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
   });
 
+  it("holds no negative zero: written out and read back, a copy is the copy", () => {
+    // JSON.stringify writes -0 as "0". A copy that kept one would differ from itself as a record holds it.
+    // (Found by the property below, on one run in CI: seed -295827057, counterexample -0.)
+    const copy = boundedCopy({ qty: -0, rules: [-0, 0, -1.5, { c: -0 }] });
+    expect(copy.ok).toBe(true);
+    if (!copy.ok) return;
+    const out = copy.value as { qty: number; rules: [number, number, number, { c: number }] };
+    expect(Object.is(out.qty, 0)).toBe(true);
+    expect(Object.is(out.rules[0], 0)).toBe(true);
+    expect(Object.is(out.rules[1], 0)).toBe(true);
+    expect(out.rules[2]).toBe(-1.5);
+    expect(Object.is(out.rules[3].c, 0)).toBe(true);
+    expect(JSON.parse(JSON.stringify(copy.value))).toEqual(copy.value);
+    expect(Object.is((boundedCopy(-0) as { ok: true; value: unknown }).value, 0)).toBe(true);
+  });
+
   it("property: a copy is plain, bounded JSON, and copying it again changes nothing", () => {
     fc.assert(
       fc.property(fc.anything({ maxDepth: 8, withBigInt: true, withDate: true, withMap: true, withNullPrototype: true, withObjectString: true, withSet: true, withTypedArray: true }), (value) => {
@@ -137,7 +153,8 @@ describe("boundedCopy: structured data from outside the engine", () => {
         const again = boundedCopy(copy.value);
         expect(again).toEqual({ ok: true, value: copy.value });
       }),
-      { numRuns: 400 },
+      // every run tries the values that once failed, whatever else chance offers it
+      { numRuns: 400, examples: [[-0], [[-0]], [{ c: -0 }]] },
     );
   });
 });

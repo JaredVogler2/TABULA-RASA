@@ -28,7 +28,7 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 11 | 14 | — | 24 | 1 |
+| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 11 | 16 | — | 26 | 1 |
 
 ## Security review: finding by finding
 
@@ -123,6 +123,8 @@ Defects that neither review reported, found by the tests and measurements writte
 | Medium | A page slower than its world fell behind it without limit: the worker sent thirty frames a second whether or not the page had dealt with the last. With the page slowed twenty times at 64×, "paused" was shown 31–39 seconds after pause was pressed and the page's own timers ran 17–27 seconds late | Following a browser test that failed once in CI back to its cause, then measuring (after phase 20) | The worker sends a frame only when the page has taken the last one (D-050): 0.7–0.9 seconds under the same slowing; four tests in `sim.worker.test.ts` |
 | Low | The two-tabs test demanded an autosave from an even day. The page asks for the autosave when it sees a second morning; at 64× a day lasts three quarters of a second, and on a slow machine the world kept is the next day's. A newer save than the test allowed failed it, once in CI and in five of ten runs here with the page slowed ten times | The failed run; `evidence/after-20/old-assertion.txt` | The test asserts what the game promises — a save from between the last second morning the page saw and where the world stopped — and says what the slot held when it fails |
 | Low | The charters test played its world at the fastest speed until a charter was counted and then pressed pause. In that world the scripted charter lapses unsigned every three and a quarter days and is offered again a quarter of a day later; for those quarter days nothing is live and the lapsed charter is folded away. A slow runner stopped the world inside one — on day 19, nine and a half seconds after the first offer — and the test failed for where the world stopped | A second run that failed in CI, on the commit before D-050; the window worked out from the engine alone (`evidence/after-20/charters-test.txt`) | The test takes the world to a known moment by single steps, which land exactly on any machine, and asserts the charter's state before reading its words |
+| Low | The bounded copy of a model's charter kept a negative zero, which JSON writes back as `0`: written to a record and read back, the copy was not the copy. No digest could tell (the canonical form already writes it as 0), and no published world has one | The property test for it drew `-0` on one run in CI, on a commit that changed only documents; replayed with the seed its log printed (`evidence/after-20/negative-zero.txt`) | The copy holds `0` (D-051); a test for the case, and the property tries it on every run |
+| Low | On every screen 560 px wide or narrower a notice sat 47 px over the time bar, hiding its step button and clock for the five seconds it stays: the bar is two rows tall there, and the notice was placed for one | The release check's own still of the deployed site as a phone; then measured at eight widths (`evidence/after-20/notice-over-time-bar.txt`) | The notice sits above the bar at every width; the whole-loop browser test asserts it on both projects |
 
 ## What the phase asked to be examined, and where each is
 

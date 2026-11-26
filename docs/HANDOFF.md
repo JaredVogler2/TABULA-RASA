@@ -210,7 +210,7 @@ pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 ## Where everything is
 
 - **Start again from here:** [`CONTINUE_HERE.md`](./CONTINUE_HERE.md) — the commit, the commands, what each proves.
-- **What was decided and why:** [`DECISIONS.md`](./DECISIONS.md), 50 entries.
+- **What was decided and why:** [`DECISIONS.md`](./DECISIONS.md), 51 entries.
 - **What was claimed and what backs it:** [`EVIDENCE.md`](./EVIDENCE.md); raw outputs in `evidence/`.
 - **What was found wrong:** [`QA_REPORT.md`](./QA_REPORT.md).
 - **How good it is, by its builder's account:** [`SCORECARD.md`](./SCORECARD.md).

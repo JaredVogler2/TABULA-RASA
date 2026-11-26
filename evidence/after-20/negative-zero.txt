@@ -1,0 +1,69 @@
+# A unit test that failed in CI on a commit that changed only documents
+
+CI run 45730650133 (2026-11-26, the `check` job, commit 0e2fbc9: documents and evidence only), step "Unit,
+property and fuzz tests":
+
+   FAIL  src/engine/core/bounded.test.ts > boundedCopy: structured data from outside the engine
+         > property: a copy is plain, bounded JSON, and copying it again changes nothing
+  Error: Property failed after 238 tests
+  { seed: -295827057, path: "237", endOnFailure: true }
+  Counterexample: [-0]
+  Caused by: AssertionError: expected +0 to deeply equal -0
+   ❯ src/engine/core/bounded.test.ts:133:34
+
+   Test Files  1 failed | 39 passed (40)
+        Tests  1 failed | 494 passed (495)
+
+The property tries 400 values a run, drawn at random and differently every run. On this run one of them was
+a negative zero. `boundedCopy` kept it; `JSON.stringify` writes a negative zero as "0"; so the copy, written
+to a decision record and read back, was not the copy. The function's promise is plain JSON data, and for this
+one value it did not hold. The failure had nothing to do with the commit it appeared on, and it was not a
+fault of the test.
+
+## Replayed, with the seed and path the log printed (the probe is below)
+
+Before the change:
+
+  replay of CI's seed and path: FAILS, counterexample [-0]
+  boundedCopy([-0, { c: -0 }]) keeps a negative zero: true
+  20,000 more cases (seed 7): pass
+
+After it (`return v === 0 ? 0 : v;` in src/engine/core/bounded.ts):
+
+  replay of CI's seed and path: passes
+  boundedCopy([-0, { c: -0 }]) keeps a negative zero: false
+  20,000 more cases (seed 7): pass
+
+## That nothing else moves
+
+  pnpm test: 40 files, 496 tests pass (495 before; the new one pins this case, and the property now tries the
+  values that failed on every run).
+
+The engine's canonical text, from which every digest and hash is made, already writes a negative zero as 0
+(src/engine/core/canonical.ts: `Object.is(value, -0) ? "0" : String(value)`), and that line is the only place
+in the engine that tells the two zeros apart: no other `Object.is`, no sign test, no division by a value that
+could be one. `boundedCopy` is applied to charters and motions that arrive from minds outside the engine
+(src/engine/mind/external.ts) and to a stored world being checked; of the published worlds only the bundled
+recording has outside minds, and it replays to its recorded digests (tests/unit/recording.test.ts, in the run
+above).
+
+## The probe
+
+// Scratch: the property that failed in CI, replayed with the seed and path its log printed.
+import { isDeepStrictEqual } from "node:util";
+import fc from "fast-check";
+import { boundedCopy } from "../../src/engine/core/bounded";
+
+const arbitrary = fc.anything({ maxDepth: 8, withBigInt: true, withDate: true, withMap: true, withNullPrototype: true, withObjectString: true, withSet: true, withTypedArray: true });
+const property = fc.property(arbitrary, (value) => {
+  const copy = boundedCopy(value);
+  if (!copy.ok) return true;
+  // what the test asserts with toEqual: written out as JSON and read back, the copy is the copy
+  return isDeepStrictEqual(JSON.parse(JSON.stringify(copy.value)), copy.value);
+});
+const replay = fc.check(property, { seed: -295827057, path: "237", endOnFailure: true });
+console.log("replay of CI's seed and path:", replay.failed ? `FAILS, counterexample ${fc.stringify(replay.counterexample)}` : "passes");
+const direct = boundedCopy([-0, { c: -0 }]);
+console.log("boundedCopy([-0, { c: -0 }]) keeps a negative zero:", direct.ok && (Object.is((direct.value as unknown[])[0], -0) || Object.is(((direct.value as unknown[])[1] as { c: number }).c, -0)));
+const wide = fc.check(property, { numRuns: 20000, seed: 7 });
+console.log("20,000 more cases (seed 7):", wide.failed ? `FAILS, counterexample ${fc.stringify(wide.counterexample)}` : "pass");
