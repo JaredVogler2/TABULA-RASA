@@ -109,6 +109,9 @@ describe("camera rig: what it looks at is drawn where it can be seen", () => {
     still.rig.resize(390, 600);
     still.rig.update(1 / 60);
     still.rig.setInsets(150, 250);
+    // there already, without waiting for a frame
+    expect(still.rig.focusY()).toBe(250);
+    expect(drawnAt(still.rig, still.rig.target, 390, 600).y).toBeCloseTo(250, 3);
     still.rig.update(1 / 60);
     expect(drawnAt(still.rig, still.rig.target, 390, 600).y).toBeCloseTo(250, 3);
   });

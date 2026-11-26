@@ -31,9 +31,10 @@ Said first, because the rest should be read in its light.
 |---|---|---|
 | A live call to Claude | **never made; $0 spent** | your authorization (below) |
 | The owner's console and live minds on the web | **not deployed**: the game alone is, at https://tabula-rasa-bay.vercel.app | a database (a billable integration, yours to approve), then phase 17 |
-| A person who has played it | none | a playtest |
-| A real device | none: no phone, no graphics chip | a look on your own hardware |
-| A screen reader, Firefox, Safari | not tried | — |
+| A person who has played it | none but you, briefly: on 2026-11-26 you opened it on your phone and reported two defects, both fixed (D-052) | a playtest |
+| A real device | yours, for those few minutes; none here: no phone, no graphics chip | a look on your own hardware, again |
+| A screen reader, Firefox | not tried | — |
+| Safari | not installed here, so nothing was tested in it. The nearest it has come is the browser on your phone, whichever that is: the two reports above | — |
 | Evidence that agreements help the citizens | **the registered positive control failed** (D-044) | a redesigned control, registered anew |
 | A licence | `package.json` says `UNLICENSED` | your decision |
 
@@ -69,6 +70,10 @@ output is in `evidence/`.
 
 Phase 20 asks five questions. The build was "played" by the browser tests and looked at in stills by the agent
 that made it; **not by a person**, and at two or three frames a second. The answers are bounded by that.
+(After this was written you opened the deployed game on your phone and reported two things within minutes: a
+list whose words crowded off the screen, and a Follow that did not appear to follow. Both were real, both had
+passed every test here, and both are fixed — D-052. That is all a person and a device have yet contributed.
+It answers none of the five questions; it does measure what the stills and the tests were missing.)
 
 1. **Is it fun to watch?** Not known. What there is to watch is there — people at work, weather, day and
    night, fires at dusk, paths wearing in, a follow camera, six speeds — and none of it has been seen moving
@@ -96,7 +101,7 @@ that made it; **not by a person**, and at two or three frames a second. The answ
 | 1 | **Say how the scenario's aim turned out.** Each card stated an aim and nothing ever reported it; an observer changed a world and got two columns of numbers. | **Done** (D-049). The Atlas counts it, for the world and its untouched twin; a notice on the morning it is decided. Two aims that could not be met in any world measured were reworded to ones that can go either way |
 | 2 | **Make the Chronicle readable at a glance.** A spring morning logged six identical "A root patch began to recover." lines and pushed everything else off the page. | **Done.** The same sentence at the same hour is one line with a count, and opens out again; nothing is dropped |
 | 3 | **Run a model.** A smoke test, then a small pilot: the project's central claim has no evidence either way. | Blocked on your authorization |
-| 4 | **Put it in front of a person and a device.** | Cannot be done from here |
+| 4 | **Put it in front of a person and a device.** | Cannot be done from here. Begun by you: a few minutes on your phone found two defects (D-052). A playtest and a pass over devices are still to do |
 | 5 | **Repair what the experiment and the long benchmark found:** a positive control that does not hold (D-044), and baseline planners that ask for the unreachable in a crowded famine (D-046). | Recorded, not done: both change behaviour, which means a new engine version and a new registration on new seeds |
 
 Also noted and not done: a per-shore reading in Compare; a resources overlay; a view of everyone's ties at

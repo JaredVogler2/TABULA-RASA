@@ -150,6 +150,7 @@ only the owner can give were reached without having asked for them earlier.
 | The owner | pointed at that failing check | `docs/PROGRESS.md` § Human interventions |
 | The developer agent's own tests and measurements | 19 further defects while fixing the above (9 medium, 10 low; 18 fixed, 1 recorded) | `docs/QA_REPORT.md` § Found while fixing |
 | The registered experiment | that the positive control does not hold | `docs/EXPERIMENT_PROTOCOL.md` §11, D-044 |
+| The owner, on their own phone (2026-11-26, after this was scored) | two defects that every test and still had passed: a list whose words crowded off the screen, and a Follow that held the person followed behind their own card. Three more defects of Follow were found looking into the second | `docs/QA_REPORT.md` § Reported by the owner from their phone, D-052 |
 
 ## Built, then replaced
 
@@ -230,7 +231,10 @@ version, seeds, configuration, hashes).
    scores above are not revised for it: they were given without it. The console is not deployed, and the first
    hosted database will be the first real test of D-047.
 3. **No person and no device.** No playtest, no real phone, no graphics chip, no screen reader, no browser but
-   Chromium, no ear. `docs/QA_REPORT.md` § Not run.
+   Chromium, no ear. `docs/QA_REPORT.md` § Not run. Since this was scored the owner has opened the deployed
+   game on a phone, once, and found two defects within minutes (D-052). The scores above are not revised for
+   it; it is the first measurement of what "nothing here was looked at by a person" was hiding, and it argues
+   for the lower reading of every criterion that rests on stills.
 4. **The positive control failed** (D-044). The experiment as designed cannot show that agreements help; a
    redesign is a new registration on new seeds.
 5. **Baseline planners in a crowded famine ask for the unreachable every tick** (D-046). The cost is fixed; the

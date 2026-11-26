@@ -150,7 +150,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
     await page.getByTestId("inspector-toggle").click();
     await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
     await expect(page.getByTestId("inspector-toggle")).toHaveAccessibleName("Open the whole card");
-    await page.getByTestId("inspector-name").click();
+    await page.getByTestId("inspector-name").tap();
     await expect(page.getByTestId("inspector")).not.toHaveAttribute("data-compact", "true");
   } else {
     // at the side of a wide screen the card is always whole, and has no arrow

@@ -38,6 +38,22 @@ notice was drawn half its width off-centre while it faded in, and jumped. Eviden
 `evidence/after-20/`. Phase 18 became PASS for the game alone (above); phase 15 stays PARTIAL for the reason
 it was — no device.
 
+**What a phone showed (2026-11-26).** The owner opened the deployed game on their phone and within minutes
+reported two things that every test and every still had passed over (interventions 17 and 18, below): the
+Recordings sheet with its words crowded into a sliver and running off the screen, and a Follow that did not
+appear to follow — on a phone the person followed was held behind their own card. Both are fixed, and four
+more faults of Follow were found beside them: a tapped citizen hidden the same way, a zoom that ended the
+follow without a word, a camera that went on tracking the first person after a second was chosen, and a
+camera that trailed a walker at low frame rates (D-052). What changed in how things are tested matters as much
+as the fixes: the flow test used to read that the button said "Following"; it now measures where the person is
+drawn and what is on top of that point of the page. Evidence: `evidence/after-20/sight-before.md` (the
+deployed build) against `sight-after.md`, `rows.txt`, `follow.txt`. The owner merged the fixes as pull request
+7, and four minutes later the deployed site was measured the same way and showed neither fault
+(`evidence/after-20/sight-live.md`); the release check passed again, 25 of 25
+(`evidence/phase-18/release-check-after-pr7.txt`). Phases 11 and 12 stay PARTIAL: this was a few minutes of
+one person on one phone, not a playtest or a pass over devices, and the fixes have been measured in Chromium
+at a phone's size, not seen on a phone by the builder.
+
 ## Spend
 
 Anthropic API: **$0.00** (no calls made, no key configured). Infrastructure: one Vercel project, made by the
@@ -69,7 +85,23 @@ Everything the owner did or said, from the session's own record (times in UTC, 2
 14. 2026-11-26, about 00:55 — "Proceed with fable 5.2 max fast mode": a go-ahead, and a setting of theirs.
 15. 2026-11-26, 01:38 — merged pull request 5, seven minutes after its last check went green. The site
     rebuilt by itself.
+16. 2026-11-26, 02:19 — merged pull request 6 (a notice enters where it stays), its checks green. The site
+    rebuilt by itself.
+17. 2026-11-26, about 02:23 — "Minor formatting tweak needed with crowding words at opening of app", with a
+    picture from their phone of the Recordings sheet on the deployed site. **The first report from a person
+    using the game, and from a physical device.** It was a defect in every list of rows on a phone; fixed
+    (D-052).
+18. 2026-11-26, 02:29 — "Following a person doesn't seem to move the camera and track them unless I doing
+    something wrong I do not think this functionality works as intended correct me if I am wrong". They were
+    doing nothing wrong: on a phone the person followed was held behind their own card. Fixed, with four
+    more defects of Follow found while looking (D-052).
+19. 2026-11-26, about 04:43 — "Try again". Nothing had failed: pull request 7 had been open for three
+    quarters of an hour with its checks green, and its second commit was still being made.
+20. 2026-11-26, 04:44 — merged pull request 7, at its first commit (the fixes and their tests), twenty-seven
+    minutes after its checks went green and about a minute before the second commit was pushed. The site
+    rebuilt by itself; the record of the work became pull request 8.
 
-No design direction, code, review, test result or decision came from a person beyond these. A deployment of
-the game alone was authorized, and made by the owner. No spend, key, database or other billable infrastructure
-has been authorized.
+Items 17 and 18 are the only observations of the product by a person other than the builder. No design
+direction, code, review, test result or decision came from a person beyond what is listed. A deployment of the
+game alone was authorized, and made by the owner. No spend, key, database or other billable infrastructure has
+been authorized.

@@ -28,7 +28,8 @@ not do — are fixed, one of them by changing the code to do what the document s
 |---|---|---|---|---|---|---|---|
 | Security review | 0 | 0 | 8 | 16 | 8 | 26 | 6 |
 | Documentation audit | — | 5 | 17 | 16 | — | 38 | 0 |
-| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 11 | 17 | — | 27 | 1 |
+| Found while fixing (and, later, in phases 18–20 and after) | 0 | 0 | 12 | 19 | — | 30 | 1 |
+| Reported by the owner from their phone (2026-11-26) | 0 | 0 | 2 | 0 | — | 2 | 0 |
 
 ## Security review: finding by finding
 
@@ -92,6 +93,16 @@ Reproduction for each is in `evidence/phase-16/review-documentation.md`.
 | L3 | A generated server module did not import `server-only` | The generator emits it |
 | L4–L7, L9, L16 | Small inaccuracies in architecture, cost, model description and charter | Corrected where they stand |
 
+## Reported by the owner from their phone
+
+The only two findings in this report that came from a person using the product, and from a physical device.
+Both had passed every test and every still here (D-052).
+
+| Sev. | What was reported | What it was | Fix |
+|---|---|---|---|
+| Medium | "Minor formatting tweak needed with crowding words at opening of app", with a picture of the Recordings sheet on the deployed site | On every phone width a row's name was squeezed into a sliver and broken one word to a line, and the rest of the row ran off the edge of the sheet, which then scrolled sideways: a row was a grid whose second part took the width of its words and could not wrap. The list of saved worlds, drawn with the same style, had the same fault; the world lines and a citizen's lists did not show it with the words they held. The flow test found the name, read it and pressed it (`evidence/after-20/sight-before.md`, `evidence/after-20/rows.txt`) | A row's parts sit side by side when both fit and one below the other when they do not. `tests/e2e/layout.ts` measures every list a flow meets, and the Recordings sheet at seven sizes. **Not verified:** the picture also showed the name drawn over the paragraph above, which Chromium does not do; the alignment taken to cause it is gone, and no browser with that engine is installed here |
+| Medium | "Following a person doesn't seem to move the camera and track them" | On a phone a citizen's card is a sheet over the lower part of the map, the camera held whoever it followed at the middle of the canvas, and the middle of the canvas was behind the sheet. Closing the card to look ended the follow. The flow test pressed Follow and read "Following" off the button (`evidence/after-20/sight-before.md`) | The camera draws what it looks at in the middle of the map the interface leaves uncovered; a card opens drawn back to its head, and a tapped citizen is turned to. The flow test measures where the person is drawn and what is on top of that point, at rest and with time running |
+
 ## Found while fixing
 
 Defects that neither review reported, found by the tests and measurements written for the fixes.
@@ -126,6 +137,9 @@ Defects that neither review reported, found by the tests and measurements writte
 | Low | The bounded copy of a model's charter kept a negative zero, which JSON writes back as `0`: written to a record and read back, the copy was not the copy. No digest could tell (the canonical form already writes it as 0), and no published world has one | The property test for it drew `-0` on one run in CI, on a commit that changed only documents; replayed with the seed its log printed (`evidence/after-20/negative-zero.txt`) | The copy holds `0` (D-051); a test for the case, and the property tries it on every run |
 | Low | On every screen 560 px wide or narrower a notice sat 47 px over the time bar, hiding its step button and clock for the five seconds it stays: the bar is two rows tall there, and the notice was placed for one | The release check's own still of the deployed site as a phone; then measured at eight widths (`evidence/after-20/notice-over-time-bar.txt`) | The notice sits above the bar at every width; the whole-loop browser test asserts it on both projects |
 | Low | Every notice was drawn half its width to the right of the centre for the quarter second it faded in (124 px on a desktop), then jumped to the middle: its entry animated `transform`, which replaced the transform that centres it | One measurement that caught a notice mid-entry; then its entry sampled frame by frame on the live site (`evidence/after-20/notice-entry.txt`). No still picture could have shown it | An entry of the notice's own that keeps the centring; the whole-loop browser test measures the first frame on both projects |
+| Medium | Choosing another citizen while one was being followed left the camera tracking the first: the card and its Follow button were about the second. On every screen, since Follow was written | Reading how a follow ends, after the owner's report (D-052) | The camera lets go when the selection passes to someone or somewhere else; the flow test asks the camera itself whether it is following, beside reading the button. Reverting the one line fails that test (`evidence/after-20/follow.txt`) |
+| Low | Zooming, turning or tilting the view ended a follow without saying so: a pinch to see the person better let go of them | The same reading | Only moving the view across the ground lets go; `cameraRig.test.ts`, and the flow test zooms while following |
+| Low | The camera was moved before the people each frame, and with its step capped at a tenth of a second: at a few frames a second it trailed a walker it was following by a tile or more | Measuring how far a followed citizen strays from where they are held, for the flow test's tolerance (`evidence/after-20/sight-before.md` against `sight-after.md`) | People take their places first, and the camera is given the time that really passed; `cameraRig.test.ts` holds the step, the flow test the straying |
 
 ## What the phase asked to be examined, and where each is
 

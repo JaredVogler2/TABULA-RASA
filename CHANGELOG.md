@@ -5,7 +5,52 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 6 — notices enter where they stay (2026-11-26, open)
+## Pull request 8 — the record of what the phone showed (2026-11-26)
+
+Engine 0.7.0, unchanged. Written with the pull request: whether it has been merged is on GitHub, not here.
+
+- D-052: the two reports from the owner's phone, what each was, the four further faults of Follow found
+  beside them, what was decided, and how to undo it.
+- Both reports measured the same way against the deployed site before the fixes, against the fixed build, and
+  against the deployed site again once pull request 7 was merged: `node scripts/sight.mjs <address> <folder>`
+  (`evidence/after-20/sight-before.md`, `sight-after.md`, `sight-live.md`, with stills). They are live.
+- A card that is tapped or pulled up eases open instead of jumping.
+- The Follow button no longer says "Following" when a Chronicle or journal entry has just sent the camera
+  somewhere else.
+- The arithmetic of what the interface covers is a function of its own, with tests.
+- The documents now say that a person has used the game — once, on one phone — and what that found.
+
+## Pull request 7 — what the owner's phone showed (2026-11-26, merged)
+
+Engine 0.7.0, unchanged.
+
+**For someone playing, on a phone**
+- **Follow follows.** The person followed is drawn in the middle of the map that the bars and their card leave
+  uncovered, and stays there as they walk. They used to be held at the middle of the screen, which on a phone
+  is behind their own card: the button said "Following" and there was nobody to see (D-052).
+- A tapped citizen stays in sight: the view turns to them and their card opens drawn back to its head — name,
+  what they are doing, who decided, Follow. A tap on the card's head, a pull up or its arrow opens the whole
+  card; a pull down or the cross closes it.
+- Lists read as lists. In the Recordings sheet the name of a recording was squeezed into a sliver, one word to
+  a line, with the rest of the row running off the screen; the list of saved worlds had the same fault. A
+  name and what is said about it now sit side by side when they fit and one under the other when they do
+  not.
+
+**For someone playing, on any screen**
+- Zooming, turning or tilting the view no longer ends a follow without a word; only moving the view away does.
+- Choosing someone else while following lets go of the first person. The camera used to go on tracking them
+  while the card and its button were about the second.
+- On a slow device the camera keeps up with whoever it follows: it trailed a walker by a tile or more at a few
+  frames a second.
+
+**Under it**
+- The browser tests measure where a citizen is drawn and what is on top of that point of the page, and every
+  list of rows a flow meets (`tests/e2e/layout.ts`). Until now they read that a button said "Following".
+
+**Not in it:** a look at any of this on a physical phone by the builder, or in any browser but Chromium. The
+owner's phone is where both faults were seen; the fixes have been measured in Chromium at a phone's size.
+
+## Pull request 6 — notices enter where they stay (2026-11-26, merged)
 
 Engine 0.7.0, unchanged.
 

@@ -1,0 +1,291 @@
+Follow: what it did, what it does, and what holds it
+====================================================
+
+2026-11-26. Four cores of an Intel Xeon at 2.3 GHz, no graphics chip; headless Chromium with a software
+rasterizer, at a phone's size (390 x 844) and a desktop's (1366 x 768). Not a phone.
+
+The report, from the owner, on the deployed game on their phone:
+  "Following a person doesn't seem to move the camera and track them unless I doing something wrong I
+   do not think this functionality works as intended correct me if I am wrong"
+
+They were doing nothing wrong.
+
+
+1. Before and after, measured the same way
+------------------------------------------
+
+node scripts/sight.mjs <address> evidence/after-20 --name <name> --shots
+  sight-before.md / .json   the deployed build (https://tabula-rasa-bay.vercel.app, from main at 1bb4759)
+  sight-after.md / .json    a production build of this tree, served here
+  sight-<name>-phone-tapped.jpg, -following.jpg, -walked.jpg, and the same for desktop
+
+On a phone, deployed build:
+  tapped           drawn at (182, 365)   on top there: the card (its body)        card 213..703
+  Follow pressed   drawn at (195, 406)   on top there: the card (a button of it)  button: Following
+  zoomed in        drawn at (195, 403)   under the card                           button: Follow  <- the zoom ended it
+  time at 8x       29 samples in twelve seconds: under the card in 29
+On a phone, this tree:
+  tapped           drawn at (195, 286)   on top there: the map                    card 416..703 (drawn back)
+  Follow pressed   drawn at (195, 274)   the map                                  button: Following
+  zoomed in        drawn at (195, 271)   the map                                  button: Following
+  time at 8x       30 samples: under something in 0; never more than 19 px from where they are held
+On a desktop the person was in sight on both builds (the card is at the side). There the zoom ended
+the follow on the deployed build and does not on this tree, and with time running the person strayed
+up to 64 px from where they were held on the deployed build, 13 px on this tree. (On the phone the
+deployed build's figure is 39 px, behind the card.) These are single runs of twelve seconds each: the
+straying depends on how far the person happens to walk, and on how few frames a second this machine
+draws. What they show is the direction; what holds it is in sections 2 to 4.
+
+
+2. The parts, tested without a browser
+--------------------------------------
+
+pnpm exec vitest run src/render/cameraRig.test.ts src/render/pick.test.ts src/ui/game/swipe.test.ts src/ui/game/coverOf.test.ts --reporter=verbose
+
+ ✓ src/render/pick.test.ts > selections: the same thing or another > a citizen is the same citizen and nobody else 1ms
+ ✓ src/render/pick.test.ts > selections: the same thing or another > a place is one place whatever stands on it 0ms
+ ✓ src/render/pick.test.ts > selections: the same thing or another > nothing is the same as nothing 0ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > nothing, when nothing stands on it 2ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > the bars from the top, and the time bar from the bottom 0ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > a sheet that has risen covers from its top edge down, whatever is under it 0ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > a banner in a row of its own under the bars counts with them 0ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > a part that is not laid out covers nothing 0ms
+ ✓ src/ui/game/coverOf.test.ts > what the interface covers of the map > is measured from the map's own edges, wherever the map is on the page 0ms
+ ✓ src/render/cameraRig.test.ts > camera rig: what it looks at is drawn where it can be seen > draws it at the middle of the picture when nothing is covered 9ms
+ ✓ src/render/cameraRig.test.ts > camera rig: what it looks at is drawn where it can be seen > draws it at the middle of what the interface leaves uncovered 5ms
+ ✓ src/render/cameraRig.test.ts > camera rig: what it looks at is drawn where it can be seen > looks through the same lens: only where the picture is cut from it changes 6ms
+ ✓ src/render/cameraRig.test.ts > camera rig: what it looks at is drawn where it can be seen > moves there over several frames, and at once when motion is reduced 5ms
+ ✓ src/render/cameraRig.test.ts > camera rig: what it looks at is drawn where it can be seen > keeps the middle inside the picture whatever it is told, and follows the picture's size 6ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > keeps the person followed where the rig looks, as they move 2ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > is not ended by zooming, turning or tilting — by keys, the wheel, an Alt-drag or two fingers 2ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > is ended by moving the view across the ground: a one-finger drag, or the arrow keys 0ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > does not fall behind a walker when frames are slow, given the time that has really passed 3ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > takes an ordinary frame as it is, and never a frame longer than a second 1ms
+ ✓ src/render/cameraRig.test.ts > camera rig: following > ends by itself when the person followed is no longer there 0ms
+ ✓ src/ui/game/swipe.test.ts > pulling a sheet down: when letting go closes it > far enough closes it however slowly it was pulled 1ms
+ ✓ src/ui/game/swipe.test.ts > pulling a sheet down: when letting go closes it > a short pull closes it only as a flick 0ms
+ ✓ src/ui/game/swipe.test.ts > pulling a sheet down: when letting go closes it > a touch that does not move, or moves up, never closes anything 0ms
+ ✓ src/ui/game/swipe.test.ts > pulling a drawn-back sheet up: when letting go opens it > opens when pulled up far enough, and not by a touch that barely moved or went down 0ms
+ ✓ src/ui/game/swipe.test.ts > pulling a drawn-back sheet up: when letting go opens it > a tap is not a pull: what opens a sheet is further than what counts as a tap 0ms
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+
+
+3. Each rule broken on purpose, one line at a time
+--------------------------------------------------
+
+For each: one line of the source is changed, the unit tests of its file are run, and the source is put
+back. "FAILS" is the wanted answer: some test notices.
+
+FAILS  the cover is ignored (the picture is never moved)
+       src/render/cameraRig.ts
+       × camera rig: what it looks at is drawn where it can be seen > draws it at the middle of what the interface leaves uncovered
+       × camera rig: what it looks at is drawn where it can be seen > looks through the same lens: only where the picture is cut from it changes
+       × camera rig: what it looks at is drawn where it can be seen > moves there over several frames, and at once when motion is reduced
+       × camera rig: what it looks at is drawn where it can be seen > keeps the middle inside the picture whatever it is told, and follows the picture's size
+       × camera rig: following > keeps the person followed where the rig looks, as they move
+FAILS  the picture is moved the wrong way
+       src/render/cameraRig.ts
+       × camera rig: what it looks at is drawn where it can be seen > draws it at the middle of what the interface leaves uncovered
+       × camera rig: what it looks at is drawn where it can be seen > looks through the same lens: only where the picture is cut from it changes
+       × camera rig: what it looks at is drawn where it can be seen > moves there over several frames, and at once when motion is reduced
+       × camera rig: what it looks at is drawn where it can be seen > keeps the middle inside the picture whatever it is told, and follows the picture's size
+       × camera rig: following > keeps the person followed where the rig looks, as they move
+FAILS  the middle may leave the picture (no limit on the move)
+       src/render/cameraRig.ts
+       × camera rig: what it looks at is drawn where it can be seen > keeps the middle inside the picture whatever it is told, and follows the picture's size
+FAILS  the picture jumps instead of easing
+       src/render/cameraRig.ts
+       × camera rig: what it looks at is drawn where it can be seen > moves there over several frames, and at once when motion is reduced
+FAILS  reduced motion is not respected (the picture always eases)
+       src/render/cameraRig.ts
+       × camera rig: what it looks at is drawn where it can be seen > moves there over several frames, and at once when motion is reduced
+FAILS  a zoom, a turn or a tilt ends a follow (as it used to)
+       src/render/cameraRig.ts
+       × camera rig: following > is not ended by zooming, turning or tilting — by keys, the wheel, an Alt-drag or two fingers
+FAILS  moving the view across the ground does not end a follow
+       src/render/cameraRig.ts
+       × camera rig: following > is ended by moving the view across the ground: a one-finger drag, or the arrow keys
+FAILS  the camera's step is capped at a tenth of a second (as it used to be)
+       src/render/timing.ts
+       × camera rig: following > does not fall behind a walker when frames are slow, given the time that has really passed
+       × camera rig: following > takes an ordinary frame as it is, and never a frame longer than a second
+FAILS  a follow never ends by itself when the person is gone
+       src/render/cameraRig.ts
+       × camera rig: following > ends by itself when the person followed is no longer there
+FAILS  any two citizens are the same selection
+       src/render/pick.ts
+       × selections: the same thing or another > a citizen is the same citizen and nobody else
+FAILS  a place is another place when something else stands on it
+       src/render/pick.ts
+       × selections: the same thing or another > a place is one place whatever stands on it
+FAILS  a part of the interface that is not laid out counts as covering the map
+       src/ui/game/coverOf.ts
+       × what the interface covers of the map > a part that is not laid out covers nothing
+FAILS  the bars count as standing over the bottom, and the sheets over the top
+       src/ui/game/coverOf.ts
+       × what the interface covers of the map > the bars from the top, and the time bar from the bottom
+       × what the interface covers of the map > a sheet that has risen covers from its top edge down, whatever is under it
+       × what the interface covers of the map > a banner in a row of its own under the bars counts with them
+       × what the interface covers of the map > a part that is not laid out covers nothing
+       × what the interface covers of the map > is measured from the map's own edges, wherever the map is on the page
+FAILS  the last sheet counts, not the one that reaches furthest
+       src/ui/game/coverOf.ts
+       × what the interface covers of the map > a sheet that has risen covers from its top edge down, whatever is under it
+FAILS  the cover is measured from the top of the page, not of the map
+       src/ui/game/coverOf.ts
+       × what the interface covers of the map > is measured from the map's own edges, wherever the map is on the page
+FAILS  a pull down opens a drawn-back sheet
+       src/ui/game/swipe.ts
+       × pulling a drawn-back sheet up: when letting go opens it > opens when pulled up far enough, and not by a touch that barely moved or went down
+FAILS  a touch that barely moves opens a drawn-back sheet
+       src/ui/game/swipe.ts
+       × pulling a drawn-back sheet up: when letting go opens it > a tap is not a pull: what opens a sheet is further than what counts as a tap
+
+17 of 17 breakages fail at least one test
+
+
+4. The camera lets go when someone else is chosen: the one rule only a browser can hold
+----------------------------------------------------------------------------------------
+
+The old line was put back in src/render/WorldRenderer.ts (the camera let go only when nothing was
+selected), the production build made again, and the whole-loop test run on the desktop project:
+
+Running next.config.ts took 24ms
+
+Running 1 test using 1 worker
+
+  ✘  1 [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (1.9m)
+
+
+  1) [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline ────
+
+    Error: the camera has let go of the first person
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+      254 |   expect(other, "someone else was chosen").not.toBe(who);
+      255 |   await expect(follow).toHaveAttribute("aria-pressed", "false");
+    > 256 |   expect(await page.evaluate(() => window.__tr?.following()), "the camera has let go of the first person").toBe(false);
+          |                                                                                                            ^
+      257 |   await page.getByTestId("inspector-close").click();
+      258 |   await expect(page.getByTestId("inspector")).toHaveCount(0);
+      259 |
+        at /home/user/TABULA-RASA/tests/e2e/play.spec.ts:256:108
+
+    Error Context: test-results/play-a-new-player-can-complete-the-whole-loop-offline-desktop/error-context.md
+
+  1 failed
+    [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline ─────
+exit 1
+
+On the line before the one that fails, the test read that the button had gone back to "Follow" — and it
+had. Reading the button is what this test used to do. The source was then restored and built again.
+
+
+5. The browser tests, on this tree
+----------------------------------
+
+pnpm exec playwright test tests/e2e/play.spec.ts --project=mobile --trace off
+
+Running next.config.ts took 22ms
+
+Running 4 tests using 1 worker
+
+  ✓  1 [mobile] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (2.9m)
+  ✓  2 [mobile] › tests/e2e/play.spec.ts:360:1 › lists of rows are whole from the smallest phone to a desktop: the Recordings sheet (19.2s)
+  -  3 [mobile] › tests/e2e/play.spec.ts:391:1 › the keyboard alone can drive the game: every key it reads, and never a pointer
+  -  4 [mobile] › tests/e2e/play.spec.ts:521:1 › charters are shown in plain words, with how they came about
+
+  2 skipped
+  2 passed (3.2m)
+exit 0
+
+pnpm exec playwright test tests/e2e/play.spec.ts --project=desktop --trace off
+
+Running next.config.ts took 32ms
+
+Running 4 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/play.spec.ts:54:1 › a new player can complete the whole loop offline (3.4m)
+  ✓  2 [desktop] › tests/e2e/play.spec.ts:360:1 › lists of rows are whole from the smallest phone to a desktop: the Recordings sheet (25.6s)
+  ✓  3 [desktop] › tests/e2e/play.spec.ts:391:1 › the keyboard alone can drive the game: every key it reads, and never a pointer (1.8m)
+  ✓  4 [desktop] › tests/e2e/play.spec.ts:521:1 › charters are shown in plain words, with how they came about (1.3m)
+
+  Slow test file: [desktop] › tests/e2e/play.spec.ts (6.9m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  4 passed (7.0m)
+exit 0
+
+In the whole-loop test, on both projects: the person tapped is in sight above their card (phone); the
+card opens and draws back by its arrow, and opens by a tap on its head; the person followed is in the
+middle of the uncovered map; a drag lets go of them and the button says so; Follow brings them back to
+within 12 px of where they were held; a zoom keeps the follow; over a quarter of a day at 8x they are
+never under a bar or the card and never more than 70 px from where they are held; someone else is
+chosen and both the button and the camera have let go.
+
+
+6. The whole suite
+------------------
+
+On GitHub's runners, on the first commit of this pull request (7d8a306, the fixes and their tests):
+run 45752121337 — check, e2e (mobile) and e2e (desktop) all green (3, 13 and 20 minutes).
+
+Here, a whole-suite run on that same tree was started and then stopped by hand after its first twelve
+tests, all on the desktop project and all passing, to free the machine for the measurements above:
+
+Running 36 tests using 1 worker
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (3.8m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (292ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (19ms)
+  ✓   4 [desktop] › tests/e2e/history.spec.ts:64:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (6.6m)
+  ✓   5 [desktop] › tests/e2e/lab.spec.ts:40:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (18.1s)
+  ✓   6 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (1.8m)
+  ✓   7 [desktop] › tests/e2e/owner.spec.ts:67:1 › a visitor without a session learns nothing and can change nothing (216ms)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:104:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (2.3s)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:162:1 › authorizing spend takes the words, and the kill switch works from the console (713ms)
+  ✓  10 [desktop] › tests/e2e/owner.spec.ts:203:1 › a visitor replays the published run from its record, and every epoch matches (10.2s)
+  ✓  11 [desktop] › tests/e2e/owner.spec.ts:228:1 › the bundled recording plays from the title screen and matches its record to the end (45.0s)
+  ✓  12 [desktop] › tests/e2e/owner.spec.ts:268:1 › signing out ends every session, wherever its cookie was copied to (348ms)
+  (stopped here; the phone project was not reached)
+
+After that commit three small things changed, and are in the tree the runs of section 5 were made on:
+a card that is tapped or pulled up eases open instead of jumping; the button no longer says
+"Following" if a Chronicle entry has just sent the camera elsewhere; and the arithmetic of what the
+interface covers moved into a function of its own with tests (section 2). The whole suite on this
+tree is CI's to run on the commit that carries this file.
+
+
+7. Not shown
+------------
+
+- Anything on a physical phone, or in a phone's own browser. Everything above is Chromium.
+- How it feels: whether the map turning to a tapped person is welcome, whether a card that opens
+  drawn back is found to open. Those are for a person to say.
+- A pull upwards on the card's head, as a gesture: its rule is unit-tested and the tap and the arrow
+  are run in a browser; the drag itself is not.
+
+
+8. Afterwards (written the same hour)
+-------------------------------------
+
+The owner merged pull request 7 at 04:44 UTC, at 7d8a306: the fixes and their tests, the tree section 6
+calls "the first commit". This file, the rest of the evidence and the three small changes named in
+section 6 were pushed about a minute after that merge, and so are in pull request 8.
+
+The deployed site was then measured the same way as in section 1, starting three and a half minutes after
+the merge (sight-live.md / .json, and the stills beside them):
+  On a phone-sized page:
+    tapped           drawn at (195, 286)   on top there: the map     card 416..703 (drawn back)
+    Follow pressed   drawn at (195, 274)   the map                   button: Following
+    zoomed in        drawn at (195, 271)   the map                   button: Following
+    time at 8x       35 samples in twelve seconds: under something in 0; never more than 17 px from
+                     where they are held
+  On a desktop-sized page: in sight throughout; the follow kept through the zoom; never more than 12 px.
+  The Recordings row: the name on one line with the row to itself, at six sizes from 320 to 1366 px.
+The release check against the site, after that: 25 of 25 (evidence/phase-18/release-check-after-pr7.txt).
+
+Still not shown: any of it on a phone.
