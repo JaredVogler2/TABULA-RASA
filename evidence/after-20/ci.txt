@@ -1,0 +1,29 @@
+Continuous integration on GitHub for the commits after phase 20 — as the repository reported it on 2026-11-25
+
+Three jobs on GitHub's own machines (ubuntu-latest, Node 22, PostgreSQL 16): check (lint, types, unit tests,
+generated files, links, scans, build, bundle scan), and the whole browser suite once for each project.
+
+  run          commit    check     e2e (mobile)   e2e (desktop)   what failed
+  45690303999  55dc9db   success   success        FAILURE         two-tabs test: the autosave assertion (D-050); the
+                                                                  renderer-fallback test: its 300-second limit
+  45695515802  de2f0e1   success   success        success         —
+  45704267429  8f120ac   success   success        FAILURE         charters test: stopped where nothing was live
+                                                                  (charters-test.txt)
+  45717983573  b25d1b7   success   success        success         —   (D-050)
+
+The last, job by job:
+
+  job            result    started (UTC)          finished (UTC)
+  check          success   2026-11-25T23:01:01Z   2026-11-25T23:04:04Z
+  e2e (mobile)   success   2026-11-25T23:01:01Z   2026-11-25T23:18:47Z
+  e2e (desktop)  success   2026-11-25T23:01:01Z   2026-11-25T23:26:20Z
+
+https://github.com/JaredVogler2/TABULA-RASA/actions/runs/45717983573
+
+Neither failed run was run again. Each failure was followed to its cause: old-assertion.txt and
+trail-before.md for the first, charters-test.txt for the second. The desktop browser step took 26.8 minutes on
+55dc9db and 31.5 on 8f120ac; the whole desktop job, set-up included, took 25.3 on b25d1b7. One run each, on
+machines that are not the same from run to run: noted, and nothing is claimed from it.
+
+Pull request 4 was merged at b25d1b7. The commit after it rewrites the charters test; its run is on the pull
+request that follows.

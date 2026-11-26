@@ -5,7 +5,25 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, open)
+## Pull request 5 — the release, and what looking at it found (2026-11-26, open)
+
+Engine 0.7.0: one line changed, no behaviour (D-051).
+
+- A second browser test that failed once in CI, the charters test, depended on where a world running at the
+  fastest speed happened to stop: in its world the scripted charter lapses and is offered again every three
+  and a quarter days, and for a quarter of a day in between nothing is live. It now steps the world to a known
+  moment and asserts the charter's state before reading its words.
+- Recorded: the whole browser suite with D-050 in place, here and on GitHub's runners; how the window the
+  failed run stopped in was worked out from the engine alone.
+- **The game is deployed: https://tabula-rasa-bay.vercel.app** — a Vercel project made by the owner's import, from
+  `main` at `41a4ffa`. The release check passes against it, 25 of 25. The owner's console and live minds are
+  not deployed.
+- On a phone a notice no longer sits on top of the time controls: it used to cover the step button and the
+  clock for the five seconds it stays. Seen in the release check's own picture of the live site.
+- A charter from a model can no longer carry a negative zero into a record (D-051). Found by a test that draws
+  its cases at random, on a commit that had nothing to do with it.
+
+## Pull request 4 — after phase 20: a page slower than its world (2026-11-25, merged)
 
 Engine 0.7.0, unchanged. Snapshot schema 6. Affordances 2026.11-i. Prompt p2.
 

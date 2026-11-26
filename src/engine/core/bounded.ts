@@ -67,7 +67,9 @@ export function boundedCopy(value: unknown, bounds: Bounds = PAYLOAD_BOUNDS): { 
     if (typeof v === "number") {
       // JSON has no NaN or infinity; nothing the engine reads from here should either
       if (!Number.isFinite(v)) throw new OutOfBounds();
-      return v;
+      // Nor a negative zero: written out it is "0", so a copy that kept one would not be the copy that is
+      // read back from a record. (The engine's canonical form already writes it as 0: no digest can tell.)
+      return v === 0 ? 0 : v;
     }
     if (typeof v === "string") {
       const text = cleanText(v, bounds.text);

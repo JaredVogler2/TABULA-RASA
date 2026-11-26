@@ -1,0 +1,46 @@
+# A notice sat on top of the time controls on every phone
+
+Seen in the release check's own still of the deployed site as a phone (evidence/phase-18/deployed-phone-2-world.jpg:
+"Field journal · Something put by" over the step button and the clock), then measured.
+
+On a screen 560 px wide or narrower the time bar is two rows tall — play, step and clock above the six speeds —
+and a notice was still placed where it clears a bar of one row.
+
+Measured in headless Chromium against the production build: a world is made, the game is saved from the menu,
+and the notice ("Saved. Snapshot …") and the time bar are measured. Top and bottom edges in CSS pixels.
+
+Before:
+
+  320x640: notice 493..554  time bar 507..630 (123 tall)  OVERLAP 47px
+  360x740: notice 593..654  time bar 607..730 (123 tall)  OVERLAP 47px
+  390x844: notice 697..758  time bar 711..834 (123 tall)  OVERLAP 47px
+  430x932: notice 785..846  time bar 799..922 (123 tall)  OVERLAP 47px
+  560x800: notice 672..714  time bar 667..790 (123 tall)  OVERLAP 47px
+  561x800: notice 672..714  time bar 726..790 (64 tall)  clear by 12px
+  768x1024: notice 896..938  time bar 950..1014 (64 tall)  clear by 12px
+  1366x768: notice 640..682  time bar 696..758 (62 tall)  clear by 14px
+
+After (three lines of CSS under the same 560 px rule that makes the bar two rows):
+
+  320x640: notice 434..495  time bar 507..630 (123 tall)  clear by 12px
+  360x740: notice 534..595  time bar 607..730 (123 tall)  clear by 12px
+  390x844: notice 638..699  time bar 711..834 (123 tall)  clear by 12px
+  430x932: notice 726..787  time bar 799..922 (123 tall)  clear by 12px
+  560x800: notice 613..655  time bar 667..790 (123 tall)  clear by 12px
+  561x800: notice 672..714  time bar 726..790 (64 tall)  clear by 12px
+  768x1024: notice 896..938  time bar 950..1014 (64 tall)  clear by 12px
+  1366x768: notice 640..682  time bar 696..758 (62 tall)  clear by 14px
+
+Stills at 390 px: notice-390-before.jpg, notice-390-after.jpg.
+
+The notice never took a press (it lets them through); it hid what was under it for the five seconds it stays.
+
+Held by: tests/e2e/play.spec.ts, "a new player can complete the whole loop offline", on both projects: after the
+intervention's notice appears, its lower edge is at or above the time controls' upper edge.
+
+  pnpm exec playwright test tests/e2e/play.spec.ts -g "whole loop" --trace off
+    ✓  1 [desktop] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.4m)
+    ✓  2 [mobile] › tests/e2e/play.spec.ts:53:1 › a new player can complete the whole loop offline (2.1m)
+    2 passed (4.5m)
+
+The site that is deployed was built before this change: it shows the overlap until this is merged to `main`.

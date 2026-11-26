@@ -1637,6 +1637,11 @@
   .dayTrack {
     flex: 1;
   }
+  /* the bar is two rows tall here (123 px, where it is 64 on a wider screen): a notice sits above it, as it
+     does everywhere else, and not over the step button and the clock (it did, by 47 px, on every phone) */
+  .toast {
+    bottom: calc(145px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-height: 480px) and (orientation: landscape) {

@@ -1,0 +1,28 @@
+The one attempt to create the Vercel project — 2026-11-26, about 00:20 UTC
+
+Asked of the owner, in the session, immediately before:
+
+  "Shall I deploy the TABULA RASA game to Vercel now? Nothing is deployed today. It would create one new
+   project, `tabula-rasa`, in your Vercel team, linked to this GitHub repository's `main` branch, and publish
+   a public site at an address ending in .vercel.app. The game alone needs no database, no API key and no
+   environment variables, and makes no calls to the Anthropic API. On Vercel's Hobby plan it costs nothing
+   (Hobby's terms are personal or non-commercial use); on a paid plan it draws on that plan's included usage
+   like any other project."
+
+Answered: "Deploy the game only (Recommended)".
+
+The call (through the session's Vercel connector): create a project named tabula-rasa on the owner's team,
+linked to the GitHub repository JaredVogler2/TABULA-RASA.
+
+The answer:
+
+  Vercel API request failed (403: forbidden). You don't have permission to create the project.
+  status 403, code "forbidden", action "create", resource "project"
+
+What followed: nothing. The call was not repeated, and no other way of bringing a project into being was
+tried in its place (a deployment that creates its project as a side effect would have been one): a refusal
+to create is a refusal to create. Read-only calls made before and after show no project for this repository
+on the team. Nothing is deployed.
+
+What would finish it: the owner importing the repository in the Vercel dashboard (docs/DEPLOYMENT.md §5), or
+a Vercel token given through the session's secure form. Then `pnpm release:check -- https://<address>`.

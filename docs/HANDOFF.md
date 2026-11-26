@@ -6,7 +6,8 @@ is backed elsewhere, and says where.
 
 ## What you have
 
-A browser game and a laboratory, built from the prompts in `prompts/` in one session:
+A browser game and a laboratory, built from the prompts in `prompts/` in one session. **The game is live at
+https://tabula-rasa-bay.vercel.app.**
 
 - **The game** (`/`). A deterministic simulated island with fifty citizens who gather, build, speak, promise,
   trade and — within a grammar the designers supplied and nothing more — propose and sign agreements that the
@@ -29,7 +30,7 @@ Said first, because the rest should be read in its light.
 | | State | What it waits for |
 |---|---|---|
 | A live call to Claude | **never made; $0 spent** | your authorization (below) |
-| A deployment | **nothing is deployed** | your approval to create the project (below) |
+| The owner's console and live minds on the web | **not deployed**: the game alone is, at https://tabula-rasa-bay.vercel.app | a database (a billable integration, yours to approve), then phase 17 |
 | A person who has played it | none | a playtest |
 | A real device | none: no phone, no graphics chip | a look on your own hardware |
 | A screen reader, Firefox, Safari | not tried | — |
@@ -60,7 +61,7 @@ output is in `evidence/`.
 | 15 | Scale and performance | PARTIAL | frame rate on real hardware not measurable here |
 | 16 | Adversarial QA | PASS | two independent reviews; every finding fixed or accepted |
 | 17 | Live pilot | **BLOCKED** | needs your authorization to spend |
-| 18 | Vercel release | **BLOCKED** | needs your approval to deploy; prepared and rehearsed |
+| 18 | Vercel release | PASS (the game alone) | https://tabula-rasa-bay.vercel.app, made by your import; 25 of 25 release checks; the console and live minds are not deployed |
 | 19 | Scorecard | PASS | a self-assessment: 68 of 100, no veto triggered, two incidents disclosed |
 | 20 | Redesign and handoff | PASS | this document; two improvements made, three recorded |
 
@@ -117,12 +118,15 @@ Then http://localhost:3000. Nothing else is needed. No subscription, key or data
 
 ### Deploy it
 
-[`DEPLOYMENT.md`](./DEPLOYMENT.md). The game alone needs no variable and costs nothing on Vercel's Hobby plan
-(whose terms are "personal or non-commercial use": your call). Say the word and the assistant creates the
-project and checks it; or do it yourself in three clicks. After any deployment:
+**It is deployed: https://tabula-rasa-bay.vercel.app** — the game alone, since 2026-11-26, from your import of the
+repository in Vercel (the assistant's own attempt was refused: its connector may read your projects, not
+create one). It needs no variable and costs nothing on Vercel's Hobby plan, whose terms are "personal or
+non-commercial use". A merge to `main` now deploys itself. [`DEPLOYMENT.md`](./DEPLOYMENT.md) has the rest:
+what was checked, how to undo it, and what the console would need. After any deployment that changes the
+product:
 
 ```bash
-pnpm release:check -- https://YOUR-SITE
+pnpm release:check -- https://tabula-rasa-bay.vercel.app
 ```
 
 ### Keep a key safe
@@ -195,7 +199,7 @@ pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 
 | Step | Cost | Risk |
 |---|---|---|
-| Deploy the game alone | $0 | a flood of visitors pauses a Hobby project; it does not bill |
+| ~~Deploy the game alone~~ **done** | $0 | a flood of visitors pauses a Hobby project; it does not bill |
 | Add the console (a database) | $0 on a free plan; a billable integration | the first hosted database is the first real test of D-047 |
 | Smoke test | at most $2 | the first meeting of the adapter with the real service: expect to learn something |
 | A pilot of a few people consulted often | $10, separately authorized | cost per decision is unmeasured; the bound is several times what is expected |
@@ -206,7 +210,7 @@ pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 ## Where everything is
 
 - **Start again from here:** [`CONTINUE_HERE.md`](./CONTINUE_HERE.md) — the commit, the commands, what each proves.
-- **What was decided and why:** [`DECISIONS.md`](./DECISIONS.md), 50 entries.
+- **What was decided and why:** [`DECISIONS.md`](./DECISIONS.md), 51 entries.
 - **What was claimed and what backs it:** [`EVIDENCE.md`](./EVIDENCE.md); raw outputs in `evidence/`.
 - **What was found wrong:** [`QA_REPORT.md`](./QA_REPORT.md).
 - **How good it is, by its builder's account:** [`SCORECARD.md`](./SCORECARD.md).

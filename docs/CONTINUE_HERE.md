@@ -5,13 +5,15 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 ## Current state (2026-11-25)
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, restarted from `main` after each merge. Pull requests 1 (phases
-  01–05, 09, 10), 2 (phases 06–08, 11–14) and 3 (phases 15–20) were merged to `main` by the owner on
-  2026-11-25. Pull request 4 holds what came after: the evidence for the whole-suite run, and D-050.
+  01–05, 09, 10), 2 (phases 06–08, 11–14), 3 (phases 15–20) and 4 (the evidence for the whole-suite run, and
+  D-050) were merged to `main` by the owner on 2026-11-25. Pull request 5 holds one rewritten browser test
+  and the evidence that came after D-050.
 - **Phases:** 01–07, 09, 10, 14, 16 PASS · 08 PARTIAL (one item needs a model) · 11, 12 PARTIAL (no GPU, no
   device, no human playtest) · 13 PARTIAL (no live recording exists to compare with) · 15 PARTIAL (every
   simulation, storage and server measurement is in; frame rates on a device with a graphics chip are not
-  measurable here) · 17 BLOCKED (no spend authorized) · 18 BLOCKED (prepared and rehearsed; **nothing is
-  deployed** until the owner says so) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
+  measurable here) · 17 BLOCKED (no spend authorized) · 18 PASS for the game alone (**deployed at
+  https://tabula-rasa-bay.vercel.app** by the owner's import on 2026-11-26; 25 of 25 release checks; the console and
+  live minds are not deployed) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
   worked; what is left is the owner's: `docs/HANDOFF.md`.**
 - **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
   batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
@@ -38,6 +40,8 @@ export TEST_DATABASE_URL=postgres://tabula:tabula@localhost:5432/tabula_test
 pnpm check        # lint, typecheck, unit, generated-file freshness (affordances, migrations, prompts, licences),
                   # secret scans (files and history), build, bundle scan
 pnpm e2e          # Playwright, production build, desktop + phone emulation (about 40 minutes on a CPU renderer; --project=desktop for one)
+                  # one Playwright run at a time on a machine: each run's set-up drops and recreates the `e2e` schema,
+                  # so a second run started beside it fails the first one's owner-console tests with "The server answered 500"
 pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
 pnpm compare -- --seeds 1-4 --days 40                  # paired baselines, development seeds
 pnpm schedulers -- --seeds 1-4 --days 6 --slots 8      # activation policies on the same worlds, mock minds, no cost
@@ -61,6 +65,7 @@ node scripts/shots.mjs /tmp/shots vista closeup forager woodcutter charter knowl
 pnpm live:smoke
 # is a running site what a release should be? (a deployment's address, or a local `next start`; signs in nowhere)
 pnpm release:check -- http://127.0.0.1:3299 --fast
+pnpm release:check -- https://tabula-rasa-bay.vercel.app --fast     # the deployment (--fast where there is no graphics chip)
 ```
 
 Expected at `de2f0e1`: `pnpm check` exits 0 with 491 unit tests in 40 files (ten need PostgreSQL and are skipped
@@ -70,9 +75,17 @@ with nothing it asserts having failed. Its limit is ten minutes since the commit
 in 4.5. The same commit's whole suite passed on GitHub's runners, both projects
 (`evidence/phase-20/tests.txt`, `e2e-run.txt`, `e2e-fallback-rerun.txt`, `ci.txt`). `replay IDENTICAL`.
 
-With D-050 on top: `pnpm check` exits 0 with 495 unit tests in 40 files (four more, for the pacing of frames);
-`pnpm exec playwright test tests/e2e/resilience.spec.ts --project=desktop`: 2 passed
-(`evidence/after-20/`).
+With D-050 on top (`b25d1b7`): `pnpm check` exits 0 with 495 unit tests in 40 files (four more, for the pacing
+of frames); `pnpm e2e`: 29 passed, 5 skipped by design, none failed, in 42 minutes; the same commit is green on
+GitHub's runners (`evidence/after-20/e2e-run.txt`, `ci.txt`). The commit after it rewrites one browser test
+(the charters test steps its world to a known moment): `pnpm exec playwright test tests/e2e/play.spec.ts
+--project=desktop`, 3 passed (`evidence/after-20/e2e-play.txt`).
+
+After those: `pnpm test` is 496 tests (D-051 adds one). **Some unit tests draw their cases at random, and
+differently every run** (`fast-check`). One of them can fail on a commit that has nothing to do with it; when
+that happens the log prints a seed and a path. Replay them (`fc.check(property, { seed, path })`), find what
+the value shows, and fix that: the one such failure so far was a real edge (D-051). Do not run the job again
+and hope.
 
 ## Execution order (D-001)
 
@@ -119,13 +132,13 @@ With D-050 on top: `pnpm check` exits 0 with 495 unit tests in 40 files (four mo
 
 ## Next actions
 
-1. **Phase 18, release: ask the owner, then deploy.** Everything that does not deploy is done:
-   `docs/DEPLOYMENT.md` (levels, costs, variables, steps, checks, rollback, privacy), `pnpm release:check`, and
-   a rehearsal of it against the production build with no variable set (`evidence/phase-18/`). What remains
-   needs the owner's word: creating the Vercel project (a public site under their account) and, for the
-   console, a database (a billable integration even at $0). Once given: create the project from `main`, run
-   `pnpm release:check -- https://<address>`, write the results into `DEPLOYMENT.md` §8 and §12, `EVIDENCE.md`
-   and `PROGRESS.md`. Until then the phase is BLOCKED and nothing may say "deployed".
+1. **The release is made, at level 1.** https://tabula-rasa-bay.vercel.app, a Vercel project the owner created
+   by importing the repository (the assistant's connector may read the owner's projects and may not create one
+   or list a project's variables). A merge to `main` deploys itself; a push to another branch makes a preview
+   behind a Vercel login. After a merge that changes the product: `pnpm release:check -- https://tabula-rasa-bay.vercel.app`.
+   **Not deployed:** the console (level 2) — it needs a database, a billable integration that has not been
+   asked for and needs the owner's approval — and live minds (level 3, phase 17). Open on the deployment: which
+   Node.js runs it was not observed (`docs/DEPLOYMENT.md` § Known unknowns).
 2. **After the phases.** Recorded in `docs/HANDOFF.md` and not done, because each changes the engine's
    behaviour (a new version, and for anything experimental a new registration on seeds 9032 and up): a
    positive control that holds (D-044); planners that stop asking for the unreachable in a crowded famine
@@ -146,8 +159,8 @@ With D-050 on top: `pnpm check` exits 0 with 495 unit tests in 40 files (four mo
 
 ## Open questions for the owner (none of them blocks offline work)
 
-- **Whether to deploy**, and at which level (`docs/DEPLOYMENT.md` §1): the game alone needs nothing and costs
-  nothing on the Hobby plan, whose terms are "personal or non-commercial use"; the console needs a database.
+- **Whether to go on to the console** (level 2), which needs a database: not asked yet. The game alone is
+  deployed.
 - **Which model?** `ANTHROPIC_MODEL` has no default. Per-call upper bounds are in `docs/COST.md`.
 - **A ceiling for the deployment** (`BUDGET_CEILING_USD`), **an amount for a smoke test** (at most $2), then
   separately for a pilot.
