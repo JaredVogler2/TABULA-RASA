@@ -9,6 +9,7 @@ import { AF, AGENT_STRIDE, type AimView, type DaySample, type StaticWorldView } 
 import { useController } from "./context";
 import styles from "./game.module.css";
 import { PanelHead } from "./Panels";
+import { Ages } from "./Progress";
 
 /**
  * The atlas: the whole island on one sheet — relief, water, where people are, what they
@@ -74,9 +75,13 @@ function reliefImage(world: StaticWorldView): ImageData {
   return img;
 }
 
+/** The map's inks for a granary, a stone house, a healing house, a mill and a record house (the key uses the same). */
+const WORK_INK = ["#c9a67a", "#9a9384", "#e4dbc6", "#5b6a78", "#a8623c"];
+
 function AtlasMap() {
   const controller = useController();
   const world = useGame((s) => s.world);
+  const crafts = world?.config.crafts ?? false;
   const selection = useGame((s) => s.selection);
   const seen = useGame((s) => (s.overlay.knowledge && s.selection?.type === "agent" && s.agentDetail?.id === s.selection.id ? s.agentDetail.seen : null));
   const roster = useGame((s) => s.roster);
@@ -120,7 +125,7 @@ function AtlasMap() {
         ctx.fillStyle = "rgba(238, 228, 204, 0.72)";
         for (let t = 0; t < w * h; t++) if (!(((seen[t >> 3] as number) >> (t & 7)) & 1)) ctx.fillRect((t % w) * SCALE, Math.floor(t / w) * SCALE, SCALE, SCALE);
       }
-      const built = [0, 0, 0, 0];
+      const built = new Array<number>(10).fill(0);
       let lit = 0;
       for (const s of data.structures) {
         const x = (s.x + 0.5) * SCALE;
@@ -148,6 +153,28 @@ function AtlasMap() {
           ctx.fillStyle = s.complete ? "#8a5a36" : "rgba(138, 90, 54, 0.5)";
           ctx.fillRect(x - 3.5, y - 3.5, 7, 7);
           ctx.strokeRect(x - 3.5, y - 3.5, 7, 7);
+        } else if (s.kind === 4) {
+          // a field: a tilled square, green while it grows, gold when ripe, bare earth when unsown
+          ctx.fillStyle = !s.complete ? "rgba(122, 92, 60, 0.55)" : s.ripe >= 1000 ? "#d9bb55" : "#7aa850";
+          ctx.fillRect(x - 3.5, y - 3.5, 7, 7);
+          ctx.strokeStyle = "rgba(43, 33, 23, 0.55)";
+          ctx.strokeRect(x - 3.5, y - 3.5, 7, 7);
+        } else if (s.kind >= 5) {
+          // the other works: a granary and a mill are round, a house, a healing house and a record house have a roof
+          const fill = WORK_INK[s.kind - 5] ?? "#9a9384";
+          ctx.fillStyle = s.complete ? fill : "rgba(154, 147, 132, 0.5)";
+          ctx.beginPath();
+          if (s.kind === 5 || s.kind === 8) ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+          else {
+            ctx.moveTo(x - 4.2, y + 4);
+            ctx.lineTo(x - 4.2, y - 1);
+            ctx.lineTo(x, y - 5);
+            ctx.lineTo(x + 4.2, y - 1);
+            ctx.lineTo(x + 4.2, y + 4);
+            ctx.closePath();
+          }
+          ctx.fill();
+          ctx.stroke();
         } else {
           ctx.strokeStyle = "#3f6a2e";
           ctx.lineWidth = 1.4;
@@ -196,7 +223,9 @@ function AtlasMap() {
         ctx.strokeStyle = i === selected ? "#2b2117" : "rgba(251, 246, 234, 0.9)";
         ctx.stroke();
       }
-      const text = `${living} living ${living === 1 ? "person" : "people"}; ${built[0] ?? 0} hearths (${lit} lit), ${built[1] ?? 0} shelters, ${built[2] ?? 0} stores, ${built[3] ?? 0} plots; ${inForce} ${inForce === 1 ? "agreement" : "agreements"} in force.`;
+      const works = (built[4] ?? 0) + (built[5] ?? 0) + (built[6] ?? 0) + (built[7] ?? 0) + (built[8] ?? 0) + (built[9] ?? 0);
+      const worksText = works > 0 ? ` ${built[4] ?? 0} fields, ${built[5] ?? 0} granaries, ${built[6] ?? 0} stone houses, ${built[7] ?? 0} healing houses, ${built[8] ?? 0} mills, ${built[9] ?? 0} record houses;` : "";
+      const text = `${living} living ${living === 1 ? "person" : "people"}; ${built[0] ?? 0} hearths (${lit} lit), ${built[1] ?? 0} shelters, ${built[2] ?? 0} stores, ${built[3] ?? 0} plots;${worksText} ${inForce} ${inForce === 1 ? "agreement" : "agreements"} in force.`;
       setSummary((prev) => (prev === text ? prev : text));
     };
     draw();
@@ -256,6 +285,28 @@ function AtlasMap() {
           <li>
             <i data-glyph="plot" /> plot
           </li>
+          {crafts && (
+            <>
+              <li>
+                <i data-glyph="field" /> field (gold when ripe)
+              </li>
+              <li>
+                <i data-glyph="granary" /> granary
+              </li>
+              <li>
+                <i data-glyph="house" /> stone house
+              </li>
+              <li>
+                <i data-glyph="healing" /> healing house
+              </li>
+              <li>
+                <i data-glyph="mill" /> mill
+              </li>
+              <li>
+                <i data-glyph="records" /> record house
+              </li>
+            </>
+          )}
           <li>
             <i data-glyph="path" /> worn ground
           </li>
@@ -290,6 +341,8 @@ const TRENDS: Trend[] = [
   { id: "gini", title: "Inequality of holdings", note: "Gini, 0 equal · 1 one holds all", pick: (d) => d.gini / 1000, format: (v) => v.toFixed(2), max: 1 },
   { id: "structures", title: "Things built", note: "standing structures", pick: (d) => d.structures, format: (v) => v.toFixed(0) },
 ];
+/** Charted only in a world with crafts, where it is counted. */
+const LEGACY_TREND: Trend = { id: "legacy", title: "Legacy", note: "people, crafts, works and ages, in points", pick: (d) => d.legacy ?? 0, format: (v) => v.toFixed(0) };
 
 function niceMax(v: number): number {
   if (v <= 0) return 1;
@@ -418,13 +471,15 @@ function Aim() {
 
 function Almanac() {
   const series = useGame((s) => s.series);
+  const crafts = useGame((s) => s.world?.config.crafts ?? false);
+  const trends = crafts ? [...TRENDS, LEGACY_TREND] : TRENDS;
   const [table, setTable] = useState(false);
   if (series.length === 0) return <p className={styles.empty}>The almanac begins with the first full day.</p>;
   const rows = series.slice(-14);
   return (
     <div>
       <div className={styles.trends}>
-        {TRENDS.map((t) => (
+        {trends.map((t) => (
           <TrendChart key={t.id} trend={t} series={series} />
         ))}
       </div>
@@ -438,7 +493,7 @@ function Almanac() {
             <thead>
               <tr>
                 <th scope="col">Day</th>
-                {TRENDS.map((t) => (
+                {trends.map((t) => (
                   <th key={t.id} scope="col">
                     {t.title}
                   </th>
@@ -449,7 +504,7 @@ function Almanac() {
               {rows.map((d) => (
                 <tr key={d.day}>
                   <th scope="row">{d.day + 1}</th>
-                  {TRENDS.map((t) => (
+                  {trends.map((t) => (
                     <td key={t.id} className="tnum">
                       {t.format(t.pick(d))}
                     </td>
@@ -476,6 +531,7 @@ export function AtlasPanel() {
             <AtlasMap />
             <div>
               <Aim />
+              <Ages />
               <div className={styles.sectionTitle}>
                 Almanac <span>one line per measure, a point per day · your timeline</span>
               </div>

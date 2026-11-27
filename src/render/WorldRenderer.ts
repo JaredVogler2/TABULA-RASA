@@ -172,7 +172,8 @@ export class WorldRenderer {
     this.structures = buildStructures(field, q, know);
     this.ties = buildTies();
     this.scene.add(this.ties.object);
-    this.citizens = buildCitizens(field, view.agents.length + 32, q, (tile) => this.structures?.spotAt(tile) ?? this.flora?.spotAt(tile) ?? null);
+    // room for everyone the world's record can ever hold: newcomers come, and a figure is kept for each
+    this.citizens = buildCitizens(field, Math.max(view.agents.length + 32, view.capacity ?? 0), q, (tile) => this.structures?.spotAt(tile) ?? this.flora?.spotAt(tile) ?? null);
     this.citizens.setRoster(view.agents);
     this.atmosphere = buildAtmosphere(Math.max(view.w, view.h), q);
     this.atmosphere.configure(this.renderer);

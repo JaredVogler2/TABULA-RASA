@@ -4,6 +4,8 @@ import {
   CloudRain,
   FlaskConical,
   FolderOpen,
+  GraduationCap,
+  Hand,
   History as HistoryIcon,
   Info,
   Leaf,
@@ -24,10 +26,12 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSwipeDown } from "./swipe";
-import { AFFORDANCES, AFFORDANCE_CATEGORIES, AFFORDANCE_VERSION, ENGINE_VERSION, type AffordanceCategory } from "@/engine";
+import { AFFORDANCES, AFFORDANCE_CATEGORIES, AFFORDANCE_VERSION, CRAFTS, CRAFT_SPECS, ENGINE_VERSION, type AffordanceCategory } from "@/engine";
 import { useGame } from "@/store/game";
+import { CRAFT_LABEL } from "@/worker/describe";
 import { useController } from "./context";
 import styles from "./game.module.css";
+import { handText } from "./Progress";
 import { runsOf } from "./runs";
 import { clock, type ChronicleGroup } from "./text";
 
@@ -222,11 +226,23 @@ const INTERVENTIONS: InterventionDef[] = [
   { kind: "newcomers", title: "Newcomers", icon: <UsersRound aria-hidden />, text: "Five strangers land together on the shore, knowing nothing of the island or its people.", foot: "instant · five adults", params: { count: 5 } },
   { kind: "hush", title: "Hush", icon: <Megaphone aria-hidden />, text: "For four days voices carry only to someone standing next to the speaker.", foot: "4 days · communication", params: { days: 4, radius: 1 } },
 ];
-
 export function Interventions() {
   const controller = useController();
   const forkDay = useGame((s) => s.forkDay);
+  const crafts = useGame((s) => s.world?.config.crafts ?? false);
+  const hand = useGame((s) => s.hud?.hand ?? null);
+  const season = useGame((s) => s.hud?.cal.season ?? 0);
+  const knowers = useGame((s) => s.hud?.progress?.knowers ?? null);
   const [busy, setBusy] = useState("");
+  const spent = hand !== null && hand.left <= 0;
+  const make = async (kind: string, params: Record<string, number>, key = kind): Promise<void> => {
+    setBusy(key);
+    try {
+      await controller.intervene(kind, params);
+    } finally {
+      setBusy("");
+    }
+  };
   return (
     <div className={styles.scrim} onClick={(e) => e.target === e.currentTarget && controller.openPanel("interventions")}>
       <section className={`${styles.paper} ${styles.sheet}`} role="dialog" aria-modal="true" aria-labelledby="interventions-title" data-testid="interventions">
@@ -241,23 +257,17 @@ export function Interventions() {
               Nothing here tells anyone what to do, and no outcome is predicted — the only honest forecast is to run it.
             </span>
           </div>
+          {hand ? (
+            <div className={styles.note} data-tone={spent ? "caution" : undefined} style={{ marginTop: 10 }} data-testid="hand-note">
+              <Hand aria-hidden />
+              <span>
+                This island lets you change it {hand.perSeason === 1 ? "once" : `${hand.perSeason} times`} a season. {spent ? `You have used this season's: it is yours again in ${["summer", "autumn", "winter", "spring"][season] ?? "the next season"}.` : handText(hand.left, hand.perSeason, season) + "."}
+              </span>
+            </div>
+          ) : null}
           <div className={styles.cards} style={{ marginTop: 14 }}>
             {INTERVENTIONS.map((iv) => (
-              <button
-                key={iv.kind}
-                type="button"
-                className={styles.card}
-                disabled={busy !== ""}
-                data-testid={`intervene-${iv.kind}`}
-                onClick={async () => {
-                  setBusy(iv.kind);
-                  try {
-                    await controller.intervene(iv.kind, iv.params);
-                  } finally {
-                    setBusy("");
-                  }
-                }}
-              >
+              <button key={iv.kind} type="button" className={styles.card} disabled={busy !== "" || spent} data-testid={`intervene-${iv.kind}`} onClick={() => void make(iv.kind, iv.params)}>
                 <span className={styles.cardHead}>
                   {iv.icon}
                   {iv.title}
@@ -267,6 +277,34 @@ export function Interventions() {
               </button>
             ))}
           </div>
+          {crafts ? (
+            // Offered only in a world with crafts: there is no such person anywhere else. Which craft is the
+            // observer's to choose — the page says who here knows each, and what each rests on.
+            <div className={styles.strangerPick} data-testid="stranger-pick">
+              <div className={styles.cardHead}>
+                <GraduationCap aria-hidden />A stranger with a craft
+              </div>
+              <p className={styles.cardText}>
+                One stranger lands who knows the craft you choose, and the crafts it rests on, and nothing else of the island. A craft passes on only by being watched at work by someone ready for it, or by being written down; whether anyone watches is not up to you.
+              </p>
+              <div className={styles.chips} role="group" aria-label="The craft the stranger knows">
+                {CRAFT_SPECS.map((c) => {
+                  const known = knowers?.[c.id] ?? 0;
+                  const rests = c.needs.map((n) => CRAFT_LABEL[CRAFTS[n] as string]).join(" and ");
+                  return (
+                    <button key={c.id} type="button" className={styles.chip} disabled={busy !== "" || spent} data-known={known > 0} data-testid={`intervene-stranger-${c.name}`} onClick={() => void make("stranger", { craft: c.id }, `stranger-${c.name}`)}>
+                      <b>{CRAFT_LABEL[c.name]}</b>
+                      <span>
+                        {known === 0 ? "nobody here knows it" : known === 1 ? "one person here knows it" : `${known} here know it`}
+                        {rests ? ` · brings ${rests} too` : ""}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <span className={styles.cardFoot}>instant · one adult</span>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

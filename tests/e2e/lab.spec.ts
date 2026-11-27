@@ -19,6 +19,7 @@ interface PublishedCell {
   condition: string;
   seed: number;
   sha256: string;
+  digest: string;
 }
 
 interface PublishedManifest {
@@ -114,8 +115,13 @@ test("laboratory: a published bundle, read as what it is, and a run reproduced i
   await expect(page.getByTestId("verify")).toContainText(`published ${cell.sha256}`);
   await page.getByTestId("verify-run").click();
   const result = page.getByTestId("verify-result");
-  await expect(result).toContainText("Reproduced: the same final state, bit for bit", { timeout: 240_000 });
-  await expect(result).toContainText(cell.sha256);
+  // The published bundles were made by engine 0.7.0. This engine keeps that one's rules for worlds
+  // without crafts or newcomers, so the check is on the digest of the state; the file hash also
+  // covers the version stamp and is shown, not compared.
+  await expect(page.getByTestId("verify-by-digest")).toContainText(`made by engine ${manifest.engine}`);
+  await expect(page.getByTestId("verify")).toContainText(`state digest ${cell.digest}`);
+  await expect(result).toContainText("Reproduced: the same final state, digest for digest", { timeout: 240_000 });
+  await expect(result).toContainText(cell.digest);
   await expect(result).toHaveAttribute("data-tone", "good");
   await page.getByTestId("verify").scrollIntoViewIfNeeded();
   await shot(page, project, "51-run-reproduced");

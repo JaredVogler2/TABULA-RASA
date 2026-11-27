@@ -18,6 +18,8 @@ export interface JournalDef {
   title: string;
   /** Why an observer would care; a description of the thing, never a claim about what it proves. */
   why: string;
+  /** True for a page that can only be seen in a world with crafts: it is not asked anywhere else. */
+  crafts?: true;
 }
 
 export interface JournalEntry {
@@ -52,7 +54,22 @@ export const JOURNAL: readonly JournalDef[] = [
   { id: "arrival", question: "Will strangers come ashore?", title: "Strangers ashore", why: "They know nothing of the island or of the people already on it." },
   { id: "winter", question: "Will they see a winter?", title: "First winter", why: "Days are short, the cold costs warmth every hour, and little grows." },
   { id: "spring", question: "…and come through it?", title: "Through the winter", why: "Who is still here, and what they built to get here, is the record of that winter." },
+  // worlds with crafts
+  { id: "craft", question: "Will anyone work out something nobody showed them?", title: "A craft found", why: "It came from that person's own practice. Until someone else takes it in, it is theirs alone, and dies with them.", crafts: true },
+  { id: "watched", question: "…and will it pass to anyone else?", title: "Taken in by watching", why: "A craft spreads by being practised where others can see. Who gets to stand near is not written anywhere.", crafts: true },
+  { id: "field", question: "Will anyone dig a field?", title: "A field", why: "A field bears again and again for whoever sows it — and for whoever reaps it, which need not be the same person.", crafts: true },
+  { id: "granary", question: "Will a harvest be kept?", title: "A granary", why: "Food that keeps is food that can be counted on, hoarded, shared or fought over.", crafts: true },
+  { id: "house", question: "Will anyone build in stone?", title: "Walls of stone", why: "A stone house outlasts many winters and takes many hands to raise.", crafts: true },
+  { id: "healing", question: "Will the sick be given a house?", title: "A house for the sick", why: "It mends only as far as someone lays up care in it, which costs them food they could have eaten.", crafts: true },
+  { id: "mill", question: "Will a stream be put to work?", title: "A mill", why: "The first work on the island that nobody's arms do. What comes out of it is anyone's who gets there first, unless an agreement says otherwise.", crafts: true },
+  { id: "written", question: "Will anything be written down?", title: "Something written down", why: "From here on a craft can outlive everyone who knows it.", crafts: true },
+  { id: "drawn", question: "Will a thriving island draw others to it?", title: "Drawn by plenty", why: "Beds to spare and a full larder bring newcomers. They arrive hungry and knowing nothing.", crafts: true },
 ];
+
+/** The pages asked in a world: every page, or without those that only a world with crafts can answer. */
+export function journalOf(crafts: boolean): readonly JournalDef[] {
+  return crafts ? JOURNAL : JOURNAL.filter((d) => !d.crafts);
+}
 
 const CAMPFIRE = 0;
 const SHELTER = 1;
@@ -63,7 +80,13 @@ export function pageFor(e: SimEvent): string | null {
   const kind = (e.d as { kind?: number } | undefined)?.kind;
   switch (e.k) {
     case "built":
-      return kind === CAMPFIRE ? "fire" : kind === SHELTER ? "shelter" : kind === STORE ? "store" : null;
+      return kind === CAMPFIRE ? "fire" : kind === SHELTER ? "shelter" : kind === STORE ? "store" : kind === 4 ? "field" : kind === 5 ? "granary" : kind === 6 ? "house" : kind === 7 ? "healing" : kind === 8 ? "mill" : null;
+    case "discovered":
+      return "craft";
+    case "learned":
+      return e.r === "watching" ? "watched" : null;
+    case "inscribed":
+      return "written";
     case "plant":
       return "plot";
     case "craft":
@@ -96,7 +119,8 @@ export function pageFor(e: SimEvent): string | null {
     case "death":
       return "death";
     case "arrival":
-      return "arrival";
+      // someone drawn by a thriving settlement is its own page; the first stranger of any kind is the older one
+      return e.r === "drawn" ? "drawn" : "arrival";
     case "season":
       return e.q === 3 ? "winter" : e.q === 0 && e.t > 96 ? "spring" : null;
     default:

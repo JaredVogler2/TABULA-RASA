@@ -36,6 +36,22 @@ export const STRUCTURE_LABEL: Record<string, string> = {
   shelter: "shelter",
   store: "store",
   plot: "planted plot",
+  field: "field",
+  granary: "granary",
+  house: "stone house",
+  healing_house: "healing house",
+  mill: "mill",
+  record_house: "record house",
+};
+
+/** What each craft is called (ids: CRAFTS in the engine's constants). */
+export const CRAFT_LABEL: Record<string, string> = {
+  tillage: "tillage",
+  storekeeping: "storekeeping",
+  masonry: "masonry",
+  herb_lore: "herb lore",
+  millwrighting: "millwrighting",
+  record_keeping: "record keeping",
 };
 
 export function itemLabel(id: number): string {

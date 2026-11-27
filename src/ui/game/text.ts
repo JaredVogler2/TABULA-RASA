@@ -4,9 +4,9 @@
  * Every sentence here is a fixed rendering of fields from a logged event, a validated
  * intent or an agent's recorded goal code. Nothing is generated, embellished or inferred.
  */
-import { ITEMS, NODE_KINDS, RECIPES, SEASONS, STRUCTURE_KINDS, WEATHER, type SimEvent } from "@/engine";
-import { ITEM_LABEL, NODE_LABEL, STRUCTURE_LABEL } from "@/worker/describe";
-import type { StaticAgentView, StaticWorldView } from "@/worker/protocol";
+import { CRAFTS, ITEMS, NODE_KINDS, RECIPES, SEASONS, STRUCTURE_KINDS, WEATHER, ageTitle, type SimEvent } from "@/engine";
+import { CRAFT_LABEL, ITEM_LABEL, NODE_LABEL, STRUCTURE_LABEL } from "@/worker/describe";
+import type { StaticAgentView, StaticWorldView, StructureView } from "@/worker/protocol";
 
 export type ChronicleGroup = "people" | "nature" | "making" | "observer" | "institutions";
 
@@ -48,10 +48,60 @@ export function structureName(kind: number | undefined): string {
   return key ? (STRUCTURE_LABEL[key] ?? key) : "structure";
 }
 
+export function craftName(craft: number | undefined): string {
+  const key = CRAFTS[craft ?? -1];
+  return key ? (CRAFT_LABEL[key] ?? key) : "a craft";
+}
+
+/** The crafts in a bit set, by name, in the ladder's order. */
+export function craftNames(lore: number): string[] {
+  return CRAFTS.filter((_, c) => (lore & (1 << c)) !== 0).map((key) => CRAFT_LABEL[key] ?? key);
+}
+
+/** What someone found out, as a clause after their name. */
+const DISCOVERY: readonly string[] = [
+  "worked out how to dig and sow a field",
+  "worked out how to keep a harvest in a granary",
+  "worked out how to build in stone",
+  "learned which plants ease an illness",
+  "worked out how to make a stream turn a mill",
+  "worked out how to write down what is known",
+];
+
+/** One sentence on how a structure stands, from the fields of its view. */
+export function structureLede(s: StructureView): string {
+  if (!s.complete) {
+    // a field that has been reaped is whole and waiting for seed, not half built
+    if (s.kind === 4 && s.progress >= 500) return "Reaped, and standing unsown: two roots and the work of sowing would make it bear again.";
+    return `Under construction — ${Math.round(s.progress / 10)}%.`;
+  }
+  switch (s.kind) {
+    case 0:
+      return s.fuel > 0 ? `Burning — about ${Math.round(s.fuel / 4)} hours of fuel left.` : "Cold. It needs wood.";
+    case 3:
+    case 4:
+      return s.ripe >= 1000 ? "Ripe: anyone here can harvest it." : `Growing — ${Math.round(s.ripe / 10)}% of the way to harvest.`;
+    case 5:
+      return "Standing. Food kept here spoils about a third as fast as in a store.";
+    case 6:
+      return "Standing. Six can sleep here, warmer than under thatch.";
+    case 7:
+      return s.fuel > 0 ? `Standing, with care laid up for about ${Math.max(1, Math.round(s.fuel / 4))} hours of tending. The ill and the hurt who sleep here mend faster.` : "Standing, with no care laid up. The ill who sleep here still mend faster than elsewhere.";
+    case 8:
+      return s.running ? "Its wheel is turning: roots left here become rations, a day's worth each morning." : "Its wheel stands still: the stream beside it is not running today.";
+    case 9: {
+      const written = craftNames(s.lore);
+      return written.length ? `Written here: ${written.join(", ")}. Anyone who visits may come away knowing one of them.` : "Standing, with nothing written in it yet.";
+    }
+    default:
+      return "Complete.";
+  }
+}
+
 const CAUSES: Record<string, string> = { hunger: "hunger", thirst: "thirst", cold: "cold", exhaustion: "exhaustion", unknown: "unknown causes" };
 
 /** What each kind of change to the world's conditions is called in a list. */
-export const SHOCK_NAMES: Record<string, string> = { drought: "drought", cold_snap: "cold snap", blight: "blight", rain: "long rain", bounty: "bounty", windfall: "windfall", newcomers: "newcomers", hush: "hush" };
+export const SHOCK_NAMES: Record<string, string> = { drought: "drought", cold_snap: "cold snap", blight: "blight", rain: "long rain", bounty: "bounty", windfall: "windfall", newcomers: "newcomers", hush: "hush", stranger: "a stranger with a craft" };
 
 const SHOCKS: Record<string, string> = {
   drought: "A drought set in: streams shrink to pools and bushes stop bearing",
@@ -62,6 +112,7 @@ const SHOCKS: Record<string, string> = {
   windfall: "A windfall of fish and driftwood washed ashore",
   newcomers: "Newcomers landed on the shore",
   hush: "Voices carry less far",
+  stranger: "A stranger who knows a craft landed on the shore",
 };
 
 function speechText(act: Record<string, unknown> | undefined, world: StaticWorldView | null, name: (id: number) => string): string {
@@ -120,7 +171,28 @@ export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: St
     case "death":
       return { ...base, ...place, group: "people", weight: 3, text: `${name(e.a)} died of ${CAUSES[e.r ?? "unknown"] ?? e.r}.` };
     case "arrival":
-      return { ...base, ...place, group: "people", weight: 2, text: `${name(e.a)} came ashore.` };
+      return {
+        ...base,
+        ...place,
+        group: "people",
+        weight: 2,
+        text: e.r === "drawn" ? `${name(e.a)} came ashore, drawn by a settlement with beds and food to spare.` : e.r === "stranger" ? `${name(e.a)} came ashore: a stranger who knows ${craftName(e.q)}.` : `${name(e.a)} came ashore.`,
+      };
+    case "discovered":
+      return { ...base, ...place, group: "making", weight: 3, text: `${name(e.a)} ${DISCOVERY[e.q ?? -1] ?? "found out a craft"}${e.r === "illness" ? ", getting over an illness" : ""}. Nobody showed them.` };
+    case "learned":
+      return {
+        ...base,
+        ...place,
+        agents: [e.a, ...(e.b !== undefined ? [e.b] : [])],
+        group: "making",
+        weight: 2,
+        text: e.r === "reading" ? `${name(e.a)} learned ${craftName(e.q)} at a record house.` : `${name(e.a)} learned ${craftName(e.q)} by watching ${name(e.b ?? -1)} at work.`,
+      };
+    case "inscribed":
+      return { ...base, ...place, group: "making", weight: 3, text: `${name(e.a)} wrote ${craftName(e.q)} down in a record house.` };
+    case "age":
+      return { ...base, group: "making", weight: 3, text: `The ${ageTitle(e.q ?? 0)} began: a reading of what stands on the island. Nobody on it was told.` };
     case "ill":
       return { ...base, group: "people", weight: 1, text: `${name(e.a)} fell ill.` };
     case "recover":
@@ -149,10 +221,12 @@ export function chronicle(e: SimEvent, world: StaticWorldView | null, roster: St
       return { ...base, ...place, agents: [e.a, ...others], group: "making", weight: 3, text: `${name(e.a)} finished a ${structureName(d?.kind)}${withText}.` };
     }
     case "plant":
-      return { ...base, ...place, group: "making", weight: 2, text: `${name(e.a)} planted a plot.` };
+      return { ...base, ...place, group: "making", weight: 2, text: e.r === "field" ? `${name(e.a)} sowed a field again.` : `${name(e.a)} planted a plot.` };
     case "harvest": {
       const mine = e.b === undefined || e.b === e.a;
-      return { ...base, agents: [e.a, ...(mine ? [] : [e.b as number])], group: "making", weight: 2, text: mine ? `${name(e.a)} harvested ${e.q} roots from a plot they planted.` : `${name(e.a)} harvested ${e.q} roots from a plot that ${name(e.b as number)} planted.` };
+      const what = e.r === "field" ? "field" : "plot";
+      const did = e.r === "field" ? "dug" : "planted";
+      return { ...base, agents: [e.a, ...(mine ? [] : [e.b as number])], group: "making", weight: 2, text: mine ? `${name(e.a)} harvested ${e.q} roots from a ${what} they ${did}.` : `${name(e.a)} harvested ${e.q} roots from a ${what} that ${name(e.b as number)} ${did}.` };
     }
     case "craft": {
       const recipe = RECIPES[(e.d as { recipe?: number } | undefined)?.recipe ?? -1];
@@ -261,6 +335,11 @@ const REFUSAL: Record<string, string> = {
   unknown_recipe: "nobody knows how to make that",
   bad_quantity: "the amount made no sense",
   disabled: "that is not possible in this world",
+  unknown_craft: "they do not know how",
+  no_stream: "a mill has to stand beside a stream",
+  not_a_remedy: "only berries or fibre can be laid up as care",
+  not_ripe: "it was not ripe yet",
+  store_full: "it could hold no more",
 };
 
 const INTENT_VERB: Record<string, string> = {
@@ -389,6 +468,21 @@ export function goalSentence(goal: string, why: string): string {
     tired: "is exhausted",
     curious: "has nothing pressing to do",
     content: "has no pressing need",
+    // worlds with crafts
+    field_stands_ready: "a field of theirs stands unsown",
+    keep_the_harvest: "there is more food about than a store keeps well",
+    walls_that_last: "has been cold at night, and stone keeps the cold out",
+    someone_is_ill: "someone is ill",
+    for_the_sick: "knows which plants heal",
+    against_illness: "the healing house has no care laid up",
+    ill: "is ill",
+    hurt: "is hurt",
+    let_the_stream_work: "a stream can do the grinding",
+    rations_keep: "rations feed more than roots, and keep",
+    so_it_is_not_lost: "what is known should not die with those who know it",
+    write_it_down: "knows something the record house may lack",
+    reap_my_crop: "is hungry, and their own crop is ripe",
+    reap_what_stands_ripe: "is going short, and a crop stands ripe",
   };
   const goals: Record<string, string> = {
     drink: "Going to drink",
@@ -431,6 +525,19 @@ export function goalSentence(goal: string, why: string): string {
     trade: "Taking up an offer",
     offer: "Offering an exchange",
     build_together: "Working on a shared building",
+    // worlds with crafts
+    dig_field: "Digging a field",
+    sow: "Sowing a field",
+    build_granary: "Building a granary",
+    build_house: "Building a stone house",
+    build_healing_house: "Building a healing house",
+    lay_up_care: "Laying up care for the sick",
+    convalesce: "Lying in the healing house",
+    build_mill: "Building a mill",
+    take_to_mill: "Taking roots to the mill",
+    build_record_house: "Building a record house",
+    keep_records: "Writing down what they know",
+    read_records: "Reading at the record house",
   };
   const g = goals[goal] ?? goal.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
   const r = reasons[why];

@@ -5,15 +5,19 @@
  * numbers. Posts compact view frames to the UI and answers detail requests.
  */
 import {
+  CRAFT_COUNT,
+  FIELD_GROW_DAYS,
   ITEM_COUNT,
   Item,
   NODE_SPECS,
   NodeKind,
+  PLOT_GROW_DAYS,
   Skill,
   SnapshotError,
   StructureKind,
   STRUCTURE_SPECS,
   TICKS_PER_DAY,
+  agentCapacity,
   applyIntervention,
   calendarAt,
   carriedWeight,
@@ -24,16 +28,20 @@ import {
   forkWorld,
   giniPermille,
   hasSeen,
+  legacyOf,
   manifestOf,
   openBundle,
   packBundle,
+  readAges,
   replayTape,
   restoreWorld,
   scratchOf,
   serializeWorld,
   snapshotHash,
   step,
+  streamRuns,
   summarize,
+  tally,
   totalGoods,
   validateConfig,
   worldDigest,
@@ -61,8 +69,10 @@ import {
   type CompareView,
   type DaySample,
   type FromWorker,
+  type HandView,
   type HistoryView,
   type PileView,
+  type ProgressView,
   type Recording,
   type ReplayView,
   type StaticAgentView,
@@ -344,6 +354,8 @@ const UI_EVENTS = new Set<string>([
   "proposal_rejected", "endorse", "ratified", "lapsed", "joined", "left", "expelled", "motion", "vote", "motion_result",
   "rule", "transfer", "breach", "sanction", "dissolved", "pact", "pact_done", "pact_void", "promise_kept", "promise_broken",
   "deposit", "withdraw",
+  // worlds with crafts ("milled" and "tended" are counted, not narrated: a mill grinds every morning)
+  "discovered", "learned", "inscribed", "age",
 ]);
 
 function civicCounts(w: WorldState): { proposals: number; institutions: number } {
@@ -396,7 +408,7 @@ function civicsView(w: WorldState): CivicsView {
 /** The two worlds as they stand, counted the same way, and who is dead in only one of them. */
 function stateDiff(mine: WorldState, twin: WorldState): Pick<CompareView, "state" | "happened" | "deadOnlyYours" | "deadOnlyTwin"> {
   const count = (w: WorldState) => {
-    const built = [0, 0, 0, 0];
+    const built = new Array<number>(STRUCTURE_SPECS.length).fill(0);
     let lit = 0;
     for (const st of w.structures) {
       if (st.removed || !st.complete) continue;
@@ -520,8 +532,10 @@ function dominantItem(inv: readonly number[]): number {
   return best;
 }
 
-function structureView(s: Structure): StructureView {
+function structureView(s: Structure, w: WorldState | null = world): StructureView {
   const spec = STRUCTURE_SPECS[s.kind]!;
+  const growDays = s.kind === StructureKind.field ? FIELD_GROW_DAYS : PLOT_GROW_DAYS;
+  const crop = s.kind === StructureKind.plot || s.kind === StructureKind.field;
   let needed = 0;
   let missing = 0;
   for (const [item, qty] of spec.materials) {
@@ -541,10 +555,12 @@ function structureView(s: Structure): StructureView {
     progress: s.complete ? 1000 : Math.round(1000 * (0.5 * materialShare + 0.5 * laborShare)),
     fuel: s.fuel,
     fill: Math.min(1000, stored * 12),
-    ripe: s.kind === StructureKind.plot && s.ripeTick >= 0 && world ? (world.tick >= s.ripeTick ? 1000 : Math.max(0, 1000 - Math.round(((s.ripeTick - world.tick) * 1000) / (12 * TICKS_PER_DAY)))) : 0,
+    ripe: crop && s.complete && s.ripeTick >= 0 && w ? (w.tick >= s.ripeTick ? 1000 : Math.max(0, 1000 - Math.round(((s.ripeTick - w.tick) * 1000) / (growDays * TICKS_PER_DAY)))) : 0,
     occupants: s.occupants,
     bound: s.bound,
     founder: s.founder,
+    lore: s.lore,
+    running: s.kind === StructureKind.mill && s.complete && w !== null && streamRuns(w, scratchOf(w), s),
   };
 }
 
@@ -554,7 +570,12 @@ function structureSignature(w: WorldState): string {
     if (s.removed) continue;
     let stored = 0;
     for (let i = 0; i < ITEM_COUNT; i++) stored += s.inv[i] as number;
-    sig += `${s.id}:${s.complete ? 1 : 0}:${s.laborDone}:${s.fuel > 0 ? 1 : 0}:${stored}:${s.occupants}:${s.bound}:${s.ripeTick >= 0 && w.tick >= s.ripeTick ? 1 : 0};`;
+    sig += `${s.id}:${s.complete ? 1 : 0}:${s.laborDone}:${s.fuel > 0 ? 1 : 0}:${stored}:${s.occupants}:${s.bound}:${s.ripeTick >= 0 && w.tick >= s.ripeTick ? 1 : 0}`;
+    // a field's crop stands taller by the day, a record house gains slabs, a mill's wheel stops with its stream
+    if (s.kind === StructureKind.field && s.complete && s.ripeTick > w.tick) sig += `:${Math.floor((s.ripeTick - w.tick) / TICKS_PER_DAY)}`;
+    else if (s.kind === StructureKind.record_house) sig += `:${s.lore}`;
+    else if (s.kind === StructureKind.mill && s.complete) sig += `:${streamRuns(w, scratchOf(w), s) ? 1 : 0}`;
+    sig += ";";
   }
   return sig;
 }
@@ -593,6 +614,7 @@ function staticView(w: WorldState): StaticWorldView {
     nodeY: w.nodes.y.slice(),
     nodeCap: w.nodes.cap.slice(),
     agents: roster(w),
+    capacity: agentCapacity(w.config),
   };
 }
 
@@ -687,7 +709,7 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     },
     agents: buf,
     nodeAmounts: w.nodes.amount.slice(),
-    structures: sendStructures ? w.structures.filter((s) => !s.removed).map(structureView) : null,
+    structures: sendStructures ? w.structures.filter((s) => !s.removed).map((s) => structureView(s, w)) : null,
     piles: sendPiles ? pileViews(w) : null,
     marks: sendMarks ? w.inst.institutions.map((i) => ({ id: i.id, x: i.seatX, y: i.seatY, ended: i.ended >= 0, members: i.members.length, stores: i.stores.filter((id) => w.structures[id] && !w.structures[id]!.removed) })) : null,
     traffic: sendTraffic ? w.traffic.slice() : null,
@@ -703,6 +725,50 @@ function buildFrame(w: WorldState, forceLists: boolean): ViewFrame {
     forkTick: control ? forkTick : -1,
     replay: rec ? rec.view : null,
     history: historyView(),
+    progress: progressOf(w),
+    hand: handOf(),
+  };
+}
+
+/** Which season of which year a tick falls in: the unit the observer's hand is counted by. */
+function seasonOf(w: WorldState, tick: number): number {
+  const cal = calendarAt(w.config, tick);
+  return cal.year * 4 + cal.season;
+}
+
+/** How many changes the observer has left this season (null where the world sets no limit). */
+function handOf(): HandView | null {
+  if (!world || world.config.changesPerSeason <= 0) return null;
+  const now = seasonOf(world, world.tick);
+  let used = 0;
+  for (const iv of world.interventions) if (iv.origin === "observer" && seasonOf(world, iv.tick) === now) used++;
+  return { perSeason: world.config.changesPerSeason, left: Math.max(0, world.config.changesPerSeason - used) };
+}
+
+/** Ages, legacy and who knows what, for the world shown — and how its untouched twin stands. */
+function progressOf(w: WorldState): ProgressView | null {
+  if (!w.config.crafts) return null;
+  const t = tally(w);
+  const ages = readAges(w);
+  const knowers = new Array<number>(CRAFT_COUNT).fill(0);
+  for (const a of w.agents) {
+    if (!a.alive || a.lore === 0) continue;
+    for (let c = 0; c < CRAFT_COUNT; c++) if (a.lore & (1 << c)) knowers[c] = (knowers[c] as number) + 1;
+  }
+  // the other of the two worlds: the twin while the lived world is on screen, and the other way about
+  const other = w === world ? control : world;
+  const theirs = other && control ? readAges(other) : null;
+  return {
+    reached: ages.reached,
+    standing: ages.standing,
+    ticks: ages.ticks,
+    next: ages.next,
+    legacy: legacyOf(w),
+    knowers,
+    recorded: t.recordedLore,
+    living: t.living,
+    works: { fields: t.fields, granaries: t.granaries, houses: t.houses, healingHouses: t.healingHouses, mills: t.mills, recordHouses: t.recordHouses },
+    twin: other && theirs ? { reached: theirs.reached, legacy: legacyOf(other).total, living: tally(other).living, ticks: theirs.ticks } : null,
   };
 }
 
@@ -733,6 +799,7 @@ function sample(w: WorldState): DaySample {
     commons: commonsHealthPermille(w),
     gini: giniPermille(holdings),
     structures,
+    ...(w.config.crafts ? { legacy: legacyOf(w).total, age: readAges(w).reached } : {}),
   };
 }
 
@@ -1033,6 +1100,7 @@ function agentDetail(w: WorldState, id: number): AgentDetail | null {
     capacity: carryCapacity(a),
     load: carriedWeight(a),
     recent: w === world ? (recent.get(a.id) ?? []).slice().reverse() : [],
+    lore: a.lore,
   };
 }
 
@@ -1054,7 +1122,7 @@ function tileDetail(w: WorldState, x: number, y: number): TileDetail | null {
     moveCost: t.moveCost[tile] as number,
     traffic: w.traffic[tile] as number,
     node: node >= 0 ? { id: node, kind: w.nodes.kind[node] as number, amount: w.nodes.amount[node] as number, cap: w.nodes.cap[node] as number } : null,
-    structure: s ? structureView(s) : null,
+    structure: s ? structureView(s, w) : null,
     pile: pile ? pile.inv.slice() : null,
     agents: w.agents.filter((a) => a.alive && a.x === x && a.y === y).map((a) => a.id),
   };
@@ -1200,6 +1268,12 @@ ctx.onmessage = (event: MessageEvent<ToWorker>) => {
         if (rebuild || viewTwin) {
           // nothing is changed in a world that is not on screen, or while its past is being checked
           post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick: -1, reason: rebuild ? "rebuild" : "twin" });
+          break;
+        }
+        // a world can allow the observer only so many changes a season: the hand is counted here, where it enters
+        const hand = handOf();
+        if (hand && hand.left <= 0) {
+          post({ type: "intervened", requestId: msg.requestId, ok: false, forkTick, reason: "limit" });
           break;
         }
         const ok = applyObserver(msg.kind, msg.params);

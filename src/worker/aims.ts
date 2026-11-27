@@ -16,7 +16,7 @@
  * Everything is decided from the state alone, so a world that was saved, opened from a file or
  * returned to in History gives the same answer as one that was watched all the way.
  */
-import { TICKS_PER_DAY, calendarAt, commonsHealthPermille, createWorld, scenarioById, shoreSides, yearLength, type Agent, type WorldState } from "@/engine";
+import { AGE_COUNT, TICKS_PER_DAY, ageTitle, calendarAt, commonsHealthPermille, createWorld, needText, readAges, scenarioById, shoreSides, yearLength, type Agent, type WorldState } from "@/engine";
 import type { AimPair, AimView, DaySample } from "./protocol";
 
 /** The day a tick falls on, as the game shows days: the first day is day 1. */
@@ -113,6 +113,10 @@ function survival(world: WorldState, id: string, text: string, num: number, den:
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
+const COUNTS = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+/** "eleven" for 11; the figure itself beyond twelve. */
+const ordinalCount = (n: number): string => COUNTS[n] ?? String(n);
+
 /** The commons as the almanac keeps them: how full on average now, and their emptiest morning on record. */
 function commonsLine(world: WorldState, series: readonly DaySample[]): string {
   const now = Math.round(commonsHealthPermille(world) / 10);
@@ -178,6 +182,99 @@ function shores(world: WorldState, id: string, text: string): AimView {
   };
 }
 
+/**
+ * The Long Road's aim, in numbers: the last age by the end of this year of the island, with
+ * this share of the people it began with alive on the morning it is reached (D-058). Set on
+ * development seeds with scripted players (`scripts/hands.ts`), so that an island left alone
+ * seldom meets it, a hand that only feeds is usually too slow, a hand that only teaches usually
+ * loses too many, and a hand that reads the island and does both usually meets it.
+ */
+export const ROAD_AIM = { num: 4, den: 5, years: 5 } as const;
+
+/**
+ * "Bring four in five of the first fifty to the last age by the end of the fifth year."
+ *
+ * Met on the morning the last age is reached, if that is within the years allowed and enough of
+ * the people the island began with are alive that morning. Lost on the day one founder too
+ * many has died before then, or on the morning after the last year allowed if the age has not
+ * come. Newcomers neither help nor hurt: the aim is about the people who were there on the
+ * first morning. Everything is read from the state alone — who died when, and the tick each
+ * age was first reached — so a saved world answers as a watched one does.
+ */
+function lastAgeInTime(world: WorldState, id: string, text: string): AimView {
+  const { num, den, years } = ROAD_AIM;
+  const people = founders(world);
+  const began = people.length;
+  const need = Math.ceil((began * num) / den);
+  const spare = began - need;
+  const share = "four in five";
+  const last = AGE_COUNT - 1;
+  const ages = readAges(world);
+  const yearDays = yearLength(world.config);
+  /** The first tick after the last day allowed. */
+  const deadline = years * yearDays * TICKS_PER_DAY;
+  const reached = world.metrics.ages[last] as number;
+  const inTime = reached >= 0 && reached < deadline;
+  // deaths count up to the morning that decides it: the age's morning if it came in time, else the deadline
+  const horizon = inTime ? reached : deadline;
+  const deaths = people
+    .filter((a) => a.diedTick >= 0 && a.diedTick < horizon)
+    .map((a) => a.diedTick)
+    .sort((x, y) => x - y);
+  const aliveNow = people.filter((a) => a.alive).length;
+  const stands = `${ageTitle(ages.reached)}${ages.reached > 0 ? `, reached on day ${shownDay(ages.ticks[ages.reached] as number)}` : ""}`;
+  const lastDay = years * yearDays;
+  if (deaths.length > spare) {
+    const at = deaths[spare] as number;
+    const lines = [`Lost on day ${shownDay(at)}: the ${ordinal(spare + 1)} death left ${began - spare - 1} of the ${began} who began, and ${share} is ${need}. They had come as far as the ${stands}.`];
+    // what they died of is the plainest thing this reading can say about why (the engine records it with each death)
+    const lost = people.filter((a) => a.diedTick >= 0 && a.diedTick <= at);
+    lines.push(`Those ${lost.length === spare + 1 ? ordinalCount(spare + 1) : lost.length} died: ${causesOf(lost)}.`);
+    if (aliveNow !== began - spare - 1) lines.push(`${aliveNow} of them are alive now.`);
+    return { id, text, state: "lost", decidedDay: shownDay(at), figure: `${aliveNow} of ${began} alive`, lines };
+  }
+  if (inTime) {
+    const saw = aliveBefore(people, reached);
+    const year = Math.floor(reached / (yearDays * TICKS_PER_DAY)) + 1;
+    const lines = [`Met on day ${shownDay(reached)}: the ${ageTitle(last)} was reached in the ${ordinal(year)} year, with ${saw} of the ${began} who began alive. ${cap(share)} is ${need}; the ${ordinal(years)} year ends with day ${lastDay}.`];
+    if (aliveNow !== saw) lines.push(`${aliveNow} of them are alive now.`);
+    return { id, text, state: "met", decidedDay: shownDay(reached), figure: `${saw} of ${began} · day ${shownDay(reached)}`, lines };
+  }
+  if (world.tick >= deadline) {
+    const lines = [`Lost on day ${shownDay(deadline)}: the ${ordinal(years)} year ended and they stood in the ${ageTitle(readAgeAt(world, deadline))}.${reached >= 0 ? ` The ${ageTitle(last)} came on day ${shownDay(reached)}, too late.` : ""}`];
+    lines.push(`${aliveNow} of the ${began} who began are alive now.`);
+    return { id, text, state: "lost", decidedDay: shownDay(deadline), figure: `${ageTitle(ages.reached)} · ${aliveNow} of ${began}`, lines };
+  }
+  const year = Math.floor(world.tick / (yearDays * TICKS_PER_DAY)) + 1;
+  const left = lastDay - Math.floor(world.tick / TICKS_PER_DAY);
+  const lines = [`They stand in the ${stands}.`];
+  if (ages.next) lines.push(`The ${ageTitle(ages.next.age)} asks for ${ages.next.needs.map(needText).join(", ")}.`);
+  lines.push(`${aliveNow} of the ${began} who began are alive. ${cap(share)} is ${need}${deaths.length > 0 ? `: ${spare - deaths.length === 0 ? "one more death loses it" : `${spare - deaths.length} more can be lost`}` : ""}.`);
+  lines.push(`It is year ${year} of ${years}: the ${ordinal(years)} year ends with day ${lastDay}, ${left === 1 ? "1 day" : `${left} days`} from this morning.`);
+  return { id, text, state: "open", decidedDay: null, figure: `${aliveNow} of ${began} · year ${year} of ${years}`, lines };
+}
+
+/**
+ * What a group of the dead died of, most often first: "9 of hunger, 1 of cold and 1 of
+ * thirst". The engine records one cause with each death; this only counts them.
+ */
+export function causesOf(dead: readonly Agent[]): string {
+  const counts = new Map<string, number>();
+  for (const a of dead) counts.set(a.deathCause || "unknown", (counts.get(a.deathCause || "unknown") ?? 0) + 1);
+  const parts = [...counts.entries()].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1)).map(([cause, n]) => `${n} of ${cause === "unknown" ? "causes not recorded" : cause}`);
+  return parts.length <= 1 ? (parts[0] ?? "") : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+/** The highest age that had been reached by a tick (from the ticks each was first reached at). */
+function readAgeAt(world: WorldState, tick: number): number {
+  let age = 0;
+  for (let i = 1; i < AGE_COUNT; i++) {
+    const t = world.metrics.ages[i] as number;
+    if (t >= 0 && t < tick) age = i;
+  }
+  return age;
+}
+
 /** How the aim of this world's scenario stands. Null for a scenario with no aim this reader knows. */
 export function readAim(world: WorldState, series: readonly DaySample[]): AimView | null {
   let objective: { id: string; text: string };
@@ -213,6 +310,8 @@ export function readAim(world: WorldState, series: readonly DaySample[]): AimVie
     }
     case "shores_gap":
       return shores(world, id, text);
+    case "letters_in_time":
+      return lastAgeInTime(world, id, text);
     default:
       return null;
   }

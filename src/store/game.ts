@@ -8,7 +8,7 @@ import type { Pick, Quality } from "@/render/WorldRenderer";
 import type { ChronicleEntry } from "@/ui/game/text";
 import type { SaveMeta } from "@/persist/saves";
 import type { JournalEntry } from "@/ui/game/journal";
-import type { AgentDetail, AimPair, BranchView, CalendarView, ClimateView, CivicsView, CompareView, DaySample, HistoryView, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
+import type { AgentDetail, AimPair, BranchView, CalendarView, ClimateView, CivicsView, CompareView, DaySample, HandView, HistoryView, ProgressView, ReplayView, StaticAgentView, StaticWorldView, TileDetail } from "@/worker/protocol";
 
 export type Phase = "title" | "setup" | "loading" | "playing";
 export type Panel = "none" | "chronicle" | "interventions" | "compare" | "civics" | "menu" | "affordances" | "saves" | "about" | "recordings" | "atlas" | "journal" | "history";
@@ -32,6 +32,10 @@ export interface HudState {
   replay: ReplayView | null;
   /** The world's own history: stored moments, and any re-run of the past in progress. */
   history: HistoryView | null;
+  /** Ages, legacy and crafts of the world on screen (null in a world without crafts). */
+  progress: ProgressView | null;
+  /** The observer's remaining changes this season (null where the world sets no limit). */
+  hand: HandView | null;
 }
 
 export interface Settings {
@@ -98,6 +102,11 @@ export interface GameState {
   soundOn: boolean;
   /** True for the attract-mode world behind the title screen. */
   vista: boolean;
+  /**
+   * The closing page, when it is open: everyone has died ("extinct"), or the scenario's aim was
+   * met or lost this morning. Shown once for each; closing it changes nothing in the world.
+   */
+  closing: "extinct" | "met" | "lost" | null;
   set(patch: Partial<GameState>): void;
 }
 
@@ -168,5 +177,6 @@ export const useGame = create<GameState>((set) => ({
   overlay: { knowledge: false, ties: false },
   soundOn: false,
   vista: true,
+  closing: null,
   set: (patch) => set(patch),
 }));

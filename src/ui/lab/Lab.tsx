@@ -8,7 +8,7 @@
  */
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { ENGINE_VERSION, SCHEMA_VERSION } from "@/engine";
+import { DIGEST_COMPATIBLE_ENGINES, ENGINE_VERSION, SCHEMA_VERSION } from "@/engine";
 import type { ContrastResult, Plan, StudyReport } from "@/lab/analyse";
 import { LIVE_DESIGNS, dollars, estimateLiveStudy, seedsWithin } from "@/lab/cost";
 import { METRIC_LABEL, type Metric } from "@/lab/studies";
@@ -201,28 +201,36 @@ function Verify({ path }: { path: string }) {
   const cells = hashes?.hashes ?? [];
   const cell = cells[pick];
   if (!hashes || !cell) return null;
-  // a hash is only comparable with one made by the same engine writing the same snapshot format:
-  // a bundle from another version is still a record of what that version did, but this build cannot check it
-  const sameEngine = (hashes.engine ?? ENGINE_VERSION) === ENGINE_VERSION && (hashes.schema ?? SCHEMA_VERSION) === SCHEMA_VERSION;
+  // A file hash is only comparable with one made by the same engine writing the same snapshot format.
+  // An earlier engine whose rules this one keeps for worlds like these (none has crafts or draws
+  // newcomers) is checked on the digest of the state instead: the file also holds the version
+  // that wrote it, the digest does not. Any other version's bundle is still a record of what
+  // that version did, but this build cannot check it.
+  const made = hashes.engine ?? ENGINE_VERSION;
+  const sameEngine = made === ENGINE_VERSION && (hashes.schema ?? SCHEMA_VERSION) === SCHEMA_VERSION;
+  const byDigest = !sameEngine && DIGEST_COMPATIBLE_ENGINES.includes(made) && typeof cell.digest === "string" && cell.digest.length > 0;
+  const checkable = sameEngine || byDigest;
   const run = (): void => {
     worker.current?.terminate();
     const w = new Worker(new URL("../../worker/lab.worker.ts", import.meta.url), { type: "module" });
     worker.current = w;
-    setState({ status: "running", expected: cell.sha256 });
+    const expected = byDigest ? cell.digest : cell.sha256;
+    setState({ status: "running", expected });
     w.onmessage = (e: MessageEvent<VerifyReply>) => {
-      setState({ status: "done", reply: e.data, expected: cell.sha256 });
+      setState({ status: "done", reply: e.data, expected });
       w.terminate();
     };
     const days = hashes.studies.find((s) => s.id === cell.study)?.days ?? 40;
     const request: VerifyRequest = { study: cell.study, condition: cell.condition, seed: cell.seed, days };
     w.postMessage(request);
   };
-  const same = state.status === "done" && state.reply?.ok && state.reply.sha256 === state.expected;
+  const computed = state.reply ? (byDigest ? state.reply.digest : state.reply.sha256) : "";
+  const same = state.status === "done" && state.reply?.ok && computed === state.expected;
   return (
     <section className={styles.panel} data-testid="verify">
       <h2>Check a run yourself</h2>
       <p className={styles.small}>
-        Pick any cell of this bundle. Your browser builds that world from its seed and configuration, runs it to the horizon and hashes the final state. If the hash equals the published one, you have reproduced the run; nothing is sent anywhere. Or open the cell as a world and watch what the numbers are numbers of.
+        Pick any cell of this bundle. Your browser builds that world from its seed and configuration, runs it to the horizon and hashes the final state. If {byDigest ? "the state's digest" : "the hash"} equals the published one, you have reproduced the run; nothing is sent anywhere. Or open the cell as a world and watch what the numbers are numbers of.
       </p>
       <div className={styles.verifyRow}>
         <label className={styles.field}>
@@ -235,15 +243,28 @@ function Verify({ path }: { path: string }) {
             ))}
           </select>
         </label>
-        <button type="button" className={styles.primary} onClick={run} disabled={state.status === "running" || !sameEngine} data-testid="verify-run">
+        <button type="button" className={styles.primary} onClick={run} disabled={state.status === "running" || !checkable} data-testid="verify-run">
           {state.status === "running" ? "Running…" : "Run it here"}
         </button>
         <Link href={`/?study=${encodeURIComponent(cell.study)}&condition=${encodeURIComponent(cell.condition)}&seed=${cell.seed}`} className={styles.secondary} data-testid="verify-open">
           Open it as a world
         </Link>
       </div>
-      <p className={styles.mono}>published {cell.sha256}</p>
-      {sameEngine ? null : (
+      <p className={styles.mono}>
+        published {cell.sha256}
+        {byDigest ? (
+          <>
+            <br />
+            state digest {cell.digest}
+          </>
+        ) : null}
+      </p>
+      {byDigest ? (
+        <p className={styles.small} role="note" data-testid="verify-by-digest">
+          This bundle was made by engine {made} (snapshot format {hashes.schema ?? "?"}); this page runs engine {ENGINE_VERSION} (format {SCHEMA_VERSION}). The newer engine adds crafts and newcomers as rules a world has to switch on. None of these worlds does, so they are stepped by the rules that made the bundle and must end in the same state: the check here is on the digest of that state. The file hash above is not compared, because the file also records the version that wrote it.
+        </p>
+      ) : null}
+      {checkable ? null : (
         <p className={styles.result} data-tone="bad" role="note" data-testid="verify-other-engine">
           This bundle was made by engine {hashes.engine ?? "?"} (snapshot format {hashes.schema ?? "?"}); this page runs engine {ENGINE_VERSION} (format {SCHEMA_VERSION}). A different engine is a different model, so re-running here would not be a check of these runs. To reproduce them, check out the commit that made the bundle.
         </p>
@@ -252,9 +273,11 @@ function Verify({ path }: { path: string }) {
         <p className={styles.result} data-tone={same ? "good" : "bad"} role="status" data-testid="verify-result">
           {state.reply.ok ? (
             <>
-              <span className={styles.mono}>computed&nbsp; {state.reply.sha256}</span>
+              <span className={styles.mono}>computed&nbsp; {computed}</span>
               <br />
-              {same ? `Reproduced: the same final state, bit for bit (${state.reply.alive} of ${state.reply.population} alive; ${(state.reply.ms / 1000).toFixed(1)} s here).` : "DIFFERENT: this browser did not reproduce the published run."}
+              {same
+                ? `Reproduced: the same final state, ${byDigest ? "digest for digest" : "bit for bit"} (${state.reply.alive} of ${state.reply.population} alive; ${(state.reply.ms / 1000).toFixed(1)} s here).`
+                : "DIFFERENT: this browser did not reproduce the published run."}
             </>
           ) : (
             `Could not run it: ${state.reply.error ?? "unknown error"}`

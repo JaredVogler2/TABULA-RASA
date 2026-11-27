@@ -4,7 +4,7 @@
  * write simulation state other than time control and logged observer interventions.
  */
 import { Soundscape, type Cue, type SoundLevels } from "@/audio/soundscape";
-import { TICKS_PER_DAY, makeConfig, type WorldConfig } from "@/engine";
+import { TICKS_PER_DAY, ageTitle, makeConfig, type WorldConfig } from "@/engine";
 import { AUTOSAVE_ID, deleteSave, getSave, listSaves, putSave, toRecord } from "@/persist/saves";
 import { samePick } from "@/render/pick";
 import { WorldRenderer, type Pick, type Quality } from "@/render/WorldRenderer";
@@ -21,12 +21,14 @@ const CHRONICLE_CAP = 600;
 
 /** World events that are marked by a tone when sound is on; the most consequential wins when several coincide. */
 const CUES: Record<string, { cue: Cue; rank: number }> = {
+  age: { cue: "ratified", rank: 7 },
   ratified: { cue: "ratified", rank: 6 },
   dissolved: { cue: "dissolved", rank: 5 },
   lapsed: { cue: "dissolved", rank: 5 },
   death: { cue: "death", rank: 4 },
   arrival: { cue: "arrival", rank: 3 },
   season: { cue: "season", rank: 2 },
+  discovered: { cue: "built", rank: 2 },
   built: { cue: "built", rank: 1 },
 };
 
@@ -179,8 +181,18 @@ export class GameController {
       s.set({ series: [...s.series, sample], controlSeries: control ? [...s.controlSeries, control] : s.controlSeries, aim });
       // the morning an aim is decided is said once, as a notice; the count is in the atlas
       const now = aim.yours;
-      if (now && before && before.id === now.id && before.state === "open" && (now.state === "met" || now.state === "lost")) {
-        this.toast(`This world's aim was ${now.state} on day ${now.decidedDay ?? "?"}: ${now.text} The atlas has the count.`);
+      const decided = !!now && !!before && before.id === now.id && before.state === "open" && (now.state === "met" || now.state === "lost");
+      if (now && decided) this.toast(`This world's aim was ${now.state} on day ${now.decidedDay ?? "?"}: ${now.text} The atlas has the count.`);
+      // In a world with crafts the morning everyone is gone, or the aim is decided, opens the closing page
+      // (once: it is a page to read, not a state of the world, and the world is paused while it is read).
+      if (s.world?.config.crafts && !s.vista && !s.hud?.replay) {
+        const last = s.series[s.series.length - 1];
+        const extinct = sample.alive === 0 && (last ? last.alive > 0 : true);
+        const closing = extinct ? "extinct" : now && decided ? (now.state as "met" | "lost") : null;
+        if (closing) {
+          this.pause();
+          useGame.getState().set({ closing, panel: "none" });
+        }
       }
     };
     this.client.onError = (message) => useGame.getState().set({ error: message });
@@ -324,6 +336,8 @@ export class GameController {
         if (c && (!best || c.rank > best.rank)) best = c;
         const page = state.vista ? null : pageFor(e);
         if (page) this.witness(entryFrom(page, e, entry));
+        // an age reached is said once, as a notice: the ladder is in the Atlas
+        if (e.k === "age" && !state.vista) this.toast(`The ${ageTitle(e.q ?? 0)} has begun. The Atlas has what the next one asks for.`);
       }
       // one tone at a time, and none over the title's passing island
       if (best && !state.vista && now - this.lastCue > 450) {
@@ -355,6 +369,8 @@ export class GameController {
           hasTwin: frame.hasTwin,
           replay: frame.replay,
           history: frame.history,
+          progress: frame.progress,
+          hand: frame.hand,
         },
       };
       // the worker is the one that knows when the twin left (a re-run forks again at the tick it forked the first time)
@@ -476,6 +492,8 @@ export class GameController {
     if (entry.id === "recovered" && !state.journal.some((j) => j.id === "depleted")) return;
     const def = JOURNAL.find((d) => d.id === entry.id);
     if (!def) return;
+    // a page that only a world with crafts can answer is not asked of any other
+    if (def.crafts && !state.world?.config.crafts) return;
     state.set({ journal: [...state.journal, entry], journalUnread: state.panel === "journal" ? 0 : state.journalUnread + 1 });
     this.toast(`Field journal · ${def.title}`, "news");
   }
@@ -565,6 +583,8 @@ export class GameController {
         hasTwin: ready.frame.hasTwin,
         replay: ready.frame.replay,
         history: ready.frame.history,
+        progress: ready.frame.progress,
+        hand: ready.frame.hand,
       },
       chronicle: [],
       series: ready.series,
@@ -572,6 +592,7 @@ export class GameController {
       // the worker knows when the twin left; nothing here is inferred from the lengths of lists
       forkDay: ready.frame.forkTick >= 0 ? Math.floor(ready.frame.forkTick / TICKS_PER_DAY) : -1,
       aim: null,
+      closing: null,
       compare: null,
       selection: null,
       agentDetail: null,
@@ -1063,6 +1084,10 @@ export class GameController {
       this.toast("This world's past is being lived again. A moment.");
       return;
     }
+    if (!result.ok && result.reason === "limit") {
+      this.toast("You have changed this island already this season. Its fortune is yours again when the season turns.");
+      return;
+    }
     if (result.ok) {
       const state = useGame.getState();
       state.set({ forkDay: state.forkDay >= 0 ? state.forkDay : Math.floor(result.forkTick / TICKS_PER_DAY), panel: "none" });
@@ -1186,6 +1211,19 @@ export class GameController {
   async remove(id: string): Promise<void> {
     await deleteSave(id);
     await this.refreshSaves();
+  }
+
+  /** The same island again: the same scenario, seed and rules, from its first morning. */
+  async again(): Promise<void> {
+    const world = useGame.getState().world;
+    useGame.getState().set({ closing: null });
+    if (world) await this.newWorld(world.config);
+  }
+
+  /** Leave this island for the choice of another. */
+  another(): void {
+    useGame.getState().set({ closing: null });
+    void this.toTitle().then(() => useGame.getState().set({ phase: "setup" }));
   }
 
   async toTitle(): Promise<void> {

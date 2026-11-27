@@ -16,6 +16,7 @@ import { Coach, RecordingBar, Timebar, Toast, TopBar, TwinBar } from "./Hud";
 import { HistoryPanel, RerunBar } from "./History";
 import { Inspector } from "./Inspector";
 import { JournalPanel } from "./Journal";
+import { Closing, GoalBar } from "./Progress";
 import { AffordancesPanel, Chronicle, Fault, Interventions, MenuPanel } from "./Panels";
 import { Setup, Title } from "./Title";
 import { useMapCover } from "./cover";
@@ -228,6 +229,7 @@ export function Game() {
             <RecordingBar />
             <RerunBar />
             <TwinBar />
+            <GoalBar />
             {panel === "chronicle" ? <Chronicle /> : null}
             <Inspector />
             <Coach />
@@ -244,6 +246,7 @@ export function Game() {
         {playing && panel === "history" ? <HistoryPanel /> : null}
         {panel === "affordances" ? <AffordancesPanel /> : null}
         {panel === "recordings" ? <RecordingsPanel /> : null}
+        {playing ? <Closing /> : null}
         {playing ? <Fault /> : null}
         <Toast />
       </div>
