@@ -734,18 +734,6 @@ export class WorldRenderer {
     };
   }
 
-  /**
-   * Leave out every mesh whose name is given, as `budget()` lists them. For finding out what a part of the
-   * picture costs or looks like without the rest; the studio's `hide=`.
-   */
-  setHidden(names: readonly string[]): void {
-    const hidden = new Set(names);
-    this.scene.traverse((o) => {
-      if (o.name && hidden.has(o.name)) o.visible = false;
-    });
-    this.shadowStale = true;
-  }
-
   /** Triangles submitted per mesh (instances included), largest first: the render budget, measured. */
   budget(): { name: string; triangles: number; instances: number }[] {
     const rows: { name: string; triangles: number; instances: number }[] = [];

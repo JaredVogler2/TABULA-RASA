@@ -6,7 +6,7 @@
  * how far to advance it, and where the camera stands.
  *
  *   /studio?scenario=first_light&seed=1&days=3&ticks=30&q=high&az=0.6&polar=0.9&dist=80
- *           &tx=30&ty=28&agent=4&play=1&speed=8&policy=reflex&inst=grammar_search&hide=sea,flora-grass
+ *           &tx=30&ty=28&agent=4&play=1&speed=8&policy=reflex&inst=grammar_search
  */
 import { useEffect, useRef, useState } from "react";
 import { TICKS_PER_DAY, makeConfig, type InstitutionMode, type PolicyKind } from "@/engine";
@@ -64,8 +64,6 @@ export function Studio() {
       if (disposed) return;
       renderer.setWorld(ready.world);
       renderer.pushFrame(ready.frame);
-      // `hide=sea,flora-grass` leaves parts of the picture out, to see or to measure the rest without them
-      if (params.get("hide")) renderer.setHidden(params.get("hide")!.split(","));
       renderer.start();
 
       const total = Math.round(num("days", 0) * TICKS_PER_DAY + num("ticks", 0));
