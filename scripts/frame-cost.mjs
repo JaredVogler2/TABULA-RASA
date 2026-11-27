@@ -120,13 +120,21 @@ for (let rep = 0; rep < REPEAT; rep++) {
         await page.waitForFunction(() => window.__studio?.ready === true, null, { timeout: 300_000 });
         // two frames to be past anything compiled or uploaded on first use
         await page.waitForFunction(() => window.__frames >= 2, null, { timeout: 300_000 });
-        const f0 = await page.evaluate(() => window.__frames);
+        // Drawing is done by another process, after the page has asked for it. The page is made to wait
+        // until everything asked for so far has been drawn, at both ends of the count, so that the time
+        // counted belongs to the frames counted and to no others.
+        const settled = () =>
+          page.evaluate(() => {
+            document.querySelector("canvas")?.getContext("webgl2")?.finish();
+            return window.__frames;
+          });
+        const f0 = await settled();
         const c0 = cpuSeconds(marker);
         const t0 = Date.now();
         await page.waitForFunction((want) => window.__frames >= want, f0 + FRAMES, { timeout: 600_000, polling: 50 });
+        const f1 = await settled();
         const c1 = cpuSeconds(marker);
         const t1 = Date.now();
-        const f1 = await page.evaluate(() => window.__frames);
         const per = await page.evaluate((from) => window.__perFrame.slice(from), f0);
         const stats = await page.evaluate(() => window.__studio.stats());
         const n = f1 - f0;

@@ -6,6 +6,10 @@
  * Requires a running server (default http://127.0.0.1:3210, override with SHOTS_URL).
  * Headless Chromium renders through SwiftShader here, so these images show what the
  * product draws, not how fast a real device draws it.
+ *
+ * SHOTS_FORMAT=jpeg writes JPEG instead of PNG. SHOTS_MAX_WIDTH=1280 draws any shot wider than
+ * that at that width and the same shape (the window is made smaller: nothing is resampled), for
+ * stills that are to be kept in the repository.
  */
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -53,7 +57,9 @@ for (const name of names) {
     failed = true;
     continue;
   }
-  const context = await browser.newContext({ viewport: { width: shot.w, height: shot.h }, deviceScaleFactor: shot.dpr ?? 1 });
+  const maxWidth = Number(process.env.SHOTS_MAX_WIDTH ?? 0);
+  const scale = maxWidth > 0 && shot.w > maxWidth ? maxWidth / shot.w : 1;
+  const context = await browser.newContext({ viewport: { width: Math.round(shot.w * scale), height: Math.round(shot.h * scale) }, deviceScaleFactor: shot.dpr ?? 1 });
   const page = await context.newPage();
   const errors = [];
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
