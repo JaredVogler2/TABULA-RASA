@@ -26,6 +26,12 @@ were set with scripted players.
 - **What nobody has done:** played it. The players in every number are scripts.
 - **Ideas put to the owner and not built** (D-058): harder grades of the aim, choosing where a change falls,
   hardships with signs and changes saved for them, a wonder that draws the curious, an island a day.
+- **A browser test must not depend on where the world happens to stop.** The world runs in its worker at
+  its own pace while a click waits for the page, so the tick at which a test reaches a step differs from run
+  to run, and by more on a software renderer. Two tests failed in CI on this pull request for that reason and
+  no other (`evidence/long-road/observer-race.txt`, `someone-else.txt`): step to a known tick, or make the
+  step work at any. CI keeps nothing of a failed browser run but its log, so a test's message should say the
+  tick.
 - **The owner merges quickly and a merge deploys itself** (below). The Long Road is the default scenario on
   the title screen: a fault in it is the first thing a visitor meets.
 

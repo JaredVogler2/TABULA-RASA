@@ -121,6 +121,10 @@ Everything the owner did or said, from the session's own record (times in UTC, 2
     letters doesn't seem too hard to achieve for example. Run detailed in depth testing. I want some form of
     skill involved for user to influence progress, suggest ideas here."* It was too easy; the test and what
     it changed are D-058.
+26. 2026-11-27, 18:13 — with pull request 11 open: *"Failure on one of five the long road ci pull request"*;
+    and at 20:16 a picture of its card, still showing four checks of five. Two browser tests had failed in CI
+    on two successive commits, each because of where the world happened to have stopped when the test reached
+    a step, and neither because of the game: `evidence/long-road/observer-race.txt` and `someone-else.txt`.
 
 Items 17, 18 and 23–25 are the only observations of the product by a person other than the builder. No design
 direction, code, review, test result or decision came from a person beyond what is listed. A deployment of the

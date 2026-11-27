@@ -244,18 +244,20 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await shot(page, project, "05b-followed-while-walking");
 
   // Choosing someone else lets go of the first: the card, its button and the camera are all about the second.
-  // (The button went back to "Follow" and the camera went on tracking the first person.) Zoomed out — which
-  // keeps the follow — so that there is someone else to choose.
-  const held2 = (await seen()).at!;
-  await page.mouse.move(held2.x, held2.y + 30);
-  for (let i = 0; i < 10; i++) {
-    await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(80);
-  }
-  await expect(follow).toHaveAttribute("aria-pressed", "true");
-  let other: number | null = null;
-  for (let attempt = 0; attempt < 12 && (other === null || other === who); attempt++) {
-    const target = await page.evaluate((first) => {
+  // (The button went back to "Follow" and the camera went on tracking the first person.)
+  //
+  // There has to be someone else to choose, and on a phone that is not a given: between the tutorial and the
+  // card the map shows through a band 142 px tall, with the person followed held in the middle of it, and
+  // beyond that only at the margins. This step used to zoom out by ten notches and tap whoever was then drawn
+  // where the map shows. With citizen 0 followed, nobody is at 45 of the 291 ticks from 140 to 430: nothing was
+  // tapped, and the test failed with the first person "still chosen" on whichever run ended its walk on such a
+  // tick — and which tick that is depends on how quick the machine's clicks are (CI, 27 November 2026). So the
+  // view is widened a notch at a time — zooming out keeps the follow — until someone else can be tapped: at
+  // none of those ticks are the ten-notch view and the widest both empty. Should every view be, people walk: a
+  // tick at a time is let pass. Measured: evidence/long-road/someone-else.txt.
+  /** Someone other than the person followed who can be tapped: drawn on the map itself, well clear of them. */
+  const someoneElse = (): Promise<{ x: number; y: number } | null> =>
+    page.evaluate((first) => {
       const canvas = document.querySelector('[data-testid="world-canvas"]');
       const mine = window.__tr?.screenOf(first) ?? null;
       for (let id = 0; id < 50; id++) {
@@ -268,9 +270,64 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
       }
       return null;
     }, who!);
-    if (target) {
-      if (touch) await page.touchscreen.tap(target.x, target.y);
-      else await page.mouse.click(target.x, target.y);
+  /** The picture has stopped changing: everyone is drawn where they were drawn a moment ago. */
+  const pictureAtRest = async (): Promise<void> => {
+    let last: (number | null)[] = [];
+    await expect
+      .poll(
+        async () => {
+          const now = await page.evaluate(() => {
+            const all: (number | null)[] = [];
+            for (let id = 0; id < 50; id++) {
+              const p = window.__tr?.screenOf(id) ?? null;
+              all.push(p ? p.x : null, p ? p.y : null);
+            }
+            return all;
+          });
+          const moved = now.map((v, i) => {
+            const was = last[i];
+            if (was === undefined) return Number.POSITIVE_INFINITY;
+            if (v === null || was === null) return v === was ? 0 : Number.POSITIVE_INFINITY;
+            return Math.abs(v - was);
+          });
+          last = now;
+          return Math.max(...moved) < 1 ? "at rest" : "moving";
+        },
+        // looked at further apart than frames are drawn, even by a renderer that draws three a second
+        { message: "the picture comes to rest", timeout: 30_000, intervals: [700] },
+      )
+      .toBe("at rest");
+  };
+  const held2 = (await seen()).at!;
+  await page.mouse.move(held2.x, held2.y + 30);
+  // (the view stops widening at the whole island, fourteen notches from here)
+  let notches = 0;
+  let target: { x: number; y: number } | null = null;
+  while (target === null && notches < 14) {
+    await page.mouse.wheel(0, 120);
+    notches++;
+    await pictureAtRest();
+    target = await someoneElse();
+  }
+  let waited = 0;
+  for (; target === null && waited < 48; waited++) {
+    const before = await tick(page);
+    await stepTicks(page, 1);
+    await expect.poll(() => tick(page), { timeout: 30_000 }).toBe(before + 1);
+    await pictureAtRest();
+    target = await someoneElse();
+  }
+  testInfo.annotations.push({ type: "someone else", description: `${project}: at tick ${await tick(page)}, ${notches} notches out${waited ? ` and ${waited} ticks later` : ""}` });
+  expect(target, `someone else stands where they can be tapped (tick ${await tick(page)}, ${notches} notches out, ${waited} ticks waited)`).not.toBeNull();
+  // neither zooming out nor time passing lets go of the person followed
+  await expect(follow).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => window.__tr?.following()), "the camera is still following the first person").toBe(true);
+  let other: number | null = null;
+  for (let attempt = 0; attempt < 12 && (other === null || other === who); attempt++) {
+    const at = await someoneElse();
+    if (at) {
+      if (touch) await page.touchscreen.tap(at.x, at.y);
+      else await page.mouse.click(at.x, at.y);
     }
     await page.waitForTimeout(700);
     other = await selectedCitizen(page);
