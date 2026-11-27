@@ -1,0 +1,17 @@
+pnpm exec playwright test --trace off   (whole suite, tree a57d62d: before the graphics merge; software renderer; started 2026-11-27 about 17:19 UTC)
+Stopped by the session's 30-minute limit on background commands after 13 of 38 tests. Nothing had failed.
+
+Running 38 tests using 1 worker
+  ✓   1 [desktop] › tests/e2e/a11y.spec.ts:96:1 › no serious or critical accessibility violations on any screen or panel (4.6m)
+  ✓   2 [desktop] › tests/e2e/diagnostics.spec.ts:8:1 › browser and worker reproduce the Node reference digest (276ms)
+  ✓   3 [desktop] › tests/e2e/diagnostics.spec.ts:28:1 › health endpoint reveals no configuration (25ms)
+  ✓   4 [desktop] › tests/e2e/goal.spec.ts:33:1 › the goal: an age, a legacy and one change a season, from the first morning; the ladder in the Atlas (3.7m)
+  ✓   5 [desktop] › tests/e2e/history.spec.ts:64:1 › history: an exact re-run, the twin on screen, a new line, a return, a rebuilt past, an export, a refused import and a recorded cause (9.3m)
+  ✓   6 [desktop] › tests/e2e/lab.spec.ts:41:1 › laboratory: a published bundle, read as what it is, and a run reproduced in this browser (21.6s)
+  ✓   7 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.5m)
+  ✓   8 [desktop] › tests/e2e/owner.spec.ts:67:1 › a visitor without a session learns nothing and can change nothing (435ms)
+  ✓   9 [desktop] › tests/e2e/owner.spec.ts:104:1 › the owner signs in, sees that nothing can be spent, runs a mock society and publishes it (3.2s)
+  ✓  10 [desktop] › tests/e2e/owner.spec.ts:162:1 › authorizing spend takes the words, and the kill switch works from the console (997ms)
+  ✓  11 [desktop] › tests/e2e/owner.spec.ts:203:1 › a visitor replays the published run from its record, and every epoch matches (11.5s)
+  ✓  12 [desktop] › tests/e2e/owner.spec.ts:228:1 › the bundled recording plays from the title screen and matches its record to the end (1.0m)
+  ✓  13 [desktop] › tests/e2e/owner.spec.ts:268:1 › signing out ends every session, wherever its cookie was copied to (462ms)

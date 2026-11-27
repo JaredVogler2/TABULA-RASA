@@ -31,8 +31,11 @@ were set with scripted players.
 
 Checked on this work's tree: `pnpm test` 568 passed, 2 skipped by design, 48 files (with PostgreSQL); lint,
 types and every generated-file check; the legacy scripts above; `tests/e2e/goal.spec.ts` on both projects
-(2 passed). The whole browser suite had not finished here when this was written: CI runs it on every push,
-and GitHub has its result (`docs/EVIDENCE.md` § The Long Road).
+(2 passed). The whole browser suite was not finished here: a run on the tree before the graphics merge was
+stopped by the session's 30-minute limit on background commands after 13 of 38 tests, all passing
+(`evidence/long-road/e2e-local-partial.txt`). CI runs both projects on every push, and GitHub has the result
+for the head. **A background command here is stopped after 30 minutes unless given a longer limit: the whole
+suite needs about 45.**
 
 ## Graphics, second pass (2026-11-27)
 
