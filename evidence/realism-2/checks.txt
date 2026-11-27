@@ -1,0 +1,47 @@
+Checks run on the changed tree (D-054), 2026-11-27, Node 22.23.5, on a machine whose load average was 9–13
+on four cores throughout (other sessions' simulations and browser runs).
+
+$ pnpm lint
+> eslint
+exit 0
+
+$ pnpm typecheck
+Generating route types...
+✓ Types generated successfully
+exit 0            (next typegen && tsc --noEmit)
+
+$ pnpm test
+ Test Files  1 failed | 44 passed (45)
+      Tests  1 failed | 518 passed | 10 skipped (529)
+   Duration  207.33s
+exit 1
+
+  The one failure is a time limit, in a file this change does not touch:
+    FAIL  src/server/api.test.ts > the owner API > one address hammering sign-in cannot lock the owner out,
+          and strangers together cannot keep the owner off a device they have used
+    TestTimeoutError: Test timed out in 30000ms.
+  The test hashes passwords many times over; the ten skipped tests need PostgreSQL (TEST_DATABASE_URL).
+
+$ pnpm exec vitest run src/server/api.test.ts        (the same file, on its own, straight afterwards; load average 9.45)
+     ✓ one address hammering sign-in cannot lock the owner out, and strangers together cannot keep the owner
+       off a device they have used 19710ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+exit 0
+
+  So: every test passes, and one of them needs more than its thirty seconds when the whole suite runs on a
+  machine this busy. Its limit was not changed.
+
+  The renderer's own tests are among the 44 files that passed in the whole run: src/render/cameraRig.test.ts
+  (11 tests), citizens.test.ts (1), pick.test.ts (3) and the new realism.test.ts (10).
+
+$ pnpm check:links
+check:links passed: 42 documents; every link to a file in the repository and every root-relative path in backticks exists.
+exit 0
+
+$ pnpm build
+Not run on the final tree. It passed (exit 0) on the tree every number and still in this folder was taken
+from. After it, one unused method (WorldRenderer.setHidden) and the studio parameter that called it were
+taken out again and a comment was reworded; nothing else in the product's code changed.
+
+Not run: pnpm e2e (one run at a time on this machine; left to the session that merges this change).
