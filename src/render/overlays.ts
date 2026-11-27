@@ -34,11 +34,17 @@ export interface KnowledgeUniforms {
   [key: string]: IUniform<unknown>;
 }
 
-/** GLSL that greys a finished fragment toward dry parchment where the tile is unknown. `uv` is the tile-space coordinate. */
+/**
+ * GLSL that greys a finished fragment toward dry parchment where the tile is unknown. `uv` is the tile-space coordinate.
+ * While no citizen's knowledge is being shown the veil is nowhere, and nothing is read or worked out for it:
+ * the test is on a value that is the same for every pixel, and the texture is read at its one size (D-054).
+ */
 export const VEIL_GLSL = /* glsl */ `
-  float kUnknown = uKnownMix * (1.0 - smoothstep(0.25, 0.75, texture2D(uKnown, kuv).r));
-  float kLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(kLum) * 0.42 + uKnownTone, kUnknown * 0.94);
+  if (uKnownMix > 0.0) {
+    float kUnknown = uKnownMix * (1.0 - smoothstep(0.25, 0.75, textureLod(uKnown, kuv, 0.0).r));
+    float kLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(kLum) * 0.42 + uKnownTone, kUnknown * 0.94);
+  }
 `;
 
 export interface Knowledge {

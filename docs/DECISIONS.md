@@ -1464,6 +1464,136 @@ rollback. Read this file before modifying any contract it mentions.
 - **Cost and risks.** Assets and shaders run in the browser with the existing Three.js dependency. Finer meshes and surface shading add GPU work. SwiftShader captures verify appearance and give submitted geometry counts. Performance on physical devices remains unmeasured.
 - **Rollback.** Revert the graphics change. It adds no asset service, schema migration, simulation rule or save format change.
 
+## D-054 — A frame is made cheaper first, and what is saved is spent on leaves, water, rock and the sky's light (2026-11-27)
+
+- **Problem.** The owner asked whether the graphics could be improved further, "as realistic as possible
+  without damaging speed and run time". Looked at in stills of the merged build (`71d4418`, after D-053), four
+  things read as unreal. Crowns and bushes were faceted lumps, lit one flat face at a time. A stream was a
+  pale ribbon laid on the ground: a colour two fifths opaque at its edge and nine tenths in mid-channel, the
+  same from every angle. Rain on the sea was blobs of white drawn afresh six times a second, which read as
+  confetti (and were first taken for the sun's glitter). And nothing was dimmer for lying in a gully, at the
+  foot of a cliff or under a tree: the sky lit every point of the ground alike. Two things stood in the way.
+  D-053 had bought its detail with triangles (the high preset went from 1.65 to 1.77 million at the vista and
+  to 1.91 million close in), and the request rules out a second helping of that. And there is no graphics chip
+  here, so "speed" cannot be measured as a frame rate at all: every frame time on file is a software
+  renderer's.
+- **Original proposal.** The art bible as phase 11 left it: flora as "faceted, slightly irregular lumps",
+  fresh water "clear `#7fd6cf` over the gravel at the edge", light from a sun, a moon and a sky, shadows from
+  the sun on medium and high. Its own rubric held "Terrain and vegetation detail" at 3 with "Trees are still
+  faceted lumps", and "Lighting and materials" at 3 with "No ambient occlusion pass on high; materials are
+  flat-shaded colour only".
+- **Alternatives.** (a) Models and textures from outside: detail that costs nothing at run time, at the price
+  of a download, a licence to keep track of and a look that is someone else's; the product has no asset that
+  is not made by its own code, and stays so. (b) A screen-space occlusion pass: a full-screen pass on every
+  frame to estimate what can be worked out once from the height field. (c) Mirrored or refracted water: the
+  scene drawn a second time. (d) Shadows of drifting clouds: considered and not built. The engine's weather is
+  clear, overcast, rain, storm or snow; none of them is fair weather with passing clouds, so the picture would
+  show weather the world does not have. (e) A flatter tone curve (AgX in place of ACES): tried, and kept as a
+  pair of stills (`evidence/realism-2/tried-aces.jpg`, `evidence/realism-2/tried-agx.jpg`); the greens are
+  more sober and the shallows lose the light the art bible asks of them. Not taken. (f) Sharper textures on
+  ground seen at a slant (anisotropic filtering): it was on in an early build and was taken out without being
+  measured on its own, on the reasoning that it is paid for with several reads of a texture where one is made,
+  on far ground that the lens then blurs. (g) A shadow map fitted to what the camera sees when it is close:
+  considered and not built; shadows would be up to twice as fine close in, and in a tilted view would stop at
+  a line on the far ground. (h) Leaves as cut-out cards: not built; more triangles, each card drawn over the
+  next. A crown's outline is broken another way (item 6). (i) Taking the savings and leaving the picture as it
+  was: that meets "without damaging speed" and not "as realistic as possible".
+- **Decision.** Savings first, then spending, and a gate on the sum: at the same camera and window, for each
+  preset separately, a frame may submit no more draw calls and no more triangles than before, and may cost the
+  software renderer no more. The first two are exact. For the third a measure was added
+  (`scripts/frame-cost.mjs`): the processor time the browser's own processes spend on a fixed number of
+  frames, which moves much less than wall-clock frame times do when other work shares the machine. It measures
+  how much work a frame asks for; it is not a frame rate, and it weighs pixels more heavily than a graphics
+  chip would. Items 1 to 5 are what was saved, 6 to 10 what it was spent on, 11 what the low preset takes.
+  1. **Shadows are drawn again on every second frame.** Between two frames the sun has not moved and a walker
+     has moved a fraction of a step; drawing the shadow map submitted as many triangles again as everything
+     that casts a shadow. A frame asked for on its own (a paused view, a new world) always draws them.
+  2. **A shadow is cast by a stand-in.** Each crown, bush and rock carries a coarse copy of itself after its
+     own triangles, a tenth smaller, which is drawn only into the shadow map: 140 triangles for a crown's 560,
+     60 for a bush's 240, 40 for a rock's 180.
+  3. **From far off, less is drawn of what is too small to see.** Beyond 84 units crowns and bushes wear the
+     plainer form the low preset always wore (160 triangles for a crown's 560, 120 for a bush's 240), and
+     within 70 their full form again; grass thins from all of its tufts at 42 units to three in ten at 105,
+     evenly over the island.
+  4. **Noise is read, not computed.** On medium and high the ground worked out thirteen values of noise for
+     every pixel of every frame, the sea six, a stream four and a crown two. They are now looks at three small
+     repeating textures (256 × 256, made once in the browser by `src/render/detail.ts`; nothing is
+     downloaded): two for the ground and two more under water, three for the sea, two for a stream, one for a
+     crown. A stream no longer reads the height of the land four times a pixel to learn which way it runs:
+     that is worked out once for each vertex. The veil that shows what one citizen knows, and rain on the sea,
+     cost nothing while no veil is shown and on a dry day. A blur narrower than a pixel and a half takes four
+     looks at the picture instead of thirteen.
+  5. **The shadow filter that exists is the one asked for.** The soft filter asked for until now is gone from
+     this three.js, which said so on every start and used the plain one. The plain one is now asked for, and
+     narrowed (2.2 where 3.5) after its five scattered samples showed as stipple on the newly smooth crowns;
+     the two widths were not compared in otherwise identical builds.
+  6. **Leaves.** A crown is lit as one soft mass: its lumps share their vertices (42 to a lump where there
+     were 240), their normals lean out from the middle of the crown, and the dimness in the creases between
+     lumps and underneath them is worked out once and carried on the vertices. Leaves are one look at a
+     texture of massed sprays, wrapped round the crown by direction so that no side of it sees the texture
+     edge-on. On the high preset the outline of each lump is broken where the texture says the foliage is
+     thin. With the sun behind a crown, some light is let through at its rim. Conifers are four uneven skirts
+     of boughs in place of three cones, in two fewer triangles.
+  7. **Water.** The texture of ripples carries the water's slope as well as its height, so that the sun is
+     mirrored by the waves themselves: a sheen, and glints only where a wave faces the right way. A stream is
+     clear water over the bed that is drawn beneath it (a fifth opaque at its edge where it was two fifths)
+     and mirrors the sky at a slant; its surface is carried the way the land falls. The seabed takes the
+     water's own colour with depth, red going first. Rain on the sea is rings that open and fade where drops
+     fall. Sand just above the waterline is wet: darker and smoother.
+  8. **The sky's light.** How much of the sky each point of the ground can see is worked out once from the
+     height field (the steepest rise within about three tiles, in eight directions) and dims the sky's light
+     there, never the sun's and never by more than four fifths: gullies, the feet of cliffs and stream beds
+     lie darker. What stands on the ground dims it too, beneath the crown, and that shade is worked out again
+     when a tree is felled or grows back, so that the dimness goes with the tree (the art bible's rule that
+     state is shown by the thing itself).
+  9. **Rock.** Cliffs show the ledges of their own bedding, thick beds from far and thin ones within them from
+     near. (The fine relief of turf and gravel, which D-053 drew from differences of noise between
+     neighbouring pixels, is now read from the ground texture's own slope; it is meant to look as it did and
+     to cost less.)
+  10. **The key light.** The sun stands lower: at noon 44° where it stood 50° at the equinoxes, and 56° where
+      63° at midsummer. By the sun's height, shadows at noon are about a quarter longer (this was not measured
+      in a still); it is meant to let the island's relief read from the vista.
+  11. **The low preset** takes what applies to it: thinner grass from far off, textures in place of noise, the
+      dimmer hollows and shade, the wet sand, the lower sun, and the new conifers, which it now shades
+      smoothly. Its broad-leaved crowns keep their facets and take no leaf texture; it has no ledges, no water
+      colour on the seabed and, as before, no shadows.
+- **Evidence.** [Evidence](EVIDENCE.md#more-realism-at-no-cost-in-speed-d-054-2026-11-27): the stills, the
+  numbers and the commands. At the vista, in a 960 × 540 window, a frame of the high preset submits 746,236
+  triangles on average where it submitted 1,773,875 (-58%), and 913,214 on a frame that redraws shadows, in 71
+  draw calls on average and 80 at most where it made 80; it costs the software renderer 3.49 processor-seconds
+  where it cost 5.46 (the median of three rounds, each measuring the one build and then the other). Medium:
+  725,748 triangles for 1,716,826, 3.02 s for 4.48 s. Low: 424,030 for 433,771, 1.32 s for 1.65 s. Close in:
+  high 1,296,894 triangles for 1,907,899 and 2.92 s for 3.64 s; medium 1,228,245 for 1,820,450 and 2.62 s for
+  2.83 s; on low the two builds submit the same triangles to within a tenth of a percent and cost the same
+  (0.94 s and 0.94 s). By the wall clock, on a machine asked for more than twice what its cores can do, the
+  changed build was the quicker in every round on three of those six rows and in one round of three on the
+  other three: that is recorded, and nothing is concluded from it. Nine views, before and after, are in
+  `evidence/realism-2/`.
+- **Affected acceptance tests.** No row of the acceptance matrix changes state; P8 (frame time on a device
+  with a graphics chip) stays NOT RUN. `src/render/realism.test.ts` (10 tests) holds what can be held without
+  a graphics context: the stand-ins and the range each pass draws, the plainer form and its two distances, the
+  grass's share, the shade under a tree going and coming with the tree, the sky narrower in a stream bed than
+  on open land, the textures repeating exactly and level on average. What the renderer reports of itself
+  changes meaning: `drawCalls` and `triangles` are the dearer of the last two frames (the one that redrew
+  shadows), and `drawCallsMean` and `trianglesMean` are their mean. `scripts/perf.mjs` and the browser tests
+  read the first two; the browser tests were not run with this change.
+- **Cost and risks.** Three textures of a quarter of a megabyte each, about a megabyte on the graphics card
+  with their smaller copies; making them took about 160 ms once, and the sky about 20 ms for a world, in Node
+  on this machine (`evidence/realism-2/checks.txt`). A shadow is up to one frame old. Grass and crowns change
+  with distance: a slow zoom across 42–105 and 70–84 units may show tufts appearing and crowns changing shape,
+  and this was not watched in motion. The broken outline of crowns (high only) is decided in the shader, which
+  may make the renderer shade pixels of a crown that another crown then covers; its cost was not measured on
+  its own, the high preset's numbers include it, and it is not on the medium preset, which the phone's stills
+  use. Only the ground is dimmed by the sky it sees: people and buildings standing in a gully are lit as
+  before. The stand-ins rely on two hooks that this three.js calls around each draw into the shadow map; were
+  they not called, shadows would be cast by the full shapes, as before. The processor-time measure is a
+  software renderer's and weighs pixels heavily; close in on the low preset it shows no gain, and by the wall
+  clock nothing is shown either way. **Not measured, and not claimed:** a frame rate on any device; how any of
+  this looks on a real screen or in motion; the sun's glints on the sea and the light through the rim of a
+  crown, which no kept still looks toward.
+- **Rollback.** Revert the commits of this change. No asset, dependency, save format, engine rule or setting
+  is added.
+
 ## D-055 — Engine 0.8.0: know-how, six works and newcomers; every earlier world is stepped as before (2026-11-27)
 
 - **Problem.** The owner, after playing: *"with the current state civilizations only can die rather than

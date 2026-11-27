@@ -1,0 +1,15 @@
+What scripts/shots.mjs printed as it captured the nine 'before' stills of this folder (the merged build, 71d4418): one line a
+still, with how long the capture took and what the renderer reported of itself when the still was taken.
+The folder the stills were first written to is cut from each line and the file is given the name it has here.
+The frame times were taken while a second browser was measuring frame cost on the same four cores: they
+are a record, and they compare nothing. Draw calls and triangles are exact.
+
+vista_laptop: vista_laptop-before.jpg (87646 ms) {"fps":0,"frameMsP50":5983.1,"frameMsP95":13999.5,"drawCalls":80,"triangles":1773875,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+closeup: closeup-before.jpg (72420 ms) {"fps":0,"frameMsP50":4883.2,"frameMsP95":12432.9,"drawCalls":82,"triangles":1907899,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+midday: midday-before.jpg (87657 ms) {"fps":0,"frameMsP50":4649.9,"frameMsP95":8199.7,"drawCalls":81,"triangles":1776203,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+dusk: dusk-before.jpg (89067 ms) {"fps":0,"frameMsP50":5966.4,"frameMsP95":10499.6,"drawCalls":80,"triangles":1776391,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+night: night-before.jpg (102639 ms) {"fps":0,"frameMsP50":4949.9,"frameMsP95":10632.9,"drawCalls":80,"triangles":1775547,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+winter: winter-before.jpg (274057 ms) {"fps":0,"frameMsP50":5299.8,"frameMsP95":8333,"drawCalls":93,"triangles":1818627,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+woodcutter: woodcutter-before.jpg (113272 ms) {"fps":0,"frameMsP50":5733.1,"frameMsP95":13182.8,"drawCalls":88,"triangles":1914723,"pixelRatio":1,"quality":"high","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+phone: phone-before.jpg (121071 ms) {"fps":0,"frameMsP50":6783.1,"frameMsP95":14816,"drawCalls":66,"triangles":1716826,"pixelRatio":2,"quality":"medium","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}
+low: low-before.jpg (33664 ms) {"fps":1,"frameMsP50":1416.6,"frameMsP95":4383.1,"drawCalls":47,"triangles":433771,"pixelRatio":1,"quality":"low","renderer":"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"}

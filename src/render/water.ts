@@ -1,7 +1,14 @@
 /**
  * Water: the luminous sea held inside the slab, and fresh water in streams and ponds.
  * Colour comes from true depth (sampled from the same height field as the terrain),
- * with foam where it meets land, moving glints and soft swell.
+ * with foam where it meets land, glints where the sun is mirrored, and soft swell.
+ *
+ * Since D-054 the surface is read from a small repeating texture of ripples
+ * (`detail.ts`) where it used to be computed as noise for every pixel. The texture
+ * carries the slope of the water as well as its height, so that light is mirrored by
+ * the waves themselves: the sun lies on the sea as a broken path of glints toward it,
+ * not as specks scattered evenly. A stream is clear water over the bed that is drawn
+ * beneath it, moving the way the land falls, and mirrors the sky only at a slant.
  */
 import {
   BufferAttribute,
@@ -18,14 +25,16 @@ import {
   Vector3,
   type IUniform,
 } from "three";
+import { type DetailParts, detailMeans } from "./detail";
 import { SUBDIV, type HeightField } from "./heightfield";
 import { type KnowledgeUniforms, VEIL_GLSL, buildKnowledge } from "./overlays";
-import { FOAM, FRESH_DEEP, WATER_DEEP, WATER_MID, WATER_SHALLOW } from "./palette";
+import { FOAM, FRESH_CLEAR, FRESH_DEEP, WATER_DEEP, WATER_MID, WATER_SHALLOW } from "./palette";
 import { GLSL_NOISE } from "./terrain";
 
 export interface WaterUniforms {
   uTime: IUniform<number>;
   uHeight: IUniform<DataTexture>;
+  uRipples: IUniform<DataTexture>;
   uWorld: IUniform<Vector3>;
   uSunDir: IUniform<Vector3>;
   uSunColor: IUniform<Color>;
@@ -47,7 +56,7 @@ export interface WaterParts {
 
 const vec = (c: Color) => `vec3(${c.r.toFixed(4)}, ${c.g.toFixed(4)}, ${c.b.toFixed(4)})`;
 
-export function buildWater(field: HeightField, quality: "low" | "medium" | "high" = "high", know?: KnowledgeUniforms): WaterParts {
+export function buildWater(field: HeightField, quality: "low" | "medium" | "high" = "high", detail: DetailParts, know?: KnowledgeUniforms): WaterParts {
   const defines: Record<string, string> = quality === "low" ? { TR_LOW: "" } : {};
   const { w, h, sw, sh } = field;
 
@@ -61,6 +70,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   const uniforms: WaterUniforms = {
     uTime: { value: 0 },
     uHeight: { value: heightTexture },
+    uRipples: { value: detail.ripples },
     uWorld: { value: new Vector3(w, h, 0) },
     uSunDir: { value: new Vector3(0.4, 0.8, 0.4) },
     uSunColor: { value: new Color(1, 1, 1) },
@@ -76,11 +86,16 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   uniforms.uKnownMix = knowledge.uKnownMix;
   uniforms.uKnownTone = knowledge.uKnownTone;
 
+  const mean = detailMeans().ripples;
+  const f = (x: number) => x.toFixed(4);
+  const LEVEL = `vec2(${f(mean[0])}, ${f(mean[1])})`;
+
   const common = /* glsl */ `
     precision highp float;
     varying vec3 vW;
     uniform float uTime;
     uniform sampler2D uHeight;
+    uniform sampler2D uRipples;
     uniform sampler2D uKnown;
     uniform float uKnownMix;
     uniform vec3 uKnownTone;
@@ -120,60 +135,73 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         if (ground > 0.03) discard;
 
         float t = uTime;
-        float w1 = trNoise(p * 0.8 + vec2(t * 0.22, t * 0.16));
-        float w2 = trNoise(p * 2.1 - vec2(t * 0.27, t * 0.19));
+        // The surface is two trains of waves crossing: a slow swell and, turned across it, a shorter
+        // chop. Each is one look at the ripple texture, which gives the water's slope as well as its
+        // height; as waves shrink below a pixel the texture's smaller copies smooth them away, so the
+        // sea is calm from far off and does not shimmer.
+        vec4 swell = texture2D(uRipples, p * 0.105 + vec2(t * 0.011, t * 0.007));
+        float w1 = swell.b;
 #ifdef TR_LOW
-        float w3 = w2;
-        vec3 n = normalize(vec3((w1 - 0.5) * 0.3 + (w2 - 0.5) * 0.3, 1.0, (w2 - 0.5) * 0.3 + (w1 - 0.5) * 0.2));
+        vec2 slope = (swell.rg - ${LEVEL}) * 0.5;
+        float lace = swell.a;
+        float glint = 0.0;
 #else
-        float w3 = trNoise(p * 5.3 + vec2(-t * 0.4, t * 0.33));
-        // Crossed wave trains describe surface slopes. Shorter waves fade when
-        // their wavelength approaches a pixel, keeping the vista from shimmering.
-        float footprint = length(fwidth(p));
-        vec2 swell = vec2(0.93, 0.37);
-        vec2 crossSea = vec2(-0.39, 0.92);
-        float crest = dot(p, swell) * 2.5 - t * 1.3 + w1 * 1.5;
-        float chop = dot(p, crossSea) * 6.4 - t * 1.9 + w2 * 2.2;
-        float ripple = dot(p, swell + crossSea * 0.45) * 14.0 - t * 2.8 + w3 * 3.0;
-        float smallWaves = 1.0 - smoothstep(0.6, 2.3, footprint * 14.0);
-        vec2 slope = swell * (0.075 * cos(crest) + 0.034 * cos(ripple) * smallWaves)
-          + crossSea * 0.055 * cos(chop) * (1.0 - smoothstep(0.15, 0.55, footprint));
-        vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
+        vec4 chop = texture2D(uRipples, vec2(p.x * 0.74 + p.y * 0.67, p.y * 0.74 - p.x * 0.67) * 0.41 - vec2(t * 0.034, t * 0.022));
+        vec4 fine = texture2D(uRipples, p * 1.7 + vec2(t * 0.05, -t * 0.041));
+        vec2 gC = chop.rg - ${LEVEL};
+        vec2 gF = fine.rg - ${LEVEL};
+        vec2 slope = (swell.rg - ${LEVEL}) * 0.62 + vec2(gC.x * 0.74 - gC.y * 0.67, gC.y * 0.74 + gC.x * 0.67) * 0.5 + gF * 0.36;
+        float lace = fine.b;
+        float glint = fine.a;
 #endif
+        vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
 
         vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(WATER_MID)}, smoothstep(0.0, 0.75, depth));
         col = mix(col, ${vec(WATER_DEEP)}, smoothstep(0.55, 2.3, depth));
-        col *= 0.95 + 0.1 * w1;
-#ifndef TR_LOW
-        col *= 1.0 + 0.034 * cos(crest) + 0.019 * cos(chop);
-#endif
-        float alpha = mix(0.3, 0.95, smoothstep(0.0, 1.35, depth));
+        col *= 0.93 + 0.14 * w1;
+        // clear at the very edge, where the sand shows through and takes the water's colour by itself
+        float alpha = mix(0.16, 0.95, smoothstep(0.0, 1.5, depth));
 
-        // two bands of foam breathing along the shore
+        // foam breathing along the shore, and a thinner line riding in behind it
         float breathe = 0.05 * sin(t * 0.8 + p.x * 0.6 + p.y * 0.4);
         float edge = 1.0 - smoothstep(0.0, 0.09 + breathe, depth);
-        float lace = smoothstep(0.5, 0.85, trNoise(p * 6.5 + vec2(t * 0.35, -t * 0.28)) + edge * 0.5);
-        float foam = edge * lace * 0.85;
+        float foam = edge * smoothstep(0.42, 0.74, lace + edge * 0.5) * 0.85;
 #ifndef TR_LOW
         float band = smoothstep(0.17, 0.22, depth) * (1.0 - smoothstep(0.23, 0.3 + breathe, depth));
-        foam += band * smoothstep(0.6, 0.85, trNoise(p * 8.0 - vec2(t * 0.3, t * 0.2))) * 0.4;
+        foam += band * smoothstep(0.5, 0.72, chop.b + 0.25 * lace) * 0.42;
 #endif
 
         vec3 V = normalize(cameraPosition - vW);
         vec3 H = normalize(uSunDir + V);
-        float spec = pow(max(dot(n, H), 0.0), 110.0) * (1.0 - uNight);
-        float glitter = pow(max(dot(n, H), 0.0), 26.0) * w3 * (1.0 - uNight);
+        float nh = max(dot(n, H), 0.0);
+        // The sun mirrored in the waves: a soft sheen, and on it sharp glints where a wavelet happens
+        // to face the right way. Both lie where the slope allows them — along the path toward the sun.
+        float spec = pow(nh, 150.0) * (1.0 - uNight);
+        float sparkle = pow(nh, 520.0) * smoothstep(0.5, 0.78, glint) * (1.0 - uNight);
         // Dielectric reflection is weak when viewed from above and stronger toward the horizon.
         float fres = 0.02 + 0.98 * pow(1.0 - clamp(dot(n, V), 0.0, 1.0), 5.0);
         float reflectedHeight = clamp(reflect(-V, n).y, 0.0, 1.0);
         vec3 reflection = uSky * mix(vec3(0.64, 0.71, 0.75), vec3(0.29, 0.46, 0.62), reflectedHeight);
         col *= uLight;
-        col = mix(col, reflection, fres * 0.59);
-        col += uSunColor * (spec * 1.12 + glitter * 0.12);
-        // rain rings
+        col = mix(col, reflection, fres * 0.62);
+        col += uSunColor * (spec * 0.7 + sparkle * 3.2);
+        alpha = max(alpha, min(1.0, fres * 1.4 + spec + sparkle));
+        // Rain on the water: a ring opens where a drop falls and widens as it fades, each cell of a grid
+        // in its own time, more of them in a storm. Nothing is worked out for this on a dry day, and
+        // from far off, where a ring is smaller than a pixel, they are left to the eye.
 #ifndef TR_LOW
-        float ring = smoothstep(0.86, 0.96, trNoise(p * 9.0 + floor(t * 6.0) * 3.7)) * uRain;
-        col += vec3(0.25) * ring * (1.0 - uNight * 0.6);
+        if (uRain > 0.0) {
+          vec2 rg = p * 5.0;
+          vec2 cell = floor(rg);
+          float born = trHash(cell);
+          float age = fract(t * (0.8 + 0.5 * born) + born * 9.0);
+          vec2 where = (vec2(trHash(cell + 3.1), trHash(cell + 7.7)) - 0.5) * 0.5;
+          float d = length(fract(rg) - 0.5 - where);
+          float ring = (1.0 - smoothstep(0.0, 0.035, abs(d - age * 0.24))) * (1.0 - age) * step(born, uRain * 1.3);
+          ring *= 1.0 - smoothstep(0.012, 0.05, length(fwidth(p)));
+          col += vec3(0.42) * ring * (1.0 - uNight * 0.6);
+          alpha = max(alpha, ring * 0.6);
+        }
 #endif
         col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), clamp(foam, 0.0, 1.0) * 0.88);
         alpha = max(alpha, clamp(foam, 0.0, 1.0) * 0.9);
@@ -196,8 +224,11 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   const pos: number[] = [];
   const mask: number[] = [];
   const pond: number[] = [];
+  const flow: number[] = [];
   const idx: number[] = [];
   const vertexAt = new Int32Array(sw * sh).fill(-1);
+  const g = field.ground;
+  const groundAt = (sx: number, sy: number): number => g[Math.max(0, Math.min(sh - 1, sy)) * sw + Math.max(0, Math.min(sw - 1, sx))] as number;
   const addVertex = (sx: number, sy: number): number => {
     const i = sy * sw + sx;
     let v = vertexAt[i] as number;
@@ -206,6 +237,12 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     pos.push(sx / SUBDIV - w / 2, field.fresh[i] as number, sy / SUBDIV - h / 2);
     mask.push(field.wetMask[i] as number);
     pond.push(field.pond[i] as number);
+    // Which way the land falls here, and how steeply: the fall over a tile either side, so that the
+    // channel's own banks do not count. Worked out once per vertex; the surface runs that way.
+    const gx = groundAt(sx + SUBDIV, sy) - groundAt(sx - SUBDIV, sy);
+    const gz = groundAt(sx, sy + SUBDIV) - groundAt(sx, sy - SUBDIV);
+    const steep = Math.hypot(gx, gz);
+    flow.push(steep > 1e-4 ? -gx / steep : 0, steep > 1e-4 ? -gz / steep : 0, steep);
     vertexAt[i] = v;
     return v;
   };
@@ -228,6 +265,7 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
   freshGeometry.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
   freshGeometry.setAttribute("aMask", new BufferAttribute(new Float32Array(mask), 1));
   freshGeometry.setAttribute("aPond", new BufferAttribute(new Float32Array(pond), 1));
+  freshGeometry.setAttribute("aFlow", new BufferAttribute(new Float32Array(flow), 3));
   freshGeometry.setIndex(idx);
   const freshMaterial = new ShaderMaterial({
     transparent: true,
@@ -237,12 +275,15 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
     vertexShader: /* glsl */ `
       attribute float aMask;
       attribute float aPond;
+      attribute vec3 aFlow;
       varying vec3 vW;
       varying float vMask;
       varying float vPond;
+      varying vec3 vFlow;
       void main() {
         vMask = aMask;
         vPond = aPond;
+        vFlow = aFlow;
         vec4 wp = modelMatrix * vec4(position, 1.0);
         vW = wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
@@ -251,47 +292,53 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
       ${common}
       varying float vMask;
       varying float vPond;
+      varying vec3 vFlow;
       void main() {
         vec2 p = vW.xz;
         float t = uTime;
-        // streams run downhill: scroll the surface detail along the local gradient of the bed
-        vec2 uv = (p + uWorld.xy * 0.5) / uWorld.xy;
-        float e = 1.0 / uWorld.x;
-        float gx = texture2D(uHeight, uv + vec2(e, 0.0)).r - texture2D(uHeight, uv - vec2(e, 0.0)).r;
-        float gz = texture2D(uHeight, uv + vec2(0.0, e)).r - texture2D(uHeight, uv - vec2(0.0, e)).r;
-        vec2 grad = vec2(gx, gz);
-        vec2 flow = -normalize(grad + vec2(1e-4));
         // a stream runs, a pond lies still: how much the bed falls decides which this is
-        float running = smoothstep(0.05, 0.3, length(grad)) * (1.0 - smoothstep(0.15, 0.6, vPond));
-        // Blend two stretched patterns by the bed slope. World-aligned coordinates
-        // keep small changes in the heading from compressing streaks into bands.
-        float alongX = trNoise(p * vec2(1.35, 4.5) - vec2(sign(flow.x) * t * 1.15, 0.0));
-        float alongZ = trNoise(p * vec2(4.5, 1.35) - vec2(0.0, sign(flow.y) * t * 1.15));
-        float streak = mix(alongX, alongZ, smoothstep(0.45, 0.87, abs(flow.y)));
-        float still = trNoise(p * 1.7 + vec2(t * 0.07, -t * 0.05));
-        float f1 = mix(still, streak, running);
-        float f2 = trNoise(p * 7.0 + vec2(13.0 + t * 0.17, -t * 0.14));
-        // clear over the gravel at the edge, deepening to green-blue in mid-channel
+        float running = smoothstep(0.05, 0.3, vFlow.z) * (1.0 - smoothstep(0.15, 0.6, vPond));
+        // The surface is carried downhill. It is drawn twice, half a beat apart, each copy sliding
+        // with the current and fading out as the other fades in, so that it moves for ever and is
+        // never stretched; where nothing runs, both copies only drift.
+        vec2 drift = vec2(t * 0.006, -t * 0.004);
+        vec2 carry = vFlow.xy * running * 0.62;
+        float beat = fract(t * 0.34);
+        vec4 ra = texture2D(uRipples, p * 0.93 + drift - carry * beat);
+#ifdef TR_LOW
+        vec4 r = ra;
+#else
+        vec4 rb = texture2D(uRipples, p * 0.93 + 0.47 + drift - carry * fract(beat + 0.5));
+        vec4 r = mix(ra, rb, abs(beat * 2.0 - 1.0));
+#endif
+        float f1 = r.b;
+        vec2 slope = (r.rg - ${LEVEL}) * mix(0.55, 1.25, running);
+        vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
+        // clear over the gravel at the edge, deepening to green-blue in mid-channel: mostly the bed
+        // itself is what is seen, and the water only tints it
         float depth = smoothstep(0.44, 0.97, vMask);
-        vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(FRESH_DEEP)}, depth * (0.72 + 0.28 * f1));
-        col *= 0.9 + 0.16 * f2;
-        vec3 n = normalize(vec3((f1 - 0.5) * 0.6, 1.0, (f2 - 0.5) * 0.6));
+        vec3 col = mix(${vec(FRESH_CLEAR)}, ${vec(FRESH_DEEP)}, depth * (0.74 + 0.26 * f1));
         vec3 V = normalize(cameraPosition - vW);
         vec3 H = normalize(uSunDir + V);
-        float spec = pow(max(dot(n, H), 0.0), 70.0) * (1.0 - uNight);
-        float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
+        float nh = max(dot(n, H), 0.0);
+        float spec = pow(nh, 190.0) * (1.0 - uNight);
+        float fres = 0.02 + 0.98 * pow(1.0 - clamp(dot(n, V), 0.0, 1.0), 5.0);
+        float reflectedHeight = clamp(reflect(-V, n).y, 0.0, 1.0);
+        vec3 reflection = uSky * mix(vec3(0.62, 0.69, 0.72), vec3(0.3, 0.46, 0.6), reflectedHeight);
         col *= uLight;
-        col = mix(col, uSky * 0.8, fres * 0.22);
-        col += uSunColor * spec * 0.9;
+        col = mix(col, reflection, fres * 0.75);
+        col += uSunColor * spec * 1.6;
         // riffles where the water runs shallow and fast
-        float riffle = running * smoothstep(0.7, 0.93, streak) * (1.0 - 0.6 * depth);
+        float riffle = running * smoothstep(0.62, 0.82, f1) * (1.0 - 0.6 * depth);
         float rim = 1.0 - smoothstep(0.45, 0.8, vMask);
-        float lace = smoothstep(0.62, 0.9, f2 + rim * 0.3);
-        col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), clamp(rim * lace * 0.3 + riffle * 0.42, 0.0, 1.0));
+        float lace = smoothstep(0.55, 0.8, r.a + rim * 0.3);
+        float froth = clamp(rim * lace * 0.22 + riffle * 0.5, 0.0, 1.0);
+        col = mix(col, ${vec(FOAM)} * (uLight * 0.95 + 0.02), froth);
         // winter: a pale skin of ice
         col = mix(col, vec3(0.82, 0.9, 0.94) * (uLight * 0.95 + 0.03), uIce * (0.55 + 0.25 * f1));
         // the mesh extends past the bank; the visible edge is this smooth contour of the channel mask
-        float alpha = smoothstep(0.34, 0.5, vMask) * mix(mix(0.4, 0.9, depth), 0.95, uIce);
+        float body = max(mix(0.2, 0.8, depth), min(1.0, fres * 1.5 + spec + froth));
+        float alpha = smoothstep(0.34, 0.5, vMask) * mix(body, 0.95, uIce);
         // a stream runs out into the sea rather than ending in steps at the shore
         alpha *= smoothstep(-0.04, 0.08, vW.y);
         gl_FragColor = vec4(col, alpha);

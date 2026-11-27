@@ -310,3 +310,31 @@ it is given — more people, more events, a heavier picture.
 - **Other browsers.** Only Chromium has run it.
 - **Anything about live calls:** latency, throughput, cost.
 
+## What a frame submits, after D-054 (2026-11-27)
+
+The browser table above was measured in phase 15, before two changes to what is drawn. D-053 added detail and
+triangles; D-054 took away more than that, and spent some of the saving. At the vista, First Light, seed 1, in
+a 960 × 540 window (`docs/EVIDENCE.md` § More realism at no cost in speed; `evidence/realism-2/`):
+
+| Preset | After D-053: draw calls · triangles, every frame | After D-054: on average | After D-054: on a frame that redraws shadows |
+|---|---|---|---|
+| High | 80 · 1,773,875 | 71 · 746,236 | 80 · 913,214 |
+| Medium | 66 · 1,716,826 | 57.5 · 725,748 | 66 · 884,326 |
+| Low | 47 · 433,771 | 47 · 424,030 | no shadows: every frame alike |
+
+Where the triangles went: shadows are redrawn on every second frame; crowns, bushes and rocks cast them with
+coarse stand-ins; from far off crowns and bushes wear a plainer form and the grass thins. Where the per-pixel
+work went: noise that was computed for every pixel is read from three small textures.
+
+**A second measure, for comparing builds here.** `node scripts/frame-cost.mjs` counts the processor time the
+browser's processes spend on a fixed number of frames. On this machine that is the software renderer's work,
+and it moves less than a wall-clock frame time does when other jobs share the machine: between an hour with
+less else running and a busier one, the wall-clock time of the same frame of the same build went from 1.6 s to
+3.1–4.3 s, while this measure stayed within a fifth (5.5 to 4.6–6.1; the earlier rows, taken with the first
+form of the script, are `evidence/realism-2/frame-cost-before-quiet.jsonl`). It is not steady, which is why
+the two builds were measured turn and turn about. At the vista it fell from 5.46 to 3.49 processor-seconds a
+frame on high (-36%), from 4.48 to 3.02 on medium (-33%) and from 1.65 to 1.32 on low (-20%); close in, from
+3.64 to 2.92 on high and from 2.83 to 2.62 on medium, and on low it did not move (0.94 and 0.94). These are
+medians of three rounds. It is a measure of work asked for, on a renderer that pays for pixels on the
+processor; by the wall clock the same runs show nothing either way. **It is not a frame rate, and threshold P8
+is still not run**: nothing here has been drawn by a graphics chip.

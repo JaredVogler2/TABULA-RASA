@@ -23,6 +23,7 @@ import { AF, AGENT_STRIDE, type StaticWorldView, type ViewFrame } from "@/worker
 import { buildAmbient, type AmbientParts } from "./ambient";
 import { buildAtmosphere, type AtmosphereParts } from "./atmosphere";
 import { CameraRig } from "./cameraRig";
+import { buildDetail, type DetailParts } from "./detail";
 import { samePick } from "./pick";
 import { frameSteps } from "./timing";
 import { buildCitizens, type CitizenParts } from "./citizens";
@@ -68,8 +69,15 @@ export interface RenderStats {
   fps: number;
   frameMsP50: number;
   frameMsP95: number;
+  /**
+   * What the costlier of the last two frames submitted, every pass counted. Shadows are drawn again on
+   * every second frame (D-054), so one frame in two is dearer than the other: this is the dear one, and
+   * the two fields below are the mean of the pair, which is what a frame costs on average.
+   */
   drawCalls: number;
   triangles: number;
+  drawCallsMean: number;
+  trianglesMean: number;
   pixelRatio: number;
   quality: Quality;
   renderer: string;
@@ -96,6 +104,7 @@ export class WorldRenderer {
   private ambient: AmbientParts | null = null;
   private knowledge: Knowledge | null = null;
   private ties: Ties | null = null;
+  private detail: DetailParts | null = null;
   private post: PostChain | null = null;
   private frame: ViewFrame | null = null;
   private frameArrival = 0;
@@ -121,6 +130,11 @@ export class WorldRenderer {
   private disposed = false;
   private glInfo = "unknown";
   private dayBrightness = 1;
+  /** Whose turn it is: shadows are drawn again on every second frame, and at once when `shadowStale`. */
+  private shadowTurn = false;
+  private shadowStale = true;
+  /** Draw calls and triangles of the last frame and of the one before it. */
+  private readonly cost = { calls: 0, triangles: 0, callsBefore: 0, trianglesBefore: 0 };
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -166,9 +180,11 @@ export class WorldRenderer {
 
     this.knowledge = buildKnowledge(view.w, view.h);
     const know = this.knowledge.uniforms;
-    this.terrain = buildTerrain(view, field, q, know);
-    this.water = buildWater(field, q, know);
-    this.flora = buildFlora(view, field, q, know);
+    // fine detail for the ground, the water and the leaves: three small textures made here, once
+    this.detail = buildDetail();
+    this.terrain = buildTerrain(view, field, q, this.detail, know);
+    this.water = buildWater(field, q, this.detail, know);
+    this.flora = buildFlora(view, field, q, this.detail, know);
     this.structures = buildStructures(field, q, know);
     this.ties = buildTies();
     this.scene.add(this.ties.object);
@@ -194,13 +210,14 @@ export class WorldRenderer {
     });
     if (q !== "low") this.post = buildPost(this.renderer, this.scene, this.rig.camera, q, this.options.reducedMotion);
     this.deadKey = "";
+    this.shadowStale = true;
     this.resize();
     // a rig made anew (another world, another preset) is told at once what the interface covers
     this.rig.setInsets(this.insets.top, this.insets.bottom, true);
   }
 
   private clearWorld(): void {
-    for (const part of [this.terrain, this.water, this.flora, this.citizens, this.structures, this.atmosphere, this.ambient, this.knowledge, this.ties]) part?.dispose();
+    for (const part of [this.terrain, this.water, this.flora, this.citizens, this.structures, this.atmosphere, this.ambient, this.knowledge, this.ties, this.detail]) part?.dispose();
     const keep = new Set([this.ring]);
     for (const child of [...this.scene.children]) if (!keep.has(child as Mesh)) this.scene.remove(child);
     this.post?.dispose();
@@ -216,6 +233,7 @@ export class WorldRenderer {
     this.ambient = null;
     this.knowledge = null;
     this.ties = null;
+    this.detail = null;
     this.frame = null;
     for (const b of this.bubbles) b.el.remove();
     this.bubbles.length = 0;
@@ -226,6 +244,9 @@ export class WorldRenderer {
     this.frameArrival = performance.now();
     if (!this.view || !this.field) return;
     this.flora?.setAmounts(frame.nodeAmounts);
+    // the dimness under a crown goes with the tree and comes back with it
+    const shade = this.flora?.takeShade();
+    if (shade) this.terrain?.setShade(shade);
     this.ambient?.setAmounts(frame.nodeAmounts);
     if (frame.roster) this.citizens?.setRoster(frame.roster);
     if (frame.structures) {
@@ -287,6 +308,8 @@ export class WorldRenderer {
 
   /** Render exactly one frame immediately (used when paused, and by tests). */
   renderOnce(): void {
+    // a single frame drawn on request shows shadows as they are now, whichever turn it is
+    this.shadowStale = true;
     this.renderFrame(0.016, performance.now());
   }
 
@@ -305,6 +328,7 @@ export class WorldRenderer {
     if (frame) this.citizens!.update(frame, tickFraction, dt, time);
     rig.update(cameraDt);
     this.citizens!.setDistance(rig.getDistance());
+    this.flora!.setDistance(rig.getDistance());
 
     if (frame) {
       const yearPos = frame.cal.yearPos;
@@ -361,6 +385,15 @@ export class WorldRenderer {
     this.updateSelection(time);
     this.updateLabels(now);
 
+    // Shadows are drawn again on every second frame, not on every one (D-054). Between two frames the sun
+    // has not moved and a walker has moved a fraction of a step, so a shadow one frame old lies where a new
+    // one would; drawing it costs as many triangles again as everything that casts one.
+    this.shadowTurn = !this.shadowTurn;
+    if (this.shadowTurn || this.shadowStale) {
+      this.renderer.shadowMap.needsUpdate = true;
+      this.shadowStale = false;
+    }
+
     if (this.post) {
       // keep the sharp band on the orbit target; blur grows as the camera comes closer
       this.tmp.copy(rig.target).project(rig.camera);
@@ -370,6 +403,10 @@ export class WorldRenderer {
     } else {
       this.renderer.render(this.scene, rig.camera);
     }
+    this.cost.callsBefore = this.cost.calls;
+    this.cost.trianglesBefore = this.cost.triangles;
+    this.cost.calls = this.renderer.info.render.calls;
+    this.cost.triangles = this.renderer.info.render.triangles;
 
     if (this.options.adaptiveResolution !== false) this.adapt(dt, now);
   }
@@ -688,8 +725,10 @@ export class WorldRenderer {
       fps: p50 > 0 ? Math.round(1000 / p50) : 0,
       frameMsP50: Math.round(p50 * 10) / 10,
       frameMsP95: Math.round(q(0.95) * 10) / 10,
-      drawCalls: this.renderer.info.render.calls,
-      triangles: this.renderer.info.render.triangles,
+      drawCalls: Math.max(this.cost.calls, this.cost.callsBefore),
+      triangles: Math.max(this.cost.triangles, this.cost.trianglesBefore),
+      drawCallsMean: (this.cost.calls + this.cost.callsBefore) / 2,
+      trianglesMean: (this.cost.triangles + this.cost.trianglesBefore) / 2,
       pixelRatio: this.pixelRatio,
       quality: this.quality,
       renderer: this.glInfo,
@@ -703,7 +742,8 @@ export class WorldRenderer {
       const mesh = o as Mesh;
       if (!mesh.isMesh || !mesh.visible) return;
       const g = mesh.geometry;
-      const per = (g.index ? g.index.count : (g.getAttribute("position")?.count ?? 0)) / 3;
+      // what the picture draws of it: a geometry may carry a coarse stand-in after this range, drawn only into the shadow map
+      const per = Math.min(g.index ? g.index.count : (g.getAttribute("position")?.count ?? 0), g.drawRange.count) / 3;
       const instances = (mesh as InstancedMesh).isInstancedMesh ? (mesh as InstancedMesh).count : 1;
       rows.push({ name: mesh.name || mesh.type, triangles: Math.round(per * instances), instances });
     });
