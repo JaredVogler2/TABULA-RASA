@@ -129,7 +129,8 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
           const s = await seen();
           const moved = s.at ? Math.hypot(s.at.x - last.x, s.at.y - last.y) : Number.NaN;
           if (s.at) last = s.at;
-          const inPlace = !centered || (s.fromMiddle >= 0 && s.fromMiddle < 40);
+          const centerX = (page.viewportSize()?.width ?? 0) / 2;
+          const inPlace = !centered || (s.at && Math.abs(s.at.x - centerX) < 16 && s.fromMiddle < 40);
           return s.under === "" && moved < 1.5 && inPlace
             ? "at rest in sight"
             : `under "${s.under}", moved ${moved}, ${s.fromMiddle}px from the uncovered middle`;
