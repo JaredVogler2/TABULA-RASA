@@ -60,7 +60,7 @@ const MiniatureShader = {
         }
         col = acc / wsum;
       } else if (radius > 0.35) {
-        // a blur of a pixel or so needs four looks, not thirteen: from far off, most of the frame is here
+        // a blur narrower than a pixel and a half needs four looks, not thirteen
         vec2 o = vec2(0.62, 0.38) * radius / uRes;
         col = (col + texture2D(tDiffuse, vUv + o).rgb + texture2D(tDiffuse, vUv - o).rgb + texture2D(tDiffuse, vUv + vec2(-o.y, o.x)).rgb + texture2D(tDiffuse, vUv - vec2(-o.y, o.x)).rgb) * 0.2;
       }

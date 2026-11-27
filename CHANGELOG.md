@@ -5,6 +5,28 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
+## Graphics: more realism at no cost in speed (D-054, 2026-11-27)
+
+Nothing the simulation computes changes: this is the picture only.
+
+- A frame is cheaper. Shadows are redrawn on every second frame and cast by coarse stand-ins; from far off,
+  crowns wear a plainer form and the grass thins; noise that was computed for every pixel is read from three
+  small textures made in the browser. At the vista on the high preset a frame submits 746,236 triangles on
+  average where it submitted 1,773,875, in no more draw calls; medium likewise; low a little less than it did.
+- What was saved is spent on matter. Crowns are lit as soft masses with leaves on them, and on the high preset
+  their outlines are broken. Streams are clear water over their beds; rain is rings on the sea; the shallows
+  take the water's colour over the sand, and the beach has a wet edge. Gullies, cliff feet and the ground
+  under trees are dimmer, and the dimness under a tree goes when the tree is felled. Cliffs show the ledges of
+  their bedding. The sun stands lower, and shadows are about a quarter longer at noon.
+- In the shaders and not yet judged in a still: the sun's glints on the sea, placed by the waves' own slopes,
+  and light coming through the rim of a crown against the sun.
+- `node scripts/frame-cost.mjs`: what a frame costs a software renderer in processor time, for setting one
+  build beside another on a busy machine.
+- Not measured: a frame rate on any device (there is no graphics chip here), and whether a frame arrives
+  sooner by the wall clock on this machine, which was too busy to say.
+
+[Stills and numbers](docs/EVIDENCE.md#more-realism-at-no-cost-in-speed-d-054-2026-11-27)
+
 ## Pull request 10 — citizen and island realism (2026-11-27)
 
 - Citizens have shaped faces and hands, fitted woven tunics, boots, and articulated walking and work poses.

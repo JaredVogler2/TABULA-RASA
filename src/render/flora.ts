@@ -423,8 +423,9 @@ interface SwayOptions {
   leaves?: "broad" | "needle";
   /**
    * Broad leaves only: the outline of a crown is broken where its foliage is thin, instead of being
-   * the clean curve of the lumps it is built from. It is paid for per pixel of every crown (a pixel
-   * of a crown can no longer be skipped because another crown will cover it), so only the high preset asks for it.
+   * the clean curve of the lumps it is built from. Deciding the outline in the
+   * shader may make the renderer shade pixels of a crown that another crown then covers; what that costs
+   * was not measured on its own, so only the high preset asks for it.
    */
   ragged?: boolean;
 }

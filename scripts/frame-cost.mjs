@@ -14,8 +14,9 @@
  *
  * Here Chromium draws through SwiftShader, a software renderer: every pixel and every vertex is
  * paid for on the processor. Processor time per frame is therefore a measure of how much work a
- * frame asks for, and it barely moves when something else is using the machine, which wall-clock
- * time does. It is NOT a frame rate, and says nothing about how fast a graphics chip would draw
+ * frame asks for, and it moves much less than wall-clock time does when something else is using
+ * the machine (not nothing: measure two builds turn and turn about, and more than once). It is NOT
+ * a frame rate, and says nothing about how fast a graphics chip would draw
  * the same frame: a chip is far faster at pixels than at anything else. It is for comparing one
  * build with another, at the same view and size.
  */
