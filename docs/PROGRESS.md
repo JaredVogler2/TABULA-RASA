@@ -110,3 +110,8 @@ Items 17 and 18 are the only observations of the product by a person other than 
 direction, code, review, test result or decision came from a person beyond what is listed. A deployment of the
 game alone was authorized, and made by the owner. No spend, key, database or other billable infrastructure has
 been authorized.
+
+**Citizen and island realism (D-053, 2026-11-27) — PARTIAL.** Rebuilt the citizens with articulated knees
+and elbows, detailed faces, cloth, hands and boots. Updated ground, grass, foliage and sea rendering.
+Production-build screenshots and check results are indexed in [Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27).
+Physical-device performance remains open.

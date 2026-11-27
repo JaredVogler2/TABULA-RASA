@@ -1453,3 +1453,13 @@ rollback. Read this file before modifying any contract it mentions.
 - **Rollback.** Remove the call to `useMapCover` (the camera is then told of no cover and draws at the
   centre) and start `inspectorCompact` false on selection; restore `.row` to its grid. The camera's order of
   work and its time step are independent of the rest.
+
+## D-053 — Naturalistic citizens and island surfaces (2026-11-27)
+
+- **Problem.** At close range the citizens read as pawns. Broad, flat patches of turf and triangular grass reinforced the miniature effect even at eye level.
+- **Visual direction.** Use the supplied Seven Wonders reference for the naturalism of its surfaces, coast and lighting. Keep Tabula Rasa's own island, scale and cut-away diorama.
+- **Alternatives.** Imported skinned models could add anatomical detail, with new art licensing, download and animation-retargeting work. The existing procedural renderer can add the visible features with shared geometry and preserve the connection between simulation actions and poses.
+- **Decision.** Build shared sculpted figures with articulated elbows and knees, stable physique and appearance, and a compact weave texture generated in the browser. Draw only the hats, tools and loads present in each frame. Use simpler meshes at the vista, and focus the closer Follow camera on the citizen’s body. On wide screens, the camera measures the bars that cover the map’s centre column. Add layers of vegetation colour, narrower grass and reeds, terrain relief shading and crossed wave normals on Medium and High. Retain simplified geometry and shaders on Low.
+- **Evidence and checks.** See [Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27). A renderer unit test covers packed props, load visibility during work, and removal of both limbs on death. The game loop exercises selection, follow and the offline world on desktop and phone viewports.
+- **Cost and risks.** Assets and shaders run in the browser with the existing Three.js dependency. Finer meshes and surface shading add GPU work. SwiftShader captures verify appearance and give submitted geometry counts. Performance on physical devices remains unmeasured.
+- **Rollback.** Revert the graphics change. It adds no asset service, schema migration, simulation rule or save format change.

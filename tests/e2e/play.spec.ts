@@ -23,6 +23,15 @@ async function tick(page: Page): Promise<number> {
   return Number(text.replace(/\D+/g, ""));
 }
 
+/** Run a batch of exact single steps through the paused game's time controls. */
+function stepTicks(page: Page, count: number): Promise<void> {
+  return page.evaluate((presses) => {
+    const button = document.querySelector<HTMLButtonElement>('[data-testid="step-tick"]');
+    if (!button) throw new Error("the step button is not on the page");
+    for (let i = 0; i < presses; i++) button.click();
+  }, count);
+}
+
 /** Click (or tap) a living citizen in the 3D world at its real on-screen position. */
 async function clickCitizen(page: Page, touch: boolean): Promise<void> {
   for (let attempt = 0; attempt < 12; attempt++) {
@@ -121,7 +130,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   expect(who, "the inspector is open on a citizen").not.toBeNull();
   const seen = () => sight(page, who!);
   /** Where the citizen is drawn once the camera has come to rest, having waited for nothing to stand over them. */
-  const atRest = async (): Promise<{ x: number; y: number }> => {
+  const atRest = async (centered = false): Promise<{ x: number; y: number }> => {
     let last = { x: Number.NaN, y: Number.NaN };
     await expect
       .poll(
@@ -129,7 +138,11 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
           const s = await seen();
           const moved = s.at ? Math.hypot(s.at.x - last.x, s.at.y - last.y) : Number.NaN;
           if (s.at) last = s.at;
-          return s.under === "" && moved < 1.5 ? "at rest in sight" : `under "${s.under}", moved ${moved}`;
+          const centerX = (page.viewportSize()?.width ?? 0) / 2;
+          const inPlace = !centered || (s.at && Math.abs(s.at.x - centerX) < 16 && s.fromMiddle < 40);
+          return s.under === "" && moved < 1.5 && inPlace
+            ? "at rest in sight"
+            : `under "${s.under}", moved ${moved}, ${s.fromMiddle}px from the uncovered middle`;
         },
         { message: "the citizen comes to rest where they can be seen", timeout: 30_000, intervals: [500] },
       )
@@ -178,7 +191,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await expect(follow).toHaveAttribute("aria-pressed", "true");
   // following is for watching: a card that was open in full draws back
   if (touch) await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
-  const home = await atRest();
+  const home = await atRest(true);
   const held = await seen();
   expect(held.under, "nothing stands over the person followed").toBe("");
   expect(held.fromMiddle, `the person followed is drawn at the middle of the uncovered map (${JSON.stringify(held)})`).toBeLessThan(40);
@@ -270,6 +283,14 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await expect(page.getByTestId("inspector")).toHaveCount(0);
 
   // ── the Chronicle lists logged events; an entry jumps to where it happened
+  if (!touch) {
+    // In First Light seed 7, the first Chronicle entry about a living citizen is logged at tick 325.
+    // How far play has advanced before pause depends on the browser, so step past it explicitly.
+    const pausedAt = await tick(page);
+    const chronicleTick = Math.max(pausedAt, 336);
+    await stepTicks(page, chronicleTick - pausedAt);
+    await expect.poll(() => tick(page), { timeout: 60_000 }).toBe(chronicleTick);
+  }
   await page.getByTestId("open-chronicle").click();
   await expect(page.getByTestId("chronicle")).toBeVisible();
   const entries = page.getByTestId("chronicle-entries").locator("li");
@@ -281,7 +302,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
     // where it happened, so it is following nobody — and the button must not go on saying that it is. (For
     // forty minutes between two merges it did: choosing the same citizen again had been made to keep the
     // follow, without asking whether the camera still had them.)
-    const jump = page.getByTestId("chronicle-entries").locator('button[title="Go to where this happened"]');
+    const jump = page.getByTestId("chronicle-entries").locator('button[title="Go to where this happened"][data-group="people"]');
     let chosen: number | null = null;
     let at = -1;
     for (let i = 0; i < Math.min(await jump.count(), 30) && chosen === null; i++) {
@@ -597,16 +618,10 @@ test("charters are shown in plain words, with how they came about", async ({ pag
   // takes most of a second where the picture is drawn in software, and six hundred are wanted. (A real press of
   // the same button, and of its key, is in the two tests above.)
   const QUARTER_DAY = 24;
-  const stepQuarterDay = (): Promise<void> =>
-    page.evaluate((presses) => {
-      const button = document.querySelector<HTMLButtonElement>('[data-testid="step-tick"]');
-      if (!button) throw new Error("the step button is not on the page");
-      for (let i = 0; i < presses; i++) button.click();
-    }, QUARTER_DAY);
   let stepped = await tick(page);
   expect(stepped, "a new world starts paused at its first tick").toBe(0);
   for (let quarters = 0; quarters < 4 * 12 && !(await page.getByTestId("civics-count").isVisible()); quarters++) {
-    await stepQuarterDay();
+    await stepTicks(page, QUARTER_DAY);
     stepped += QUARTER_DAY;
     await expect.poll(() => tick(page), { timeout: 60_000 }).toBe(stepped);
   }

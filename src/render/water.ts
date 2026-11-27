@@ -124,14 +124,29 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         float w2 = trNoise(p * 2.1 - vec2(t * 0.27, t * 0.19));
 #ifdef TR_LOW
         float w3 = w2;
+        vec3 n = normalize(vec3((w1 - 0.5) * 0.3 + (w2 - 0.5) * 0.3, 1.0, (w2 - 0.5) * 0.3 + (w1 - 0.5) * 0.2));
 #else
         float w3 = trNoise(p * 5.3 + vec2(-t * 0.4, t * 0.33));
+        // Crossed wave trains describe surface slopes. Shorter waves fade when
+        // their wavelength approaches a pixel, keeping the vista from shimmering.
+        float footprint = length(fwidth(p));
+        vec2 swell = vec2(0.93, 0.37);
+        vec2 crossSea = vec2(-0.39, 0.92);
+        float crest = dot(p, swell) * 2.5 - t * 1.3 + w1 * 1.5;
+        float chop = dot(p, crossSea) * 6.4 - t * 1.9 + w2 * 2.2;
+        float ripple = dot(p, swell + crossSea * 0.45) * 14.0 - t * 2.8 + w3 * 3.0;
+        float smallWaves = 1.0 - smoothstep(0.6, 2.3, footprint * 14.0);
+        vec2 slope = swell * (0.075 * cos(crest) + 0.034 * cos(ripple) * smallWaves)
+          + crossSea * 0.055 * cos(chop) * (1.0 - smoothstep(0.15, 0.55, footprint));
+        vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
 #endif
-        vec3 n = normalize(vec3((w1 - 0.5) * 0.3 + (w2 - 0.5) * 0.2 + (w3 - 0.5) * 0.1, 1.0, (w2 - 0.5) * 0.3 + (w1 - 0.5) * 0.2 - (w3 - 0.5) * 0.1));
 
         vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(WATER_MID)}, smoothstep(0.0, 0.75, depth));
         col = mix(col, ${vec(WATER_DEEP)}, smoothstep(0.55, 2.3, depth));
         col *= 0.95 + 0.1 * w1;
+#ifndef TR_LOW
+        col *= 1.0 + 0.034 * cos(crest) + 0.019 * cos(chop);
+#endif
         float alpha = mix(0.3, 0.95, smoothstep(0.0, 1.35, depth));
 
         // two bands of foam breathing along the shore
@@ -148,12 +163,13 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         vec3 H = normalize(uSunDir + V);
         float spec = pow(max(dot(n, H), 0.0), 110.0) * (1.0 - uNight);
         float glitter = pow(max(dot(n, H), 0.0), 26.0) * w3 * (1.0 - uNight);
-        // reflection uses the calm surface normal so distant water does not break into blotches
-        float fres = pow(1.0 - max(V.y, 0.0), 4.0);
-
+        // Dielectric reflection is weak when viewed from above and stronger toward the horizon.
+        float fres = 0.02 + 0.98 * pow(1.0 - clamp(dot(n, V), 0.0, 1.0), 5.0);
+        float reflectedHeight = clamp(reflect(-V, n).y, 0.0, 1.0);
+        vec3 reflection = uSky * mix(vec3(0.64, 0.71, 0.75), vec3(0.29, 0.46, 0.62), reflectedHeight);
         col *= uLight;
-        col = mix(col, uSky * 0.9, fres * 0.3);
-        col += uSunColor * (spec * 1.2 + glitter * 0.1);
+        col = mix(col, reflection, fres * 0.59);
+        col += uSunColor * (spec * 1.12 + glitter * 0.12);
         // rain rings
 #ifndef TR_LOW
         float ring = smoothstep(0.86, 0.96, trNoise(p * 9.0 + floor(t * 6.0) * 3.7)) * uRain;
@@ -247,12 +263,14 @@ export function buildWater(field: HeightField, quality: "low" | "medium" | "high
         vec2 flow = -normalize(grad + vec2(1e-4));
         // a stream runs, a pond lies still: how much the bed falls decides which this is
         float running = smoothstep(0.05, 0.3, length(grad)) * (1.0 - smoothstep(0.15, 0.6, vPond));
-        vec2 q = vec2(dot(p, flow), dot(p, vec2(-flow.y, flow.x)));
-        // the current draws the surface out into streaks along its course
-        float streak = trNoise(vec2(q.x * 1.25 - t * 1.15, q.y * 6.5));
+        // Blend two stretched patterns by the bed slope. World-aligned coordinates
+        // keep small changes in the heading from compressing streaks into bands.
+        float alongX = trNoise(p * vec2(1.35, 4.5) - vec2(sign(flow.x) * t * 1.15, 0.0));
+        float alongZ = trNoise(p * vec2(4.5, 1.35) - vec2(0.0, sign(flow.y) * t * 1.15));
+        float streak = mix(alongX, alongZ, smoothstep(0.45, 0.87, abs(flow.y)));
         float still = trNoise(p * 1.7 + vec2(t * 0.07, -t * 0.05));
         float f1 = mix(still, streak, running);
-        float f2 = trNoise(p * 7.0 - flow * t * 1.6 * running + vec2(13.0 + t * 0.06, t * 0.04));
+        float f2 = trNoise(p * 7.0 + vec2(13.0 + t * 0.17, -t * 0.14));
         // clear over the gravel at the edge, deepening to green-blue in mid-channel
         float depth = smoothstep(0.44, 0.97, vMask);
         vec3 col = mix(${vec(WATER_SHALLOW)}, ${vec(FRESH_DEEP)}, depth * (0.72 + 0.28 * f1));

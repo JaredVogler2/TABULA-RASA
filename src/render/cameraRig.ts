@@ -41,6 +41,7 @@ export class CameraRig {
   private moved = 0;
   private pinch = { dist: 0, angle: 0, midY: 0 };
   private followFn: (() => Vector3 | null) | null = null;
+  private followHeight = 0;
   private autoOrbit = 0;
   /**
    * How much of the picture the interface covers from the top and from the bottom, in CSS pixels.
@@ -214,8 +215,9 @@ export class CameraRig {
     if (distance !== undefined) this.wantDistance = clamp(distance, MIN_DIST, this.maxDist);
   }
 
-  follow(fn: (() => Vector3 | null) | null, distance?: number): void {
+  follow(fn: (() => Vector3 | null) | null, distance?: number, height = 0): void {
     this.followFn = fn;
+    this.followHeight = height;
     if (fn && distance !== undefined) this.wantDistance = clamp(Math.min(this.wantDistance, distance), MIN_DIST, this.maxDist);
   }
 
@@ -305,7 +307,8 @@ export class CameraRig {
     this.target.x += (this.want.x - this.target.x) * k;
     this.target.z += (this.want.z - this.target.z) * k;
     const ground = Math.max(0, this.field.heightAt(this.target.x, this.target.z));
-    this.target.y += (ground - this.target.y) * (snap ? 1 : 1 - Math.exp(-dt * 4));
+    const aimHeight = ground + (this.followFn ? this.followHeight : 0);
+    this.target.y += (aimHeight - this.target.y) * (snap ? 1 : 1 - Math.exp(-dt * 4));
     this.distance += (this.wantDistance - this.distance) * k;
     this.azimuth += (this.wantAzimuth - this.azimuth) * k;
     this.polar += (this.wantPolar - this.polar) * k;

@@ -45,6 +45,7 @@ export type Pick =
 /** A frame longer than this (under 24 a second) counts as slow; the internal resolution never goes below MIN_PIXEL_RATIO. */
 export const SLOW_FRAME_MS = 42;
 export const MIN_PIXEL_RATIO = 0.6;
+const CITIZEN_VIEW_HEIGHT = 0.45;
 
 export interface RendererOptions {
   quality: Quality;
@@ -302,6 +303,7 @@ export class WorldRenderer {
     const tickFraction = frame && frame.tps > 0 ? Math.min(1, ((now - this.frameArrival + frame.sinceTickMs) * frame.tps) / 1000) : 0;
     if (frame) this.citizens!.update(frame, tickFraction, dt, time);
     rig.update(cameraDt);
+    this.citizens!.setDistance(rig.getDistance());
 
     if (frame) {
       const yearPos = frame.cal.yearPos;
@@ -537,7 +539,7 @@ export class WorldRenderer {
     if (sel.type === "agent") {
       const id = sel.id;
       const v = new Vector3();
-      this.rig.follow(() => (this.citizens?.positionOf(id, v) ? v : null), 26);
+      this.rig.follow(() => (this.citizens?.positionOf(id, v) ? v : null), 18, CITIZEN_VIEW_HEIGHT);
     } else if (this.field) {
       const c = this.field.tileCentre(sel.x, sel.y);
       this.rig.focus(c.x, c.z, 30);
@@ -576,7 +578,7 @@ export class WorldRenderer {
     }
   }
 
-  focusAgent(id: number, distance = 30): void {
+  focusAgent(id: number, distance = 18): void {
     if (!this.rig || !this.citizens) return;
     if (this.citizens.positionOf(id, this.tmp)) this.rig.focus(this.tmp.x, this.tmp.z, distance);
   }
@@ -645,7 +647,7 @@ export class WorldRenderer {
   screenOf(agent: number): { x: number; y: number } | null {
     const rig = this.rig;
     if (!rig || !this.citizens?.positionOf(agent, this.tmp)) return null;
-    this.tmp.y += 0.45;
+    this.tmp.y += CITIZEN_VIEW_HEIGHT;
     this.tmp.project(rig.camera);
     if (this.tmp.z > 1 || Math.abs(this.tmp.x) > 1 || Math.abs(this.tmp.y) > 1) return null;
     const rect = this.canvas.getBoundingClientRect();

@@ -960,27 +960,23 @@ export class GameController {
   }
 
   /**
-   * Tell the camera how much of the map the interface covers. On a narrow screen the bars stand over the top
-   * of the map and the time bar — and any sheet that has risen: the inspector, the Chronicle — over the bottom;
-   * what the camera looks at is drawn at the middle of what is left. On a wide screen the panels are at the
-   * sides and nothing is moved.
-   *
-   * Every part of the interface that stands on the map counts, whichever it is: each is a child of the element
-   * marked `data-hud`, and is taken to stand over the top or over the bottom by which half of the map its
-   * middle is in.
+   * Tell the camera how much of the map the interface covers. On wide screens measure
+   * the centre column, where the camera holds the citizen, so side panels leave the
+   * framing alone. On narrow screens all bars and sheets count.
    */
   measureCover(): void {
     const canvas = this.canvas;
     if (!canvas || !this.renderer || typeof window === "undefined") return;
     const hud = canvas.parentElement?.querySelector("[data-hud]") ?? null;
-    if (!hud || !window.matchMedia("(max-width: 880px)").matches) {
+    if (!hud) {
       this.renderer.setInsets(0, 0);
       return;
     }
-    const cover = coverOf(
-      canvas.getBoundingClientRect(),
-      Array.from(hud.children, (part) => part.getBoundingClientRect()),
-    );
+    const map = canvas.getBoundingClientRect();
+    const centerX = (map.left + map.right) / 2;
+    const narrow = window.matchMedia("(max-width: 880px)").matches;
+    const parts = Array.from(hud.children, (part) => part.getBoundingClientRect());
+    const cover = coverOf(map, narrow ? parts : parts.filter((part) => part.left <= centerX && part.right >= centerX));
     this.renderer.setInsets(cover.top, cover.bottom);
   }
 

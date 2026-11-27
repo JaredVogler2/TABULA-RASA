@@ -1,7 +1,6 @@
 # Art bible
 
-Version 2 (phase 11, second art pass; version 1 was phase 04). Everything here describes what the product
-draws and plays from live simulation state; nothing in the repository is a painted mock-up or a recording.
+The island and its citizens are rendered from live simulation state. The phase 11 critique and measurements below are the baseline for the realism pass (D-053).
 
 ## The idea
 
@@ -35,7 +34,7 @@ Scene colours are authored in sRGB and converted to linear in shaders; tonemappi
 | Highland turf | `#7f8a5c`; rock `#a39a88` / `#5b564e`; snow `#eef2f4` | rock only where steep or high |
 | Shore sand | `#d6c292` | |
 | Soil and worn path | `#7a5c3c`, `#b59a6c` | slab sides, traffic tint |
-| Sea | `#7fd6cf` shallow → `#2f9aa3` → `#0f4f63` deep; foam `#f2fbf8` | by distance from shore |
+| Sea | `#7fd6cf` shallow → `#328ca2` → `#164b73` deep; foam `#f2fbf8` | by distance from shore |
 | Fresh water | clear `#7fd6cf` over the gravel at the edge → `#175f5e` in mid-channel | streams streak along their fall; ponds lie still |
 | Banks and beds | damp earth `#665539`, gravel `#56655a`, pebbles `#9c9684` | where the channel mask says water meets land |
 | Cloth of agreements | `#b4533c` `#3f6a8c` `#c98a2b` `#5a7d4b` `#8c5a86` `#2f6e6a` `#c26d4a` `#6b7fb0` | one per institution: pennants, cords, the Charters panel, the atlas |
@@ -69,10 +68,11 @@ after dark.
 - Terrain: Catmull-Rom surface through tile centres at 4× subdivision, crags on steep highland, a sea floor
   that falls away from the shore so shallows are luminous and the rim is deep.
 - Flora: faceted, slightly irregular lumps — three broadleaf silhouettes (round, tall, wide), a three-tier
-  conifer, low bushes with separate berries, reeds, root rosettes, grass tufts. Flat shading on purpose: the
-  facets are the "carved model" signature.
-- Citizens: a tunic with a belt and hem in a darker shade of its own cloth, head, hair, sleeved arms, legs.
-  A straw hat is part of who a person is (three in ten, fixed by id). Everything else they wear is state:
+  conifer, low bushes with separate berries, reeds, root rosettes and grass tufts. Layered leaf colour and
+  curved grass blades add detail at ground level while the crowns retain their carved silhouettes.
+- Citizens: a fitted tunic with folds, belt and cuffs, trousers and boots, sculpted facial features,
+  hair, and articulated arms with hands. Medium and High add finer faces and woven cloth. A straw hat
+  is part of who a person is (three in ten, fixed by id). What they wear or carry for work reflects state:
   an **axe**, a **spear** or a **basket** is drawn only for someone who owns one — in the hand while it is
   being used, on the back otherwise — and what they carry is shaped by what it mostly is: logs, a rock, fish,
   or a sack in the colour of its contents, in the basket if they have one and in their arms if not.
@@ -92,7 +92,8 @@ a tile past the engine's own threshold for easier going; D-032).
 
 ## Animation
 
-Interpolation runs between simulation ticks and never feeds back. Walk (leg swing, bob), gather (bend and
+Interpolation runs between simulation ticks. Walking includes knee flex, opposing arm swing and shorter
+strides under load or illness. Follow brings a selected person closer. Gather (bend and
 reach), fell (a slow raise and a quick strike), fish (poised, then a lunge), carry (arms round the load),
 eat/drink (hand to mouth), rest/sleep (lying), build/work (hammer swing), speak (a gesture and a short bubble).
 
@@ -188,7 +189,7 @@ phase-04 stills (`evidence/phase-04/shots/`) are the "before".
 | 9 | `4-silhouette-clean.jpg`, `4-midday.jpg`, and the first charter capture (not kept): visible people clean, hidden people hinted; the lake a calm teal; a ratified charter's post, cords and pennant legible beside its store in the snow. Worn paths still could not be found at day 22. | Traffic was measured (never above about 33 on a tile in 40 days) and the wear mapping recalibrated to the engine's own threshold, with grass trodden down on worn tiles (D-032). |
 | 10 | The first knowledge view (capture not kept; `shots/knowledge.jpg` is the view after this pass): it washed unknown land to a dark slab, heaviest over the sea. | The wash became a pale parchment tone scaled to the light of the hour, so that it reads as unmapped paper by day and does not glow at night. |
 
-## Rubric (S02 scale: 0 absent · 1 placeholder · 2 functional · 3 polished · 4 exceptional and verified)
+## Phase 11 rubric (S02 scale: 0 absent · 1 placeholder · 2 functional · 3 polished · 4 exceptional and verified)
 
 Scored by the builder from the captures named, after phase 11. A score of 4 needs verification on real
 hardware and with people; none has happened, so nothing scores 4.
