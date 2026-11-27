@@ -132,16 +132,55 @@ function hungerPlan(world: WorldState, sc: Scratch, a: Agent, tile: number, why:
       }
     }
   }
+  // In a world with crafts the hungry know what a ripe crop is: their own first, and anyone's once
+  // they are going short. (Elsewhere the reflex layer has never known a plot from a stone, and a
+  // world without crafts is left exactly as it was: D-055.)
+  if (world.config.crafts && roomFor(a, Item.root) > 0) {
+    const crop = ripeCrop(world, a, a.energy < 400);
+    if (crop) return { intents: [{ k: "harvest", structure: crop.id }], goal: "eat", why: crop.mine ? "reap_my_crop" : "reap_what_stands_ripe" };
+  }
   const food = bestKnownNode(world, a, FOOD_NODE_KINDS);
   if (food.node >= 0) return { intents: [{ k: "gather", node: food.node, qty: 3 }], goal: "forage", why };
   return { intents: [{ k: "explore" }], goal: "seek_food", why: "no_food_known" };
+}
+
+/**
+ * The nearest crop this agent believes is ripe, within a morning's walk: one it sowed, or —
+ * if `anyones` — one that anybody did.
+ */
+export function ripeCrop(world: WorldState, a: Agent, anyones: boolean): { id: number; mine: boolean } | null {
+  let best = -1;
+  let bestD = 15;
+  let bestMine = false;
+  for (const ks of a.mind.structs) {
+    if ((ks.kind !== StructureKind.plot && ks.kind !== StructureKind.field) || ks.state !== 2) continue;
+    const s = world.structures[ks.id];
+    const mine = s !== undefined && (s.founder === a.id || (ks.kind === StructureKind.field && s.builders.includes(a.id)));
+    if (!mine && !anyones) continue;
+    const dx = ks.x > a.x ? ks.x - a.x : a.x - ks.x;
+    const dy = ks.y > a.y ? ks.y - a.y : a.y - ks.y;
+    const d = dx > dy ? dx : dy;
+    // one's own crop before another's at the same distance; otherwise the nearer; then the older
+    if (d < bestD || (d === bestD && mine && !bestMine) || (d === bestD && mine === bestMine && best >= 0 && ks.id < best)) {
+      best = ks.id;
+      bestD = d;
+      bestMine = mine;
+    }
+  }
+  return best >= 0 ? { id: best, mine: bestMine } : null;
 }
 
 function sleepPlan(world: WorldState, sc: Scratch, a: Agent, tile: number, night: boolean): Plan {
   // the short nights of summer do not restore a hard day's work: the tired sleep in
   const ticks = night ? Math.min(56, ticksUntilMorning(world) + (a.rest < 450 ? 12 : 2)) : 16;
   const intents: Intent[] = [];
-  const shelter = nearestKnownStructure(a, StructureKind.shelter, 8, (k) => k.state >= 1);
+  // a roof to sleep under: for the ill or hurt a healing house if one is known, otherwise a stone
+  // house before a thatched shelter (in a world without crafts only shelters are ever known)
+  const needy = a.ill > 0 || a.health < 700;
+  const shelter =
+    (needy ? nearestKnownStructure(a, StructureKind.healing_house, 12, (k) => k.state >= 1) : undefined) ??
+    nearestKnownStructure(a, StructureKind.house, 8, (k) => k.state >= 1) ??
+    nearestKnownStructure(a, StructureKind.shelter, 8, (k) => k.state >= 1);
   const fire = sc.warm[tile] ? undefined : nearestKnownStructure(a, StructureKind.campfire, 6, (k) => k.state === 2);
   if (shelter) intents.push({ k: "goto", x: shelter.x, y: shelter.y, near: 1 });
   else if (fire) intents.push({ k: "goto", x: fire.x, y: fire.y, near: 1 });

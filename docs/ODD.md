@@ -1,9 +1,15 @@
 # Model description (ODD)
 
 A description of the simulation in the Overview–Design concepts–Details format used for agent-based models.
-It describes engine version 0.7.0 as it is in the repository; every number below is a constant or default in
+It describes engine version 0.8.0 as it is in the repository; every number below is a constant or default in
 `src/engine/model/constants.ts` or `config.ts` unless a file is named. Where this document and the code
 disagree, the code is the model.
+
+Engine 0.8.0 is engine 0.7.0 with two rules that a world has to switch on (`crafts`, `arrivals`; D-055). With
+both off — the default, and the setting of every published experiment — a world is stepped exactly as 0.7.0
+stepped it, digest for digest (`tests/unit/legacy.test.ts`). Everything those two rules add is described in
+§3.3 under "Know-how and works" and "Newcomers", and marked *(crafts)* or *(arrivals)* where it touches the
+tables below.
 
 ## 1. Overview
 
@@ -23,9 +29,9 @@ It is not a model of any historical society and supports no claim about human pr
 |---|---|---|
 | **Tile** (64 × 64 by default) | height, water (none / sea / stream / pond), biome (shore, wetland, meadow, forest, scrub, highland), fertility, movement cost, drinkable (perennial / seasonal), region | Static after generation. |
 | **Resource node** (about 860 on the reference island: 825–891 over seeds 1–16) | kind (berry bush, root patch, tree, reed bed, stone outcrop, clay bank, fishing water), capacity, amount | Renewable kinds regrow; stone and clay are finite. |
-| **Agent** (50 by default) | position; energy, hydration, rest, warmth, health (0–1000); illness; inventory (13 items); tool wear; 9 traits, 4 physical attributes, 7 skills; current action and queued intents; **mind** | Traits are fixed at creation; skills grow with practice. |
+| **Agent** (50 by default) | position; energy, hydration, rest, warmth, health (0–1000); illness; inventory (13 items); tool wear; 9 traits, 4 physical attributes, 7 skills; current action and queued intents; **mind**; *(crafts)* the crafts known, one bit each; the tick of arrival | Traits are fixed at creation; skills grow with practice. *(arrivals)* More agents may come; none is ever born and none ages. |
 | **Mind** (per agent) | tiles ever seen; believed amount, time and source for each node; the fullest each node has been seen; last known position of each other agent; trust, favours given and received, promises kept and broken per other agent; known structures; ≤ 48 episodic memories with salience; ≤ 8 commitments; ≤ 12 things heard; home; felt-temperature average and trend; cold nights, hungry days and winters lived; charters and offers known | Nothing in a mind is true by construction; it is what the agent has perceived or been told. |
-| **Structure** | kind (campfire, shelter, store, plot), site, founder, builders, contributors, missing materials, labour, fuel, contents, contents open to all, controlling institution, integrity | Built by agents from gathered materials. |
+| **Structure** | kind (campfire, shelter, store, plot; *(crafts)* field, granary, stone house, healing house, mill, record house), site, founder, builders, contributors, missing materials, labour, fuel (in a healing house: care laid up), contents, contents open to all, controlling institution, integrity; *(crafts)* the crafts written in a record house | Built by agents from gathered materials. |
 | **Pile** | goods on the ground at a tile | Anyone may pick them up. |
 | **Climate** | weather, temperature, wetness, snow, light; drought / cold-snap / rain / hush timers | One per world. |
 | **Proposal, institution, motion, pact** | see `docs/INSTITUTIONS.md` | Exist only through agents' acts. |
@@ -38,7 +44,9 @@ tile is a few minutes' walk (2–4 ticks to cross, by biome). Typical runs: 40�
 Each tick, in this order (`src/engine/sim/step.ts`):
 
 1. **Environment.** Weather and temperature update; once a day: regrowth and winter die-back of nodes, spoilage
-   of carried, stored and dropped food, wear of structures, ripening of plots, scheduled shocks.
+   of carried, stored and dropped food, wear of structures, ripening of plots, scheduled shocks; then, last in
+   the morning's upkeep, *(crafts)* mills grind and the practised may find a craft, *(arrivals)* newcomers may
+   come ashore, *(crafts)* any age reached for the first time is noted.
 2. **Speech** uttered last tick is delivered to those within hearing; hearers update what they know.
 3. **Bodies.** Needs decay by activity; warmth exchanges with felt temperature; illness; damage when a need is
    at zero; death. Then each living mind's bookkeeping: overdue promises judged, temperature sampled, and once a
@@ -145,12 +153,49 @@ None. Scheduled shocks, where a scenario has them, are drawn from the seed.
   no clock).
 - **Social record** (`mind/social.ts`). Promises, trust changes, hearsay; see the table in `docs/COGNITION.md`.
 - **Institutions and pacts** (`institutions/`, `docs/INSTITUTIONS.md`).
+- **Know-how and works** *(crafts; `sim/works.ts`, D-055)*. Six crafts, each opening one work: tillage → field,
+  storekeeping → granary, masonry → stone house, herb lore → healing house, millwrighting → mill (needs tillage
+  and masonry), record keeping → record house (needs storekeeping and masonry). Nobody knows any at tick 0.
+  *Finding one:* once a person has put in a craft's practice — tillage: 12 ticks of farming and farming skill
+  240; storekeeping: 45 ticks of building and 20 of crafting; masonry: 30 of mining and 60 of building;
+  millwrighting: 250 of woodcutting and 90 of building; record keeping: 60 of crafting — each morning carries
+  a chance of insight (3%, 2%, 1.5%, 1.2% and 1% for the five at average curiosity; half that for the least
+  curious and half as much again for the most; scaled by `learningRate`), one craft a person a day. Herb lore
+  has no morning chance: someone who has foraged 300 ticks and reached foraging skill 550 may find it (15%,
+  scaled the same way) on recovering from an illness. *Watching:* when someone who knows a craft finishes a
+  piece of its work, each waking person in sight who has what the craft rests on may take it in (15%, scaled).
+  *Reading:* inspecting a record house, a person may come away with a craft written there that they are ready
+  for (35%, scaled); a record keeper inspecting one writes down a craft they know that it lacks. *The works:*
+  a field (2 roots + 2 wood, on fertile ground; ripe after ten growing days — not in winter or drought; yields
+  14 roots, a little more on rich ground or to a skilled hand; then stands unsown until 2 roots and a little
+  labour sow it again). A granary (holds 600; food in it spoils at 120‰ of the usual rate where a store's
+  spoils at 350‰). A stone house (sleeps six; warmer and more restful than a shelter; wears a fifth as fast).
+  A healing house (sleeps four; only the ill or the hurt rest there; asleep in one an illness runs out twice
+  as fast, and four times as fast while care is laid up, when health comes back as well — a herb knower
+  deposits berries or fibre, 32 ticks of care a unit, 960 at most).
+  A mill (beside a stream; each morning the stream runs, up to 36 stored roots become rations, one for one).
+  A record house (holds what was written in it for as long as it stands).
+- **Newcomers** *(arrivals; `sim/works.ts`, D-055)*. In spring and summer, each morning: if the dwellings
+  standing have at least two beds more than there are people, and the food in stores, granaries and mills
+  comes to at least 1,550 energy a head, then with probability 200‰ one to three adults come ashore, as long
+  as fewer than two and a half times the founders are alive and the world's record has room (the founders,
+  twenty-four, and a hundred or twice the founders, whichever is more). They are made as the founders were
+  and know no craft and no person.
+- **Ages and legacy** *(crafts; `metrics/ages.ts`, D-056)*. Readings for the observer, shown to no mind and
+  gating nothing. An age is a threshold in what stands and what has been done (Hearths: 5 fires, 8 dwellings,
+  2 stores; Fields: 3 fields, 3 field harvests; Stone: 4 stone houses, a granary; Mills: a mill, 30 roots
+  ground, a healing house; Letters: 5 crafts written in one record house); the tick each is first reached is
+  kept with the world. Legacy is a sum over this morning: 10 a living person, 60 a craft known, 40 a craft
+  written, 150 an age reached, and each standing work up to a limit for its kind.
 - **Measures** (`metrics/`). Definitions in protocol §4; the choices left open there are documented beside the
   code (ties in the interaction network are gifts, pact legs, speech addressed to one person, kept promises
   and co-founding; public speech is logged without its hearers and is not a tie).
 
 ### 3.4 What is known to be unrealistic
 
-No births, ageing, kinship or inheritance. No force. Perfect record-keeping of consent, deposits and votes. A
+No births, ageing, kinship or inheritance (D-057: designed and not built; in a world that draws newcomers a
+headcount grows only by adult strangers arriving). In a world with crafts, a ladder of know-how with fixed
+prerequisites and six works chosen by the designers: there is no other thing to discover and no other order
+to discover it in. A craft once known is never forgotten by the person, and is learned in a moment. No force. Perfect record-keeping of consent, deposits and votes. A
 40-day year. Homogeneous bodies apart from four attributes. A single island with no outside. Crops that need
 no tending. Monitoring that is free once someone is in sight. Each of these bounds what the model can say.

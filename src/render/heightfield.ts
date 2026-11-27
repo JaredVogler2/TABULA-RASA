@@ -338,6 +338,51 @@ export class HeightField {
     }
   }
 
+  private sky: Float32Array | null = null;
+
+  /**
+   * How much of the sky each sample of the ground can see, 0..1 (1 = an open plain), worked out once
+   * and kept: in eight directions the land is followed out to three tiles, and the steepest rise met
+   * on the way is the horizon in that direction. A slice of sky above a horizon at slope s gives a
+   * level surface 1 / (1 + s²) of what an open slice would. Light from the sky is dimmed by this
+   * where the ground lies in a gully, under a cliff or between hills (D-054); the sun is not.
+   */
+  openness(): Float32Array {
+    if (this.sky) return this.sky;
+    const { sw, sh, ground: g } = this;
+    const sky = new Float32Array(sw * sh).fill(1);
+    const reach = [1, 2, 3, 5, 8, 12];
+    const dirs = [1, 0, 1, 1, 0, 1, -1, 1, -1, 0, -1, -1, 0, -1, 1, -1];
+    for (let sy = 0; sy < sh; sy++) {
+      for (let sx = 0; sx < sw; sx++) {
+        const i = sy * sw + sx;
+        const here = g[i] as number;
+        // under the sea the water's own colour does this work
+        if (here < -0.05) continue;
+        let sum = 0;
+        for (let d = 0; d < 16; d += 2) {
+          const dx = dirs[d] as number;
+          const dy = dirs[d + 1] as number;
+          const unit = (dx !== 0 && dy !== 0 ? 1.41421356 : 1) / SUBDIV;
+          let steepest = 0;
+          for (let r = 0; r < reach.length; r++) {
+            const k = reach[r] as number;
+            const x = sx + dx * k;
+            const y = sy + dy * k;
+            if (x < 0 || y < 0 || x >= sw || y >= sh) break;
+            const there = g[y * sw + x] as number;
+            const slope = ((there > 0 ? there : 0) - here) / (k * unit);
+            if (slope > steepest) steepest = slope;
+          }
+          sum += 1 / (1 + steepest * steepest);
+        }
+        sky[i] = sum / 8;
+      }
+    }
+    this.sky = sky;
+    return sky;
+  }
+
   /** Bilinear ground elevation at world coordinates. */
   heightAt(worldX: number, worldZ: number): number {
     const gx = (worldX + this.w / 2) * SUBDIV;

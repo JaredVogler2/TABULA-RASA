@@ -4,7 +4,7 @@ import { MapPin } from "lucide-react";
 import { useGame } from "@/store/game";
 import { useController } from "./context";
 import styles from "./game.module.css";
-import { JOURNAL } from "./journal";
+import { journalOf } from "./journal";
 import { PanelHead } from "./Panels";
 import { tickLabel } from "./text";
 
@@ -15,6 +15,8 @@ import { tickLabel } from "./text";
 export function JournalPanel() {
   const controller = useController();
   const journal = useGame((s) => s.journal);
+  const crafts = useGame((s) => s.world?.config.crafts ?? false);
+  const JOURNAL = journalOf(crafts);
   const close = () => controller.openPanel("journal");
   const seen = new Map(journal.map((j) => [j.id, j]));
   const entries = JOURNAL.filter((d) => seen.has(d.id)).sort((a, b) => seen.get(a.id)!.tick - seen.get(b.id)!.tick);

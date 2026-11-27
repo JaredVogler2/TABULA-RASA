@@ -14,6 +14,9 @@
  */
 import {
   BIOMES,
+  CRAFTS,
+  Craft,
+  FIRST_WORK_KIND,
   FOOD_ITEMS,
   ITEMS,
   ITEM_SPECS,
@@ -28,12 +31,14 @@ import {
   TICKS_PER_DAY,
   TRAITS,
   WEATHER,
+  craftFor,
 } from "../model/constants";
 import type { Agent, Intent, SpeechAct, WorldState } from "../model/types";
 import { calendarAt } from "../world/climate";
 import { carriedWeight, carryCapacity, roomFor } from "../sim/inventory";
 import { hasSeen } from "../sim/pathfind";
 import { pileAt, structureAt, type Scratch } from "../sim/scratch";
+import { isRemedy, knows } from "../sim/works";
 import { believedDrinkable } from "./knowledge";
 import { visibleAgents, visiblePiles } from "./senses";
 import { sensesCold } from "./social";
@@ -141,6 +146,8 @@ export interface Observation {
     doing: string;
     /** The note I left myself with my last decision, if any. */
     note: string;
+    /** The crafts I know, by name. Present only in a world that has crafts. */
+    crafts?: string[];
   };
   now: {
     daysLived: number;
@@ -192,7 +199,16 @@ const STRUCTURE_STATE: readonly (readonly string[])[] = [
   ["unfinished", "standing"],
   ["unfinished", "empty", "some stock", "well stocked"],
   ["unfinished", "growing", "ripe"],
+  // the works (worlds with crafts)
+  ["unsown", "growing", "ripe"],
+  ["unfinished", "empty", "some stock", "well stocked"],
+  ["unfinished", "standing"],
+  ["unfinished", "standing, no care laid up", "standing, care laid up"],
+  ["unfinished", "empty", "some stock", "well stocked"],
+  ["unfinished", "standing, nothing written in it", "standing, crafts written in it"],
 ];
+/** A structure that can be carried on with: one not yet raised, or a field waiting to be sown. */
+const isSite = (state: string): boolean => state === "unfinished" || state === "unsown";
 
 export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Observation {
   const m = a.mind;
@@ -338,6 +354,7 @@ export function buildObservation(world: WorldState, sc: Scratch, a: Agent): Obse
       home: m.homeX >= 0 ? { x: m.homeX, y: m.homeY } : null,
       doing: m.goal,
       note: m.note,
+      ...(world.config.crafts ? { crafts: CRAFTS.filter((_, c) => knows(a, c)) } : {}),
     },
     now: {
       daysLived: Math.floor(tick / TICKS_PER_DAY),
@@ -475,19 +492,23 @@ function actionMask(world: WorldState, sc: Scratch, a: Agent, people: ObservedPe
   const kinds: number[] = [];
   for (const spec of STRUCTURE_SPECS) {
     if (spec.kind === StructureKind.plot && !world.config.planting) continue;
+    // a work can be laid out only by someone who knows its craft, and only where crafts exist
+    if (spec.kind >= FIRST_WORK_KIND && !(world.config.crafts && knows(a, craftFor(spec.kind)))) continue;
     if (spec.materials.some(([item]) => (a.inv[item] as number) > 0)) kinds.push(spec.kind);
   }
-  const sites = structures.filter((s) => s.state === "unfinished").map((s) => s.id);
+  const sites = structures.filter((s) => isSite(s.state)).map((s) => s.id);
   if (kinds.length || sites.length) out.push({ k: "build", kinds, sites });
 
   const fires = structures.filter((s) => s.kind === "campfire" && s.state !== "unfinished").map((s) => s.id);
   if (fires.length && (a.inv[Item.wood] as number) > 0) out.push({ k: "refuel", structures: fires });
-  const ripe = structures.filter((s) => s.kind === "plot" && s.state === "ripe").map((s) => s.id);
+  const ripe = structures.filter((s) => (s.kind === "plot" || s.kind === "field") && s.state === "ripe").map((s) => s.id);
   if (ripe.length) out.push({ k: "harvest", structures: ripe });
-  const stores = structures.filter((s) => s.kind === "store" && s.state !== "unfinished").map((s) => s.id);
-  if (stores.length) {
-    if (carried.length) out.push({ k: "deposit", structures: stores });
-    out.push({ k: "withdraw", structures: stores });
+  const stores = structures.filter((s) => (s.kind === "store" || s.kind === "granary" || s.kind === "mill") && s.state !== "unfinished").map((s) => s.id);
+  // care is laid up in a healing house from berries or fibre, by someone who knows herbs
+  const care = knows(a, Craft.herb_lore) && carried.some(isRemedy) ? structures.filter((s) => s.kind === "healing_house" && s.state !== "unfinished").map((s) => s.id) : [];
+  if (stores.length || care.length) {
+    if (carried.length) out.push({ k: "deposit", structures: care.length ? [...stores, ...care] : stores });
+    if (stores.length) out.push({ k: "withdraw", structures: stores });
   }
   if (structures.length) out.push({ k: "inspect", structures: structures.map((s) => s.id) });
 

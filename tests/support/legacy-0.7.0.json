@@ -1,0 +1,303 @@
+{
+ "engine": "0.7.0",
+ "note": "Written once by engine 0.7.0 (commit 71d4418). Do not regenerate: see scripts/legacy-digests.ts.",
+ "cells": [
+  {
+   "id": "first-light-planner-1",
+   "scenario": "first_light",
+   "seed": 1,
+   "days": 30,
+   "overrides": {},
+   "digests": [
+    "1f7a05ef0a356e5f",
+    "0f4c181304fd8b1f",
+    "3ad2fbf35d15c7e7",
+    "dfb4805a53ca13cd",
+    "2a299724d03b5ac9",
+    "405e30075e737c90"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 26483
+  },
+  {
+   "id": "first-light-planner-2",
+   "scenario": "first_light",
+   "seed": 2,
+   "days": 30,
+   "overrides": {},
+   "digests": [
+    "5a069dbfe0a12b9c",
+    "224e526a30e2135b",
+    "3e8f27e61eea18d0",
+    "43e530c04caf2f2d",
+    "82a4173536e331a7",
+    "c696029d89b0808d"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 26606
+  },
+  {
+   "id": "first-light-reflex-3",
+   "scenario": "first_light",
+   "seed": 3,
+   "days": 20,
+   "overrides": {
+    "policy": "reflex"
+   },
+   "digests": [
+    "98991f89336774e5",
+    "3791dd91cfaca6f3",
+    "7773a584334043e5",
+    "1738f1b6b25becf0"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 14579
+  },
+  {
+   "id": "first-light-no-agreements-5",
+   "scenario": "first_light",
+   "seed": 5,
+   "days": 20,
+   "overrides": {
+    "institutions": "off"
+   },
+   "digests": [
+    "51d3478c5f2be4fb",
+    "bc06b68345c09bc8",
+    "b46b17eaa0667387",
+    "bd05fd5e85c79c3f"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 17324
+  },
+  {
+   "id": "long-winter-scripted-1",
+   "scenario": "long_winter",
+   "seed": 1,
+   "days": 30,
+   "overrides": {
+    "institutions": "scripted_control"
+   },
+   "digests": [
+    "2ad7db1df69c7ea9",
+    "a7a01c8b7b771922",
+    "82a8486fa2ed40f0",
+    "cf8d90e197100023",
+    "9ba55673eb481dff",
+    "68c96926c5f80efb"
+   ],
+   "alive": 32,
+   "people": 50,
+   "events": 24752
+  },
+  {
+   "id": "thin-commons-2",
+   "scenario": "thin_commons",
+   "seed": 2,
+   "days": 20,
+   "overrides": {},
+   "digests": [
+    "a824dc05a72061a7",
+    "a47b50bac39698d6",
+    "f6586eccec200f4a",
+    "97d844ef5456a3bc"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 17401
+  },
+  {
+   "id": "two-shores-1",
+   "scenario": "two_shores",
+   "seed": 1,
+   "days": 20,
+   "overrides": {},
+   "digests": [
+    "77411a0d1a4d54ca",
+    "1618c0d2faf57373",
+    "4c5ae5501e7cfa9d",
+    "15a91929502b7ca3"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 17183
+  },
+  {
+   "id": "dry-year-4",
+   "scenario": "dry_year",
+   "seed": 4,
+   "days": 25,
+   "overrides": {},
+   "digests": [
+    "5459596f9dcb1a4f",
+    "fa2b21af1771f924",
+    "ce342c8d776849b2",
+    "57502c6b7d91e69d",
+    "e672b05e98f8905c"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 20418
+  },
+  {
+   "id": "first-light-mixed-6",
+   "scenario": "first_light",
+   "seed": 6,
+   "days": 15,
+   "overrides": {
+    "plannerShare": 500,
+    "planEvery": 24
+   },
+   "digests": [
+    "6015e90836124a04",
+    "207e92dac0bfa643",
+    "4dfcdf943496ff19"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 11389
+  },
+  {
+   "id": "newcomers-7",
+   "scenario": "first_light",
+   "seed": 7,
+   "days": 15,
+   "overrides": {},
+   "intervention": {
+    "day": 3,
+    "kind": "newcomers",
+    "params": {
+     "count": 8
+    }
+   },
+   "digests": [
+    "ffa979ee79ed8ae9",
+    "fe8bb1388cfce410",
+    "c9934ebd53594cd1"
+   ],
+   "alive": 58,
+   "people": 58,
+   "events": 15349
+  },
+  {
+   "id": "crowded-8",
+   "scenario": "thin_commons",
+   "seed": 8,
+   "days": 12,
+   "overrides": {
+    "population": 120
+   },
+   "digests": [
+    "8793e00a4ef2e82b",
+    "b27e381ca84a30f2",
+    "042008c8ca878620"
+   ],
+   "alive": 114,
+   "people": 120,
+   "events": 22402
+  },
+  {
+   "id": "first-light-three-years-2",
+   "scenario": "first_light",
+   "seed": 2,
+   "days": 124,
+   "overrides": {},
+   "long": true,
+   "digests": [
+    "5a069dbfe0a12b9c",
+    "224e526a30e2135b",
+    "3e8f27e61eea18d0",
+    "43e530c04caf2f2d",
+    "82a4173536e331a7",
+    "c696029d89b0808d",
+    "acdd6aab96f26f78",
+    "aad407f21f783f3a",
+    "4cafb5b400f9f955",
+    "d7f6a0c96154ece9",
+    "1e21d26eb2f3b3e1",
+    "2a9a66d01ec9febf",
+    "1affe3d6b4540630",
+    "7661cbc5e69a64b5",
+    "9a6574a7ba1818ba",
+    "d11b930c6d7e8133",
+    "0e2040f1a766e28e",
+    "27ac3f22a9580e94",
+    "84536b9c269d30c2",
+    "5997452c33390e43",
+    "23c357ceff421d6b",
+    "7044c81c82a4deea",
+    "1580ca1cca4810cc",
+    "a09faca7bee4f343",
+    "53b8e026a39b35e6"
+   ],
+   "alive": 5,
+   "people": 50,
+   "events": 88482
+  },
+  {
+   "id": "first-light-six-years-1",
+   "scenario": "first_light",
+   "seed": 1,
+   "days": 240,
+   "overrides": {},
+   "long": true,
+   "digests": [
+    "1f7a05ef0a356e5f",
+    "0f4c181304fd8b1f",
+    "3ad2fbf35d15c7e7",
+    "dfb4805a53ca13cd",
+    "2a299724d03b5ac9",
+    "405e30075e737c90",
+    "cfc91107a0f2ac2a",
+    "52c46b6e45ee0345",
+    "eaeb30a451c2f329",
+    "59718b26fb0a028c",
+    "47b280458bb4e544",
+    "b2a8e15878b7c300",
+    "2ecc6a3a05c4b9d4",
+    "b6b628818722f317",
+    "5e927249670e64ee",
+    "d415ab0975709e8d",
+    "5745a30fb8a04386",
+    "c3b9109a4fad7b0c",
+    "f646fe00fbddaa5c",
+    "94ba5489924a9db2",
+    "a2cd72b0c2a9b745",
+    "15c92686a5f51b40",
+    "05b175cc6f59a475",
+    "96f752f9422966a0",
+    "dee3a1dfd0c95b61",
+    "0e6b1f993c2b89fa",
+    "3d27ac9be6d8f226",
+    "596567ca282c6e8b",
+    "ec62faf51b5f7034",
+    "95606b31d5118527",
+    "221c438bb5947817",
+    "4735edfe4a85243b",
+    "391ce027e29a0f96",
+    "61d4ea507ef93690",
+    "5df89b28d7ae726b",
+    "d236b5f188649b0a",
+    "9ef527fead48a92c",
+    "b053afd295e9b133",
+    "ef1171501f9e6485",
+    "e93ca861ab022eea",
+    "ebaf09b158ed453f",
+    "b5c01e1ae837e77f",
+    "5caf0b707f2ed521",
+    "b056c1f445f5e2ad",
+    "c441be979ac2c96e",
+    "8688475251805b83",
+    "7f77e32293df8790",
+    "d4699b14239f9862"
+   ],
+   "alive": 50,
+   "people": 50,
+   "events": 232597
+  }
+ ]
+}

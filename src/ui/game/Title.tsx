@@ -64,12 +64,18 @@ export function Setup() {
   const controller = useController();
   const set = useGame((s) => s.set);
   const error = useGame((s) => s.error);
-  const [scenario, setScenario] = useState("first_light");
+  const [scenario, setScenario] = useState("long_road");
   const [seedText, setSeedText] = useState("1");
   const [policy, setPolicy] = useState<PolicyKind>("planner");
   const [institutions, setInstitutions] = useState<InstitutionMode>("grammar_search");
+  // The five earlier scenarios are made as they were first built unless this is switched on: they are the
+  // blank slate the studies ran, and every aim on their cards was counted in such worlds (D-049, D-056).
+  const [progress, setProgress] = useState<"on" | "off">("off");
   const chosen = SCENARIOS.find((s) => s.id === scenario) ?? SCENARIOS[0]!;
   const seed = parseSeed(seedText);
+  // a scenario that is about crafts has them whatever is chosen below; every other can be played with or without
+  const builtIn = chosen.overrides.crafts === true;
+  const rules = builtIn ? {} : { crafts: progress === "on", arrivals: progress === "on" };
 
   return (
     <div className={styles.scrim}>
@@ -89,7 +95,9 @@ export function Setup() {
               <button key={s.id} type="button" role="radio" aria-checked={s.id === scenario} className={styles.card} onClick={() => setScenario(s.id)} data-testid={`scenario-${s.id}`}>
                 <span className={styles.cardHead}>{s.title}</span>
                 <span className={styles.cardText}>{s.tagline}</span>
-                <span className={styles.cardFoot}>Optional aim: {s.objective.text}</span>
+                <span className={styles.cardFoot}>
+                  {s.overrides.crafts ? "The aim" : "Optional aim"}: {s.objective.text}
+                </span>
               </button>
             ))}
           </div>
@@ -127,9 +135,17 @@ export function Setup() {
                   <option value="scripted_control">Scripted control: one designer-written charter is offered (not emergence)</option>
                 </select>
               </label>
+              <label className={styles.field} style={{ flex: "1 1 320px" }}>
+                Crafts and newcomers
+                <select className={styles.select} value={builtIn ? "on" : progress} onChange={(e) => setProgress(e.target.value as "on" | "off")} disabled={builtIn} data-testid="progress-select">
+                  <option value="on">A people that can grow: crafts to be found, works to raise, newcomers drawn by plenty</option>
+                  <option value="off">As first built: fifty people, the first toolkit, nobody new (what the studies ran)</option>
+                </select>
+              </label>
             </div>
             <p className={styles.muted} style={{ marginTop: 8 }}>
               This world will use seed <b className="tnum">{seed}</b>. Both kinds of mind are deterministic programs labelled BASELINE — neither is a language model, and neither is told to form any group or rule.
+              {builtIn || progress === "on" ? " The crafts and what each opens are supplied by the designers and listed under “What was designed”; who comes to know them is not." : ""}
             </p>
           </div>
           {error ? (
@@ -143,7 +159,7 @@ export function Setup() {
           <button type="button" className={styles.button} onClick={() => set({ phase: "title" })}>
             Back
           </button>
-          <button type="button" className={styles.button} data-variant="ember" onClick={() => void controller.newWorld(makeConfig(scenario, seed, { policy, institutions }))} data-testid="create-world">
+          <button type="button" className={styles.button} data-variant="ember" onClick={() => void controller.newWorld(makeConfig(scenario, seed, { policy, institutions, ...rules }))} data-testid="create-world">
             Create this world
             <ArrowRight aria-hidden />
           </button>

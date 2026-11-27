@@ -9,13 +9,14 @@ import { Stream, below, chance, stochasticDiv, u32 } from "../core/rng";
 import type { ShockKind } from "../model/config";
 import {
   Biome,
+  CRAFT_COUNT,
+  CRAFT_SPECS,
   FOOD_ITEMS,
   ITEM_COUNT,
   ITEM_SPECS,
   Item,
   NODE_SPECS,
   NodeKind,
-  STORE_SPOIL_FACTOR,
   StructureKind,
   TICKS_PER_DAY,
   Water,
@@ -24,9 +25,11 @@ import {
 import { ACTOR_ENV, ACTOR_OBSERVER, type Intervention, type WorldState } from "../model/types";
 import { calendarAt, droughtActive } from "../world/climate";
 import { agentCapacity, createAgent, spawnTiles } from "../world/population";
+import { noteAges } from "../metrics/ages";
 import { emit, type EventOut } from "./events";
 import { dropOnGround, pruneEmptyPiles, sink, source } from "./inventory";
 import type { Scratch } from "./scratch";
+import { dailyWear, dailyWorks, drawNewcomers, holdsGoods, spoilFactor } from "./works";
 
 const DROUGHT_SENSITIVE = new Set<number>([NodeKind.berry_bush, NodeKind.root_patch, NodeKind.reed_bed]);
 
@@ -101,6 +104,7 @@ function spoilInventory(world: WorldState, inv: number[], factor: number, day: n
 }
 
 function dailyUpkeep(world: WorldState, sc: Scratch, out: EventOut, day: number, season: number): void {
+  const cfg = world.config;
   regrow(world, out, day, season);
 
   // spoilage: carried goods, ground piles (exposed), stores (protected)
@@ -116,12 +120,12 @@ function dailyUpkeep(world: WorldState, sc: Scratch, out: EventOut, day: number,
   pruneEmptyPiles(world, sc);
   for (const s of world.structures) {
     if (s.removed || !s.complete) continue;
-    if (s.kind === StructureKind.store) {
-      const lost = spoilInventory(world, s.inv, STORE_SPOIL_FACTOR, day, 200_000 + s.id);
+    if (holdsGoods(s.kind)) {
+      const lost = spoilInventory(world, s.inv, spoilFactor(s.kind), day, 200_000 + s.id);
       if (lost > 0) emit(world, out, "spoil", ACTOR_ENV, { s: s.id, q: lost });
     }
     // weathering
-    const wear = s.kind === StructureKind.shelter ? 5 : s.kind === StructureKind.store ? 3 : 0;
+    const wear = dailyWear(s.kind);
     if (wear > 0) {
       s.integrity -= wear + (world.climate.weather === Weather.storm ? 12 : 0);
       if (s.integrity <= 0) {
@@ -137,11 +141,16 @@ function dailyUpkeep(world: WorldState, sc: Scratch, out: EventOut, day: number,
         emit(world, out, "collapse", ACTOR_ENV, { s: s.id, x: s.x, y: s.y });
       }
     }
-    // plots do not grow in winter or during a drought
-    if (s.kind === StructureKind.plot && s.ripeTick >= 0 && world.tick < s.ripeTick && (season === 3 || droughtActive(world))) {
+    // plots and fields do not grow in winter or during a drought
+    if ((s.kind === StructureKind.plot || s.kind === StructureKind.field) && s.ripeTick >= 0 && world.tick < s.ripeTick && (season === 3 || droughtActive(world))) {
       s.ripeTick += TICKS_PER_DAY;
     }
   }
+
+  // the rules added in engine 0.8.0, each behind its own switch
+  if (cfg.crafts) dailyWorks(world, sc, out, day);
+  if (cfg.arrivals) drawNewcomers(world, sc, out, day, season);
+  if (cfg.crafts) noteAges(world, out);
 
   // footpaths fade unless they keep being walked
   const traffic = world.traffic;
@@ -238,12 +247,37 @@ export function applyIntervention(world: WorldState, sc: Scratch, out: EventOut,
           const x = tile % w;
           const id = world.agents.length;
           const a = createAgent(cfg, world.terrain, world.nodes, id, x, (tile - x) / w, taken);
+          a.since = world.tick;
           world.agents.push(a);
           for (let i = 0; i < ITEM_COUNT; i++) source(world, i, a.inv[i] as number);
           emit(world, out, "arrival", a.id, { x: a.x, y: a.y });
         }
         affected = count;
       }
+      break;
+    }
+    case "stranger": {
+      // One adult comes ashore knowing a craft, and the crafts it rests on: the craft asked for, or
+      // the first on the ladder that nobody living knows. A world without crafts has no such person.
+      if (!cfg.crafts || agentCapacity(cfg) - world.agents.length < 1) return;
+      let known = 0;
+      for (const a of world.agents) if (a.alive) known |= a.lore;
+      let craft = Number.isInteger(iv.params.craft) && (iv.params.craft as number) >= 0 && (iv.params.craft as number) < CRAFT_COUNT ? (iv.params.craft as number) : -1;
+      for (let c = 0; craft < 0 && c < CRAFT_COUNT; c++) if ((known & (1 << c)) === 0) craft = c;
+      if (craft < 0) craft = below(CRAFT_COUNT, cfg.seed, Stream.Arrivals, world.tick, 7);
+      let lore = 1 << craft;
+      for (let pass = 0; pass < CRAFT_COUNT; pass++) for (const spec of CRAFT_SPECS) if (lore & (1 << spec.id)) for (const need of spec.needs) lore |= 1 << need;
+      const tiles = spawnTiles({ ...cfg, spawn: "clustered" }, world.terrain, 1, world.tick + 1);
+      const tile = tiles[0] ?? 0;
+      const x = tile % w;
+      const a = createAgent(cfg, world.terrain, world.nodes, world.agents.length, x, (tile - x) / w, new Set(world.agents.map((p) => p.name)));
+      a.lore = lore;
+      a.since = world.tick;
+      world.agents.push(a);
+      for (let i = 0; i < ITEM_COUNT; i++) source(world, i, a.inv[i] as number);
+      emit(world, out, "arrival", a.id, { x: a.x, y: a.y, r: "stranger", q: craft });
+      data.craft = craft;
+      affected = 1;
       break;
     }
     default:

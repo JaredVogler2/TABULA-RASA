@@ -788,3 +788,59 @@ describe("worker: the aim on the scenario's card", () => {
   });
 });
 
+describe("worker: the goal — ages, legacy and a limited hand", () => {
+  it("a world without crafts is sent no progress and no limit; a world with crafts is, from its first frame", () => {
+    const plain = ask((requestId) => ({ type: "init", config: makeConfig("first_light", 5, {}), requestId }), "ready");
+    expect(plain.frame.progress).toBeNull();
+    expect(plain.frame.hand).toBeNull();
+    expect(plain.world.capacity).toBe(74);
+
+    const ready = ask((requestId) => ({ type: "init", config: makeConfig("long_road", 5, {}), requestId }), "ready");
+    expect(ready.world.capacity).toBe(174); // room for the newcomers a thriving island draws
+    const p = ready.frame.progress!;
+    expect(p).toMatchObject({ reached: 0, standing: 0, living: 50, twin: null, recorded: 0 });
+    expect(p.knowers).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(p.legacy).toEqual({ total: 500, people: 500, crafts: 0, works: 0, ages: 0 });
+    expect(p.next?.age).toBe(1);
+    expect(ready.frame.hand).toEqual({ perSeason: 1, left: 1 });
+  });
+
+  it("the island allows one change a season: the second is refused, and the hand comes back when the season turns", () => {
+    const first = ask((requestId) => ({ type: "intervene", kind: "bounty", params: { magnitude: 1000 }, requestId }), "intervened");
+    expect(first.ok).toBe(true);
+    expect(frame().hand).toEqual({ perSeason: 1, left: 0 });
+    const second = ask((requestId) => ({ type: "intervene", kind: "windfall", params: { magnitude: 1000 }, requestId }), "intervened");
+    expect(second).toMatchObject({ ok: false, reason: "limit" });
+    // nothing was done: the world's own record holds one change
+    const before = save();
+    expect(restoreWorld(before.snapshot).interventions.filter((i) => i.origin === "observer")).toHaveLength(1);
+    // summer begins on day 11 of a year of four ten-day seasons
+    const f = stepTo(10 * TICKS_PER_DAY + 2);
+    expect(f.cal.season).toBe(1);
+    expect(f.hand).toEqual({ perSeason: 1, left: 1 });
+    const third = ask((requestId) => ({ type: "intervene", kind: "stranger", params: { craft: -1 }, requestId }), "intervened");
+    expect(third.ok).toBe(true);
+    // the stranger knows the first craft nobody here knew, and the twin is counted beside this world
+    const after = frame();
+    expect(after.progress?.knowers.reduce((a, b) => a + b, 0)).toBeGreaterThan(0);
+    expect(after.progress?.twin).not.toBeNull();
+    expect(after.agentCount).toBeGreaterThan(50);
+  });
+
+  it("the aim of the long road is read from the state: open, with the age stood in and what the next asks for", () => {
+    const aim = ask((requestId) => ({ type: "aim", requestId }), "aim").aim;
+    expect(aim.yours?.id).toBe("letters_in_time");
+    expect(aim.yours?.state).toBe("open");
+    expect(aim.yours?.lines.join(" ")).toMatch(/They stand in the Age of/);
+    expect(aim.yours?.lines.join(" ")).toMatch(/of the 50 who began are alive\. Four in five is 40/);
+    expect(aim.yours?.lines.join(" ")).toMatch(/It is year 1 of 5: the fifth year ends with day 200/);
+    expect(aim.yours?.figure).toMatch(/^\d+ of 50 · year 1 of 5$/);
+    expect(aim.twin?.id).toBe("letters_in_time");
+    // each morning's sample carries the legacy and the age, for the almanac
+    mornings.length = 0;
+    stepTo(12 * TICKS_PER_DAY + 2);
+    const sample = mornings[mornings.length - 1]!.sample;
+    expect(typeof sample.legacy).toBe("number");
+    expect(sample.age).toBeGreaterThanOrEqual(0);
+  });
+});

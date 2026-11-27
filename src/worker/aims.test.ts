@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SCENARIOS, TICKS_PER_DAY, createWorld, makeConfig, restoreWorld, serializeWorld, step, type SimEvent, type WorldState } from "@/engine";
-import { firstWinterEnd, ordinal, readAim, readAims, scheduledDrought, shoreWellBeing } from "./aims";
+import { ROAD_AIM, firstWinterEnd, ordinal, readAim, readAims, scheduledDrought, shoreWellBeing } from "./aims";
 import type { DaySample } from "./protocol";
 
 /**
@@ -205,6 +205,103 @@ describe("the aim on a scenario's card, counted", () => {
     expect(emptied.aliveA).toBe(0);
     expect(emptied.b).toBe(before.b);
     expect(readAim(w, [])!.figure).toBe(`a gap of ${before.b}`);
+  });
+
+  it("The Long Road: four in five of the first fifty to the last age by the end of the fifth year — met that morning; lost by the eleventh death, or by the calendar", () => {
+    expect(ROAD_AIM).toEqual({ num: 4, den: 5, years: 5 });
+    const reach = (w: WorldState, days: number[]): void => days.forEach((d, i) => (w.metrics.ages[i + 1] = day(d)));
+    const w = world("long_road");
+    expect(w.config.population).toBe(50);
+    const open = readAim(w, [])!;
+    expect(open.state).toBe("open");
+    expect(open.figure).toBe("50 of 50 · year 1 of 5");
+    expect(open.lines).toEqual([
+      "They stand in the Age of Foraging.",
+      "The Age of Hearths asks for 0 of 5 fires, 0 of 8 dwellings, 0 of 2 stores.",
+      "50 of the 50 who began are alive. Four in five is 40.",
+      "It is year 1 of 5: the fifth year ends with day 200, 200 days from this morning.",
+    ]);
+
+    // ten of the fifty dead by the third year, the last age reached late in the fifth: met that morning
+    for (let id = 0; id < 10; id++) kill(w, id, day(90) + id);
+    reach(w, [10, 50, 90, 150]);
+    w.tick = day(130);
+    const close = readAim(w, [])!;
+    expect(close.state).toBe("open");
+    expect(close.figure).toBe("40 of 50 · year 4 of 5");
+    expect(close.lines.slice(-2)).toEqual(["40 of the 50 who began are alive. Four in five is 40: one more death loses it.", "It is year 4 of 5: the fifth year ends with day 200, 71 days from this morning."]);
+    reach(w, [10, 50, 90, 150, 190]);
+    w.tick = day(195);
+    const met = readAim(w, [])!;
+    expect(met.state).toBe("met");
+    expect(met.decidedDay).toBe(190);
+    expect(met.figure).toBe("40 of 50 · day 190");
+    expect(met.lines).toEqual(["Met on day 190: the Age of Letters was reached in the fifth year, with 40 of the 50 who began alive. Four in five is 40; the fifth year ends with day 200."]);
+    // a founder who dies after that morning takes nothing back
+    kill(w, 20, day(193));
+    const after = readAim(w, [])!;
+    expect(after.state).toBe("met");
+    expect(after.decidedDay).toBe(190);
+    expect(after.lines[1]).toBe("39 of them are alive now.");
+
+    // newcomers neither help nor hurt: eleven founders dead is lost on the day of the eleventh, whoever has come since
+    const thin = world("long_road");
+    for (let id = 0; id < 11; id++) kill(thin, id, day(60) + id * 96);
+    for (let i = 0; i < 20; i++) {
+      const newcomer = structuredClone(thin.agents[30]!);
+      newcomer.id = thin.agents.length;
+      newcomer.since = day(65);
+      thin.agents.push(newcomer);
+    }
+    reach(thin, [10, 50]);
+    thin.tick = day(100);
+    const lost = readAim(thin, [])!;
+    expect(lost.state).toBe("lost");
+    expect(lost.decidedDay).toBe(70);
+    expect(lost.lines[0]).toBe("Lost on day 70: the eleventh death left 39 of the 50 who began, and four in five is 40. They had come as far as the Age of Fields, reached on day 50.");
+    // and what those eleven died of, as the engine recorded it with each death
+    expect(lost.lines[1]).toBe("Those eleven died: 11 of hunger.");
+    thin.agents[0]!.deathCause = "cold";
+    thin.agents[1]!.deathCause = "cold";
+    thin.agents[2]!.deathCause = "thirst";
+    expect(readAim(thin, [])!.lines[1]).toBe("Those eleven died: 8 of hunger, 2 of cold and 1 of thirst.");
+    // reaching the last age afterwards does not undo it
+    reach(thin, [10, 50, 90, 110, 120]);
+    thin.tick = day(125);
+    expect(readAim(thin, [])!.state).toBe("lost");
+    expect(readAim(thin, [])!.decidedDay).toBe(70);
+
+    // the calendar: on the last day of the fifth year it is still open; the next morning it is lost
+    const slow = world("long_road");
+    reach(slow, [10, 50, 150]);
+    slow.tick = day(200);
+    const last = readAim(slow, [])!;
+    expect(last.state).toBe("open");
+    expect(last.lines.at(-1)).toBe("It is year 5 of 5: the fifth year ends with day 200, 1 day from this morning.");
+    slow.tick = day(201);
+    const late = readAim(slow, [])!;
+    expect(late.state).toBe("lost");
+    expect(late.decidedDay).toBe(201);
+    expect(late.lines).toEqual(["Lost on day 201: the fifth year ended and they stood in the Age of Stone.", "50 of the 50 who began are alive now."]);
+    // the age coming later is said, and changes nothing
+    reach(slow, [10, 50, 150, 250, 260]);
+    slow.tick = day(270);
+    expect(readAim(slow, [])!.lines[0]).toBe("Lost on day 201: the fifth year ended and they stood in the Age of Stone. The Age of Letters came on day 260, too late.");
+    // reached on the very last day allowed is in time
+    const just = world("long_road");
+    reach(just, [10, 50, 150, 190, 200]);
+    just.tick = day(201);
+    expect(readAim(just, [])!.state).toBe("met");
+    expect(readAim(just, [])!.decidedDay).toBe(200);
+    // a death on the morning itself is counted as alive that morning; one the day before is not
+    const edge = world("long_road");
+    for (let id = 0; id < 10; id++) kill(edge, id, day(30));
+    kill(edge, 10, day(100));
+    reach(edge, [10, 50, 80, 90, 100]);
+    edge.tick = day(101);
+    expect(readAim(edge, [])!.state).toBe("met");
+    kill(edge, 10, day(100) - 1);
+    expect(readAim(edge, [])!.state).toBe("lost");
   });
 
   it("is read from the state alone: a world saved and opened again gives the same answer, and so does its twin", () => {

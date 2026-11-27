@@ -9,7 +9,7 @@ import type { AgentDetail, TileDetail } from "@/worker/protocol";
 import { useController } from "./context";
 import { useSwipeDown } from "./swipe";
 import styles from "./game.module.css";
-import { MEMORY_TEXT, goalSentence, itemName, outcomeLine, structureName, tickLabel, type OutcomeLine } from "./text";
+import { MEMORY_TEXT, craftNames, goalSentence, itemName, outcomeLine, structureLede, structureName, tickLabel, type OutcomeLine } from "./text";
 
 const BAND_WORD = ["", "uneasy", "suffering", "critical"];
 
@@ -90,6 +90,7 @@ function CardHead({ kicker, title, titleStyle }: { kicker: ReactNode; title: str
 
 function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
   const controller = useController();
+  const crafts = useGame((s) => s.world?.config.crafts ?? false);
   const following = useGame((s) => s.following);
   const overlay = useGame((s) => s.overlay);
   const tiles = useGame((s) => (s.world ? s.world.w * s.world.h : 0));
@@ -320,6 +321,25 @@ function AgentCard({ detail, now }: { detail: AgentDetail; now: number }) {
           </div>
         </div>
 
+        {crafts ? (
+          <div className={styles.section} data-testid="inspector-crafts">
+            <div className={styles.sectionTitle}>
+              Crafts <span>found by practice, by watching or by reading</span>
+            </div>
+            {detail.lore === 0 ? (
+              <p className={styles.muted}>Knows no craft yet.</p>
+            ) : (
+              <div className={styles.chips}>
+                {craftNames(detail.lore).map((c) => (
+                  <span key={c} className={styles.chip}>
+                    {c}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
         <p className={styles.muted} style={{ marginTop: 14 }}>
           {detail.stats.decisions} decisions · {detail.stats.rejected} intents rejected by the engine · walked {detail.stats.distance} tiles · gave {detail.stats.givenUnits}, received {detail.stats.receivedUnits}
         </p>
@@ -366,11 +386,11 @@ function TileCard({ detail }: { detail: TileDetail }) {
         {s ? (
           <>
             <p className={styles.lede}>
-              {s.complete ? (s.kind === 0 ? (s.fuel > 0 ? `Burning — about ${Math.round(s.fuel / 4)} hours of fuel left.` : "Cold. It needs wood.") : s.kind === 3 ? (s.ripe >= 1000 ? "Ripe: anyone here can harvest it." : `Growing — ${Math.round(s.ripe / 10)}% of the way to harvest.`) : "Complete.") : `Under construction — ${Math.round(s.progress / 10)}%.`}
+              {structureLede(s)}
             </p>
             <p className={styles.muted} style={{ marginTop: 6 }}>
               Begun by {roster[s.founder]?.name ?? "someone"}. {s.bound >= 0 ? "Access is governed by an institution." : "Open to anyone: nothing in the world records who owns it."}
-              {s.kind === 1 ? ` ${s.occupants} sleeping inside.` : ""}
+              {s.kind === 1 || s.kind === 6 || s.kind === 7 ? ` ${s.occupants} sleeping inside.` : ""}
             </p>
           </>
         ) : null}

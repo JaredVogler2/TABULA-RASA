@@ -223,12 +223,27 @@ export const NODE_SPECS: readonly NodeSpec[] = [
 ];
 
 // ───────────────────────── structures
-export const STRUCTURE_KINDS = ["campfire", "shelter", "store", "plot"] as const;
+/**
+ * The first four are the toolkit every world has. The six after them are the works: each can
+ * be raised only by someone who knows its craft, and only in a world whose `crafts` switch is
+ * on (see CRAFT_SPECS). In every other world they are names that nothing ever builds.
+ */
+export const STRUCTURE_KINDS = ["campfire", "shelter", "store", "plot", "field", "granary", "house", "healing_house", "mill", "record_house"] as const;
 export type StructureKindName = (typeof STRUCTURE_KINDS)[number];
-export const StructureKind = { campfire: 0, shelter: 1, store: 2, plot: 3 } as const satisfies Record<
-  StructureKindName,
-  number
->;
+export const StructureKind = {
+  campfire: 0,
+  shelter: 1,
+  store: 2,
+  plot: 3,
+  field: 4,
+  granary: 5,
+  house: 6,
+  healing_house: 7,
+  mill: 8,
+  record_house: 9,
+} as const satisfies Record<StructureKindName, number>;
+/** Structure kinds below this are the first toolkit; kinds from it on are works that need a craft. */
+export const FIRST_WORK_KIND = 4;
 
 export interface StructureSpec {
   kind: number;
@@ -246,6 +261,13 @@ export const STRUCTURE_SPECS: readonly StructureSpec[] = [
   { kind: 1, name: "shelter", materials: [[Item.wood, 8], [Item.fiber, 6]], labor: 28, capacity: 4 },
   { kind: 2, name: "store", materials: [[Item.wood, 5], [Item.fiber, 4], [Item.stone, 2]], labor: 18, capacity: 240 },
   { kind: 3, name: "plot", materials: [[Item.root, 1]], labor: 4, capacity: 0 },
+  // the works (capacity: beds for a house and a healing house, weight for a granary and a mill)
+  { kind: 4, name: "field", materials: [[Item.root, 2], [Item.wood, 2]], labor: 14, capacity: 0 },
+  { kind: 5, name: "granary", materials: [[Item.wood, 6], [Item.clay, 6], [Item.stone, 3]], labor: 30, capacity: 600 },
+  { kind: 6, name: "house", materials: [[Item.stone, 10], [Item.wood, 5], [Item.clay, 3]], labor: 44, capacity: 6 },
+  { kind: 7, name: "healing_house", materials: [[Item.wood, 8], [Item.fiber, 6], [Item.clay, 2]], labor: 26, capacity: 4 },
+  { kind: 8, name: "mill", materials: [[Item.stone, 8], [Item.wood, 10], [Item.fiber, 2]], labor: 56, capacity: 160 },
+  { kind: 9, name: "record_house", materials: [[Item.wood, 6], [Item.clay, 8], [Item.stone, 4]], labor: 40, capacity: 0 },
 ];
 
 /** Ticks of burning provided by one unit of wood. */
@@ -259,6 +281,88 @@ export const PLOT_GROW_DAYS = 12;
 export const PLOT_YIELD = 5;
 /** Spoilage multiplier (permille) for goods inside a built store. */
 export const STORE_SPOIL_FACTOR = 350;
+
+// ───────────────────────── the works (worlds with `crafts` on)
+/** A sown field ripens in this many growing days, and yields this many roots. */
+export const FIELD_GROW_DAYS = 10;
+export const FIELD_YIELD = 14;
+/** What a reaped field needs before it bears again: seed roots and the labour of sowing. */
+export const FIELD_RESOW_ROOTS = 2;
+export const FIELD_RESOW_LABOR = 8;
+/** Least fertility a field can be dug in (a plot needs 35). */
+export const FIELD_MIN_FERTILITY = 45;
+/** Spoilage multiplier (permille) inside a granary: a third of a store's. */
+export const GRANARY_SPOIL_FACTOR = 120;
+/** Tenths of a degree a stone house adds to the air its sleepers feel (a shelter adds 80), and the rest it gives a tick (a shelter gives 21). */
+export const HOUSE_WARMTH = 115;
+export const HOUSE_REST = 23;
+/** Roots a mill grinds into rations in a day while its stream runs. */
+export const MILL_PER_DAY = 36;
+/** Ticks of care one berry or one fibre becomes when someone who knows herbs lays it up, and the most a healing house holds. */
+export const CARE_PER_UNIT = 32;
+export const CARE_MAX = 960;
+
+// ───────────────────────── crafts (worlds with `crafts` on)
+export const CRAFTS = ["tillage", "storekeeping", "masonry", "herb_lore", "millwrighting", "record_keeping"] as const;
+export type CraftName = (typeof CRAFTS)[number];
+export const Craft = {
+  tillage: 0,
+  storekeeping: 1,
+  masonry: 2,
+  herb_lore: 3,
+  millwrighting: 4,
+  record_keeping: 5,
+} as const satisfies Record<CraftName, number>;
+export const CRAFT_COUNT = CRAFTS.length;
+
+export interface CraftSpec {
+  id: number;
+  name: CraftName;
+  /** The work this craft opens (a structure kind). */
+  opens: number;
+  /** Crafts a person must already know before this one can come to them. */
+  needs: readonly number[];
+  /**
+   * Practice: [activity class, ticks spent in it]. All must be met. Hours of work are the only
+   * teacher here: nobody is told that a craft exists.
+   */
+  practice: readonly (readonly [number, number])[];
+  /** Least skill in one named skill, [skill, level], or null. */
+  skill: readonly [number, number] | null;
+  /**
+   * Once practice is met: the chance in a million, each morning, that the idea comes
+   * (scaled by the person's curiosity and by the world's learning rate). Zero for a craft
+   * that comes another way (herb lore comes on recovering from an illness).
+   */
+  insight: number;
+}
+
+/**
+ * How a craft is first found. The thresholds were set on development seeds from how much
+ * baseline people actually practise (scripts/climb.ts): tillage is within reach in the first
+ * year, storekeeping and masonry in the second or third, the rest later, if at all.
+ * Activity classes: 0 forage · 1 fish · 2 wood · 3 mine · 4 craft · 5 build · 6 farm.
+ */
+export const CRAFT_SPECS: readonly CraftSpec[] = [
+  { id: 0, name: "tillage", opens: 4, needs: [], practice: [[6, 12]], skill: [6, 240], insight: 30_000 },
+  { id: 1, name: "storekeeping", opens: 5, needs: [], practice: [[5, 45], [4, 20]], skill: null, insight: 20_000 },
+  { id: 2, name: "masonry", opens: 6, needs: [], practice: [[3, 30], [5, 60]], skill: null, insight: 15_000 },
+  { id: 3, name: "herb_lore", opens: 7, needs: [], practice: [[0, 300]], skill: [0, 550], insight: 0 },
+  { id: 4, name: "millwrighting", opens: 8, needs: [0, 2], practice: [[2, 250], [5, 90]], skill: null, insight: 12_000 },
+  { id: 5, name: "record_keeping", opens: 9, needs: [1, 2], practice: [[4, 60]], skill: null, insight: 10_000 },
+];
+/** The chance in a thousand that recovering from an illness shows a practised forager which plants ease it. */
+export const HERB_INSIGHT = 150;
+/** The chance in a thousand that someone watching a craft at work, who is ready for it, takes it in. */
+export const WATCH_LEARN = 150;
+/** The chance in a thousand that a visit to a record house teaches a craft it holds. */
+export const STUDY_LEARN = 350;
+
+/** The craft that opens a structure kind, or -1 for the first toolkit. */
+export function craftFor(kind: number): number {
+  for (const c of CRAFT_SPECS) if (c.opens === kind) return c.id;
+  return -1;
+}
 
 // ───────────────────────── crafting recipes (hand tools)
 export interface RecipeSpec {
@@ -330,3 +434,8 @@ export const TRAIT_COUNT = TRAITS.length;
 export const PHYS = ["strength", "stamina", "dexterity", "metabolism"] as const;
 export const Phys = { strength: 0, stamina: 1, dexterity: 2, metabolism: 3 } as const;
 export const PHYS_COUNT = PHYS.length;
+
+// ───────────────────────── ages (a reading of the island as a whole; see metrics/ages.ts)
+export const AGES = ["foraging", "hearths", "fields", "stone", "mills", "letters"] as const;
+export type AgeName = (typeof AGES)[number];
+export const AGE_COUNT = AGES.length;

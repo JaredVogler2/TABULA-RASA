@@ -1463,3 +1463,423 @@ rollback. Read this file before modifying any contract it mentions.
 - **Evidence and checks.** See [Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27). A renderer unit test covers packed props, load visibility during work, and removal of both limbs on death. The game loop exercises selection, follow and the offline world on desktop and phone viewports.
 - **Cost and risks.** Assets and shaders run in the browser with the existing Three.js dependency. Finer meshes and surface shading add GPU work. SwiftShader captures verify appearance and give submitted geometry counts. Performance on physical devices remains unmeasured.
 - **Rollback.** Revert the graphics change. It adds no asset service, schema migration, simulation rule or save format change.
+
+## D-054 — A frame is made cheaper first, and what is saved is spent on leaves, water, rock and the sky's light (2026-11-27)
+
+- **Problem.** The owner asked whether the graphics could be improved further, "as realistic as possible
+  without damaging speed and run time". Looked at in stills of the merged build (`71d4418`, after D-053), four
+  things read as unreal. Crowns and bushes were faceted lumps, lit one flat face at a time. A stream was a
+  pale ribbon laid on the ground: a colour two fifths opaque at its edge and nine tenths in mid-channel, the
+  same from every angle. Rain on the sea was blobs of white drawn afresh six times a second, which read as
+  confetti (and were first taken for the sun's glitter). And nothing was dimmer for lying in a gully, at the
+  foot of a cliff or under a tree: the sky lit every point of the ground alike. Two things stood in the way.
+  D-053 had bought its detail with triangles (the high preset went from 1.65 to 1.77 million at the vista and
+  to 1.91 million close in), and the request rules out a second helping of that. And there is no graphics chip
+  here, so "speed" cannot be measured as a frame rate at all: every frame time on file is a software
+  renderer's.
+- **Original proposal.** The art bible as phase 11 left it: flora as "faceted, slightly irregular lumps",
+  fresh water "clear `#7fd6cf` over the gravel at the edge", light from a sun, a moon and a sky, shadows from
+  the sun on medium and high. Its own rubric held "Terrain and vegetation detail" at 3 with "Trees are still
+  faceted lumps", and "Lighting and materials" at 3 with "No ambient occlusion pass on high; materials are
+  flat-shaded colour only".
+- **Alternatives.** (a) Models and textures from outside: detail that costs nothing at run time, at the price
+  of a download, a licence to keep track of and a look that is someone else's; the product has no asset that
+  is not made by its own code, and stays so. (b) A screen-space occlusion pass: a full-screen pass on every
+  frame to estimate what can be worked out once from the height field. (c) Mirrored or refracted water: the
+  scene drawn a second time. (d) Shadows of drifting clouds: considered and not built. The engine's weather is
+  clear, overcast, rain, storm or snow; none of them is fair weather with passing clouds, so the picture would
+  show weather the world does not have. (e) A flatter tone curve (AgX in place of ACES): tried, and kept as a
+  pair of stills (`evidence/realism-2/tried-aces.jpg`, `evidence/realism-2/tried-agx.jpg`); the greens are
+  more sober and the shallows lose the light the art bible asks of them. Not taken. (f) Sharper textures on
+  ground seen at a slant (anisotropic filtering): it was on in an early build and was taken out without being
+  measured on its own, on the reasoning that it is paid for with several reads of a texture where one is made,
+  on far ground that the lens then blurs. (g) A shadow map fitted to what the camera sees when it is close:
+  considered and not built; shadows would be up to twice as fine close in, and in a tilted view would stop at
+  a line on the far ground. (h) Leaves as cut-out cards: not built; more triangles, each card drawn over the
+  next. A crown's outline is broken another way (item 6). (i) Taking the savings and leaving the picture as it
+  was: that meets "without damaging speed" and not "as realistic as possible".
+- **Decision.** Savings first, then spending, and a gate on the sum: at the same camera and window, for each
+  preset separately, a frame may submit no more draw calls and no more triangles than before, and may cost the
+  software renderer no more. The first two are exact. For the third a measure was added
+  (`scripts/frame-cost.mjs`): the processor time the browser's own processes spend on a fixed number of
+  frames, which moves much less than wall-clock frame times do when other work shares the machine. It measures
+  how much work a frame asks for; it is not a frame rate, and it weighs pixels more heavily than a graphics
+  chip would. Items 1 to 5 are what was saved, 6 to 10 what it was spent on, 11 what the low preset takes.
+  1. **Shadows are drawn again on every second frame.** Between two frames the sun has not moved and a walker
+     has moved a fraction of a step; drawing the shadow map submitted as many triangles again as everything
+     that casts a shadow. A frame asked for on its own (a paused view, a new world) always draws them.
+  2. **A shadow is cast by a stand-in.** Each crown, bush and rock carries a coarse copy of itself after its
+     own triangles, a tenth smaller, which is drawn only into the shadow map: 140 triangles for a crown's 560,
+     60 for a bush's 240, 40 for a rock's 180.
+  3. **From far off, less is drawn of what is too small to see.** Beyond 84 units crowns and bushes wear the
+     plainer form the low preset always wore (160 triangles for a crown's 560, 120 for a bush's 240), and
+     within 70 their full form again; grass thins from all of its tufts at 42 units to three in ten at 105,
+     evenly over the island.
+  4. **Noise is read, not computed.** On medium and high the ground worked out thirteen values of noise for
+     every pixel of every frame, the sea six, a stream four and a crown two. They are now looks at three small
+     repeating textures (256 × 256, made once in the browser by `src/render/detail.ts`; nothing is
+     downloaded): two for the ground and two more under water, three for the sea, two for a stream, one for a
+     crown. A stream no longer reads the height of the land four times a pixel to learn which way it runs:
+     that is worked out once for each vertex. The veil that shows what one citizen knows, and rain on the sea,
+     cost nothing while no veil is shown and on a dry day. A blur narrower than a pixel and a half takes four
+     looks at the picture instead of thirteen.
+  5. **The shadow filter that exists is the one asked for.** The soft filter asked for until now is gone from
+     this three.js, which said so on every start and used the plain one. The plain one is now asked for, and
+     narrowed (2.2 where 3.5) after its five scattered samples showed as stipple on the newly smooth crowns;
+     the two widths were not compared in otherwise identical builds.
+  6. **Leaves.** A crown is lit as one soft mass: its lumps share their vertices (42 to a lump where there
+     were 240), their normals lean out from the middle of the crown, and the dimness in the creases between
+     lumps and underneath them is worked out once and carried on the vertices. Leaves are one look at a
+     texture of massed sprays, wrapped round the crown by direction so that no side of it sees the texture
+     edge-on. On the high preset the outline of each lump is broken where the texture says the foliage is
+     thin. With the sun behind a crown, some light is let through at its rim. Conifers are four uneven skirts
+     of boughs in place of three cones, in two fewer triangles.
+  7. **Water.** The texture of ripples carries the water's slope as well as its height, so that the sun is
+     mirrored by the waves themselves: a sheen, and glints only where a wave faces the right way. A stream is
+     clear water over the bed that is drawn beneath it (a fifth opaque at its edge where it was two fifths)
+     and mirrors the sky at a slant; its surface is carried the way the land falls. The seabed takes the
+     water's own colour with depth, red going first. Rain on the sea is rings that open and fade where drops
+     fall. Sand just above the waterline is wet: darker and smoother.
+  8. **The sky's light.** How much of the sky each point of the ground can see is worked out once from the
+     height field (the steepest rise within about three tiles, in eight directions) and dims the sky's light
+     there, never the sun's and never by more than four fifths: gullies, the feet of cliffs and stream beds
+     lie darker. What stands on the ground dims it too, beneath the crown, and that shade is worked out again
+     when a tree is felled or grows back, so that the dimness goes with the tree (the art bible's rule that
+     state is shown by the thing itself).
+  9. **Rock.** Cliffs show the ledges of their own bedding, thick beds from far and thin ones within them from
+     near. (The fine relief of turf and gravel, which D-053 drew from differences of noise between
+     neighbouring pixels, is now read from the ground texture's own slope; it is meant to look as it did and
+     to cost less.)
+  10. **The key light.** The sun stands lower: at noon 44° where it stood 50° at the equinoxes, and 56° where
+      63° at midsummer. By the sun's height, shadows at noon are about a quarter longer (this was not measured
+      in a still); it is meant to let the island's relief read from the vista.
+  11. **The low preset** takes what applies to it: thinner grass from far off, textures in place of noise, the
+      dimmer hollows and shade, the wet sand, the lower sun, and the new conifers, which it now shades
+      smoothly. Its broad-leaved crowns keep their facets and take no leaf texture; it has no ledges, no water
+      colour on the seabed and, as before, no shadows.
+- **Evidence.** [Evidence](EVIDENCE.md#more-realism-at-no-cost-in-speed-d-054-2026-11-27): the stills, the
+  numbers and the commands. At the vista, in a 960 × 540 window, a frame of the high preset submits 746,236
+  triangles on average where it submitted 1,773,875 (-58%), and 913,214 on a frame that redraws shadows, in 71
+  draw calls on average and 80 at most where it made 80; it costs the software renderer 3.49 processor-seconds
+  where it cost 5.46 (the median of three rounds, each measuring the one build and then the other). Medium:
+  725,748 triangles for 1,716,826, 3.02 s for 4.48 s. Low: 424,030 for 433,771, 1.32 s for 1.65 s. Close in:
+  high 1,296,894 triangles for 1,907,899 and 2.92 s for 3.64 s; medium 1,228,245 for 1,820,450 and 2.62 s for
+  2.83 s; on low the two builds submit the same triangles to within a tenth of a percent and cost the same
+  (0.94 s and 0.94 s). By the wall clock, on a machine asked for more than twice what its cores can do, the
+  changed build was the quicker in every round on three of those six rows and in one round of three on the
+  other three: that is recorded, and nothing is concluded from it. Nine views, before and after, are in
+  `evidence/realism-2/`.
+- **Affected acceptance tests.** No row of the acceptance matrix changes state; P8 (frame time on a device
+  with a graphics chip) stays NOT RUN. `src/render/realism.test.ts` (10 tests) holds what can be held without
+  a graphics context: the stand-ins and the range each pass draws, the plainer form and its two distances, the
+  grass's share, the shade under a tree going and coming with the tree, the sky narrower in a stream bed than
+  on open land, the textures repeating exactly and level on average. What the renderer reports of itself
+  changes meaning: `drawCalls` and `triangles` are the dearer of the last two frames (the one that redrew
+  shadows), and `drawCallsMean` and `trianglesMean` are their mean. `scripts/perf.mjs` and the browser tests
+  read the first two; the browser tests were not run with this change.
+- **Cost and risks.** Three textures of a quarter of a megabyte each, about a megabyte on the graphics card
+  with their smaller copies; making them took about 160 ms once, and the sky about 20 ms for a world, in Node
+  on this machine (`evidence/realism-2/checks.txt`). A shadow is up to one frame old. Grass and crowns change
+  with distance: a slow zoom across 42–105 and 70–84 units may show tufts appearing and crowns changing shape,
+  and this was not watched in motion. The broken outline of crowns (high only) is decided in the shader, which
+  may make the renderer shade pixels of a crown that another crown then covers; its cost was not measured on
+  its own, the high preset's numbers include it, and it is not on the medium preset, which the phone's stills
+  use. Only the ground is dimmed by the sky it sees: people and buildings standing in a gully are lit as
+  before. The stand-ins rely on two hooks that this three.js calls around each draw into the shadow map; were
+  they not called, shadows would be cast by the full shapes, as before. The processor-time measure is a
+  software renderer's and weighs pixels heavily; close in on the low preset it shows no gain, and by the wall
+  clock nothing is shown either way. **Not measured, and not claimed:** a frame rate on any device; how any of
+  this looks on a real screen or in motion; the sun's glints on the sea and the light through the rim of a
+  crown, which no kept still looks toward.
+- **Rollback.** Revert the commits of this change. No asset, dependency, save format, engine rule or setting
+  is added.
+
+## D-055 — Engine 0.8.0: know-how, six works and newcomers; every earlier world is stepped as before (2026-11-27)
+
+- **Problem.** The owner, after playing: *"with the current state civilizations only can die rather than
+  progress."* That is what the rules said. A world began with a fixed cohort of adults; nobody was born and
+  nobody came unless the observer brought them (twenty-four at most), so a headcount could only fall. And
+  everything that could be built was on the first page: a fire, a shelter, a store, a planted root. Nothing
+  could be learned that had not been known on the first morning. Measured before anything was changed, on
+  development seeds, with nobody intervening (`evidence/long-road/climb-first-light-fixed-cohort.txt`,
+  First Light, planner minds, ten years, seeds 1–8): of fifty, between 5 and 47 were alive at the end, 19.8 on
+  average; nobody was ever added, and nothing but fires, shelters, stores and plots was ever built.
+- **Original proposal.** Charter U1: "fixed cohort of adults; possible labelled optional treatment" for births,
+  to be revisited "if runs feel static beyond year one". The affordance registry's `absent.script`: "No stages,
+  epochs or unlocks … no tech tree".
+- **Alternatives.** (a) Births, childhood and old age. Designed in this session and set aside at the owner's
+  word (D-057). (b) More food only: a larger island of the same people still only shrinks. (c) Progress on a
+  schedule — an age that unlocks things on a day. Refused: that is a scripted outcome. (d) What the owner's own
+  Epoch60 does (read 2026-11-27): a headcount that grows when the settlement is fed and housed, and knowledge
+  that opens what can be built next. Epoch60 has no sexes, hospitals or power; its growth rule and its ladder
+  were the parts that answer the complaint.
+- **Decision.** (d), as two rules a world has to switch on (`crafts`, `arrivals`; both off by default, so that
+  nothing already published changes), in engine 0.8.0, snapshot format 7, affordances 2026.11-j, prompt p3.
+  - *Know-how.* Six crafts — tillage, storekeeping, masonry, herb lore, millwrighting, record keeping — held
+    by persons, one bit each (`Agent.lore`). Nobody knows any on the first morning. A craft comes from
+    practice (so many ticks of the kind of work it grows out of, then a small chance each morning, scaled by
+    the person's curiosity and the world's `learningRate`); by a chance each time, from watching someone who
+    knows it finish a piece of that work, within sight, awake, and ready for it, or from reading it in a
+    record house; and herb lore, by a chance, from recovering from an illness. Millwrighting rests on tillage
+    and masonry, record keeping on storekeeping and masonry: a craft does not come without what it rests on.
+    A craft is known by persons: if everyone who knows one dies and it was never written down, it is gone.
+  - *Works.* Six structures, each laid out only by someone who knows its craft; anyone may carry to it and
+    work on it. A **field** (sown with roots, ripe in ten days, reaped for more than a plot gives, then sown
+    again). A **granary** (holds more than a store and spoils a third as fast). A **stone house** (warmer
+    than a shelter, sleeps six, wears a fifth as fast). A **healing house** (takes in only the ill or hurt,
+    mends them faster, and faster still with herbs laid up by someone who knows them — the "hospital"). A
+    **mill** (must stand beside a stream; turns stored roots into rations while the stream runs — the
+    "power"). A **record house** (a record keeper writes down what they know; anyone ready may read it — so a
+    craft can outlive everyone who knew it). All through the intents that already existed: build, harvest,
+    deposit, withdraw, rest, inspect. No new item, recipe, intent or speech act.
+  - *Newcomers.* In spring and summer, on a morning when the settlement has two beds to spare and food laid
+    up for every head (1,550 energy each), there is a one-in-five chance that one to three adults come
+    ashore, until two and a half times the founders are alive. They are strangers: they know no craft and
+    nobody. Nobody is born, nobody ages (D-057).
+  - *Agreements.* Granaries, mills and stone houses can be governed as stores and shelters can.
+  - *The baseline minds.* The planner sows, builds, lays up care, grinds and visits a record house when it
+    knows how, and — the one change that mattered most — a hungry person now reaps a ripe field. Before that
+    change people starved beside sixty-eight ripe fields: the planner's hungry branch returned before it
+    looked at crops. Worlds without crafts keep the old planner exactly.
+  - *What an outside mind is told.* In a world with crafts, prompt p3 adds one section on crafts and works and
+    one line of the page ("Crafts you know: …"). It says nothing of ages, legacy or aims. In a world without
+    crafts the rules text is what p2 sent.
+- **Every earlier world is stepped as before.** A world with `crafts` and `arrivals` off is advanced by 0.8.0
+  exactly as 0.7.0 advanced it, and its digest covers the new fields only when one of the two is on. The
+  snapshot's SHA-256 necessarily differs (the file records the version that wrote it and three new
+  configuration keys), so compatibility is stated and checked on the digest of the state:
+  `DIGEST_COMPATIBLE_ENGINES = ["0.7.0"]`.
+  - `tests/support/legacy-0.7.0.json` was written by the unchanged 0.7.0 engine (commit `71d4418`) before any
+    rule was touched: thirteen worlds across the scenarios, both baseline minds, agreements on and off, a
+    drought, newcomers by the observer's hand, a crowded island, and two long runs (three and six years),
+    digests of every fifth day and the last. `tests/unit/legacy.test.ts` re-runs the eleven short ones on every
+    run of the suite, and `scripts/legacy-digests.ts --check` all thirteen: every digest is the one 0.7.0
+    reached (`evidence/long-road/legacy-digests.txt`).
+  - The recording bundled with 0.7.0 (`tests/support/recording-0.7.0.json`) replays under 0.8.0 and equals
+    today's re-recording tape for tape (only the prompt version and the three configuration keys differ).
+  - The published studies: twenty-four cells of the pilot bundle and twenty-four of the confirmatory bundle,
+    re-run from their seeds by 0.8.0, end on their published digests (`scripts/legacy-studies.ts`;
+    `evidence/long-road/legacy-studies-pilot.txt`, `legacy-studies-confirmatory.txt`), and the unit suite
+    re-runs three pilot cells on every run. Re-running a published cell to check it is not a new result:
+    nothing was tuned on, or learned from, a holdout seed.
+  - A schema-6 save opens, is migrated, and continues to the digests the 0.7.0 run reached.
+  - The Laboratory now checks a 0.7.0 bundle on the state's digest (it used to refuse to run one made by any
+    other engine) and says in words why the file hash is shown and not compared.
+- **A defect found before release, and its fix.** Two ten-year measurement runs did not come back. A debugger
+  on the live process showed the engine going round in `perceive`: 115 people, and a table of tile lists with
+  114 places. The per-person tables were sized "those here and sixty-four to spare" when a step fetched
+  them, which was always enough while at most twenty-four people could ever come; a world that draws
+  newcomers takes in more, they arrive in the middle of a step, and reading past the end of a typed array
+  gives `undefined`, which a walk that ends on -1 never reaches. In a browser this would have been a world
+  that silently stopped. Fixed three ways (`src/engine/sim/scratch.ts`): the tables are sized for the most
+  people the world can ever hold; they are made longer if ever found short; and the three walks end on
+  anything that is not a person. A test lands eighty people in one step (it does not finish under the old
+  sizing) and another shortens the tables by hand. Worlds without newcomers are unaffected: the tables are
+  working memory and no rule reads their length.
+- **Affected acceptance tests.** New: `src/engine/sim/works.test.ts` (twenty-two: each rule alone, through the
+  real tick pipeline; conservation, replay and save for a world with crafts; the digest covers the new
+  fields; the action list an outside mind is offered), `tests/unit/legacy.test.ts` (seventeen, two of them
+  long and run with `LEGACY_FULL=1`), two in `src/providers/prompt.test.ts`. Changed: the bundled recording
+  (re-recorded; same tape), `docs/PROMPTS.md`, `docs/AFFORDANCES.md`, the Laboratory's browser test (digest
+  for digest). Unchanged: every golden digest and every published study digest.
+- **Cost / risks.** *This is a tech tree, drawn by the designers.* The registry says so in those words: the
+  entry that read "no tech tree" now reads that there is one, and new entries list the crafts, the works, how
+  a craft is found, and the rule that draws newcomers. Blank-slate mode — a world with both rules off — is
+  what it was, and is what every published experiment used. Nothing makes anyone find or build anything: on
+  development seeds some islands never get past fields (D-056). The numbers (thresholds, yields, chances)
+  were set on development seeds 1–14 only; no holdout seed was run. People who arrive make a world heavier:
+  in the measurement runs a thriving island of about a hundred people took roughly twice as long to step as
+  a fixed cohort of fifty (ten years of seed 1: 119 s against 54 s, on a machine busy with other work — a
+  ratio, not a rate). The game's fastest speed asks for 128 ticks a second and both leave room for that in
+  Node; what a phone's browser does with a hundred and twenty-five people has not been measured.
+- **Rollback.** Set `crafts` and `arrivals` off (the default): the world is a 0.7.0 world. To remove the code:
+  `src/engine/sim/works.ts`, the six kinds and the craft table in `constants.ts`, the planner's candidates
+  marked for crafts worlds, migration 6 → 7.
+
+## D-056 — A goal for the one who watches: ages, a legacy, a limited hand, The Long Road, an ending (supersedes D-030 in worlds with crafts) (2026-11-27)
+
+- **Problem.** The owner, after playing: *"Right now it doesn't feel like there is much of a goal when playing
+  the game from a user perspective."* D-030 had written this risk down when it chose a field journal over
+  objectives: "Less of a 'game' for players who want goals; that gap is recorded for the human playtest that
+  has not happened." This is that playtest's first result — one person, the owner. The aims of D-049 are
+  counted but end with the first year; nothing accumulates, nothing ends, and the observer's own action costs
+  nothing, so no choice between interventions is ever a choice.
+- **Original proposal.** D-030: no objective about what the citizens build. D-049: "an aim here is about who is
+  alive, never about how"; "Nothing is scored, nothing accumulates". Charter §5: "All scenarios are win-less
+  sandboxes."
+- **Alternatives.** (a) Leave it: refused by the one person who has played. (b) Quests about institutions
+  ("have them found a council by day 20"): still refused, for D-030's reason — what kind of society they make
+  of themselves is the thing this project exists not to script, and nothing below is about it. (c) Orders:
+  the player places buildings or assigns work. Refused (charter §1 and §6): this is not a city builder, and
+  the observer's hand reaches the conditions, never a person. (d) A ladder of ages read from what stands and
+  what has been done, a legacy counted beside the untouched twin's, a hand that can be used once a season,
+  one scenario whose aim is the top of the ladder with nobody lost, and a page that closes the story.
+- **Decision.** (d), only in worlds with crafts (D-055). The five earlier scenarios are as they were unless
+  the setup screen's "Crafts and newcomers" is switched on for them.
+  - *Ages* (`src/engine/metrics/ages.ts`). Foraging → Hearths (five fires, eight dwellings, two stores) →
+    Fields (three fields, three harvests from fields) → Stone (four stone houses, a granary) → Mills (a mill,
+    thirty roots ground, a healing house) → Letters (five crafts written in one record house). Checked each
+    morning from the world's own state; the morning an age is first reached is kept with the world and
+    entered in the Chronicle once. An age once reached stays reached; the page says so when what it took no
+    longer stands.
+  - *Legacy.* A sum over what is there this morning, never a running tally: ten points a living person; sixty
+    for each craft someone living knows and forty for each written down; standing works, each kind up to a
+    limit (so that a hundred fields are not a civilisation); a hundred and fifty for each age reached. The
+    table of points is published (`LEGACY_POINTS`, the registry, the Atlas). Shown beside the untouched
+    twin's once there is a twin.
+  - *A limited hand.* `changesPerSeason`: The Long Road allows one change of the world a season. The worker
+    refuses a second with a reason the page words ("You have used this season's change"); the hand is whole
+    again on the first morning of the next season. Elsewhere the hand is unlimited, as before.
+  - *One new change.* A **stranger**: one adult comes ashore who knows the craft the observer chooses, and
+    the crafts it rests on (the panel says, beside each craft, how many here know it). What the islanders
+    make of that person is theirs: a craft passes only by being watched or written down.
+  - *The Long Road*, the new default scenario: First Light's island, a little leaner, with a harder winter,
+    crafts and newcomers on, and one change a season. Its aim, as first written, was "bring them to the Age
+    of Letters with no fewer alive than began"; the owner found that too easy, a test with scripted players
+    agreed, and the aim is now **four in five of the first fifty brought to the Age of Letters by the end of
+    the fifth year** (D-058, where the numbers are). The other cards keep "Optional aim"; this one says
+    "The aim".
+  - *An ending.* In a world with crafts the game pauses once, on the morning the aim is met or the last
+    person dies, with a page: what they came to, the age, the legacy beside the twin's, and three ways on —
+    stay and watch, the same island again, another island. Closing it changes nothing.
+  - *Where it is shown.* A bar under the top bar: the age, what the next asks for, the legacy (and the
+    twin's), the hand. The Atlas: the ladder with the day each age was reached, the legacy part by part, who
+    knows which craft and whether it is written down, the works on the map with a key. Nine new pages in the
+    field journal, new Chronicle sentences, a sound and a notice on the morning of a new age.
+- **Why this is not what D-030 refused.** D-030 refused to reward steering toward a designer's picture of
+  *civilization as a society* — councils, laws, currencies. Agreements are still unscripted, unscored and
+  unmentioned by any aim. What is scored here is material: who is alive, what stands, what is known. But
+  D-030's worry does not go away by being narrowed: **the ladder is a designer's picture of progress**, and a
+  score invites reading it as the point. The registry says who drew it (`observer.ages`); the Atlas heads it
+  "a reading for you · no citizen is told"; no mind, baseline or model, is shown an age, a legacy or an aim,
+  and nothing a citizen can do is gated on one.
+- **Evidence.** Untouched, with planner minds, development seeds 1–14, ten years
+  (`evidence/long-road/climb-long-road.txt`): nine islands reached the Age of Letters, one stopped at Mills,
+  four never got past Fields, and on one of those everybody died in the third year; 45.7 of fifty alive at the
+  end on average (0 to 75). The same island with First Light's own abundance (`climb-first-light-crafts.txt`,
+  seeds 1–8): all eight reached Letters, none died out, 66 to 97 alive. So a people can now grow and climb
+  where before it could only shrink — and, as D-058 found, it climbs without anyone's help more often than a
+  goal should allow. In a browser (production build, software renderer): `tests/e2e/goal.spec.ts` passes on
+  the desktop and phone projects — the default world from the setup screen, the bar on the first morning,
+  the first age, one change spending the season's hand, the ladder and a legacy that adds up in the Atlas
+  (`evidence/long-road/e2e-goal.txt`, and six screens beside it). A hand-driven run at the fastest speed
+  reached the Age of Mills by day 98 with no console error.
+- **Not measured.** Whether a person finds this a goal worth having: only the owner can say, and has not yet
+  played it. Anything on a holdout seed: none was run. Whether the legacy's points are balanced: they are a
+  first proposal and have been tuned against nothing. (What a hand is worth was measured afterwards, with
+  scripted players: D-058.)
+- **Affected acceptance tests.** New: three in `src/worker/sim.worker.test.ts` (progress and hand in the first
+  frame; a second change refused and the hand returning in summer; the stranger; the aim's reading; legacy
+  and age in the daily sample), the ages and legacy tests in `works.test.ts`, `tests/e2e/goal.spec.ts` (the
+  default world from the setup screen to the Atlas's ladder, on both projects). Changed: the charter's
+  §1, §5, §6 and §10. The older browser tests choose First Light by name and so still test the world as first
+  built; the keyboard-only test makes the default world and so now runs The Long Road.
+- **Cost / risks.** The title screen still says "No blueprint for what they should become." For what kind of
+  society they become that remains true; for what can be built there is now a published ladder, and a reader
+  may find the sentence too broad beside an "Age of Letters". It is the owner's sentence and was left as it
+  is; this entry is the flag. A default scenario with a harder winter kills more people than First Light did:
+  left alone, most islands lose more than a fifth of their founders within three years (D-058).
+- **Rollback.** Make First Light the default again (`Title.tsx`); remove `long_road` from `SCENARIOS`,
+  `Progress.tsx`, the `progress` and `hand` fields of the frame, and `letters_in_time` in `aims.ts`.
+
+## D-057 — Births, childhood, old age and kinship: designed, not built (answers charter U1 for now) (2026-11-27)
+
+- **Problem.** The owner asked whether there are "genders and capability for having children". There are not:
+  a person here has a name, a body, traits and skills, and no sex, age or kin. Charter U1 had left births as a
+  possible labelled treatment.
+- **What was designed** (in this session, before the owner's second message). Two sexes; pairing by mutual
+  regard; a pregnancy of a season; children who must be fed and cannot yet work; adulthood after some years;
+  old age and death by it; kinship as the one tie a person is born with. The hard part was not the rules but
+  the record: every mind keeps one slot per other person (met, trust, gave, got, kept, broke, last spoke),
+  sized when the world is made. A world in which people are born without end needs those slots recycled — a
+  bounded "seat" index reused after a death — and about forty-five places in the engine read them by id.
+- **Decision.** Not built. The owner, on reading the plan: *"If we don't feel the need for children then
+  that's fine if people don't age."* A headcount that can grow was the need, and newcomers drawn by a
+  settlement that can feed and house them meet it at a fraction of the cost and with no new claim about
+  families (D-055). Nobody is born, nobody ages, and there are no sexes. The registry's `body.death` and
+  `init.knowledge` entries say so.
+- **Alternatives kept open.** Generations as a labelled optional treatment, as U1 always had it. It would
+  need the seat index first, then its own decision record: inheritance, kin preference and care of children
+  are each a claim about human societies that this project has so far declined to make.
+- **Cost / risks.** Without generations there is no inheritance, no upbringing and no handing down except
+  through a record house, and the island's people are always adults who arrived as strangers. A reader
+  expecting "civilization" to include families will not find them.
+- **Rollback.** Nothing was built; there is nothing to roll back.
+
+## D-058 — The aim asks for speed and for the founders: what a hand is worth, measured with scripted players (2026-11-27)
+
+- **Problem.** The owner, on reading how the first runs of The Long Road had gone: *"Is progression plan too
+  easy — day of letters doesn't seem too hard to achieve for example. Run detailed in depth testing. I want
+  some form of skill involved for user to influence progress."* It was too easy, in the plainest way: with
+  the aim as first written ("the Age of Letters with no fewer alive than began"), an island that nobody
+  touched met it on nine of fourteen development seeds (D-056). A goal that is usually met by doing nothing
+  leaves no room for skill.
+- **How it was tested** (`scripts/hands.ts`; development seeds 1–12; planner minds; no model, no cost). The
+  same islands were lived again under scripted "players", each allowed what the scenario allows — one change a
+  season — and each seeing only what the observer's own pages show: the season, who is alive, the age and what
+  the next asks for, who knows which craft, what is written down. *None* never touches the island. *Random*
+  draws a change by lot each season. *Bounty* restores wild food every season (the obvious kindness).
+  *Scholar* brings strangers with crafts and knows the ladder (a millwright also knows tillage and masonry, so
+  three strangers bring all six crafts). *Savvy* brings the crafts one by one, then repeats them, then feeds.
+  *Balanced* asks for knowledge in spring and summer and food in autumn and winter. *Saboteur* blights and
+  chills. A change is applied exactly as the game's worker applies the observer's.
+- **What it found** (`evidence/long-road/hands/t2-aims.txt`; the day the last age was reached and how many of
+  the first fifty saw it):
+
+  | | untouched | bounty | scholar | balanced | savvy | random | saboteur |
+  |---|---|---|---|---|---|---|---|
+  | reached the last age within eight years | 7 of 12 | 11 of 12 | 11 of 12 | 12 of 12 | 12 of 12 | 9 of 12 | 0 of 12 |
+  | median day it came (where it came) | 233 | 251 | 150 | 112.5 | 191.5 | 224 | — |
+  | founders alive that morning, median | 23 | 48 | 14 | 47.5 | 10.5 | 19 | — |
+
+  Three things follow. *Any* hand that is not hostile gets an island to the last age — even one that draws
+  its changes by lot — so "reach it" asks for no skill. A hand that only feeds keeps nearly everyone alive and
+  is slow; a hand that only teaches is fast and lets most of the founders starve (on one island, all of them).
+  And a hand that does both, in the right seasons, is the fastest *and* keeps the most alive: fed people build.
+  With one change a season, **knowledge or food** is a real choice every season, and which the island needs is
+  something its pages show.
+- **Decision.**
+  - *The aim* (`ROAD_AIM` in `src/worker/aims.ts`): **bring four in five of the first fifty to the Age of
+    Letters by the end of the fifth year.** Met on the morning the age is reached, if that is within five
+    years and forty founders are alive; lost on the day the eleventh founder dies before then, or the morning
+    after the fifth year ends. Newcomers neither help nor hurt. When it is lost by deaths the reading says
+    what those founders died of, from the engine's own record — the plainest true thing about why. On the
+    twelve islands: untouched **1**, bounty **4**, scholar **3**, savvy **0**, random **0**, saboteur **0**,
+    balanced **11**. (By the end of the sixth year instead: 2, 5, 3, 0, 0, 0, 12. A harder aim the same data
+    can score — nine in ten by the end of the third year: 0, 0, 1, 0, 0, 0, and balanced 7.)
+  - *The aim is on the bar*: "47 of 50 · year 3 of 5", beside the age, the legacy and the hand.
+  - *What the hand was worth*, wherever the legacy is shown: this world against its untouched twin — legacy
+    more or less, people more or fewer, and for the furthest age either has reached, days sooner or later (or
+    which world is not there yet). The twin is not an estimate; it is run. The page says it is one pair of
+    histories (`src/ui/game/worth.ts`).
+  - *The stranger's craft is chosen*, from a list that says how many here know each and what each rests on.
+  - *Kept as it was*: one change a season, the nine changes, and no word to any mind about any of it.
+- **What was tried for the hand's rules and not adopted** (the script can try rules the game does not have):
+  *Each kind of change only once a year* (`--rest 4`): the difference between players nearly vanishes —
+  balanced 9, scholar 9, bounty 7 of 12 — because the rule itself imposes the variety that is the winning
+  idea. It would take skill out, not put it in. *Changes that can be saved up, to three* (`--bank 3`): a
+  script that kept its hand for hard times, and fed only before winter or once a tenth had died in a season,
+  met the aim on 3 of 12 (balanced, which cannot save, 11). That script starves its founders, so this says
+  little about saving in careful hands; it does say that with no hardship beyond ordinary hunger, spending
+  each season is right. Saving would earn its place together with hardships worth saving for
+  (`evidence/long-road/hands/t3-rest4-aims.txt`, `t4-bank3-aims.txt`).
+- **Ideas put to the owner, not built** (each would add a kind of skill the present game does not ask for):
+  harder grades of the same aim (measured above); choosing *where* a change falls — the beach a windfall
+  lands on, the shore a stranger comes to, the grove a bounty restores; hardships the island's own seed
+  schedules, with signs a few days ahead and a change that answers each; changes that can be saved for them;
+  a wonder set down at a place that draws the curious to it (attention, not orders — to gather watchers
+  round someone at work); one island a day, the same for everyone.
+- **Honest limits.** The players are scripts, written by the builder, and "balanced" is one fixed recipe: a
+  person who finds it will meet this aim on most islands, as the script does. What is rewarded is knowing the
+  ladder, reading the pages and keeping to the seasons — not yet judgement that has no recipe; the ideas
+  above are where that would come from. Twelve islands is a small sample: 11 of 12 is "most", not a rate.
+  The numbers of the aim were chosen on the same twelve islands they are reported on. No person has played
+  it. No holdout seed was run.
+- **Affected acceptance tests.** `src/worker/aims.test.ts` (the aim case by case: met on its morning, the
+  last day allowed, lost by the eleventh death and by the calendar, newcomers not counted, what the founders
+  died of), `src/ui/game/worth.test.ts`, `src/ui/game/text.test.ts`, `tests/e2e/goal.spec.ts` (the count on
+  the bar, the craft list). The first aim's reading (`letters_whole`) was never released and is gone.
+- **Cost / risks.** An aim that can be lost early will be: an observer who only watches sees "The aim was
+  lost" in the second or third year on most islands. The page that says so offers the same island again, and
+  says what the founders died of. A deadline invites running the world fast and not looking at it.
+- **Rollback.** `ROAD_AIM` and `lastAgeInTime` in `aims.ts`; the card's sentence in `config.ts`.

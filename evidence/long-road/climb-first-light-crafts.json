@@ -1,0 +1,2463 @@
+{
+ "scenario": "first_light",
+ "years": 10,
+ "overrides": {
+  "crafts": true,
+  "arrivals": true
+ },
+ "runs": [
+  {
+   "scenario": "first_light",
+   "seed": 1,
+   "years": [
+    {
+     "year": 1,
+     "living": 48,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 889,
+     "crafts": [
+      8,
+      3,
+      2,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 11,
+      "granaries": 1,
+      "houses": 1,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 20,
+      "stores": 11
+     }
+    },
+    {
+     "year": 2,
+     "living": 50,
+     "people": 53,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1585,
+     "crafts": [
+      44,
+      18,
+      7,
+      1,
+      1,
+      0
+     ],
+     "works": {
+      "fields": 93,
+      "granaries": 7,
+      "houses": 5,
+      "healingHouses": 0,
+      "mills": 1,
+      "recordHouses": 0,
+      "dwellings": 25,
+      "stores": 18
+     }
+    },
+    {
+     "year": 3,
+     "living": 61,
+     "people": 65,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2050,
+     "crafts": [
+      59,
+      35,
+      23,
+      5,
+      5,
+      0
+     ],
+     "works": {
+      "fields": 146,
+      "granaries": 9,
+      "houses": 12,
+      "healingHouses": 1,
+      "mills": 3,
+      "recordHouses": 0,
+      "dwellings": 32,
+      "stores": 23
+     }
+    },
+    {
+     "year": 4,
+     "living": 68,
+     "people": 72,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2265,
+     "crafts": [
+      68,
+      43,
+      34,
+      10,
+      14,
+      1
+     ],
+     "works": {
+      "fields": 155,
+      "granaries": 11,
+      "houses": 15,
+      "healingHouses": 2,
+      "mills": 5,
+      "recordHouses": 0,
+      "dwellings": 35,
+      "stores": 28
+     }
+    },
+    {
+     "year": 5,
+     "living": 72,
+     "people": 76,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2770,
+     "crafts": [
+      72,
+      55,
+      43,
+      21,
+      20,
+      6
+     ],
+     "works": {
+      "fields": 175,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 3,
+      "mills": 5,
+      "recordHouses": 2,
+      "dwellings": 26,
+      "stores": 30
+     }
+    },
+    {
+     "year": 6,
+     "living": 76,
+     "people": 81,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2840,
+     "crafts": [
+      76,
+      69,
+      59,
+      39,
+      32,
+      21
+     ],
+     "works": {
+      "fields": 183,
+      "granaries": 13,
+      "houses": 18,
+      "healingHouses": 7,
+      "mills": 7,
+      "recordHouses": 3,
+      "dwellings": 20,
+      "stores": 32
+     }
+    },
+    {
+     "year": 7,
+     "living": 80,
+     "people": 85,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2880,
+     "crafts": [
+      80,
+      76,
+      73,
+      61,
+      49,
+      39
+     ],
+     "works": {
+      "fields": 193,
+      "granaries": 13,
+      "houses": 18,
+      "healingHouses": 8,
+      "mills": 7,
+      "recordHouses": 7,
+      "dwellings": 19,
+      "stores": 32
+     }
+    },
+    {
+     "year": 8,
+     "living": 90,
+     "people": 95,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2980,
+     "crafts": [
+      90,
+      88,
+      82,
+      75,
+      71,
+      59
+     ],
+     "works": {
+      "fields": 199,
+      "granaries": 13,
+      "houses": 18,
+      "healingHouses": 8,
+      "mills": 7,
+      "recordHouses": 8,
+      "dwellings": 19,
+      "stores": 27
+     }
+    },
+    {
+     "year": 9,
+     "living": 98,
+     "people": 105,
+     "age": 5,
+     "standing": 5,
+     "legacy": 3060,
+     "crafts": [
+      98,
+      95,
+      90,
+      85,
+      81,
+      71
+     ],
+     "works": {
+      "fields": 207,
+      "granaries": 13,
+      "houses": 18,
+      "healingHouses": 8,
+      "mills": 7,
+      "recordHouses": 8,
+      "dwellings": 19,
+      "stores": 31
+     }
+    },
+    {
+     "year": 10,
+     "living": 97,
+     "people": 114,
+     "age": 5,
+     "standing": 5,
+     "legacy": 3050,
+     "crafts": [
+      97,
+      94,
+      90,
+      89,
+      87,
+      81
+     ],
+     "works": {
+      "fields": 214,
+      "granaries": 13,
+      "houses": 18,
+      "healingHouses": 8,
+      "mills": 7,
+      "recordHouses": 8,
+      "dwellings": 18,
+      "stores": 32
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    8,
+    44,
+    69,
+    94,
+    175
+   ],
+   "deaths": {
+    "cold": 1,
+    "hunger": 13,
+    "thirst": 1,
+    "exhaustion": 2
+   },
+   "counters": {
+    "discoveries": 153,
+    "learned": 455,
+    "inscribed": 48,
+    "fieldHarvests": 3058,
+    "milled": 2800,
+    "careLaid": 322,
+    "careSpent": 8106,
+    "arrivals": 64
+   },
+   "firsts": {
+    "discovered:tillage": 19,
+    "discovered:storekeeping": 21,
+    "learned:tillage": 28,
+    "discovered:masonry": 32,
+    "learned:storekeeping": 33,
+    "discovered:herb_lore": 58,
+    "discovered:millwrighting": 71,
+    "learned:masonry": 89,
+    "learned:herb_lore": 107,
+    "discovered:record_keeping": 159,
+    "learned:record_keeping": 174,
+    "learned:millwrighting": 211
+   },
+   "aimDay": 175,
+   "fewest": 48,
+   "digest": "28a55ccb6dca9b81",
+   "seconds": 152.238
+  },
+  {
+   "scenario": "first_light",
+   "seed": 2,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 790,
+     "crafts": [
+      4,
+      3,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 0,
+      "granaries": 1,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 21,
+      "stores": 15
+     }
+    },
+    {
+     "year": 2,
+     "living": 50,
+     "people": 51,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1390,
+     "crafts": [
+      36,
+      17,
+      5,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 67,
+      "granaries": 10,
+      "houses": 4,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 25,
+      "stores": 24
+     }
+    },
+    {
+     "year": 3,
+     "living": 44,
+     "people": 51,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1390,
+     "crafts": [
+      44,
+      26,
+      13,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 100,
+      "granaries": 13,
+      "houses": 8,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 29,
+      "stores": 27
+     }
+    },
+    {
+     "year": 4,
+     "living": 38,
+     "people": 51,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1805,
+     "crafts": [
+      38,
+      26,
+      18,
+      2,
+      8,
+      0
+     ],
+     "works": {
+      "fields": 111,
+      "granaries": 13,
+      "houses": 11,
+      "healingHouses": 1,
+      "mills": 2,
+      "recordHouses": 0,
+      "dwellings": 32,
+      "stores": 29
+     }
+    },
+    {
+     "year": 5,
+     "living": 44,
+     "people": 58,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1905,
+     "crafts": [
+      44,
+      31,
+      20,
+      3,
+      10,
+      0
+     ],
+     "works": {
+      "fields": 119,
+      "granaries": 14,
+      "houses": 11,
+      "healingHouses": 2,
+      "mills": 5,
+      "recordHouses": 0,
+      "dwellings": 25,
+      "stores": 33
+     }
+    },
+    {
+     "year": 6,
+     "living": 43,
+     "people": 59,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1925,
+     "crafts": [
+      43,
+      32,
+      22,
+      6,
+      14,
+      0
+     ],
+     "works": {
+      "fields": 125,
+      "granaries": 14,
+      "houses": 13,
+      "healingHouses": 3,
+      "mills": 5,
+      "recordHouses": 0,
+      "dwellings": 17,
+      "stores": 33
+     }
+    },
+    {
+     "year": 7,
+     "living": 53,
+     "people": 70,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2040,
+     "crafts": [
+      52,
+      36,
+      26,
+      8,
+      18,
+      0
+     ],
+     "works": {
+      "fields": 133,
+      "granaries": 14,
+      "houses": 14,
+      "healingHouses": 3,
+      "mills": 5,
+      "recordHouses": 0,
+      "dwellings": 19,
+      "stores": 33
+     }
+    },
+    {
+     "year": 8,
+     "living": 60,
+     "people": 77,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2230,
+     "crafts": [
+      60,
+      40,
+      28,
+      16,
+      21,
+      1
+     ],
+     "works": {
+      "fields": 158,
+      "granaries": 14,
+      "houses": 14,
+      "healingHouses": 4,
+      "mills": 7,
+      "recordHouses": 1,
+      "dwellings": 19,
+      "stores": 30
+     }
+    },
+    {
+     "year": 9,
+     "living": 70,
+     "people": 93,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2720,
+     "crafts": [
+      70,
+      56,
+      45,
+      32,
+      26,
+      16
+     ],
+     "works": {
+      "fields": 163,
+      "granaries": 14,
+      "houses": 14,
+      "healingHouses": 8,
+      "mills": 7,
+      "recordHouses": 3,
+      "dwellings": 19,
+      "stores": 30
+     }
+    },
+    {
+     "year": 10,
+     "living": 71,
+     "people": 97,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2730,
+     "crafts": [
+      71,
+      63,
+      58,
+      52,
+      46,
+      40
+     ],
+     "works": {
+      "fields": 169,
+      "granaries": 14,
+      "houses": 14,
+      "healingHouses": 9,
+      "mills": 7,
+      "recordHouses": 6,
+      "dwellings": 17,
+      "stores": 30
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    7,
+    61,
+    76,
+    141,
+    334
+   ],
+   "deaths": {
+    "hunger": 24,
+    "cold": 1,
+    "thirst": 1
+   },
+   "counters": {
+    "discoveries": 138,
+    "learned": 284,
+    "inscribed": 36,
+    "fieldHarvests": 1872,
+    "milled": 2289,
+    "careLaid": 170,
+    "careSpent": 3721,
+    "arrivals": 47
+   },
+   "firsts": {
+    "discovered:storekeeping": 29,
+    "discovered:tillage": 34,
+    "learned:tillage": 49,
+    "learned:storekeeping": 53,
+    "discovered:masonry": 58,
+    "learned:masonry": 73,
+    "discovered:herb_lore": 102,
+    "discovered:millwrighting": 127,
+    "learned:herb_lore": 223,
+    "discovered:record_keeping": 270,
+    "learned:record_keeping": 320,
+    "learned:millwrighting": 333
+   },
+   "aimDay": 334,
+   "fewest": 38,
+   "digest": "56b47561463075e0",
+   "seconds": 71.313
+  },
+  {
+   "scenario": "first_light",
+   "seed": 3,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 810,
+     "crafts": [
+      2,
+      3,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 0,
+      "granaries": 2,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 21,
+      "stores": 14
+     }
+    },
+    {
+     "year": 2,
+     "living": 50,
+     "people": 50,
+     "age": 2,
+     "standing": 2,
+     "legacy": 1180,
+     "crafts": [
+      30,
+      18,
+      2,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 43,
+      "granaries": 9,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 21,
+      "stores": 21
+     }
+    },
+    {
+     "year": 3,
+     "living": 41,
+     "people": 53,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1560,
+     "crafts": [
+      37,
+      28,
+      7,
+      4,
+      1,
+      0
+     ],
+     "works": {
+      "fields": 92,
+      "granaries": 9,
+      "houses": 4,
+      "healingHouses": 3,
+      "mills": 1,
+      "recordHouses": 0,
+      "dwellings": 25,
+      "stores": 22
+     }
+    },
+    {
+     "year": 4,
+     "living": 35,
+     "people": 53,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1680,
+     "crafts": [
+      35,
+      26,
+      11,
+      6,
+      2,
+      0
+     ],
+     "works": {
+      "fields": 104,
+      "granaries": 10,
+      "houses": 6,
+      "healingHouses": 4,
+      "mills": 1,
+      "recordHouses": 0,
+      "dwellings": 27,
+      "stores": 23
+     }
+    },
+    {
+     "year": 5,
+     "living": 49,
+     "people": 68,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1910,
+     "crafts": [
+      48,
+      26,
+      15,
+      7,
+      7,
+      0
+     ],
+     "works": {
+      "fields": 113,
+      "granaries": 10,
+      "houses": 8,
+      "healingHouses": 4,
+      "mills": 4,
+      "recordHouses": 0,
+      "dwellings": 23,
+      "stores": 26
+     }
+    },
+    {
+     "year": 6,
+     "living": 59,
+     "people": 80,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2550,
+     "crafts": [
+      58,
+      39,
+      23,
+      11,
+      11,
+      5
+     ],
+     "works": {
+      "fields": 121,
+      "granaries": 11,
+      "houses": 10,
+      "healingHouses": 5,
+      "mills": 5,
+      "recordHouses": 2,
+      "dwellings": 16,
+      "stores": 29
+     }
+    },
+    {
+     "year": 7,
+     "living": 61,
+     "people": 92,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2600,
+     "crafts": [
+      60,
+      48,
+      38,
+      32,
+      27,
+      14
+     ],
+     "works": {
+      "fields": 131,
+      "granaries": 11,
+      "houses": 12,
+      "healingHouses": 5,
+      "mills": 5,
+      "recordHouses": 3,
+      "dwellings": 18,
+      "stores": 29
+     }
+    },
+    {
+     "year": 8,
+     "living": 57,
+     "people": 100,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2560,
+     "crafts": [
+      57,
+      51,
+      48,
+      40,
+      34,
+      29
+     ],
+     "works": {
+      "fields": 145,
+      "granaries": 11,
+      "houses": 12,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 4,
+      "dwellings": 18,
+      "stores": 21
+     }
+    },
+    {
+     "year": 9,
+     "living": 64,
+     "people": 110,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2630,
+     "crafts": [
+      63,
+      57,
+      51,
+      49,
+      45,
+      41
+     ],
+     "works": {
+      "fields": 160,
+      "granaries": 11,
+      "houses": 12,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 5,
+      "dwellings": 18,
+      "stores": 23
+     }
+    },
+    {
+     "year": 10,
+     "living": 66,
+     "people": 117,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2650,
+     "crafts": [
+      66,
+      58,
+      53,
+      51,
+      49,
+      46
+     ],
+     "works": {
+      "fields": 171,
+      "granaries": 11,
+      "houses": 12,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 5,
+      "dwellings": 17,
+      "stores": 24
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    22,
+    72,
+    112,
+    127,
+    229
+   ],
+   "deaths": {
+    "hunger": 44,
+    "exhaustion": 4,
+    "cold": 3
+   },
+   "counters": {
+    "discoveries": 105,
+    "learned": 347,
+    "inscribed": 30,
+    "fieldHarvests": 1717,
+    "milled": 2738,
+    "careLaid": 313,
+    "careSpent": 9217,
+    "arrivals": 67
+   },
+   "firsts": {
+    "discovered:storekeeping": 30,
+    "discovered:tillage": 33,
+    "learned:storekeeping": 39,
+    "learned:tillage": 45,
+    "discovered:masonry": 79,
+    "discovered:herb_lore": 90,
+    "learned:herb_lore": 96,
+    "discovered:millwrighting": 110,
+    "learned:masonry": 138,
+    "discovered:record_keeping": 203,
+    "learned:record_keeping": 234,
+    "learned:millwrighting": 261
+   },
+   "aimDay": 229,
+   "fewest": 35,
+   "digest": "afe9d568747324ee",
+   "seconds": 68.564
+  },
+  {
+   "scenario": "first_light",
+   "seed": 4,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 782,
+     "crafts": [
+      5,
+      2,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 3,
+      "granaries": 0,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 19,
+      "stores": 13
+     }
+    },
+    {
+     "year": 2,
+     "living": 48,
+     "people": 50,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1590,
+     "crafts": [
+      34,
+      18,
+      10,
+      2,
+      1,
+      0
+     ],
+     "works": {
+      "fields": 63,
+      "granaries": 6,
+      "houses": 4,
+      "healingHouses": 1,
+      "mills": 1,
+      "recordHouses": 0,
+      "dwellings": 24,
+      "stores": 20
+     }
+    },
+    {
+     "year": 3,
+     "living": 43,
+     "people": 50,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1825,
+     "crafts": [
+      41,
+      26,
+      18,
+      2,
+      4,
+      0
+     ],
+     "works": {
+      "fields": 90,
+      "granaries": 9,
+      "houses": 9,
+      "healingHouses": 1,
+      "mills": 2,
+      "recordHouses": 0,
+      "dwellings": 29,
+      "stores": 24
+     }
+    },
+    {
+     "year": 4,
+     "living": 44,
+     "people": 53,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2095,
+     "crafts": [
+      43,
+      27,
+      22,
+      6,
+      10,
+      1
+     ],
+     "works": {
+      "fields": 110,
+      "granaries": 9,
+      "houses": 13,
+      "healingHouses": 2,
+      "mills": 6,
+      "recordHouses": 1,
+      "dwellings": 33,
+      "stores": 28
+     }
+    },
+    {
+     "year": 5,
+     "living": 48,
+     "people": 58,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2230,
+     "crafts": [
+      48,
+      34,
+      28,
+      6,
+      15,
+      2
+     ],
+     "works": {
+      "fields": 120,
+      "granaries": 10,
+      "houses": 14,
+      "healingHouses": 2,
+      "mills": 6,
+      "recordHouses": 1,
+      "dwellings": 25,
+      "stores": 29
+     }
+    },
+    {
+     "year": 6,
+     "living": 57,
+     "people": 67,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2590,
+     "crafts": [
+      57,
+      44,
+      31,
+      16,
+      23,
+      6
+     ],
+     "works": {
+      "fields": 130,
+      "granaries": 11,
+      "houses": 14,
+      "healingHouses": 4,
+      "mills": 7,
+      "recordHouses": 1,
+      "dwellings": 16,
+      "stores": 31
+     }
+    },
+    {
+     "year": 7,
+     "living": 64,
+     "people": 75,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2690,
+     "crafts": [
+      64,
+      56,
+      39,
+      25,
+      25,
+      9
+     ],
+     "works": {
+      "fields": 140,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 6,
+      "mills": 7,
+      "recordHouses": 1,
+      "dwellings": 18,
+      "stores": 33
+     }
+    },
+    {
+     "year": 8,
+     "living": 77,
+     "people": 91,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2820,
+     "crafts": [
+      76,
+      67,
+      51,
+      27,
+      29,
+      14
+     ],
+     "works": {
+      "fields": 146,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 6,
+      "mills": 7,
+      "recordHouses": 1,
+      "dwellings": 18,
+      "stores": 26
+     }
+    },
+    {
+     "year": 9,
+     "living": 72,
+     "people": 95,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2770,
+     "crafts": [
+      72,
+      64,
+      55,
+      40,
+      36,
+      26
+     ],
+     "works": {
+      "fields": 159,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 7,
+      "mills": 7,
+      "recordHouses": 3,
+      "dwellings": 18,
+      "stores": 27
+     }
+    },
+    {
+     "year": 10,
+     "living": 66,
+     "people": 95,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2710,
+     "crafts": [
+      66,
+      63,
+      60,
+      50,
+      52,
+      34
+     ],
+     "works": {
+      "fields": 163,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 7,
+      "mills": 7,
+      "recordHouses": 3,
+      "dwellings": 17,
+      "stores": 28
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    10,
+    51,
+    74,
+    81,
+    209
+   ],
+   "deaths": {
+    "hunger": 29
+   },
+   "counters": {
+    "discoveries": 131,
+    "learned": 300,
+    "inscribed": 18,
+    "fieldHarvests": 1789,
+    "milled": 4668,
+    "careLaid": 235,
+    "careSpent": 5550,
+    "arrivals": 45
+   },
+   "firsts": {
+    "discovered:tillage": 24,
+    "learned:tillage": 26,
+    "discovered:storekeeping": 32,
+    "discovered:masonry": 51,
+    "learned:storekeeping": 53,
+    "learned:masonry": 59,
+    "discovered:record_keeping": 60,
+    "discovered:millwrighting": 61,
+    "discovered:herb_lore": 67,
+    "learned:herb_lore": 129,
+    "learned:record_keeping": 174,
+    "learned:millwrighting": 201
+   },
+   "aimDay": 209,
+   "fewest": 41,
+   "digest": "a8c9062c18a2676c",
+   "seconds": 95.209
+  },
+  {
+   "scenario": "first_light",
+   "seed": 5,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 782,
+     "crafts": [
+      1,
+      2,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 3,
+      "granaries": 0,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 19,
+      "stores": 8
+     }
+    },
+    {
+     "year": 2,
+     "living": 50,
+     "people": 50,
+     "age": 2,
+     "standing": 2,
+     "legacy": 1285,
+     "crafts": [
+      24,
+      14,
+      5,
+      1,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 40,
+      "granaries": 7,
+      "houses": 3,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 22,
+      "stores": 15
+     }
+    },
+    {
+     "year": 3,
+     "living": 53,
+     "people": 54,
+     "age": 4,
+     "standing": 4,
+     "legacy": 1950,
+     "crafts": [
+      51,
+      31,
+      19,
+      8,
+      2,
+      0
+     ],
+     "works": {
+      "fields": 135,
+      "granaries": 10,
+      "houses": 12,
+      "healingHouses": 3,
+      "mills": 1,
+      "recordHouses": 0,
+      "dwellings": 32,
+      "stores": 19
+     }
+    },
+    {
+     "year": 4,
+     "living": 59,
+     "people": 60,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2115,
+     "crafts": [
+      58,
+      42,
+      26,
+      16,
+      13,
+      0
+     ],
+     "works": {
+      "fields": 159,
+      "granaries": 13,
+      "houses": 15,
+      "healingHouses": 5,
+      "mills": 6,
+      "recordHouses": 0,
+      "dwellings": 35,
+      "stores": 27
+     }
+    },
+    {
+     "year": 5,
+     "living": 63,
+     "people": 66,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2170,
+     "crafts": [
+      62,
+      51,
+      31,
+      16,
+      16,
+      0
+     ],
+     "works": {
+      "fields": 170,
+      "granaries": 13,
+      "houses": 16,
+      "healingHouses": 5,
+      "mills": 7,
+      "recordHouses": 0,
+      "dwellings": 19,
+      "stores": 28
+     }
+    },
+    {
+     "year": 6,
+     "living": 69,
+     "people": 72,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2245,
+     "crafts": [
+      69,
+      53,
+      38,
+      17,
+      22,
+      0
+     ],
+     "works": {
+      "fields": 173,
+      "granaries": 13,
+      "houses": 17,
+      "healingHouses": 6,
+      "mills": 8,
+      "recordHouses": 0,
+      "dwellings": 20,
+      "stores": 29
+     }
+    },
+    {
+     "year": 7,
+     "living": 75,
+     "people": 79,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2365,
+     "crafts": [
+      75,
+      54,
+      38,
+      18,
+      27,
+      1
+     ],
+     "works": {
+      "fields": 181,
+      "granaries": 13,
+      "houses": 17,
+      "healingHouses": 6,
+      "mills": 8,
+      "recordHouses": 0,
+      "dwellings": 20,
+      "stores": 31
+     }
+    },
+    {
+     "year": 8,
+     "living": 82,
+     "people": 86,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2885,
+     "crafts": [
+      82,
+      62,
+      45,
+      34,
+      34,
+      4
+     ],
+     "works": {
+      "fields": 195,
+      "granaries": 13,
+      "houses": 17,
+      "healingHouses": 7,
+      "mills": 8,
+      "recordHouses": 1,
+      "dwellings": 19,
+      "stores": 31
+     }
+    },
+    {
+     "year": 9,
+     "living": 92,
+     "people": 98,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2985,
+     "crafts": [
+      91,
+      74,
+      59,
+      48,
+      47,
+      22
+     ],
+     "works": {
+      "fields": 204,
+      "granaries": 13,
+      "houses": 17,
+      "healingHouses": 6,
+      "mills": 9,
+      "recordHouses": 2,
+      "dwellings": 19,
+      "stores": 32
+     }
+    },
+    {
+     "year": 10,
+     "living": 92,
+     "people": 107,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2985,
+     "crafts": [
+      92,
+      84,
+      75,
+      78,
+      64,
+      50
+     ],
+     "works": {
+      "fields": 209,
+      "granaries": 13,
+      "houses": 17,
+      "healingHouses": 8,
+      "mills": 9,
+      "recordHouses": 8,
+      "dwellings": 18,
+      "stores": 32
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    9,
+    56,
+    86,
+    119,
+    292
+   ],
+   "deaths": {
+    "hunger": 12,
+    "cold": 2,
+    "exhaustion": 1
+   },
+   "counters": {
+    "discoveries": 170,
+    "learned": 331,
+    "inscribed": 44,
+    "fieldHarvests": 2782,
+    "milled": 4927,
+    "careLaid": 331,
+    "careSpent": 8716,
+    "arrivals": 57
+   },
+   "firsts": {
+    "discovered:tillage": 26,
+    "discovered:storekeeping": 29,
+    "learned:storekeeping": 42,
+    "learned:tillage": 51,
+    "discovered:masonry": 57,
+    "discovered:herb_lore": 78,
+    "learned:herb_lore": 92,
+    "discovered:millwrighting": 110,
+    "learned:masonry": 113,
+    "learned:millwrighting": 138,
+    "discovered:record_keeping": 275,
+    "learned:record_keeping": 289
+   },
+   "aimDay": 292,
+   "fewest": 49,
+   "digest": "be3d4695ba49c4fe",
+   "seconds": 135.036
+  },
+  {
+   "scenario": "first_light",
+   "seed": 6,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 834,
+     "crafts": [
+      5,
+      2,
+      0,
+      1,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 1,
+      "granaries": 0,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 15,
+      "stores": 11
+     }
+    },
+    {
+     "year": 2,
+     "living": 50,
+     "people": 50,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1465,
+     "crafts": [
+      43,
+      15,
+      12,
+      2,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 77,
+      "granaries": 6,
+      "houses": 5,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 21,
+      "stores": 17
+     }
+    },
+    {
+     "year": 3,
+     "living": 57,
+     "people": 58,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1745,
+     "crafts": [
+      57,
+      31,
+      17,
+      2,
+      3,
+      0
+     ],
+     "works": {
+      "fields": 130,
+      "granaries": 8,
+      "houses": 7,
+      "healingHouses": 0,
+      "mills": 2,
+      "recordHouses": 0,
+      "dwellings": 23,
+      "stores": 21
+     }
+    },
+    {
+     "year": 4,
+     "living": 60,
+     "people": 61,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2155,
+     "crafts": [
+      60,
+      43,
+      31,
+      18,
+      7,
+      1
+     ],
+     "works": {
+      "fields": 150,
+      "granaries": 8,
+      "houses": 13,
+      "healingHouses": 3,
+      "mills": 2,
+      "recordHouses": 0,
+      "dwellings": 29,
+      "stores": 21
+     }
+    },
+    {
+     "year": 5,
+     "living": 70,
+     "people": 71,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2330,
+     "crafts": [
+      70,
+      49,
+      38,
+      21,
+      17,
+      2
+     ],
+     "works": {
+      "fields": 174,
+      "granaries": 9,
+      "houses": 14,
+      "healingHouses": 4,
+      "mills": 4,
+      "recordHouses": 1,
+      "dwellings": 26,
+      "stores": 24
+     }
+    },
+    {
+     "year": 6,
+     "living": 70,
+     "people": 79,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2750,
+     "crafts": [
+      70,
+      64,
+      48,
+      39,
+      25,
+      17
+     ],
+     "works": {
+      "fields": 181,
+      "granaries": 9,
+      "houses": 16,
+      "healingHouses": 6,
+      "mills": 5,
+      "recordHouses": 3,
+      "dwellings": 17,
+      "stores": 25
+     }
+    },
+    {
+     "year": 7,
+     "living": 70,
+     "people": 84,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2765,
+     "crafts": [
+      70,
+      67,
+      59,
+      57,
+      47,
+      42
+     ],
+     "works": {
+      "fields": 182,
+      "granaries": 9,
+      "houses": 17,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 6,
+      "dwellings": 18,
+      "stores": 25
+     }
+    },
+    {
+     "year": 8,
+     "living": 71,
+     "people": 88,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2775,
+     "crafts": [
+      71,
+      69,
+      66,
+      65,
+      59,
+      53
+     ],
+     "works": {
+      "fields": 190,
+      "granaries": 9,
+      "houses": 17,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 6,
+      "dwellings": 18,
+      "stores": 22
+     }
+    },
+    {
+     "year": 9,
+     "living": 87,
+     "people": 110,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2935,
+     "crafts": [
+      87,
+      83,
+      74,
+      69,
+      59,
+      57
+     ],
+     "works": {
+      "fields": 214,
+      "granaries": 9,
+      "houses": 17,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 6,
+      "dwellings": 19,
+      "stores": 23
+     }
+    },
+    {
+     "year": 10,
+     "living": 85,
+     "people": 110,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2915,
+     "crafts": [
+      85,
+      83,
+      81,
+      82,
+      72,
+      66
+     ],
+     "works": {
+      "fields": 227,
+      "granaries": 9,
+      "houses": 17,
+      "healingHouses": 7,
+      "mills": 5,
+      "recordHouses": 6,
+      "dwellings": 19,
+      "stores": 24
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    23,
+    57,
+    75,
+    132,
+    213
+   ],
+   "deaths": {
+    "hunger": 23,
+    "exhaustion": 1,
+    "cold": 1
+   },
+   "counters": {
+    "discoveries": 136,
+    "learned": 437,
+    "inscribed": 36,
+    "fieldHarvests": 2763,
+    "milled": 3593,
+    "careLaid": 330,
+    "careSpent": 9914,
+    "arrivals": 60
+   },
+   "firsts": {
+    "discovered:tillage": 25,
+    "discovered:storekeeping": 28,
+    "discovered:herb_lore": 29,
+    "learned:tillage": 32,
+    "learned:storekeeping": 44,
+    "discovered:masonry": 49,
+    "learned:masonry": 67,
+    "discovered:millwrighting": 83,
+    "discovered:record_keeping": 131,
+    "learned:herb_lore": 131,
+    "learned:record_keeping": 207,
+    "learned:millwrighting": 214
+   },
+   "aimDay": 213,
+   "fewest": 50,
+   "digest": "3aa8d8914d24c5bc",
+   "seconds": 123.855
+  },
+  {
+   "scenario": "first_light",
+   "seed": 7,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 802,
+     "crafts": [
+      5,
+      4,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 8,
+      "granaries": 0,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 23,
+      "stores": 11
+     }
+    },
+    {
+     "year": 2,
+     "living": 56,
+     "people": 58,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1580,
+     "crafts": [
+      40,
+      23,
+      14,
+      5,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 80,
+      "granaries": 10,
+      "houses": 6,
+      "healingHouses": 1,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 29,
+      "stores": 22
+     }
+    },
+    {
+     "year": 3,
+     "living": 68,
+     "people": 74,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2220,
+     "crafts": [
+      68,
+      31,
+      23,
+      7,
+      7,
+      1
+     ],
+     "works": {
+      "fields": 137,
+      "granaries": 11,
+      "houses": 12,
+      "healingHouses": 2,
+      "mills": 3,
+      "recordHouses": 0,
+      "dwellings": 35,
+      "stores": 26
+     }
+    },
+    {
+     "year": 4,
+     "living": 64,
+     "people": 81,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2195,
+     "crafts": [
+      64,
+      30,
+      22,
+      8,
+      6,
+      2
+     ],
+     "works": {
+      "fields": 152,
+      "granaries": 12,
+      "houses": 13,
+      "healingHouses": 3,
+      "mills": 3,
+      "recordHouses": 0,
+      "dwellings": 36,
+      "stores": 28
+     }
+    },
+    {
+     "year": 5,
+     "living": 57,
+     "people": 81,
+     "age": 4,
+     "standing": 5,
+     "legacy": 2415,
+     "crafts": [
+      57,
+      37,
+      27,
+      11,
+      17,
+      3
+     ],
+     "works": {
+      "fields": 166,
+      "granaries": 12,
+      "houses": 15,
+      "healingHouses": 4,
+      "mills": 5,
+      "recordHouses": 2,
+      "dwellings": 30,
+      "stores": 30
+     }
+    },
+    {
+     "year": 6,
+     "living": 61,
+     "people": 86,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2675,
+     "crafts": [
+      61,
+      54,
+      47,
+      31,
+      26,
+      16
+     ],
+     "works": {
+      "fields": 173,
+      "granaries": 12,
+      "houses": 17,
+      "healingHouses": 4,
+      "mills": 6,
+      "recordHouses": 3,
+      "dwellings": 19,
+      "stores": 31
+     }
+    },
+    {
+     "year": 7,
+     "living": 64,
+     "people": 90,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2705,
+     "crafts": [
+      64,
+      58,
+      51,
+      45,
+      40,
+      28
+     ],
+     "works": {
+      "fields": 173,
+      "granaries": 12,
+      "houses": 17,
+      "healingHouses": 4,
+      "mills": 6,
+      "recordHouses": 3,
+      "dwellings": 19,
+      "stores": 31
+     }
+    },
+    {
+     "year": 8,
+     "living": 74,
+     "people": 102,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2805,
+     "crafts": [
+      72,
+      68,
+      61,
+      54,
+      52,
+      41
+     ],
+     "works": {
+      "fields": 176,
+      "granaries": 12,
+      "houses": 17,
+      "healingHouses": 4,
+      "mills": 6,
+      "recordHouses": 4,
+      "dwellings": 19,
+      "stores": 25
+     }
+    },
+    {
+     "year": 9,
+     "living": 74,
+     "people": 104,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2805,
+     "crafts": [
+      74,
+      69,
+      67,
+      64,
+      61,
+      54
+     ],
+     "works": {
+      "fields": 180,
+      "granaries": 12,
+      "houses": 17,
+      "healingHouses": 6,
+      "mills": 6,
+      "recordHouses": 5,
+      "dwellings": 19,
+      "stores": 25
+     }
+    },
+    {
+     "year": 10,
+     "living": 74,
+     "people": 104,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2805,
+     "crafts": [
+      74,
+      70,
+      67,
+      69,
+      64,
+      61
+     ],
+     "works": {
+      "fields": 192,
+      "granaries": 12,
+      "houses": 17,
+      "healingHouses": 5,
+      "mills": 6,
+      "recordHouses": 6,
+      "dwellings": 17,
+      "stores": 26
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    9,
+    50,
+    71,
+    98,
+    200
+   ],
+   "deaths": {
+    "hunger": 27,
+    "cold": 2,
+    "thirst": 1
+   },
+   "counters": {
+    "discoveries": 143,
+    "learned": 363,
+    "inscribed": 36,
+    "fieldHarvests": 2597,
+    "milled": 5525,
+    "careLaid": 287,
+    "careSpent": 7904,
+    "arrivals": 54
+   },
+   "firsts": {
+    "discovered:tillage": 27,
+    "learned:tillage": 27,
+    "discovered:storekeeping": 29,
+    "discovered:masonry": 47,
+    "discovered:herb_lore": 55,
+    "learned:storekeeping": 58,
+    "learned:masonry": 59,
+    "learned:herb_lore": 70,
+    "discovered:millwrighting": 91,
+    "learned:millwrighting": 99,
+    "discovered:record_keeping": 102,
+    "learned:record_keeping": 197
+   },
+   "aimDay": 200,
+   "fewest": 50,
+   "digest": "2beb21a32643bcd3",
+   "seconds": 103.12
+  },
+  {
+   "scenario": "first_light",
+   "seed": 8,
+   "years": [
+    {
+     "year": 1,
+     "living": 50,
+     "people": 50,
+     "age": 1,
+     "standing": 1,
+     "legacy": 810,
+     "crafts": [
+      2,
+      3,
+      0,
+      0,
+      0,
+      0
+     ],
+     "works": {
+      "fields": 0,
+      "granaries": 2,
+      "houses": 0,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 20,
+      "stores": 13
+     }
+    },
+    {
+     "year": 2,
+     "living": 49,
+     "people": 50,
+     "age": 3,
+     "standing": 3,
+     "legacy": 1440,
+     "crafts": [
+      24,
+      15,
+      6,
+      0,
+      0,
+      1
+     ],
+     "works": {
+      "fields": 49,
+      "granaries": 6,
+      "houses": 4,
+      "healingHouses": 0,
+      "mills": 0,
+      "recordHouses": 0,
+      "dwellings": 25,
+      "stores": 17
+     }
+    },
+    {
+     "year": 3,
+     "living": 49,
+     "people": 56,
+     "age": 4,
+     "standing": 4,
+     "legacy": 2165,
+     "crafts": [
+      49,
+      32,
+      19,
+      4,
+      2,
+      6
+     ],
+     "works": {
+      "fields": 125,
+      "granaries": 10,
+      "houses": 13,
+      "healingHouses": 1,
+      "mills": 1,
+      "recordHouses": 1,
+      "dwellings": 35,
+      "stores": 23
+     }
+    },
+    {
+     "year": 4,
+     "living": 50,
+     "people": 59,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2510,
+     "crafts": [
+      50,
+      41,
+      33,
+      5,
+      21,
+      21
+     ],
+     "works": {
+      "fields": 143,
+      "granaries": 11,
+      "houses": 16,
+      "healingHouses": 2,
+      "mills": 6,
+      "recordHouses": 2,
+      "dwellings": 39,
+      "stores": 29
+     }
+    },
+    {
+     "year": 5,
+     "living": 58,
+     "people": 70,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2690,
+     "crafts": [
+      58,
+      50,
+      47,
+      34,
+      34,
+      24
+     ],
+     "works": {
+      "fields": 153,
+      "granaries": 11,
+      "houses": 21,
+      "healingHouses": 5,
+      "mills": 7,
+      "recordHouses": 5,
+      "dwellings": 35,
+      "stores": 31
+     }
+    },
+    {
+     "year": 6,
+     "living": 64,
+     "people": 82,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2750,
+     "crafts": [
+      64,
+      56,
+      51,
+      45,
+      43,
+      37
+     ],
+     "works": {
+      "fields": 163,
+      "granaries": 12,
+      "houses": 22,
+      "healingHouses": 8,
+      "mills": 8,
+      "recordHouses": 5,
+      "dwellings": 27,
+      "stores": 33
+     }
+    },
+    {
+     "year": 7,
+     "living": 73,
+     "people": 94,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2840,
+     "crafts": [
+      73,
+      67,
+      58,
+      54,
+      52,
+      46
+     ],
+     "works": {
+      "fields": 179,
+      "granaries": 12,
+      "houses": 22,
+      "healingHouses": 8,
+      "mills": 9,
+      "recordHouses": 7,
+      "dwellings": 27,
+      "stores": 34
+     }
+    },
+    {
+     "year": 8,
+     "living": 75,
+     "people": 98,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2860,
+     "crafts": [
+      75,
+      70,
+      67,
+      62,
+      55,
+      53
+     ],
+     "works": {
+      "fields": 188,
+      "granaries": 12,
+      "houses": 22,
+      "healingHouses": 8,
+      "mills": 9,
+      "recordHouses": 7,
+      "dwellings": 26,
+      "stores": 29
+     }
+    },
+    {
+     "year": 9,
+     "living": 85,
+     "people": 111,
+     "age": 5,
+     "standing": 5,
+     "legacy": 2960,
+     "crafts": [
+      85,
+      77,
+      69,
+      65,
+      58,
+      56
+     ],
+     "works": {
+      "fields": 195,
+      "granaries": 12,
+      "houses": 23,
+      "healingHouses": 8,
+      "mills": 9,
+      "recordHouses": 7,
+      "dwellings": 26,
+      "stores": 32
+     }
+    },
+    {
+     "year": 10,
+     "living": 96,
+     "people": 123,
+     "age": 5,
+     "standing": 5,
+     "legacy": 3070,
+     "crafts": [
+      96,
+      90,
+      79,
+      79,
+      67,
+      63
+     ],
+     "works": {
+      "fields": 203,
+      "granaries": 12,
+      "houses": 23,
+      "healingHouses": 9,
+      "mills": 9,
+      "recordHouses": 7,
+      "dwellings": 24,
+      "stores": 33
+     }
+    }
+   ],
+   "ageDays": [
+    0,
+    8,
+    65,
+    72,
+    103,
+    142
+   ],
+   "deaths": {
+    "hunger": 27
+   },
+   "counters": {
+    "discoveries": 109,
+    "learned": 465,
+    "inscribed": 42,
+    "fieldHarvests": 2524,
+    "milled": 3716,
+    "careLaid": 315,
+    "careSpent": 8279,
+    "arrivals": 73
+   },
+   "firsts": {
+    "discovered:storekeeping": 21,
+    "discovered:tillage": 30,
+    "discovered:masonry": 50,
+    "learned:tillage": 55,
+    "learned:masonry": 60,
+    "discovered:record_keeping": 73,
+    "learned:storekeeping": 75,
+    "discovered:herb_lore": 87,
+    "discovered:millwrighting": 96,
+    "learned:herb_lore": 96,
+    "learned:record_keeping": 102,
+    "learned:millwrighting": 142
+   },
+   "aimDay": 142,
+   "fewest": 49,
+   "digest": "1fe072363816befb",
+   "seconds": 113.67
+  }
+ ]
+}

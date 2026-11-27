@@ -32,6 +32,7 @@ import { dyeOf } from "./dyes";
 import type { HeightField } from "./heightfield";
 import { type KnowledgeUniforms, veil } from "./overlays";
 import { rand01 } from "./palette";
+import { WORK_REACH, buildWorks } from "./works";
 
 const KIND = { campfire: 0, shelter: 1, store: 2, plot: 3 } as const;
 const MAX = 512;
@@ -272,6 +273,8 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
     cord: mk(geoms.cord, "charter-cords", 64 * 10),
     pole: mk(geoms.pole, "charter-poles", 128),
   };
+  // fields, granaries, stone houses, healing houses, mills and record houses (worlds with crafts): works.ts
+  const works = buildWorks(field, quality, solid);
   const pennants = new InstancedMesh(geoms.pennant, cloth, 192);
   pennants.count = 0;
   pennants.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -364,7 +367,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
       const c = field.tileCentre(sv.x, sv.y);
       const y = field.standAt(c.x, c.z);
       anchors.set(sv.id, { x: c.x, y, z: c.z });
-      spots.set(sv.y * field.w + sv.x, { x: c.x, z: c.z, r: REACH[sv.kind] ?? 0.4 });
+      spots.set(sv.y * field.w + sv.x, { x: c.x, z: c.z, r: REACH[sv.kind] ?? WORK_REACH[sv.kind] ?? 0.4 });
       const rot = rand01(sv.id, 1) * Math.PI * 2;
       q.setFromAxisAngle(up, rot);
       p3.set(c.x, y - 0.01, c.z);
@@ -435,6 +438,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
       m.instanceMatrix.needsUpdate = true;
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
     }
+    works.set(list);
     // governed stores may have moved in the list: their pennants follow
     layoutMarks();
   };
@@ -557,6 +561,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
 
   const animate = (time: number, night: number): void => {
     wave(time);
+    works.animate(time);
     for (let i = 0; i < lights.length; i++) {
       const l = lights[i]!;
       const f = fires[i];
@@ -572,7 +577,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
   };
 
   return {
-    objects: [...Object.values(meshes), pennants, flames, ...lights],
+    objects: [...Object.values(meshes), ...works.objects, pennants, flames, ...lights],
     uniforms,
     setStructures,
     setPiles,
@@ -589,6 +594,7 @@ export function buildStructures(field: HeightField, quality: "low" | "medium" | 
       solid.dispose();
       cloth.dispose();
       for (const m of Object.values(meshes)) m.dispose();
+      works.dispose();
       pennants.dispose();
       flames.dispose();
     },

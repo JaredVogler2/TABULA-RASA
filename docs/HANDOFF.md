@@ -4,6 +4,32 @@ Written 2026-11-25, at the end of phase 20. This is the one document to read if 
 what does not, what it would take to finish, and how to do each thing that is yours to do. Everything it says
 is backed elsewhere, and says where.
 
+## Since this was written: The Long Road (2026-11-27)
+
+You asked three things after playing, and this is what was done about each (D-055 to D-058; the evidence is in
+[`EVIDENCE.md`](EVIDENCE.md#the-long-road-d-055-to-d-058-2026-11-27)):
+
+- *"Civilizations only can die rather than progress."* A world can now be made with **crafts and newcomers**:
+  six kinds of know-how nobody starts with, six things they open (fields, granaries, stone houses, a healing
+  house, a mill, a record house), and people drawn to a settlement that can feed and house them. Nobody is
+  born or ages — you said that was fine, and the design for it is on record (D-057).
+- *"It doesn't feel like there is much of a goal."* The default scenario is now **The Long Road**: ages to
+  reach, a legacy in points beside the untouched twin's, one change a season, an aim, and a page that ends
+  the story and offers the island again.
+- *"Too easy… I want some form of skill."* It was too easy, and a test with scripted players of different
+  skill showed how (`scripts/hands.ts`). The aim now asks for speed and care together — four in five of the
+  first fifty at the Age of Letters by the end of the fifth year — and with one change a season that makes
+  each season a choice, usually between knowledge and food. Left alone, an island meets it on 1 of 12 test
+  islands; a hand that reads the island, on 11. The game tells you what your hand was worth against the twin.
+
+**Yours to decide next** (ideas put to you in the session, none built): harder grades of the same aim;
+choosing where a change falls; hardships with signs, and changes you can save for them; a wonder that draws
+the curious to a place; an island a day. And one flag: the title still says "No blueprint for what they
+should become", which is true of what kind of society they make and no longer true of what can be built.
+
+The five earlier scenarios are exactly as they were unless you switch "Crafts and newcomers" on at setup.
+Every published study still reproduces, digest for digest.
+
 ## What you have
 
 A browser game and a laboratory, built from the prompts in `prompts/` in one session. **The game is live at
@@ -12,8 +38,9 @@ https://tabula-rasa-bay.vercel.app.**
 - **The game** (`/`). A deterministic simulated island with fifty citizens who gather, build, speak, promise,
   trade and — within a grammar the designers supplied and nothing more — propose and sign agreements that the
   engine then enforces. You watch, inspect anyone, read what the engine logged and why, change the weather or
-  the abundance (never a mind), and compare your world with an untouched twin that shares its luck. Five
-  scenarios; each states one aim, and the Atlas now says how it stands in your world and in the twin. Saves,
+  the abundance (never a mind), and compare your world with an untouched twin that shares its luck. Six
+  scenarios (The Long Road, above, and the five earlier ones); each states one aim, and the Atlas says how it
+  stands in your world and in the twin. Saves,
   world files, a history you can return to, and a bundled recording that replays to the bit. It needs no
   account, no key, no database and no network after the page has loaded.
 - **The laboratory** (`/lab`). Six registered studies run as paired experiments on the engine's baseline

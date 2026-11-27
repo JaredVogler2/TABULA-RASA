@@ -1,8 +1,14 @@
 /**
- * The land: a smooth sculpted surface coloured by habitat, shaded with procedural
- * detail (rock on slopes, strata, worn footpaths from real traffic, seasonal tint,
- * snow, wetness, caustics under shallows), plus the cut-away sides of the slab and
- * the plinth it rests on.
+ * The land: a smooth sculpted surface coloured by habitat, shaded with fine detail
+ * (rock on slopes, strata, worn footpaths from real traffic, seasonal tint, snow,
+ * wetness, caustics under shallows), plus the cut-away sides of the slab and the
+ * plinth it rests on.
+ *
+ * Since D-054 the fine detail is read from a small repeating texture (`detail.ts`)
+ * where it used to be computed as noise for every pixel, and two things are worked
+ * out once when the world is built and carried on the vertices at no cost per frame:
+ * how much of the sky each point of the ground can see, and the broad, slow variation
+ * that strata and snow lines follow.
  */
 import {
   BufferAttribute,
@@ -21,6 +27,7 @@ import {
   type IUniform,
 } from "three";
 import type { StaticWorldView } from "@/worker/protocol";
+import { type DetailParts, detailMeans } from "./detail";
 import { type HeightField, SLAB_BOTTOM, SUBDIV, fbm2, valueNoise } from "./heightfield";
 import { type KnowledgeUniforms, veil } from "./overlays";
 import { BIOME_COLORS, PATH, ROCK_DARK, ROCK_LIGHT, SEABED_DEEP, SEABED_SHALLOW, SNOW, STREAM_BED, WET_SOIL, wearOf } from "./palette";
@@ -62,6 +69,8 @@ export interface TerrainUniforms {
   uTraffic: IUniform<DataTexture>;
   uWorld: IUniform<Vector3>; // (w, h, 0)
   uNight: IUniform<number>;
+  uDetail: IUniform<DataTexture>;
+  uRipples: IUniform<DataTexture>;
   [key: string]: IUniform<unknown>;
 }
 
@@ -73,8 +82,17 @@ export interface TerrainParts {
   uniforms: TerrainUniforms;
   trafficTexture: DataTexture;
   setTraffic(traffic: Uint16Array): void;
+  /**
+   * The shade that what stands on the ground casts on it from the sky, one value per sample of the
+   * height field (0 = none .. 255 = as deep as it gets under a crown). Called when a tree is felled
+   * or grows back, so the dimness under it goes and comes with the tree.
+   */
+  setShade(shade: Uint8Array): void;
   dispose(): void;
 }
+
+/** The most that standing vegetation takes from the sky's light on the ground beneath it. */
+const CANOPY_SHADE = 0.52;
 
 function biomeColorAt(view: StaticWorldView, wx: number, wy: number, seed: number, out: Color): Color {
   const { w, h } = view;
@@ -102,7 +120,7 @@ function biomeColorAt(view: StaticWorldView, wx: number, wy: number, seed: numbe
   return out.setRGB(r, g, b);
 }
 
-export function buildTerrain(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high", know?: KnowledgeUniforms): TerrainParts {
+export function buildTerrain(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high", detail: DetailParts, know?: KnowledgeUniforms): TerrainParts {
   const { w, h } = view;
   const seed = view.config.seed;
   const sw = field.sw;
@@ -112,6 +130,10 @@ export function buildTerrain(view: StaticWorldView, field: HeightField, quality:
   const positions = new Float32Array(sw * sh * 3);
   const colors = new Float32Array(sw * sh * 3);
   const normals = new Float32Array(sw * sh * 3);
+  // two things known when the world is built, carried on each vertex as a byte:
+  // how much of the sky it sees (less what stands over it), and a broad slow variation
+  const bake = new Uint8Array(sw * sh * 2);
+  const sky = field.openness();
   const tmp = new Color();
   for (let sy = 0; sy < sh; sy++) {
     for (let sx = 0; sx < sw; sx++) {
@@ -143,9 +165,11 @@ export function buildTerrain(view: StaticWorldView, field: HeightField, quality:
         if (alpine > 0) tmp.lerp(ROCK_DARK, alpine * 0.7);
         const patch = fbm2(wx * 0.35, wy * 0.35, seed + 59, 3);
         tmp.multiplyScalar(0.86 + 0.28 * patch);
-        // hollows are darker, crests catch the light
-        tmp.multiplyScalar(field.occlusion[i] as number);
+        // hollows a little darker, crests a little lighter (the sky's light is dimmed separately, by `sky`)
+        tmp.multiplyScalar(1 + ((field.occlusion[i] as number) - 1) * 0.45);
       }
+      bake[i * 2] = Math.round(255 * (sky[i] as number));
+      bake[i * 2 + 1] = Math.round(255 * fbm2(wx * 0.55, wy * 0.55, seed + 71, 4));
       colors[i * 3] = tmp.r;
       colors[i * 3 + 1] = tmp.g;
       colors[i * 3 + 2] = tmp.b;
@@ -202,6 +226,8 @@ export function buildTerrain(view: StaticWorldView, field: HeightField, quality:
   geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("normal", new BufferAttribute(normals, 3));
   geometry.setAttribute("color", new BufferAttribute(colors, 3));
+  const bakeAttr = new BufferAttribute(bake, 2, true);
+  geometry.setAttribute("aBake", bakeAttr);
   geometry.setIndex(new BufferAttribute(indices, 1));
   geometry.computeBoundingSphere();
 
@@ -221,36 +247,38 @@ export function buildTerrain(view: StaticWorldView, field: HeightField, quality:
     uTraffic: { value: trafficTexture },
     uWorld: { value: new Vector3(w, h, 0) },
     uNight: { value: 0 },
+    uDetail: { value: detail.ground },
+    uRipples: { value: detail.ripples },
   };
+  const mean = detailMeans();
+  const f = (x: number) => x.toFixed(4);
 
   const material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0 });
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;")
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWNormal = normalize(mat3(modelMatrix) * objectNormal);");
+      .replace("#include <common>", "#include <common>\nattribute vec2 aBake;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;\nvarying vec2 vBake;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWNormal = normalize(mat3(modelMatrix) * objectNormal);\nvBake = aBake;");
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
         `#include <common>
 varying vec3 vWPos;
 varying vec3 vWNormal;
+varying vec2 vBake;
 uniform float uTime;
 uniform vec3 uSeason;
 uniform float uSeasonMix;
 uniform float uSnow;
 uniform float uWet;
 uniform sampler2D uTraffic;
+uniform sampler2D uDetail;
+uniform sampler2D uRipples;
 uniform vec3 uWorld;
 uniform float uNight;
+float terrainWet;
 #ifndef TR_LOW
-float terrainRelief;
-#endif
-${GLSL_NOISE}
-#ifdef TR_LOW
-#define trFbmQ(p) trNoise(p)
-#else
-#define trFbmQ(p) trFbm(p)
+vec3 terrainSlope;
 #endif`,
       )
       .replace(
@@ -258,16 +286,26 @@ ${GLSL_NOISE}
         `#include <color_fragment>
 {
   vec2 p = vWPos.xz;
-  float n1 = trFbmQ(p * 0.55);
-  float n2 = trFbmQ(p * 3.1 + 40.0);
+  // broad, slow variation comes with the vertex; mottling and grain are two looks at one small texture,
+  // the second turned and finer so that neither repeats where the other does
+  float n1 = vBake.y;
+  vec4 dM = texture2D(uDetail, p * 0.19);
+  float n2 = dM.a;
+  float n3 = dM.b;
 #ifdef TR_LOW
-  float n3 = n2;
+  float fine = 0.0;
 #else
-  float n3 = trNoise(p * 11.0);
+  vec4 dF = texture2D(uDetail, vec2(p.x * 0.82 - p.y * 0.57, p.x * 0.57 + p.y * 0.82) * 1.37 + 0.31);
+  float fine = dF.b - ${f(mean.ground[2])};
 #endif
   vec3 nrm = normalize(vWNormal);
   float land = smoothstep(-0.02, 0.06, vWPos.y);
   vec3 base = diffuseColor.rgb;
+#ifndef TR_LOW
+  // how much ground a pixel covers here, and so whether the finest things drawn below are larger than one
+  float footprint = length(fwidth(p));
+  float near = 1.0 - smoothstep(0.014, 0.06, footprint);
+#endif
 
   // living ground: seasonal tint on the green component of the habitat colour
   float greenness = clamp((base.g - max(base.r, base.b)) * 6.0, 0.0, 1.0);
@@ -275,29 +313,31 @@ ${GLSL_NOISE}
   vec3 dormant = mix(base, vec3(dot(base, vec3(0.3, 0.5, 0.2))) * vec3(1.12, 1.02, 0.78), 0.75);
   base = mix(base, mix(seasonal, dormant, uSeasonMix), greenness * land);
   base *= 0.84 + 0.2 * n2 + 0.12 * n3;
-  // Variations in turf and exposed soil carry from the vista down to ground level.
+  // Variations in turf and exposed soil carry from the vista down to ground level. (The texture's own
+  // smaller copies take the grain away as it shrinks below a pixel: nothing has to fade it by hand.)
 #ifndef TR_LOW
-  float detail = 1.0 - smoothstep(0.22, 0.64, length(fwidth(p)) * 18.0);
-  float grain = trNoise(p * 18.0 + n2 * 2.0);
   float patches = smoothstep(0.24, 0.77, n2 * 0.72 + n1 * 0.28);
   base *= mix(0.86, 1.12, patches);
-  base *= 1.0 + (grain - 0.5) * detail * land * (0.21 + 0.19 * greenness);
+  base *= 1.0 + fine * land * (0.2 + 0.2 * greenness);
 #endif
 
   // rock where it is steep, with faint strata following elevation
   float slope = 1.0 - nrm.y;
   float highUp = smoothstep(4.5, 8.5, vWPos.y);
   float rock = smoothstep(0.34 - 0.16 * highUp, 0.56 - 0.2 * highUp, slope + (n2 - 0.5) * 0.14) * land;
-  float strata = 0.5 + 0.5 * sin(vWPos.y * 5.0 + n1 * 6.0 + n2 * 3.0);
+  float bedding = vWPos.y * 5.0 + n1 * 6.0 + n2 * 3.0;
+  float strata = 0.5 + 0.5 * sin(bedding);
   strata = mix(0.5, smoothstep(0.2, 0.8, strata), 0.55);
   vec3 rockCol = mix(vec3(${ROCK_DARK.r.toFixed(4)}, ${ROCK_DARK.g.toFixed(4)}, ${ROCK_DARK.b.toFixed(4)}), vec3(${ROCK_LIGHT.r.toFixed(4)}, ${ROCK_LIGHT.g.toFixed(4)}, ${ROCK_LIGHT.b.toFixed(4)}), 0.2 + 0.8 * strata * (0.45 + 0.55 * n1));
   rockCol *= 0.82 + 0.3 * n3;
 #ifndef TR_LOW
-  // Irregular fractures cut across the softer sediment bands.
-  float fault = trNoise(p * 4.8 + vec2(vWPos.y * 2.6, vWPos.y * -3.8));
-  float fissure = 1.0 - smoothstep(0.018, 0.105, abs(fault - 0.43));
-  rockCol *= 0.90 + n3 * 0.21 - fissure * 0.16;
-  rockCol *= 1.0 + detail * (grain - 0.5) * 0.28;
+  // Irregular fractures cut across the softer sediment bands: the thin line where the mottling crosses its middle.
+  float fissure = 1.0 - smoothstep(0.012, 0.065, abs(n2 - 0.47));
+  rockCol *= 0.90 + n3 * 0.21 - fissure * 0.2;
+  rockCol *= 1.0 + fine * 0.26;
+  // thin beds within the thick ones, seen only from close by
+  float thin = vWPos.y * 41.0 + n2 * 9.0 + n1 * 5.0;
+  rockCol *= 1.0 + 0.085 * sin(thin) * near;
 #endif
   // lichen and moss creep onto rock where it is not too steep
   rockCol = mix(rockCol, base * 0.8, (1.0 - smoothstep(0.3, 0.55, slope)) * 0.35 * n2);
@@ -312,18 +352,31 @@ ${GLSL_NOISE}
   base = mix(base, base * vec3(0.78, 0.74, 0.62), smoothstep(0.12, 0.4, worn) * (1.0 - pathMask) * land * (1.0 - rock) * 0.85);
   base = mix(base, vec3(${PATH.r.toFixed(4)}, ${PATH.g.toFixed(4)}, ${PATH.b.toFixed(4)}) * (0.82 + 0.26 * n2), pathMask * 0.9);
 
-  // seabed: rippled sand and moving caustics in the shallows
+  // seabed: rippled sand under moving light
   float under = 1.0 - land;
   float depth = clamp(-vWPos.y / 2.0, 0.0, 1.0);
   float ripple = 0.5 + 0.5 * sin(p.x * 5.5 + n1 * 6.0) * sin(p.y * 4.5 + n2 * 4.0);
   base = mix(base, base * (0.9 + 0.14 * ripple), under);
 #ifndef TR_LOW
-  vec2 cp = p * 1.6;
-  float c1 = trNoise(cp + vec2(uTime * 0.22, uTime * 0.17));
-  float c2 = trNoise(cp * 1.7 - vec2(uTime * 0.19, uTime * 0.26));
-  float caustic = pow(1.0 - abs(c1 - c2), 7.0);
-  base += vec3(0.55, 0.62, 0.5) * caustic * under * (1.0 - depth) * (1.0 - uNight) * 0.55;
+  if (vWPos.y < 0.06) {
+    // The water's own colour is laid on what is seen through it — red goes first with depth, then
+    // green — so that shallows are turquoise over the sand and not milk.
+    base *= mix(vec3(1.0), exp(-vec3(1.9, 0.42, 0.26) * max(0.0, -vWPos.y)), under);
+    // Moving caustics in the shallows: two looks at the ripple texture drifting across each other,
+    // bright where they agree. Read at a fixed level of the texture, chosen from the size of a
+    // pixel on the ground, because this is inside a branch.
+    float lod = log2(max(1.0, footprint * 61.0)) + 1.0;
+    vec2 cp = p * 0.24;
+    float c1 = textureLod(uRipples, cp + vec2(uTime * 0.033, uTime * 0.026), lod).b;
+    float c2 = textureLod(uRipples, cp * 1.7 + 0.37 - vec2(uTime * 0.029, uTime * 0.04), lod).b;
+    float caustic = pow(1.0 - abs(c1 - c2), 7.0);
+    base += vec3(0.55, 0.62, 0.5) * caustic * under * (1.0 - depth) * (1.0 - uNight) * 0.42;
+  }
 #endif
+
+  // sand just above the waterline is wet: darker, and it shines
+  float wetSand = (1.0 - smoothstep(0.02, 0.17, vWPos.y)) * land * (1.0 - rock);
+  base *= 1.0 - 0.27 * wetSand;
 
   // rain darkens, snow settles on what faces the sky
   base *= 1.0 - 0.22 * uWet * land;
@@ -332,8 +385,15 @@ ${GLSL_NOISE}
   base = mix(base, vec3(${SNOW.r.toFixed(4)}, ${SNOW.g.toFixed(4)}, ${SNOW.b.toFixed(4)}), snowAmt * 0.92);
 
   diffuseColor.rgb = base;
+  terrainWet = max(wetSand * 0.9, clamp(uWet, 0.0, 1.0) * 0.5);
 #ifndef TR_LOW
-  terrainRelief = land * detail * ((grain - 0.5) * mix(0.005, 0.009, rock) - fissure * rock * 0.004) * (1.0 - snowAmt * 0.65);
+  // The slope of the fine relief across the ground (the second look is turned, so its slope is turned
+  // back). The texture is laid on the land from above, so on a cliff it would be smeared down the face:
+  // there it gives way to the ledges of the rock's own bedding, which run level.
+  vec2 gM = dM.rg - vec2(${f(mean.ground[0])}, ${f(mean.ground[1])});
+  vec2 gF = dF.rg - vec2(${f(mean.ground[0])}, ${f(mean.ground[1])});
+  vec2 lie = (gM * 0.34 + vec2(gF.x * 0.82 + gF.y * 0.57, gF.y * 0.82 - gF.x * 0.57) * 0.55) * (1.0 - 0.75 * smoothstep(0.2, 0.55, slope));
+  terrainSlope = vec3(lie.x, rock * (0.3 * cos(bedding) + 0.24 * cos(thin) * near), lie.y) * land * (1.0 - snowAmt * 0.65);
 #endif
 }`,
       )
@@ -341,23 +401,24 @@ ${GLSL_NOISE}
         "#include <normal_fragment_maps>",
         `#include <normal_fragment_maps>
 #ifndef TR_LOW
-vec3 dx = dFdx(-vViewPosition);
-vec3 dy = dFdy(-vViewPosition);
-vec3 sx = cross(dy, normal);
-vec3 sy = cross(normal, dx);
-float area = dot(dx, sx);
-vec3 gradient = sign(area) * (dFdx(terrainRelief) * sx + dFdy(terrainRelief) * sy);
-normal = normalize(max(abs(area), 0.00000001) * normal - gradient);
+normal = normalize(normal - mat3(viewMatrix) * terrainSlope);
 #endif`,
       )
       .replace(
         "#include <roughnessmap_fragment>",
         `#include <roughnessmap_fragment>
-roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
+roughnessFactor = mix(roughnessFactor, 0.5, terrainWet);`,
+      )
+      .replace(
+        "#include <aomap_fragment>",
+        `#include <aomap_fragment>
+// the sky's light reaches less of a gully, the foot of a cliff and the ground under a crown; the sun's is left to its shadows
+// (never to nothing: a fifth of it finds its way in by bouncing)
+reflectedLight.indirectDiffuse *= 0.2 + 0.8 * vBake.x;`,
       );
   };
   if (quality === "low") material.defines = { ...(material.defines ?? {}), TR_LOW: "" };
-  material.customProgramCacheKey = () => `tr-terrain-v4-${quality}`;
+  material.customProgramCacheKey = () => `tr-terrain-v5-${quality}`;
   if (know) veil(material, know);
 
   const mesh = new Mesh(geometry, material);
@@ -532,6 +593,12 @@ roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
     trafficTexture.needsUpdate = true;
   };
 
+  const setShade = (shade: Uint8Array): void => {
+    const n = Math.min(shade.length, sw * sh);
+    for (let i = 0; i < n; i++) bake[i * 2] = Math.round(255 * (sky[i] as number) * (1 - (CANOPY_SHADE * (shade[i] as number)) / 255));
+    bakeAttr.needsUpdate = true;
+  };
+
   return {
     mesh,
     skirt,
@@ -540,6 +607,7 @@ roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
     uniforms,
     trafficTexture,
     setTraffic,
+    setShade,
     dispose() {
       geometry.dispose();
       material.dispose();

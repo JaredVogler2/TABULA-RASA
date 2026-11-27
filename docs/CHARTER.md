@@ -16,6 +16,16 @@ about real human societies (see `EXPERIMENT_PROTOCOL.md` §8).
 One sentence for the title screen, as it stands there: *A living world. Fifty independent minds. No blueprint
 for what they should become.*
 
+**Since engine 0.8.0 there are two kinds of world** (D-055, D-056). A world *without crafts* is the blank slate
+described above, and is what every published experiment used: four things can be built and all four are known
+from the first morning. A world *with crafts* adds a ladder the designers drew — six kinds of know-how that
+have to be found, six works they open, newcomers drawn by a settlement that can feed and house them — and gives
+the one who watches a goal: ages reached, a legacy counted beside the untouched twin's, and in The Long Road an
+aim that asks for both speed and care, and a hand that can be used once a season. What kind of society the islanders make of themselves is as
+unscripted in one as in the other; what can be *built* is, in a world with crafts, a published tech tree. The
+title sentence was written for the first kind and is true of the second only in the first sense (D-056 flags
+this for the owner).
+
 ## 2. Design pillars
 
 1. **The engine is the only source of truth.** Agents — heuristic or Claude — emit *proposals*. A deterministic
@@ -38,8 +48,9 @@ for what they should become.*
 ### Observer mode (the game)
 Watch · inspect · pause · step · accelerate · follow a citizen · read the Chronicle · open the institution ledger ·
 intervene · rewind · fork · compare · read the field journal of what has been witnessed · save and resume. The
-"optional challenge" first listed here was not built as one: each scenario states an aim on its card and nothing
-checks or scores it; the journal took its place (D-030).
+"optional challenge" first listed here was not built as one: the journal took its place (D-030), each scenario's
+aim has been counted since D-049, and since D-056 a world with crafts has a goal — ages, a legacy, and in The
+Long Road an aim that ends the story when it is met or everyone is dead.
 
 ### Lab mode (the instrument)
 As built (D-036): the registered studies are data in the repository (`src/lab/studies.ts`: conditions, measure
@@ -67,9 +78,10 @@ never blocks input.
 
 ## 5. Scenarios
 
-All scenarios are win-less sandboxes. Each states one **optional** aim on its card in the setup screen (the
-last column below) and prescribes nothing about how to meet it. No citizen is told of it and nothing is
-scored. Since phase 20 the aim is **counted**: the Atlas says, from the engine's own state, where it stands —
+The five scenarios without crafts are win-less sandboxes. Each states one **optional** aim on its card in the
+setup screen (the last column below) and prescribes nothing about how to meet it. No citizen is told of it and
+nothing is scored. **The Long Road is the exception, and since D-056 the default**: its aim is the game's goal,
+its legacy is a score, and it ends with a page (below the table). Since phase 20 an aim is **counted**: the Atlas says, from the engine's own state, where it stands —
 open until its day of reckoning, then met or lost — and says the same of the untouched twin once the observer
 has made one (D-049; `src/worker/aims.ts`). Two of the aims were reworded then, because as first written they
 could not be met in any world measured. The field journal is a different thing and is still there: twenty-one
@@ -77,20 +89,40 @@ questions, each answered by the first engine-logged event of its kind (D-030).
 
 | Scenario | Distinct conditions | Optional aim, and how it is counted |
 |---|---|---|
-| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks and the default. | *See four in five through the first winter.* Of the fifty who began, those alive on the first morning of the following spring (day 41). |
+| **The Long Road** (the default; D-056, D-058) | First Light's island, a little leaner (richness 1050, node density 1300) and with a harder winter (severity 1150). Crafts and newcomers are on; the observer may change the world once a season. | *Bring four in five of the first fifty to the Age of Letters by the end of the fifth year.* Not optional: this is the aim. Met on the morning the last age is reached, if that is within five years and forty of the people the island began with are alive; lost on the day the eleventh of them dies before then (the reading says what they died of), or on the morning after the fifth year ends. Newcomers neither help nor hurt. Measured with scripted players on twelve development islands: left alone it is met on one; a hand that only feeds, on four; one that only teaches, on three; one that does both in the right seasons, on eleven. |
+| **First Light** | Temperate island, moderate abundance, fifty adults dispersed across habitable land in early spring. The reference world for benchmarks, and the default until D-056. | *See four in five through the first winter.* Of the fifty who began, those alive on the first morning of the following spring (day 41). |
 | **The Long Winter** | Starts in late summer; winter is longer and colder; food spoils. Roughly a season and a half to prepare. | *Bring three in five through to spring.* Those alive on the morning spring comes (day 29). |
 | **Thin Commons** | Food is concentrated in a few fishing lagoons and berry groves that collapse if over-harvested and recover slowly. | *See four in five through the year, on commons that can be stripped bare.* Those alive at the end of the first year; the commons' average fullness and emptiest morning are shown beside it. |
 | **Two Shores** | A strait with a single ford divides the island; stone and clay lie on one shore, timber and most food on the other. | *Narrow the gap in well-being between the shores.* A reading with no day of reckoning: well-being of those who began on each shore, the dead counted as nought. Whether it is narrow is for the twin to say. |
 | **Dry Year** | An ordinary start, then a drought of unannounced timing: streams shrink to pools and bushes fail. | *Keep four in five alive through the drought.* Those alive on the morning the drought ends; before it comes, the Atlas does not say when it will. |
 
-All five scenarios and all eight interventions are in the product. (The first playable slice, phase 04,
+**What a world with crafts adds for the one who watches** (D-056). Six **ages**, read each morning from what
+stands and what has been done — Foraging, Hearths, Fields, Stone, Mills, Letters — each noted once, on the
+morning it is first reached. A **legacy**: people alive, crafts known and written down, works standing (each
+kind up to a limit), ages reached; a sum over this morning, shown beside the untouched twin's. A bar under the
+top bar carries the age, what the next one asks for, the legacy, how the aim stands ("47 of 50 · year 3 of 5")
+and the hand; the Atlas carries the ladder, the points part by part and who knows which craft. Wherever the
+legacy is shown, so is **what the observer's hand has been worth**: this world set beside its untouched twin —
+legacy more or less, people more or fewer, an age days sooner or later (D-058). That comparison is the
+game's measure of skill, and it is run, not estimated. On the morning the aim is met, or the last person dies, the
+game pauses once on a closing page: stay, the same island again, or another. No citizen is told any of it, and
+nothing a citizen can do is gated on an age. Any of the five other scenarios can be given crafts and newcomers
+on the setup screen ("Crafts and newcomers"); it then has ages and a legacy, keeps its own optional aim, and
+the hand stays unlimited.
+
+All six scenarios and all nine interventions are in the product. (The first playable slice, phase 04,
 shipped First Light alone.) Two Shores divides its resources between its shores as the table says since engine
 0.7.0 (D-041); before that only the strait and the ford existed.
 
 ## 6. What the player may and may not do
 
 **May (environment and conditions):** trigger weather (rain, cold snap, drought), enrich or blight wild resources
-across the island, wash a windfall ashore, bring newcomers to the shore, and dampen how far voices carry (Hush).
+across the island, wash a windfall ashore, bring newcomers to the shore, dampen how far voices carry (Hush), and —
+in a world with crafts — bring one stranger who knows a craft of the observer's choosing, and the crafts it
+rests on (D-056, D-058: what the islanders make of that person is theirs; a craft passes only by being watched
+or written down). In The Long Road the hand can be
+used **once a season**: a second change is refused until the season turns, so that which change to make is a
+choice.
 Widening them was not built: an intervention can only lower the hearing radius (`hearingRadius` in
 `src/engine/world/climate.ts`; D-039). Starting conditions are set when a world is made — scenario, seed, kind of
 baseline mind and agreements on the setup screen — and, for the Lab, by the configuration overrides of each
@@ -216,7 +248,7 @@ built differently:
 
 | # | Question | Default taken | Revisit when |
 |---|---|---|---|
-| U1 | Should births / generations exist? | No (fixed cohort of adults); possible labelled optional treatment. | After phase 10 if runs feel static beyond year one. |
+| U1 | Should births / generations exist? | No. Answered for now by D-057: sexes, births, childhood and old age were designed and not built, at the owner's word; a headcount can grow through newcomers drawn by a fed and housed settlement instead (D-055). Nobody is born and nobody ages. | If the owner wants families: it needs recycled per-person slots first, then its own decision. |
 | U2 | Should agents be able to take from one another's bodies (coercion)? | No. Unattended and unbound stores can be taken from; carried items cannot. Documented as a designer limitation. | Phase 16 review. |
 | U3 | Is engine-attested evidence for accusations too strong an affordance? | Evidence is checkable only when the accuser actually perceived the act. | Phase 09 fuzz + phase 14 treatment. |
 | U4 | Live model for runtime cognition | Owner-configured; Fable 5.2 preferred; never substituted silently. | Phase 17 (owner authorization). |

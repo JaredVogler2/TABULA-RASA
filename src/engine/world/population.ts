@@ -10,8 +10,17 @@ import { ACTIVITY_CLASSES, type Agent, type Mind, type Nodes, type Terrain } fro
 
 /** Room reserved in per-agent social arrays for newcomers who may arrive later. */
 export const NEWCOMER_RESERVE = 24;
+/**
+ * The most people a world's record can ever hold, the dead included: every mind keeps a place
+ * for each of them. Where a thriving island draws newcomers, there is room for the founders
+ * twice over again (at least a hundred more); otherwise only for the observer's own newcomers.
+ */
 export function agentCapacity(cfg: WorldConfig): number {
-  return cfg.population + NEWCOMER_RESERVE;
+  return cfg.population + NEWCOMER_RESERVE + (cfg.arrivals ? Math.max(100, 2 * cfg.population) : 0);
+}
+/** The most people who may be alive at once where newcomers are drawn: two and a half times the founders. */
+export function livingLimit(cfg: WorldConfig): number {
+  return Math.floor((cfg.population * 5) / 2);
 }
 
 const ONSETS = ["", "b", "d", "f", "g", "h", "k", "l", "m", "n", "p", "r", "s", "t", "v", "w", "y", "z", "br", "dr", "sh", "th", "kr", "st", "el", "an", "or"];
@@ -164,6 +173,8 @@ export function createAgent(
     stats,
     mind,
     memberships: 0,
+    lore: 0,
+    since: 0,
   };
 }
 

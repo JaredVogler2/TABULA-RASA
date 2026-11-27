@@ -8,6 +8,13 @@ the only use on a physical device that this repository knows of. Nobody is known
 reader or with sound through a speaker.** Those gaps are listed at the end and are the reason no criterion
 here is scored as verified with people.
 
+**2026-11-27: the first playtest result, and what was built in answer.** The owner, having played, said: *"Right
+now it doesn't feel like there is much of a goal when playing the game from a user perspective"*, and that
+"civilizations only can die rather than progress". Both were true of what this document described. D-055 and
+D-056 are the answer: a world with crafts, newcomers, ages, a legacy and — in the new default scenario, The Long
+Road — an aim, a hand that can be used once a season, and an ending. **Nobody has played that yet.** The rows
+marked *(crafts)* below describe it; everything said about them comes from tests and stills made by the builder.
+
 ## What the observer has
 
 | Instrument | What it shows | Where the data comes from | Keys |
@@ -19,11 +26,14 @@ here is scored as verified with people.
 | What they know | the land the selected citizen has never seen is washed out, in the world and on the atlas | the citizen's own seen-tiles set | V |
 | Who they know | arcs to the people they have dealt with, warm for trust, cool for distrust | the citizen's own record of others | T |
 | Charters | every agreement, its rules as sentences, how it came to be proposed, who signed, how often it was used; its pennant colour | the institution engine | G |
-| Atlas | relief map with people, hearths (lit or not), shelters, stores, plots, worn ground and agreements in force; click to look or to select | latest frame | L |
+| Atlas | relief map with people, hearths (lit or not), shelters, stores, plots, worn ground and agreements in force; *(crafts)* fields (green growing, gold ripe, bare unsown), granaries, stone houses, healing houses, mills and record houses, each with its sign in the key; click to look or to select | latest frame | L |
+| The goal *(crafts; D-056, D-058)* | a bar under the top bar: the age the island has reached, what the next age asks for counted against what stands ("2 of 5 fires"), the legacy and — once there is a twin — what the hand has been worth against it ("+485 on the twin"), how the aim stands ("47 of 50 · year 3 of 5"), and how many changes are left this season. It opens the Atlas. On a phone it has a row of its own and leaves what the next age asks for to the Atlas. Hidden while the twin, a recording or a re-run is on screen | the worker's reading of the world each frame (`progressOf`, `handOf`) | L |
+| Ages, legacy, crafts *(crafts; D-056)* | in the Atlas, above the map: the six ages as a ladder with the day each was reached (and a note when what an age took no longer stands); the hand in words; the legacy part by part with the twin's beside it, and what the hand has been worth in sentences (legacy, people, days sooner or later for the furthest age); each craft with what it opens, how many living people know it and whether it is written down; what stands; and a line saying the ladder was drawn by the designers, with a way to the registry | the engine's own readings (`src/engine/metrics/ages.ts`) | L |
+| The closing page *(crafts; D-056)* | once, on the morning the aim on the card is decided or the last person dies: what they came to, the legacy beside the twin's (or a line saying there is no twin because nothing was changed), and three ways on — keep watching, this island again, another island. The game pauses for it; closing it changes nothing | the aim's reading and the daily samples | — |
 | Almanac | seven daily measures (living, welfare, food held, wild food, commons health, inequality, things built) with the numbers as a table | one sample per simulated day | L |
 | The aim | the one sentence on the scenario's card, and where it stands: open, then met or lost on a named day, or a reading with no verdict (Two Shores); the same for the untouched twin once there is one; a notice on the morning it is decided. Not a score, and no citizen is told (D-049) | the world's own state — who is alive and when the others died, the calendar, the scheduled drought — read each morning and when the Atlas opens | L |
-| Field journal | twenty-one questions, each answered by the first logged event of its kind (D-030) | the event stream | J |
-| Intervene | eight changes to conditions (weather, scarcity, abundance, arrivals, how far voices carry); never to minds; no forecast | logged in the world's own ledger; history forks | I |
+| Field journal | twenty-one questions, each answered by the first logged event of its kind (D-030); *(crafts)* nine more — the first craft found, the first learned by watching, the first field reaped, granary, stone house, healing house, mill, the first craft written down, the first newcomers drawn by plenty | the event stream | J |
+| Intervene | eight changes to conditions (weather, scarcity, abundance, arrivals, how far voices carry); never to minds; no forecast. *(crafts)* A ninth: a stranger who knows a craft the observer chooses from a list that says how many here know each. In The Long Road one change a season: the panel says so, and once it is used every card waits for the season to turn | logged in the world's own ledger; history forks; the limit is kept by the worker, not the page | I |
 | Compare | your timeline against its untouched twin: charts with a marked fork day, the day-by-day difference, deltas, the two worlds counted side by side, what happened in each by kind, who is dead in only one, the daily table. Beside a recording: the record against the same island with the engine's own minds (D-034) | both worlds, same seed and luck | K |
 | The twin | the other world on screen, from the same camera at the same tick; a banner says which world is shown; nothing can be done to it | the worker steps both worlds together | X |
 | History | the start and every second morning as moments to return to: *watch it again* (exact, checked at the end), *leave from there* (a new line, same luck or new); world lines as a tree and a list; a loaded world's past lived again from its seed; export to a file with a manifest, import with an integrity check (D-033) | compressed keyframes in the worker; the engine's determinism | H |
@@ -46,6 +56,7 @@ here is scored as verified with people.
 | play, intervene, look at the twin and back; watch five days again and arrive exactly; leave on a new line; return to the old one; compare; save, reload and live the past again from the seed; export; a tampered file refused and the true one opened; a recorded cause followed | `history.spec.ts` | going back never loses or silently changes anything, and the product says truthfully which world is on screen | whether the difference between a re-run and a new line is understood by a newcomer |
 | the Laboratory from the title screen: the bundle named for what it is, every contrast with its reading, the sizing table, a published cell re-run in the browser to the same hash, raw tables | `lab.spec.ts` | the page says what the bundle says; reproduction is real | whether a reader draws only the conclusions the page allows |
 | every screen and panel scanned with axe-core (WCAG 2.0/2.1 A and AA), now seventeen states, with History, Compare, the twin on screen and the Laboratory | `a11y.spec.ts` | no serious or critical machine-detectable violation | anything a machine cannot detect |
+| the default world from the setup screen: The Long Road chosen, its aim called the aim, crafts fixed on (and off by default for the other five); the goal bar on the first morning, word for word, and what it says to a screen reader; play until the Age of Hearths, which is in the Chronicle; the panel's note on the hand, the stranger on offer, one change made, the hand spent on the bar and every card waiting; the Atlas from the goal bar — the ladder, a legacy that adds up with the twin's beside it, six crafts, who drew the ladder and the way to the registry, the key's new signs; a journal of thirty pages; three states scanned with axe-core; on the phone the goal bar and the registry link measured against 44 px and the page against sideways scroll | `goal.spec.ts` | the goal is on screen from the first morning and the limit on the hand is real | that anyone wants the goal; the closing page (checked by hand, `docs/EVIDENCE.md`); later ages than Hearths in a browser test |
 
 ## Accessibility: what was checked and how
 
@@ -140,3 +151,8 @@ here is scored as verified with people.
 5. **Colour-vision deficiency in the 3D scene.** Charts are checked; the diorama's reds (berries, madder
    pennants) against greens are not. State there is always also shown by shape, and in the panels by words.
 6. **Long sessions.** Nothing here was used for more than a few simulated weeks at a time by a person.
+7. **The goal.** Whether ages, a legacy and one change a season make a game a person wants to play is exactly
+   what the owner's remark asked for and exactly what cannot be shown from here. Nobody has tried to *win*
+   The Long Road by hand: how often its aim is met was measured with scripted players (D-058), which shows
+   that reading the island and keeping to the seasons is rewarded — not that a person will find that out, or
+   enjoy finding it out.

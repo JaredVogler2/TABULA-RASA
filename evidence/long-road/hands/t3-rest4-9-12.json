@@ -1,0 +1,1211 @@
+{
+ "scenario": "long_road",
+ "years": 6,
+ "rules": {
+  "perSeason": 1,
+  "bank": 1,
+  "rest": 4
+ },
+ "overrides": {},
+ "runs": [
+  {
+   "scenario": "long_road",
+   "seed": 9,
+   "player": "balanced",
+   "aimDay": 224,
+   "ageDays": [
+    0,
+    8,
+    28,
+    77,
+    120,
+    223
+   ],
+   "legacy": [
+    1037,
+    1560,
+    1795,
+    2055,
+    2155,
+    2720
+   ],
+   "living": [
+    47,
+    48,
+    46,
+    47,
+    54,
+    68
+   ],
+   "fewest": 46,
+   "people": 77,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    },
+    {
+     "day": 180,
+     "kind": "windfall"
+    },
+    {
+     "day": 210,
+     "kind": "bounty"
+    },
+    {
+     "day": 220,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    4,
+    9,
+    36,
+    83,
+    88,
+    93,
+    167,
+    169
+   ],
+   "livingAtLetters": 68,
+   "foundersAtLetters": 42,
+   "seconds": 29.34
+  },
+  {
+   "scenario": "long_road",
+   "seed": 9,
+   "player": "scholar",
+   "aimDay": 224,
+   "ageDays": [
+    0,
+    8,
+    28,
+    77,
+    120,
+    223
+   ],
+   "legacy": [
+    1037,
+    1560,
+    1795,
+    2055,
+    2155,
+    2720
+   ],
+   "living": [
+    47,
+    48,
+    46,
+    47,
+    54,
+    68
+   ],
+   "fewest": 46,
+   "people": 77,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    },
+    {
+     "day": 180,
+     "kind": "windfall"
+    },
+    {
+     "day": 210,
+     "kind": "bounty"
+    },
+    {
+     "day": 220,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    4,
+    9,
+    36,
+    83,
+    88,
+    93,
+    167,
+    169
+   ],
+   "livingAtLetters": 68,
+   "foundersAtLetters": 42,
+   "seconds": 30.559
+  },
+  {
+   "scenario": "long_road",
+   "seed": 9,
+   "player": "bounty",
+   "aimDay": 182,
+   "ageDays": [
+    0,
+    8,
+    61,
+    82,
+    161,
+    181
+   ],
+   "legacy": [
+    670,
+    1150,
+    1675,
+    1855,
+    2550
+   ],
+   "living": [
+    46,
+    46,
+    44,
+    47,
+    55
+   ],
+   "fewest": 44,
+   "people": 61,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "bounty"
+    },
+    {
+     "day": 10,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "bounty"
+    },
+    {
+     "day": 50,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "bounty"
+    },
+    {
+     "day": 90,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "bounty"
+    },
+    {
+     "day": 130,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "bounty"
+    },
+    {
+     "day": 170,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    36,
+    37,
+    37,
+    38,
+    99,
+    116
+   ],
+   "livingAtLetters": 55,
+   "foundersAtLetters": 44,
+   "seconds": 24.722
+  },
+  {
+   "scenario": "long_road",
+   "seed": 10,
+   "player": "balanced",
+   "aimDay": 205,
+   "ageDays": [
+    0,
+    11,
+    32,
+    66,
+    111,
+    204
+   ],
+   "legacy": [
+    1200,
+    1665,
+    1925,
+    2060,
+    2400,
+    2620
+   ],
+   "living": [
+    51,
+    49,
+    38,
+    44,
+    52,
+    55
+   ],
+   "fewest": 38,
+   "people": 73,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    },
+    {
+     "day": 180,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    74,
+    76,
+    83,
+    84,
+    87,
+    87,
+    87,
+    87,
+    88,
+    88,
+    88,
+    89,
+    90,
+    90,
+    121,
+    137,
+    169
+   ],
+   "livingAtLetters": 55,
+   "foundersAtLetters": 33,
+   "seconds": 30.719
+  },
+  {
+   "scenario": "long_road",
+   "seed": 10,
+   "player": "scholar",
+   "aimDay": 205,
+   "ageDays": [
+    0,
+    11,
+    32,
+    66,
+    111,
+    204
+   ],
+   "legacy": [
+    1200,
+    1665,
+    1925,
+    2060,
+    2400,
+    2620
+   ],
+   "living": [
+    51,
+    49,
+    38,
+    44,
+    52,
+    55
+   ],
+   "fewest": 38,
+   "people": 73,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    },
+    {
+     "day": 180,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    74,
+    76,
+    83,
+    84,
+    87,
+    87,
+    87,
+    87,
+    88,
+    88,
+    88,
+    89,
+    90,
+    90,
+    121,
+    137,
+    169
+   ],
+   "livingAtLetters": 55,
+   "foundersAtLetters": 33,
+   "seconds": 29.086
+  },
+  {
+   "scenario": "long_road",
+   "seed": 10,
+   "player": "bounty",
+   "aimDay": 173,
+   "ageDays": [
+    0,
+    10,
+    61,
+    72,
+    113,
+    172
+   ],
+   "legacy": [
+    770,
+    1455,
+    1955,
+    2200,
+    2590
+   ],
+   "living": [
+    50,
+    49,
+    50,
+    57,
+    61
+   ],
+   "fewest": 47,
+   "people": 64,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "bounty"
+    },
+    {
+     "day": 10,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "bounty"
+    },
+    {
+     "day": 50,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "bounty"
+    },
+    {
+     "day": 90,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "bounty"
+    },
+    {
+     "day": 130,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "bounty"
+    },
+    {
+     "day": 170,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    76,
+    80,
+    82
+   ],
+   "livingAtLetters": 61,
+   "foundersAtLetters": 47,
+   "seconds": 29.274
+  },
+  {
+   "scenario": "long_road",
+   "seed": 11,
+   "player": "balanced",
+   "aimDay": 165,
+   "ageDays": [
+    0,
+    11,
+    30,
+    57,
+    71,
+    164
+   ],
+   "legacy": [
+    1237,
+    1810,
+    2160,
+    2445,
+    2635
+   ],
+   "living": [
+    50,
+    51,
+    63,
+    67,
+    67
+   ],
+   "fewest": 50,
+   "people": 72,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    35,
+    117,
+    128,
+    146,
+    155
+   ],
+   "livingAtLetters": 67,
+   "foundersAtLetters": 45,
+   "seconds": 27.936
+  },
+  {
+   "scenario": "long_road",
+   "seed": 11,
+   "player": "scholar",
+   "aimDay": 165,
+   "ageDays": [
+    0,
+    11,
+    30,
+    57,
+    71,
+    164
+   ],
+   "legacy": [
+    1237,
+    1810,
+    2160,
+    2445,
+    2635
+   ],
+   "living": [
+    50,
+    51,
+    63,
+    67,
+    67
+   ],
+   "fewest": 50,
+   "people": 72,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    35,
+    117,
+    128,
+    146,
+    155
+   ],
+   "livingAtLetters": 67,
+   "foundersAtLetters": 45,
+   "seconds": 27.728
+  },
+  {
+   "scenario": "long_road",
+   "seed": 11,
+   "player": "bounty",
+   "aimDay": 232,
+   "ageDays": [
+    0,
+    10,
+    47,
+    89,
+    105,
+    231
+   ],
+   "legacy": [
+    830,
+    1350,
+    2035,
+    2185,
+    2270,
+    2765
+   ],
+   "living": [
+    50,
+    48,
+    60,
+    63,
+    67,
+    74
+   ],
+   "fewest": 48,
+   "people": 81,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "bounty"
+    },
+    {
+     "day": 10,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "bounty"
+    },
+    {
+     "day": 50,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "bounty"
+    },
+    {
+     "day": 90,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "bounty"
+    },
+    {
+     "day": 130,
+     "kind": "windfall"
+    },
+    {
+     "day": 160,
+     "kind": "bounty"
+    },
+    {
+     "day": 170,
+     "kind": "windfall"
+    },
+    {
+     "day": 200,
+     "kind": "bounty"
+    },
+    {
+     "day": 210,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    42,
+    78,
+    120,
+    159,
+    164
+   ],
+   "livingAtLetters": 74,
+   "foundersAtLetters": 45,
+   "seconds": 52.952
+  },
+  {
+   "scenario": "long_road",
+   "seed": 12,
+   "player": "balanced",
+   "aimDay": 171,
+   "ageDays": [
+    0,
+    9,
+    48,
+    62,
+    79,
+    170
+   ],
+   "legacy": [
+    968,
+    1975,
+    2190,
+    2550,
+    2820
+   ],
+   "living": [
+    51,
+    52,
+    56,
+    67,
+    71
+   ],
+   "fewest": 50,
+   "people": 74,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    84,
+    86,
+    90
+   ],
+   "livingAtLetters": 71,
+   "foundersAtLetters": 47,
+   "seconds": 26.749
+  },
+  {
+   "scenario": "long_road",
+   "seed": 12,
+   "player": "scholar",
+   "aimDay": 171,
+   "ageDays": [
+    0,
+    9,
+    48,
+    62,
+    79,
+    170
+   ],
+   "legacy": [
+    968,
+    1975,
+    2190,
+    2550,
+    2820
+   ],
+   "living": [
+    51,
+    52,
+    56,
+    67,
+    71
+   ],
+   "fewest": 50,
+   "people": 74,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "stranger",
+     "craft": 4
+    },
+    {
+     "day": 10,
+     "kind": "bounty"
+    },
+    {
+     "day": 20,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "stranger",
+     "craft": 3
+    },
+    {
+     "day": 50,
+     "kind": "bounty"
+    },
+    {
+     "day": 60,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 90,
+     "kind": "bounty"
+    },
+    {
+     "day": 100,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "stranger",
+     "craft": 5
+    },
+    {
+     "day": 130,
+     "kind": "bounty"
+    },
+    {
+     "day": 140,
+     "kind": "windfall"
+    },
+    {
+     "day": 170,
+     "kind": "bounty"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    84,
+    86,
+    90
+   ],
+   "livingAtLetters": 71,
+   "foundersAtLetters": 47,
+   "seconds": 28.206
+  },
+  {
+   "scenario": "long_road",
+   "seed": 12,
+   "player": "bounty",
+   "aimDay": 156,
+   "ageDays": [
+    0,
+    10,
+    51,
+    65,
+    85,
+    155
+   ],
+   "legacy": [
+    881,
+    1720,
+    2170,
+    2725
+   ],
+   "living": [
+    50,
+    55,
+    60,
+    70
+   ],
+   "fewest": 50,
+   "people": 73,
+   "moves": [
+    {
+     "day": 0,
+     "kind": "bounty"
+    },
+    {
+     "day": 10,
+     "kind": "windfall"
+    },
+    {
+     "day": 40,
+     "kind": "bounty"
+    },
+    {
+     "day": 50,
+     "kind": "windfall"
+    },
+    {
+     "day": 80,
+     "kind": "bounty"
+    },
+    {
+     "day": 90,
+     "kind": "windfall"
+    },
+    {
+     "day": 120,
+     "kind": "bounty"
+    },
+    {
+     "day": 130,
+     "kind": "windfall"
+    }
+   ],
+   "stopped": true,
+   "founderDeaths": [
+    75,
+    76,
+    116
+   ],
+   "livingAtLetters": 70,
+   "foundersAtLetters": 47,
+   "seconds": 26.343
+  }
+ ]
+}

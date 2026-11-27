@@ -75,7 +75,12 @@ test("the observer's instruments work: sound, what a citizen knows, atlas, alman
     await page.getByTestId("toggle-sound").click();
     await expect(page.getByTestId("toggle-sound")).toHaveAttribute("aria-pressed", "true");
   }
-  await page.getByTestId("speed-5").click();
+  // The sound is tried with the world going at its slowest. It used to be tried at the fastest, where a world
+  // lives a day in under a second: on a software renderer each of the seven clicks below takes seconds, so
+  // by the time the world was paused it had lived anything from thirty-four days to fifty (measured, three
+  // runs each on three builds) — and the aim read further down is decided on the forty-first morning. The
+  // test passed when the clicks happened to be quick, on `main` as much as anywhere.
+  await page.getByTestId("speed-0").click();
   await page.getByTestId("play-toggle").click();
   // wind and surf are continuous: what reaches the speakers is not silence
   await expect.poll(() => page.evaluate(() => window.__tr?.soundLevel() ?? 0), { timeout: 30_000 }).toBeGreaterThan(0.0005);
@@ -87,10 +92,13 @@ test("the observer's instruments work: sound, what a citizen knows, atlas, alman
   await expect(page.getByTestId("setting-sound")).toHaveAttribute("aria-pressed", "false");
   await page.getByTestId("menu-close").click();
 
-  // ── three days of an island of planners
+  // ── a few days of an island of planners, at sixteen times: a slow click then costs days, not weeks
+  await page.getByTestId("speed-4").click();
   await expect.poll(() => tick(page), { timeout: 300_000 }).toBeGreaterThan(300);
   await page.getByTestId("play-toggle").click();
   await expect(page.getByTestId("play-toggle")).toHaveAttribute("data-playing", "false");
+  // wherever it stopped, the first winter is not over: what is read of the aim below depends on that
+  expect(await tick(page), "the world was paused before the thirtieth day").toBeLessThan(30 * 96);
 
   // ── the field journal has pages for what was logged, and questions for what was not
   if (phone) {

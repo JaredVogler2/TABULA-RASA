@@ -1,0 +1,52 @@
+84 runs: 7 players on 12 islands (seeds 1,2,3,4,5,6,7,8,9,10,11,12)
+
+When the last age was reached (day; — = not within the run), and how many of the first fifty were alive that morning:
+seed  none         bounty       scholar      balanced     savvy        random       saboteur     
+1     220 · 41     291 · 46     130 · 46     210 · 48     247 · 44     220 · 12     — (1)        
+2     — (8)        251 · 48     176 · 14     111 · 49     173 · 3      — (3)        — (0)        
+3     233 · 16     196 · 48     175 · 7      114 · 48     137 · 25     208 · 28     — (2)        
+4     — (2)        257 · 46     211 · 2      79 · 47      132 · 16     — (4)        — (0)        
+5     290 · 23     293 · 47     168 · 40     130 · 47     247 · 1      — (1)        — (1)        
+6     260 · 17     — (49)       124 · 37     120 · 48     136 · 14     231 · 21     — (0)        
+7     187 · 24     177 · 48     180 · 4      100 · 49     240 · 11     210 · 13     — (2)        
+8     243 · 7      198 · 48     133 · 7      73 · 49      213 · 10     224 · 9      — (1)        
+9     — (10)       286 · 45     150 · 3      133 · 43     217 · 6      255 · 10     — (0)        
+10    — (4)        208 · 49     — (0)        119 · 47     136 · 7      166 · 26     — (0)        
+11    — (28)       155 · 48     110 · 15     86 · 46      177 · 13     282 · 19     — (1)        
+12    179 · 42     251 · 48     78 · 47      89 · 44      206 · 5      252 · 20     — (2)        
+
+Aim: the last age by the end of year 3 (day 120), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      0 of 12      1 of 12      7 of 12      0 of 12      0 of 12      0 of 12      
+40    0 of 12      0 of 12      1 of 12      8 of 12      0 of 12      0 of 12      0 of 12      
+35    0 of 12      0 of 12      1 of 12      8 of 12      0 of 12      0 of 12      0 of 12      
+
+Aim: the last age by the end of year 4 (day 160), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      1 of 12      2 of 12      9 of 12      0 of 12      0 of 12      0 of 12      
+40    0 of 12      1 of 12      2 of 12      11 of 12     0 of 12      0 of 12      0 of 12      
+35    0 of 12      1 of 12      3 of 12      11 of 12     0 of 12      0 of 12      0 of 12      
+
+Aim: the last age by the end of year 5 (day 200), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      4 of 12      2 of 12      9 of 12      0 of 12      0 of 12      0 of 12      
+40    1 of 12      4 of 12      3 of 12      11 of 12     0 of 12      0 of 12      0 of 12      
+35    1 of 12      4 of 12      4 of 12      11 of 12     0 of 12      0 of 12      0 of 12      
+
+Aim: the last age by the end of year 6 (day 240), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      5 of 12      2 of 12      10 of 12     0 of 12      0 of 12      0 of 12      
+40    2 of 12      5 of 12      3 of 12      12 of 12     0 of 12      0 of 12      0 of 12      
+35    2 of 12      5 of 12      4 of 12      12 of 12     0 of 12      0 of 12      0 of 12      
+
+Aim: the last age by the end of year 7 (day 280), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      8 of 12      2 of 12      10 of 12     0 of 12      0 of 12      0 of 12      
+40    2 of 12      8 of 12      3 of 12      12 of 12     1 of 12      0 of 12      0 of 12      
+35    2 of 12      8 of 12      4 of 12      12 of 12     1 of 12      0 of 12      0 of 12      
+
+Aim: the last age by the end of year 8 (day 320), with at least F of the first fifty alive — islands on which it would be met:
+F     none         bounty       scholar      balanced     savvy        random       saboteur     
+45    0 of 12      11 of 12     2 of 12      10 of 12     0 of 12      0 of 12      0 of 12      
+40    2 of 12      11 of 12     3 of 12      12 of 12     1 of 12      0 of 12      0 of 12      
+35    2 of 12      11 of 12     4 of 12      12 of 12     1 of 12      0 of 12      0 of 12      

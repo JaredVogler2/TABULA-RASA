@@ -4,13 +4,14 @@
  */
 import { clampInt } from "../core/math";
 import { Stream, below, chance, stochasticDiv } from "../core/rng";
-import { ITEM_COUNT, NEED_MAX, Phys, StructureKind, TICKS_PER_DAY, Weather } from "../model/constants";
+import { HOUSE_REST, HOUSE_WARMTH, ITEM_COUNT, NEED_MAX, Phys, StructureKind, TICKS_PER_DAY, Weather } from "../model/constants";
 import { Activity, type Agent, type WorldState } from "../model/types";
 import { COMFORT_TEMP } from "../world/climate";
 import { remember } from "../mind/knowledge";
 import { emit, type EventOut } from "./events";
 import { dropOnGround } from "./inventory";
 import type { Scratch } from "./scratch";
+import { bedsOf, healIn, insightOnRecovery } from "./works";
 
 const WORK_KINDS = new Set(["gather", "craft", "work", "supply", "harvest", "build"]);
 
@@ -39,6 +40,12 @@ export function activityOf(a: Agent): number {
   }
 }
 
+/** Is this person lying in a stone house or a healing house (a work, not a thatched shelter)? */
+function stoneWalled(world: WorldState, a: Agent): boolean {
+  const s = world.structures[a.shelter];
+  return s !== undefined && s.kind !== StructureKind.shelter;
+}
+
 /** Effective temperature felt by an agent, in tenths of °C. */
 export function feltTemperature(world: WorldState, sc: Scratch, a: Agent): number {
   const tile = a.y * sc.w + a.x;
@@ -46,7 +53,8 @@ export function feltTemperature(world: WorldState, sc: Scratch, a: Agent): numbe
   let t = c.temp - Math.floor(((world.terrain.height[tile] as number) * 40) / 1000);
   if (sc.warm[tile]) t += 120;
   const sheltered = a.shelter >= 0;
-  if (sheltered) t += 80;
+  // a roof adds to the air felt under it: thatch as it always did, stone walls more
+  if (sheltered) t += stoneWalled(world, a) ? HOUSE_WARMTH : 80;
   const act = a.act;
   if (act && (act.k === "step" || WORK_KINDS.has(act.k))) t += 30;
   if (!sheltered && (c.weather === Weather.rain || c.weather === Weather.storm || c.weather === Weather.snow)) t -= 30;
@@ -87,7 +95,7 @@ export function updateBody(world: WorldState, sc: Scratch, a: Agent, out: EventO
 
   // ── rest
   if (a.asleep) {
-    const gain = a.shelter >= 0 ? 21 : sc.warm[a.y * sc.w + a.x] ? 18 : 16;
+    const gain = a.shelter >= 0 ? (stoneWalled(world, a) ? HOUSE_REST : 21) : sc.warm[a.y * sc.w + a.x] ? 18 : 16;
     a.rest = clampInt(a.rest + gain, 0, NEED_MAX);
   } else {
     const loss = working ? 6 : moving ? 5 : 4;
@@ -107,10 +115,20 @@ export function updateBody(world: WorldState, sc: Scratch, a: Agent, out: EventO
     a.warmth = clampInt(a.warmth + 22, 0, NEED_MAX);
   }
 
+  // ── a healing house: asleep in one, the ill mend faster, and with care laid up the hurt mend too
+  let mending = 0;
+  if (a.shelter >= 0 && a.asleep) {
+    const house = world.structures[a.shelter];
+    if (house && house.kind === StructureKind.healing_house) mending = healIn(world, a, house);
+  }
+
   // ── illness (idiosyncratic, non-contagious risk; checked once a day per agent, staggered)
   if (a.ill > 0) {
     a.ill--;
-    if (a.ill === 0) emit(world, out, "recover", a.id);
+    if (a.ill === 0) {
+      emit(world, out, "recover", a.id);
+      insightOnRecovery(world, a, out);
+    }
   } else if (cfg.illness > 0 && (tick + a.id * 7) % TICKS_PER_DAY === 0) {
     // base 0.7% per day, tripled when cold, hungry or exhausted
     let p = 7;
@@ -145,6 +163,7 @@ export function updateBody(world: WorldState, sc: Scratch, a: Agent, out: EventO
     a.health += a.ill > 0 ? (tick % 2 === 0 ? 1 : 0) : 1;
     if (a.health > 1000) a.health = 1000;
   }
+  if (mending > 0 && damage === 0 && a.health < 1000) a.health = Math.min(1000, a.health + mending);
 
   // ── welfare integral and activity accounting
   const minNeed = Math.min(a.energy, a.hydration, a.rest, a.warmth);
@@ -179,7 +198,7 @@ export function killAgent(world: WorldState, sc: Scratch, a: Agent, cause: strin
   a.path.length = 0;
   if (a.shelter >= 0) {
     const s = world.structures[a.shelter];
-    if (s && s.kind === StructureKind.shelter && s.occupants > 0) s.occupants--;
+    if (s && bedsOf(s.kind) > 0 && s.occupants > 0) s.occupants--;
     a.shelter = -1;
   }
   for (let i = 0; i < ITEM_COUNT; i++) {

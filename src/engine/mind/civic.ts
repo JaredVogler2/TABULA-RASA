@@ -19,6 +19,7 @@ import { searchCharter } from "../institutions/search";
 import { foodEnergy, roomFor } from "../sim/inventory";
 import { sensesCold } from "./social";
 import type { Scratch } from "../sim/scratch";
+import { holdsGoods } from "../sim/works";
 import { recall, remember } from "./knowledge";
 import type { Plan } from "./reflex";
 import type { SeenAgent } from "./senses";
@@ -52,7 +53,7 @@ export function drawRation(world: WorldState, a: Agent, hungry: boolean): Plan |
   for (const inst of activeMemberships(world, a.id)) {
     for (const sid of inst.stores) {
       const s = world.structures[sid];
-      if (!s || s.removed || !s.complete || s.kind !== StructureKind.store) continue;
+      if (!s || s.removed || !s.complete || !holdsGoods(s.kind)) continue;
       const d = cheb(s.x, s.y, a.x, a.y);
       if (d > (hungry ? 16 : 8)) continue;
       const known = a.mind.structs.find((k) => k.id === sid);
@@ -92,7 +93,7 @@ export function civicDuty(world: WorldState, _sc: Scratch, a: Agent): Plan | nul
     const me = memberOf(inst, a.id)!;
     const owed = duesOutstanding(world, a, inst.charter, foodOf(me.dep), inst.members.length);
     if (owed <= 0) continue;
-    const store = inst.stores.map((sid) => world.structures[sid]).find((s) => s && !s.removed && s.complete && s.kind === StructureKind.store);
+    const store = inst.stores.map((sid) => world.structures[sid]).find((s) => s && !s.removed && s.complete && holdsGoods(s.kind));
     if (!store || cheb(store.x, store.y, a.x, a.y) > 12) continue;
     // dues are paid from what one can spare; the conforming pay even when it pinches
     for (const item of [Item.berry, Item.fish, Item.root, Item.ration]) {

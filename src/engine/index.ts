@@ -2,7 +2,7 @@
  * Public surface of the simulation engine. Hosts (browser worker, Node scripts, server)
  * import from here; nothing outside src/engine reaches into engine internals.
  */
-export { AFFORDANCE_VERSION, ENGINE_VERSION, SCHEMA_VERSION } from "./version";
+export { AFFORDANCE_VERSION, DIGEST_COMPATIBLE_ENGINES, ENGINE_VERSION, SCHEMA_VERSION } from "./version";
 export { affordanceRegistry, AFFORDANCES, AFFORDANCE_CATEGORIES } from "./affordances";
 export type { Affordance, AffordanceCategory } from "./affordances";
 
@@ -33,6 +33,12 @@ export { MAX_BUNDLE_CHARS, diffManifests, manifestOf, openBundle, packBundle, re
 export type { BundleExtras, Manifest, OpenedBundle, WorldBundle } from "./save/history";
 export { commonsHealthPermille, giniPermille, summarize } from "./metrics/accumulate";
 export type { Summary } from "./metrics/accumulate";
+
+// crafts, works and the readings an observer steers by (worlds with `crafts`)
+export { LEGACY_POINTS, ageTitle, legacyOf, needText, needsOf, readAges, standingAge, tally } from "./metrics/ages";
+export type { AgeNeed, AgeReading, Legacy, Tally } from "./metrics/ages";
+export { ARRIVAL_CHANCE, ARRIVAL_LARDER, ARRIVAL_SPARE_BEDS, bedsOf, besideStream, bindable, holdsGoods, knows, practised, streamRuns } from "./sim/works";
+export { agentCapacity, livingLimit } from "./world/population";
 
 // minds: the contract for external decision makers, and the baselines' own tools
 export { buildObservation, carriedFoodEnergy, maskAllows, DECISION_LIMITS, OBSERVATION_VERSION } from "./mind/observe";

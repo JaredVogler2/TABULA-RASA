@@ -37,6 +37,8 @@ export const Stream = {
   Lab: 19,
   Decay: 20,
   Evolution: 21,
+  Crafts: 22,
+  Arrivals: 23,
 } as const;
 export type StreamId = (typeof Stream)[keyof typeof Stream];
 

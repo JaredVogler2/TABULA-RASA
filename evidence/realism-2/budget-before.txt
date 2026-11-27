@@ -1,0 +1,36 @@
+Triangles per mesh in the picture's own pass (instances included), largest first.
+Build 71d4418 (after D-053), First Light seed 1, the vista, high preset.
+From `node scripts/frame-cost.mjs --url <the build> --cases vista --presets high --budget` (its 28 largest rows).
+Every mesh that casts a shadow is drawn a second time, in full, into the shadow map, on every frame.
+
+vista  high   960x540  calls    80 (max 80)  triangles  1773875 (max 1773875)
+
+triangles  instances  mesh
+   189280     338  flora-canopyA
+   132160     236  flora-canopyC
+   131072       1  terrain
+   131040     234  flora-canopyB
+   119784    5704  flora-grass
+    42240     176  flora-bush
+    28160    1408  flora-berry
+    24120     134  flora-rock
+    19600      50  citizen-head
+    19392     808  flora-trunk
+    17400      50  citizen-body
+    16800     100  citizen-shin
+    14400     100  citizen-forearm
+    12060      67  flora-rock2
+    10640     380  flora-root
+    10374     247  flora-conifer
+    10152     376  flora-reed
+    10080     504  flora-pebbles
+     9000      50  citizen-hair
+     8400     100  citizen-upper-arm
+     8152       1  fresh-water
+     6000     100  citizen-thigh
+     5940      27  campfires
+     5928     247  flora-trunkTall
+     4752      18  citizen-hat
+     4608       1  sea
+     4000      50  citizen-ghost-head
+     2600      13  flora-clay

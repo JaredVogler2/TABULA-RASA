@@ -9,8 +9,8 @@ function advance(world: WorldState, ticks: number): SimEvent[] {
   return out;
 }
 
-const CIVIC: PromptFeatures = { civic: true, propose: true, escrow: true, planting: true, takeable: true };
-const PLAIN: PromptFeatures = { civic: false, propose: false, escrow: false, planting: true, takeable: true };
+const CIVIC: PromptFeatures = { civic: true, propose: true, escrow: true, planting: true, takeable: true, crafts: false };
+const PLAIN: PromptFeatures = { civic: false, propose: false, escrow: false, planting: true, takeable: true, crafts: false };
 
 function world(seed = 4, overrides: Parameters<typeof makeConfig>[2] = {}): WorldState {
   const w = createWorld(makeConfig("first_light", seed, { population: 16, illness: 0, institutions: "open", externalShare: 1000, ...overrides }));
@@ -56,6 +56,40 @@ describe(`the rules text (prompt ${PROMPT_VERSION})`, () => {
     expect(noWriting).not.toMatch(/\bpropose\b/);
     expect(systemPrompt({ ...CIVIC, escrow: false })).not.toContain("pact_offer");
     expect(systemPrompt({ ...PLAIN, planting: false })).not.toMatch(/\bplot\b/);
+  });
+
+  it("a world with crafts is told how a craft is come by and what each work does — and nothing about ages, legacy or aims", () => {
+    const crafted = systemPrompt({ ...CIVIC, crafts: true });
+    expect(crafted).toContain("CRAFTS");
+    for (const word of ["field", "granary", "healing_house", "mill", "record_house", "tillage", "millwrighting", "record_keeping"]) expect(crafted).toContain(word);
+    expect(crafted).toContain("Nobody starts with any.");
+    // the same vocabulary rules hold for the added text
+    const institutions = /\b(governments?|money|currency|tax(es)?|laws?|kings?|chiefs?|leaders?|councils?|markets?|prices?|wages?|property|ownership|banks?|hospitals?|schools?|doctors?|priests?|civili[sz]ation|progress)\b/i;
+    const advice = /\b(you should|you ought|it is (wise|best|good|better) to|try to|we recommend|consider (building|learning|teaching)|work together)\b/i;
+    const added = crafted.split("\n\n").find((part) => part.startsWith("CRAFTS")) ?? "";
+    expect(added.match(institutions)).toBeNull();
+    expect(added.match(advice)).toBeNull();
+    // what the observer steers by is the observer's: no mind is told an age exists, or that anything is counted
+    expect(crafted).not.toMatch(/\b(legacy|score|points|Age of|ages?\b.*reached|aim|goal of)\b/);
+    // and a world without crafts is told none of it: its text is the text it always was
+    const plain = systemPrompt(CIVIC);
+    expect(plain).not.toMatch(/CRAFTS|granary|healing_house|record_house|tillage|masonry/);
+    expect(crafted.length).toBeGreaterThan(plain.length);
+    expect(crafted.replace(added + "\n\n", "").length).toBeGreaterThan(plain.length); // the structures line grew too
+  });
+
+  it("the page of a person in a world with crafts says which they know; elsewhere it says nothing of crafts", () => {
+    const w = world(4, { crafts: true });
+    const a = w.agents.find((x) => x.alive)!;
+    a.lore = 0b101;
+    const page = renderObservation(observe(w, a.id)!, "rich").text;
+    expect(page).toContain("Crafts you know: tillage, masonry.");
+    a.lore = 0;
+    expect(renderObservation(observe(w, a.id)!, "rich").text).toContain("You know no craft yet.");
+    expect(page).not.toMatch(/\b(legacy|Age of)\b/);
+    const old = world(4);
+    const b = old.agents.find((x) => x.alive)!;
+    expect(renderObservation(observe(old, b.id)!, "rich").text).not.toMatch(/craft you know|Crafts you know|no craft yet/i);
   });
 
   it("is the same text for everyone in a run, so it can be cached, and is long enough to be", () => {

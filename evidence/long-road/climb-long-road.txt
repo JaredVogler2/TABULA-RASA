@@ -1,0 +1,16 @@
+long_road seed 1: after 10 years 75 alive of 111 · letters · legacy 2785 · ages on days 9/49/80/95/220 · fewest alive 48 · aim met day 220 · 119 s
+long_road seed 2: after 10 years 53 alive of 97 · mills · legacy 2070 · ages on days 8/45/165/284/-1 · fewest alive 8 · aim not met · 33 s
+long_road seed 3: after 10 years 36 alive of 97 · letters · legacy 2305 · ages on days 22/60/137/137/233 · fewest alive 16 · aim met day 258 · 27 s
+long_road seed 4: after 10 years 23 alive of 75 · fields (standing: foraging) · legacy 1090 · ages on days 9/50/-1/-1/-1 · fewest alive 4 · aim not met · 12 s
+long_road seed 5: after 10 years 70 alive of 103 · letters · legacy 2765 · ages on days 10/61/95/174/290 · fewest alive 24 · aim met day 290 · 62 s
+long_road seed 6: after 10 years 55 alive of 105 · letters · legacy 2525 · ages on days 9/52/122/149/260 · fewest alive 18 · aim met day 322 · 55 s
+long_road seed 7: after 10 years 71 alive of 100 · letters · legacy 2760 · ages on days 10/50/79/141/187 · fewest alive 24 · aim met day 295 · 50 s
+long_road seed 8: after 10 years 42 alive of 103 · letters · legacy 2300 · ages on days 9/66/243/243/243 · fewest alive 7 · aim met day 338 · 35 s
+long_road seed 9: after 10 years 30 alive of 72 · fields (standing: foraging) · legacy 1700 · ages on days 7/168/-1/-1/-1 · fewest alive 10 · aim not met · 16 s
+long_road seed 10: after 10 years 25 alive of 72 · fields (standing: foraging) · legacy 1315 · ages on days 12/100/-1/-1/-1 · fewest alive 4 · aim not met · 15 s
+long_road seed 11: after 10 years 61 alive of 95 · letters · legacy 2600 · ages on days 10/60/95/116/386 · fewest alive 32 · aim met day 386 · 59 s
+long_road seed 12: after 10 years 56 alive of 104 · letters · legacy 2595 · ages on days 9/51/69/138/179 · fewest alive 45 · aim met day 179 · 83 s
+long_road seed 13: after 10 years 43 alive of 97 · letters · legacy 2375 · ages on days 9/60/153/165/319 · fewest alive 24 · aim met day 319 · 41 s
+long_road seed 14: after 3 years 0 alive of 50 · fields · legacy 446 · ages on days 11/62/-1/-1/-1 · fewest alive 0 · aim not met · 5 s
+
+14 islands after 10 years: alive 45.7 on average (0–75); died out 1; age reached foraging 0, hearths 0, fields 4, stone 0, mills 1, letters 9; the last age with no fewer alive than began: 9 of 14

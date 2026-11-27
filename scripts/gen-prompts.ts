@@ -30,8 +30,11 @@ function examplePage(context: "rich" | "minimal"): { page: string; bound: number
 }
 
 function render(): string {
-  const full = systemPrompt({ civic: true, propose: true, escrow: true, planting: true, takeable: true });
-  const plain = systemPrompt({ civic: false, propose: false, escrow: false, planting: true, takeable: true });
+  const full = systemPrompt({ civic: true, propose: true, escrow: true, planting: true, takeable: true, crafts: false });
+  const plain = systemPrompt({ civic: false, propose: false, escrow: false, planting: true, takeable: true, crafts: false });
+  const crafted = systemPrompt({ civic: true, propose: true, escrow: true, planting: true, takeable: true, crafts: true });
+  const lineOf = (text: string, starts: string): string => text.split("\n").find((l) => l.startsWith(starts)) ?? "";
+  const sectionOf = (text: string, head: string): string => text.split("\n\n").find((part) => part.startsWith(head)) ?? "";
   const rich = examplePage("rich");
   const minimal = examplePage("minimal");
   const schema = decisionSchema(true);
@@ -64,6 +67,30 @@ function render(): string {
     `${fence}text`,
     plain,
     fence,
+    "",
+    "## What a world with crafts adds (prompt p3)",
+    "",
+    "A world whose `crafts` switch is on tells its minds three more things, and nothing else changes: the structures list names the six works, a section says how a craft is come by, and the page says which crafts the person knows. A world without crafts is told none of it — its rules text is, word for word, the two above, which are what prompt p2 was. No age, legacy or aim is mentioned to anyone: those are the observer's.",
+    "",
+    "The structures line becomes:",
+    "",
+    `${fence}text`,
+    lineOf(crafted, "Structures (build"),
+    fence,
+    "",
+    "The added section:",
+    "",
+    `${fence}text`,
+    sectionOf(crafted, "CRAFTS"),
+    fence,
+    "",
+    "The line of the answer format that changes:",
+    "",
+    `${fence}text`,
+    lineOf(crafted, "  refuel target"),
+    fence,
+    "",
+    "And on the page, after what the person carries, one of: `Crafts you know: tillage, masonry.` · `You know no craft yet.`",
     "",
     "## An example page (rich context)",
     "",

@@ -443,3 +443,188 @@ The desktop and phone game flows sampled a followed citizen as they walked. The 
 the body within the visible map, with the centre-column toolbar measured on desktop. First Light
 seed 7 with the reflex baseline logs its first living citizen in the Chronicle on the step to tick 325.
 The desktop flow steps to at least 336 before testing a jump from that entry.
+
+
+## More realism at no cost in speed (D-054, 2026-11-27)
+
+What was compared: the merged build (`71d4418`, after D-053), built from an export of that commit and served
+beside the changed build on the same machine, in the same headless Chromium, both drawing through SwiftShader.
+First Light, seed 1, the cameras of `scripts/shots.mjs`. **There is no graphics chip and no device here: no
+frame rate was measured and none is claimed.**
+
+### What a frame submits, and what it costs a software renderer
+
+`node scripts/frame-cost.mjs --url <address> --cases vista,close --presets high,medium,low --frames 6`, in a
+960 × 540 window, against the one build and then the other, three rounds of that; the raw rows are
+`evidence/realism-2/frame-cost-{before,after}.jsonl`. Draw calls and triangles are what the renderer reports
+of every pass of a frame, and were the same in every round. Since D-054 shadows are redrawn on every second
+frame, so the changed build has an average frame and a dearer one. Processor seconds a frame are the time
+every process of the browser spent on the frames counted, each count taken between two moments at which
+everything asked for had been drawn. Other work shared the machine throughout (the load average on its four
+cores read 5.1 before the rounds and 9.5 after them), and how much of it changed from round to round.
+
+| View | Preset | Draw calls: before → after on average; on a frame that redraws shadows | Triangles: before → after on average; on a frame that redraws shadows | Processor seconds a frame, before / after, in each of the three rounds | Median |
+|---|---|---|---|---|---|
+| vista | high | 80 → 71; 80 | 1,773,875 → 746,236 (-57.9%); 913,214 (-48.5%) | 5.46 / 3.46 · 4.60 / 3.49 · 6.08 / 4.22 | 5.46 → 3.49 (-36%) |
+| vista | medium | 66 → 57.5; 66 | 1,716,826 → 725,748 (-57.7%); 884,326 (-48.5%) | 4.48 / 2.79 · 4.17 / 3.02 · 5.51 / 3.60 | 4.48 → 3.02 (-33%) |
+| vista | low | 47 → 47; 47 | 433,771 → 424,030 (-2.2%); 424,030 (-2.2%) | 1.65 / 1.32 · 1.40 / 1.24 · 1.99 / 1.74 | 1.65 → 1.32 (-20%) |
+| close | high | 82 → 73; 82 | 1,907,899 → 1,296,894 (-32.0%); 1,507,731 (-21.0%) | 3.27 / 2.88 · 3.64 / 2.92 · 3.86 / 3.66 | 3.64 → 2.92 (-20%) |
+| close | medium | 68 → 59.5; 68 | 1,820,450 → 1,228,245 (-32.5%); 1,420,282 (-22.0%) | 2.79 / 2.52 · 2.83 / 2.62 · 3.45 / 2.98 | 2.83 → 2.62 (-7%) |
+| close | low | 49 → 49; 49 | 434,229 → 433,735 (-0.1%); 433,735 (-0.1%) | 0.94 / 0.94 · 0.90 / 0.89 · 1.02 / 1.09 | 0.94 → 0.94 (-0%) |
+
+On every row the changed build submits no more draw calls and fewer triangles. Its processor time is the lower
+in all three rounds on five rows of six. On the sixth, close in on the low preset, the two builds submit the
+same triangles to within a tenth of a percent and cannot be told apart: two rounds level, and in the third the
+changed build 7% dearer.
+
+The wall clock, from the same rows:
+
+| View | Preset | Wall-clock seconds a frame, before / after, in each of the three rounds | Rounds in which the changed build was the quicker |
+|---|---|---|---|
+| vista | high | 3.73 / 3.13 · 4.29 / 3.50 · 3.11 / 2.36 | 3 of 3 |
+| vista | medium | 3.54 / 2.73 · 3.80 / 2.92 · 2.00 / 1.94 | 3 of 3 |
+| vista | low | 0.97 / 1.24 · 1.21 / 1.16 · 0.71 / 0.89 | 1 of 3 |
+| close | high | 3.18 / 2.96 · 2.54 / 2.81 · 1.90 / 2.04 | 1 of 3 |
+| close | medium | 2.73 / 2.38 · 2.73 / 2.71 · 1.90 / 1.57 | 3 of 3 |
+| close | low | 0.81 / 0.87 · 0.83 / 0.77 · 0.51 / 0.56 | 1 of 3 |
+
+By the wall clock the changed build is the quicker in all three rounds on three rows (the vista on high and on
+medium, close in on medium) and in one round of three on the other three (the vista on low, close in on high
+and on low), where it is the slower by up to 28%. On a machine asked for more than twice what its cores can
+do, the wall clock measures mostly what else was running at that moment, and these runs do not show which
+build is the quicker by it. That is the limit of this evidence: the changed build asks for less work by every
+count, and whether its frames arrive sooner was not established.
+
+Triangles per mesh, at the vista on the high preset, before and after:
+`evidence/realism-2/budget-{before,after}.txt`. Broad-leaved crowns were 452,480 triangles of the picture and
+as many again of every frame's shadows; from this far they are 129,280, and their shadows 80,800 on every
+second frame.
+
+How to read the processor time: the software renderer pays for every pixel on the processor, so it weighs
+pixels far more than a graphics chip does. The triangles fell by more than the processor time did. A chip,
+which is fast at pixels, may gain more from the first than that column shows; that is an expectation and not a
+measurement.
+
+### The nine views
+
+`SHOTS_FORMAT=jpeg SHOTS_MAX_WIDTH=1280 node scripts/shots.mjs <folder> vista_laptop closeup midday dusk night winter woodcutter phone low`,
+against each build. Captured at the sizes given; nothing is resampled.
+
+| Capture | Window and studio parameters | Before | After |
+|---|---|---|---|
+| Island vista | 1280 × 720, `?scenario=first_light&seed=1&days=2&ticks=22&q=high&az=0.62&polar=0.88` | [before](../evidence/realism-2/vista_laptop-before.jpg) | [after](../evidence/realism-2/vista_laptop-after.jpg) |
+| The shore, close in (it is raining) | 1280 × 720, `…&days=2&ticks=30&q=high&agent=7&az=0.9&polar=1.08&dist=13` | [before](../evidence/realism-2/closeup-before.jpg) | [after](../evidence/realism-2/closeup-after.jpg) |
+| Woodcutter at a crown | 1280 × 720, `…&days=4&ticks=30&q=high&doing=gather_wood&az=0.7&polar=0.9&dist=8` | [before](../evidence/realism-2/woodcutter-before.jpg) | [after](../evidence/realism-2/woodcutter-after.jpg) |
+| Midday, the lake | 1280 × 720, `…&days=3&ticks=26&q=high&az=-0.5&polar=0.98&dist=46&tx=30&ty=30` | [before](../evidence/realism-2/midday-before.jpg) | [after](../evidence/realism-2/midday-after.jpg) |
+| Dusk | 1280 × 720, `…&days=3&ticks=47&q=high&az=1.9&polar=1.02&dist=58` | [before](../evidence/realism-2/dusk-before.jpg) | [after](../evidence/realism-2/dusk-after.jpg) |
+| Night | 1280 × 720, `…&days=3&ticks=76&q=high&az=0.4&polar=0.95&dist=70` | [before](../evidence/realism-2/night-before.jpg) | [after](../evidence/realism-2/night-after.jpg) |
+| Winter | 1280 × 720, `…&days=33&ticks=28&q=high&az=0.62&polar=0.9` | [before](../evidence/realism-2/winter-before.jpg) | [after](../evidence/realism-2/winter-after.jpg) |
+| A phone's window, medium preset | 390 × 844 at 3×, `…&days=2&ticks=22&q=medium&az=0.62&polar=0.86` | [before](../evidence/realism-2/phone-before.jpg) | [after](../evidence/realism-2/phone-after.jpg) |
+| Low preset | 1280 × 720, `…&days=2&ticks=22&q=low&az=0.62&polar=0.88` | [before](../evidence/realism-2/low-before.jpg) | [after](../evidence/realism-2/low-after.jpg) |
+
+What the renderer reported of itself as each still was taken (`evidence/realism-2/shots-{before,after}.txt`).
+Draw calls and triangles are exact. In all nine the changed build submits no more draw calls and no more
+triangles than the merged one, on its dearer frame as on its average. The frame times were taken while a
+second browser was measuring frame cost on the same cores: they are shown because they were recorded, and they
+compare nothing.
+
+| Capture | Before: draw calls · triangles, every frame | After: on the dearer of the last two frames | After: the mean of the two | Frame p50 as recorded, before / after (ms) |
+|---|---|---|---|---|
+| Island vista | 80 · 1,773,875 | 80 · 913,214 | 71 · 746,236 | 5,983 / 4,300 |
+| The shore, close in (it is raining) | 82 · 1,907,899 | 82 · 1,507,731 | 73 · 1,296,894 | 4,883 / 4,483 |
+| Woodcutter at a crown | 88 · 1,914,723 | 88 · 1,514,555 | 77.5 · 1,302,252 | 5,733 / 4,350 |
+| Midday, the lake | 81 · 1,776,203 | 81 · 1,370,701 | 72 · 1,187,269 | 4,650 / 6,416 |
+| Dusk | 80 · 1,776,391 | 80 · 1,354,929 | 71 · 1,171,482 | 5,966 / 4,650 |
+| Night | 80 · 1,775,547 | 80 · 1,338,104 | 71 · 1,154,604 | 4,950 / 5,316 |
+| Winter | 93 · 1,818,627 | 93 · 957,966 | 81.5 · 781,127 | 5,300 / 4,383 |
+| A phone's window, medium preset | 66 · 1,716,826 | 66 · 884,326 | 57.5 · 725,748 | 6,783 / 4,783 |
+| Low preset | 47 · 433,771 | 47 · 424,030 | 47 · 424,030 | 1,417 / 1,017 |
+
+What was seen in them. Crowns are lit as soft masses with a texture of leaves on them, where they were facets
+(the woodcutter, midday, the shore), and on the high preset their outline is uneven; conifers are skirts of
+boughs. Streams and the lake are darker and clearer, the bed showing through, where there was a pale ribbon
+(the shore, midday, the vista). On the sea close in there are rings where rain falls, where there were white
+blobs, and the surface has ripples. The shallows take the water's colour over the sand. Gullies, cliff feet
+and the ground under trees are dimmer (midday, the vista, low). Rock shows ledges (the woodcutter, midday).
+The low preset keeps its facets and gains the dimmer hollows. From the vista, at dusk, at night and in winter
+the two builds are hard to tell apart at a glance: the hollows are a little darker and the streams less
+bright.
+
+Every "after" still was looked at by its builder: midday, dusk and the shore at full size; the vista, night,
+winter, the woodcutter and low as tiles of a contact sheet at half size, and the phone's at a third (each of
+those views had been looked at at full size in earlier states of the work). Three things seen at full size in
+the state just before the last, and left as they were: close in, the leaf texture reads as wool as much as
+leaves; the thin beds on rock are regular enough to read as ruled lines; and shade on the smooth crowns shows
+the grain of the shadow filter.
+
+Tried and not taken: a flatter tone curve. The same view under the game's curve and under that one, from an
+earlier state of the work at 1100 × 620: `evidence/realism-2/tried-aces.jpg`,
+`evidence/realism-2/tried-agx.jpg`. The option that drew the second was removed again.
+
+### Checks
+
+On the final tree (`evidence/realism-2/checks.txt` has what each printed): `pnpm typecheck`, `pnpm exec eslint
+--ignore-pattern ".claude/**"`, `pnpm exec vitest run src/render` (25 tests in four files, the ten of
+`src/render/realism.test.ts` among them) and `pnpm check:links` pass. The whole unit suite (`pnpm test`) was
+run once, before the last edits to these documents and to two comments in the renderer: 518 passed, 10 were
+skipped for want of PostgreSQL, and **one ran out of time** — a sign-in test of the server, in a file this
+change does not touch, which hashes passwords many times over and has thirty seconds for it, on a machine
+whose load average was above nine on four cores. Run on its own straight afterwards it passed in 19.7 seconds.
+Its limit was not changed. `pnpm build` passed on the tree the numbers and stills above were taken from; after
+it one unused method and the studio parameter that called it were taken out again and two comments were
+corrected, and the build was not run again. The browser suite (`pnpm e2e`) was **not run** in the session that
+made this change: it runs one at a time on this machine, and is left to the session that merges it.
+
+### Not measured, not looked at
+
+A frame rate, on anything. Whether a frame arrives sooner by the wall clock (above). The picture in motion:
+rings, moving water, the grass thinning and crowns changing form as the camera moves, and shadows a frame old,
+were judged from stills drawn at a few frames a second, or not at all. The sun's glints on the sea and the
+light through the rim of a crown against the sun: both are in the shaders, and no kept still looks toward the
+sun; of two captures made toward it during the work, one showed crowns and no sea to speak of, and the other
+went under the ground. The cost of the broken outline of crowns on its own, and of the stand-ins, the plainer
+forms and the textures each on its own: only their sum was measured. Frame cost at any view but the vista and
+the shore, and at any window but 960 × 540. A real screen; a phone. The stills of `scripts/shots.mjs` that are
+not in the table above (vista, fisher, builder, forager, charter, paths, knowledge, phone_landscape) were not
+captured again for this change, though a citizen's knowledge was looked at once during the work and drew as
+before. The browser tests. Whether a person finds any of it more real.
+
+## The Long Road (D-055 to D-058, 2026-11-27)
+
+Engine 0.8.0. Environment as at the top of this file (a cloud container, software renderer, no graphics chip,
+no physical device). The machine was shared with other work while some of this ran: run times printed in the
+files are not measurements of speed. **Every island here is a development seed (1–14). No holdout seed was
+run. No model was called and nothing was spent. No person has played what this section is about.**
+
+| Claim | Command | Raw output | Result | Not shown by this evidence |
+|---|---|---|---|---|
+| The game as it was could only shrink: a fixed cohort, nothing new to build | `pnpm exec tsx scripts/climb.ts --scenario first_light --seeds 1-8 --years 10 --no-crafts --no-arrivals --quiet` | `evidence/long-road/climb-first-light-fixed-cohort.txt` | of fifty, 5 to 47 alive after ten years, 19.8 on average; nobody added; nothing beyond the first four structures (a world without crafts reads no ages) | Other scenarios; reflex minds. |
+| With crafts and newcomers a people can grow and climb | same script, `--scenario first_light --seeds 1-8 --years 10` | `climb-first-light-crafts.txt`, `.json` | all eight reached the Age of Letters (days 142 to 334); none died out; 66 to 97 alive at the end (80.9) | That anyone meant to: the baseline minds are programs. |
+| The Long Road, left alone, climbs on most islands and fails on some | same script, `--scenario long_road --seeds 1-14 --years 10` | `climb-long-road.txt`, `.json` | nine reached Letters, one stopped at Mills, four never got past Fields, one of those died out in its third year; 45.7 alive at the end (0 to 75) | — |
+| The aim as first written was too easy: an untouched island usually met it | the same runs | the same files | "the last age with no fewer alive than began": 9 of 14 | — |
+| What a hand is worth: the same twelve islands under seven scripted players, one change a season | `pnpm exec tsx scripts/hands.ts --scenario long_road --seeds 1-12 --years 8 --stop-at-letters --players none,bounty,scholar,balanced,savvy,random,saboteur` (three processes, four seeds each) | `evidence/long-road/hands/t2-*.txt`, `t2-*.json`; scored in `t2-aims.txt` | reached the last age: untouched 7, bounty 11, scholar 11, balanced 12, savvy 12, random 9, saboteur 0 of 12; median day 233, 251, 150, 112.5, 191.5, 224; founders alive that morning, median 23, 48, 14, 47.5, 10.5, 19 | Whether a person plays like any of them. |
+| The aim as it is now separates them | `pnpm exec tsx scripts/hands-aims.ts evidence/long-road/hands/t2-*.json` (counts only; runs nothing) | `t2-aims.txt` | four in five of the first fifty at the last age by the end of year five: untouched **1**, bounty **4**, scholar **3**, balanced **11**, savvy **0**, random **0**, saboteur **0** of 12. By year six: 2, 5, 3, 12, 0, 0, 0. Nine in ten by year three: 0, 0, 1, 7, 0, 0, 0 | A rate: twelve islands, and the aim's numbers were chosen on these twelve. |
+| A rule tried and not adopted: each kind of change once a year | `hands.ts … --rest 4 --players balanced,scholar,bounty --years 6` | `t3-rest4-*.txt`, `t3-rest4-aims.txt` | the same aim: balanced 9, scholar 9 (they play alike under it), bounty 7 of 12 — the rule imposes the variety that wins | — |
+| A rule tried and not adopted: changes saved up, to three | `hands.ts … --bank 3 --players steward,balanced --years 6` | `t4-bank3-*.txt`, `t4-bank3-aims.txt` | steward 3, balanced 11 of 12: the script that saves starves its founders | That saving is worthless: the script is a poor steward, and there is no hardship here worth saving for. |
+| The first, partial batch (the first aim, runs stopped when it was met) | `hands.ts … --stop-at-aim`, stopped by hand | `t1-partial.txt` | 26 runs: even a hand that draws its changes by lot met the first aim on the islands it finished | Complete: it was stopped to make room for the batch above. |
+| The aim is counted as stated, case by case | `pnpm test` (`src/worker/aims.test.ts` › The Long Road) | `evidence/long-road/unit-tests.txt` | met on its morning and on the last day allowed; lost on the eleventh founder's death, and on the morning after the fifth year; newcomers not counted; a death after the morning takes nothing back; what the lost founders died of | — |
+| Every world made before 0.8.0 is stepped as before | `pnpm exec tsx scripts/legacy-digests.ts --check` | `evidence/long-road/legacy-digests.txt` | "engine 0.8.0 reproduces all 13 worlds recorded by engine 0.7.0": thirteen worlds written by the unchanged 0.7.0 engine at `71d4418` — every scenario, both baseline minds, agreements on and off, a drought, newcomers by the observer's hand, a crowded island, and runs of three and six years — end on the same digests, on every fifth day and the last | The snapshot's SHA-256, which also covers the version stamp and is expected to differ. |
+| The published studies are reproduced digest for digest | `pnpm exec tsx scripts/legacy-studies.ts --bundle pilot --count 24` and `--bundle confirmatory --count 24` | `evidence/long-road/legacy-studies-pilot.txt`, `legacy-studies-confirmatory.txt` | 24 of 24 and 24 of 24 cells, spread evenly through each bundle, end on their published digests (a check of published cells; no holdout seed was tuned on or newly reported) | Every cell: a sample was re-run. The Laboratory page lets any reader re-run any one. |
+| A world that takes in more than sixty-four newcomers no longer stops for good | `pnpm test` (`src/engine/sim/works.test.ts` › however many come ashore within one step; a table found too short is made longer) | `evidence/long-road/unit-tests.txt` | pass; the first does not finish under the old sizing (run once by hand with the old line put back: no result in 45 s) | — |
+| Unit, property and fuzz tests | `TEST_DATABASE_URL=… pnpm test` | `evidence/long-road/unit-tests.txt` | 568 passed and 2 skipped, in 48 files (the two skipped are the long legacy worlds, which the row above runs); the database tests included | — |
+| Lint, types, generated documents, links, secrets | `pnpm lint`, `pnpm typecheck`, `pnpm gen:affordances --check`, `gen:migrations --check`, `gen:prompts --check`, `gen:licenses --check`, `pnpm check:links`, `pnpm scan:secrets`, `pnpm scan:history` | `evidence/long-road/checks.txt` | each exits 0 | — |
+| The goal is on screen from the first morning and the limit on the hand is real | `pnpm exec playwright test tests/e2e/goal.spec.ts` (both projects) | `evidence/long-road/e2e-goal.txt`; screens in `evidence/long-road/screens/` | 2 passed (desktop 2.7 min, phone emulation 2.9 min): The Long Road chosen on the setup screen and its aim called the aim; the bar on the first morning word for word; the first age reached; the note on the hand, six crafts to choose a stranger from, one change spending the season's hand and every card then waiting; the ladder, a legacy that adds up and the aim's count in the Atlas; thirty journal pages; three states scanned with axe-core. **The scan's first run found a real fault** — the bar's spoken name did not contain its visible words — which is fixed, and the run kept here is the one after | The closing page; later ages than Hearths; anything a person would say. |
+| The whole browser suite | `pnpm e2e` | the checks on pull request 11 (GitHub Actions runs both projects on every push); `evidence/long-road/e2e-local-partial.txt` | **Here, not finished**: a whole-suite run on the tree before the graphics merge was stopped by the session's 30-minute limit on background commands after 13 of 38 tests, all passing — the accessibility scan of seventeen states, both diagnostics (one holds the browser and the worker to Node's digest), the goal, history, the Laboratory (a published 0.7.0 cell reproduced digest for digest in the browser), the observer's instruments and the six owner-console tests, all on the desktop project. The play and resilience tests on desktop, and the phone project apart from the goal test, were run only by CI. The result for the head of the pull request is on the pull request, not in this file | Safari, Firefox, a device. |
+| A browser test that failed in CI on this pull request was a race in the test, on `main` as much as here | a scratch script doing what `tests/e2e/observer.spec.ts` did and reading the world's tick after each action, on three production builds, three rounds each | `evidence/long-road/observer-race.txt` | the test pressed play at the fastest speed, made seven clicks to try the sound, then paused — and later read an aim that is decided at tick 3840. Paused at: `main` 3761, 4185, 4404; this branch before the graphics merge 4846, 4224, 4596; with it 4659, 3252, 4628. Fixed by trying the sound with the world at its slowest; the test then passes on both projects (2 passed, 5.4 min) | The same measurement on GitHub's runner. |
+| A second browser test that failed in CI on this pull request depended on where people happened to be standing, on `main` as much as here | a scratch script that follows citizen 0 on a phone-sized page and counts, at every tick from 140 to 430, who else could be tapped; then the test itself, with its step made at a chosen tick | `evidence/long-road/someone-else.txt` | with the tutorial and a citizen's card open, a phone shows the map through a band 142 px tall; the whole-loop test zoomed out ten notches and tapped whoever stood in it, and at 45 of 291 ticks nobody does (at the widest view 2, and never the same ticks). Where its walk ends differs from run to run: 319, 334, 341, 344 and 348 in five runs here, and 348 is the first of thirty-five empty ticks. As it was, made at tick 350, the test fails with CI's message word for word. It now widens the view a notch at a time until someone can be tapped, and lets time pass if no view has anyone: it passes at ticks 350, 405 and 341, and the waiting passes when tried by itself. `tests/e2e/play.spec.ts` on both projects: 6 passed, 2 skipped by design (11.9 min) | The tick GitHub's runner was at when it failed: CI keeps nothing of a failed browser run but its log. |
+| What the six works look like | `/studio?scenario=long_road&seed=1&days=255&ticks=44&crafts=1&q=high&still=1`, then `__studio.look(kind)` | `evidence/long-road/work-mill.jpg`, `work-mill-and-fields.jpg`, `work-granary-houses-fields.jpg`, `work-record-house.jpg`, `work-healing-house.jpg` | captured from the production build at 1100 × 700 | A real graphics chip; a still of a stone house or a field alone (both are in the granary still). |
+
+**How the stuck step was found.** Two ten-year measurement runs did not come back. A debugger attached to one
+of the live processes showed it in `perceive` on every sample, with 115 people in the world and 114 places in
+the table of tile lists (D-055). Nothing in the test suite had failed: no test took in sixty-five newcomers.
+
+**What the scripted players are, and are not.** They are short programs written by the builder that see what
+the observer's pages show and nothing else (`scripts/hands.ts`). "Balanced" — knowledge in spring and summer,
+food in autumn and winter, the ladder known — is the best of them and is one fixed recipe. That it meets the
+aim on eleven islands of twelve says the aim can be met by reading the island and keeping to the seasons; it
+does not say a person will find that, how long it takes them, or whether it is any fun.

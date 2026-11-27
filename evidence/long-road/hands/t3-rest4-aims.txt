@@ -1,0 +1,31 @@
+36 runs: 3 players on 12 islands (seeds 1,2,3,4,5,6,7,8,9,10,11,12)
+
+When the last age was reached (day; — = not within the run), and how many of the first fifty were alive that morning:
+seed  balanced     scholar      bounty       
+1     177 · 44     177 · 44     — (48)       
+2     138 · 46     138 · 46     198 · 45     
+3     124 · 43     124 · 43     212 · 47     
+4     164 · 45     164 · 45     157 · 43     
+5     137 · 45     137 · 45     — (40)       
+6     172 · 39     172 · 39     224 · 43     
+7     136 · 44     136 · 44     139 · 46     
+8     136 · 44     136 · 44     137 · 44     
+9     223 · 42     223 · 42     181 · 44     
+10    204 · 33     204 · 33     172 · 47     
+11    164 · 45     164 · 45     231 · 45     
+12    170 · 47     170 · 47     155 · 47     
+
+Aim: the last age by the end of year 4 (day 160), with at least F of the first fifty alive — islands on which it would be met:
+F     balanced     scholar      bounty       
+45    2 of 12      2 of 12      2 of 12      
+40    5 of 12      5 of 12      4 of 12      
+
+Aim: the last age by the end of year 5 (day 200), with at least F of the first fifty alive — islands on which it would be met:
+F     balanced     scholar      bounty       
+45    5 of 12      5 of 12      4 of 12      
+40    9 of 12      9 of 12      7 of 12      
+
+Aim: the last age by the end of year 6 (day 240), with at least F of the first fifty alive — islands on which it would be met:
+F     balanced     scholar      bounty       
+45    5 of 12      5 of 12      6 of 12      
+40    10 of 12     10 of 12     10 of 12     

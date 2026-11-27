@@ -1,0 +1,10 @@
+first_light seed 1: after 10 years 97 alive of 114 · letters · legacy 3050 · ages on days 8/44/69/94/175 · fewest alive 48 · aim met day 175 · 152 s
+first_light seed 2: after 10 years 71 alive of 97 · letters · legacy 2730 · ages on days 7/61/76/141/334 · fewest alive 38 · aim met day 334 · 71 s
+first_light seed 3: after 10 years 66 alive of 117 · letters · legacy 2650 · ages on days 22/72/112/127/229 · fewest alive 35 · aim met day 229 · 69 s
+first_light seed 4: after 10 years 66 alive of 95 · letters · legacy 2710 · ages on days 10/51/74/81/209 · fewest alive 41 · aim met day 209 · 95 s
+first_light seed 5: after 10 years 92 alive of 107 · letters · legacy 2985 · ages on days 9/56/86/119/292 · fewest alive 49 · aim met day 292 · 135 s
+first_light seed 6: after 10 years 85 alive of 110 · letters · legacy 2915 · ages on days 23/57/75/132/213 · fewest alive 50 · aim met day 213 · 124 s
+first_light seed 7: after 10 years 74 alive of 104 · letters · legacy 2805 · ages on days 9/50/71/98/200 · fewest alive 50 · aim met day 200 · 103 s
+first_light seed 8: after 10 years 96 alive of 123 · letters · legacy 3070 · ages on days 8/65/72/103/142 · fewest alive 49 · aim met day 142 · 114 s
+
+8 islands after 10 years: alive 80.9 on average (66–97); died out 0; age reached foraging 0, hearths 0, fields 0, stone 0, mills 0, letters 8; the last age with no fewer alive than began: 8 of 8

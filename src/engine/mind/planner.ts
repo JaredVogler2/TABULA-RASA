@@ -29,6 +29,9 @@
  */
 import { chance, Stream } from "../core/rng";
 import {
+  Craft,
+  FIELD_MIN_FERTILITY,
+  FIELD_YIELD,
   FOOD_ITEMS,
   ITEM_SPECS,
   Item,
@@ -47,14 +50,15 @@ import { calendarAt } from "../world/climate";
 import { carriedWeight, carryCapacity, foodEnergy, roomFor } from "../sim/inventory";
 import { hasSeen, isFrontier, nearestKnown } from "../sim/pathfind";
 import type { Scratch } from "../sim/scratch";
+import { besideStream, knows } from "../sim/works";
 import { FOOD_NODE_KINDS, bestKnownNode, recall } from "./knowledge";
 import type { Plan } from "./reflex";
 import { visibleAgents, visiblePiles, type SeenAgent } from "./senses";
 import { sensesCold } from "./social";
 import { civicBusiness, civicDuty, civicLeisure, drawRation, offerCandidate, offerMade } from "./civic";
 
-/** Slots of `mind.cool` (ticks until which a kind of act is held back). */
-export const COOL = { inform: 0, ask: 1, give: 2, gossip: 3, promise: 4, explore: 5, backoff: 6, rehome: 7 } as const;
+/** Slots of `mind.cool` (ticks until which a kind of act is held back). Slots 8–10 are the civic layer's; 11 exists only in worlds with crafts. */
+export const COOL = { inform: 0, ask: 1, give: 2, gossip: 3, promise: 4, explore: 5, backoff: 6, rehome: 7, records: 11 } as const;
 
 /** Energy an adult burns in a day of mixed work (the planner's rule of thumb, not an engine constant). */
 export const DAILY_ENERGY = 310;
@@ -479,6 +483,7 @@ function shelter(c: Ctx): Candidate | null {
   if (!hasHome(c)) return null;
   if (c.cold === 0 && m.coldNights < 2 && m.wintersSeen === 0) return null;
   if (known(c, StructureKind.shelter, 6, m.homeX, m.homeY, (k) => k.state >= 1)) return null;
+  if (c.world.config.crafts && known(c, StructureKind.house, 6, m.homeX, m.homeY, (k) => k.state >= 1)) return null;
   const worth = (([300, 1000, 2600][c.cold] as number) + Math.min(900, m.coldNights * 220)) * (0.5 + c.patience / 100);
   const site = known(c, StructureKind.shelter, 10, m.homeX, m.homeY, (k) => k.state === 0);
   if (site) {
@@ -511,7 +516,7 @@ function store(c: Ctx): Candidate | null {
 function stash(c: Ctx): Candidate | null {
   const { a, m, world } = c;
   if (!hasHome(c)) return null;
-  const st = known(c, StructureKind.store, 6, m.homeX, m.homeY, (k) => k.state >= 1 && k.bound < 0);
+  const st = (world.config.crafts ? known(c, StructureKind.granary, 8, m.homeX, m.homeY, (k) => k.state >= 1 && k.bound < 0) : undefined) ?? known(c, StructureKind.store, 6, m.homeX, m.homeY, (k) => k.state >= 1 && k.bound < 0);
   if (!st) return null;
   const mine = world.structures[st.id]?.contributors.includes(a.id) ?? false;
   if (!mine && c.conformity < 60) return null;
@@ -560,13 +565,20 @@ function plot(c: Ctx): Candidate | null {
   return { score: value / time, plan: plan("plant", "sow_for_later", { k: "build", kind: StructureKind.plot, x, y }) };
 }
 
+/** Is this crop this agent's own? A plot is its planter's; a field is also theirs who have sown it since. */
+function tilledByMe(c: Ctx, ks: KnownStructure): boolean {
+  const s = c.world.structures[ks.id];
+  if (!s) return false;
+  return s.founder === c.a.id || (ks.kind === StructureKind.field && s.builders.includes(c.a.id));
+}
+
 function reap(c: Ctx): Candidate | null {
-  const { a, world } = c;
+  const { a } = c;
   let best: KnownStructure | undefined;
   let bestD = 99;
   for (const ks of c.m.structs) {
-    if (ks.kind !== StructureKind.plot || ks.state !== 2) continue;
-    const mine = world.structures[ks.id]?.founder === a.id;
+    if ((ks.kind !== StructureKind.plot && ks.kind !== StructureKind.field) || ks.state !== 2) continue;
+    const mine = tilledByMe(c, ks);
     // another's ripe crop is left alone unless this agent is hungry and little bound by custom
     if (!mine && !(a.energy < 450 && c.conformity < 50)) continue;
     const d = cheb(ks.x, ks.y, a.x, a.y);
@@ -576,9 +588,198 @@ function reap(c: Ctx): Candidate | null {
     }
   }
   if (!best || bestD > 14 || roomFor(a, Item.root) <= 0) return null;
-  const mine = world.structures[best.id]?.founder === a.id;
+  const mine = tilledByMe(c, best);
   const time = walk(bestD) + 5;
-  return { score: (5 * ITEM_SPECS[Item.root]!.energy) / time, plan: plan("reap", mine ? "my_crop" : "others_crop", { k: "harvest", structure: best.id }) };
+  const yields = best.kind === StructureKind.field ? FIELD_YIELD : 5;
+  return { score: (yields * ITEM_SPECS[Item.root]!.energy) / time, plan: plan("reap", mine ? "my_crop" : "others_crop", { k: "harvest", structure: best.id }) };
+}
+
+// ───────────────────────── the works (worlds with crafts)
+//
+// Each of these is weighed like any other project: by what the agent believes it would gain,
+// over the time it would take. None is a duty and none is assigned. Laying out a work takes
+// its craft; joining one that someone else laid out takes only hands, which is how the many
+// who do not know a craft come to be standing where it is practised.
+
+function cool(c: Ctx, slot: number): number {
+  const list = c.m.cool;
+  while (list.length <= slot) list.push(0);
+  return list[slot] as number;
+}
+
+/** An unfinished site of a kind near home that this agent could put something into, nearest first. */
+function siteOf(c: Ctx, kind: number, reach: number): KnownStructure | undefined {
+  return known(c, kind, reach, c.m.homeX, c.m.homeY, (k) => k.state === 0);
+}
+
+function ownFields(c: Ctx): number {
+  let n = 0;
+  for (const ks of c.m.structs) if (ks.kind === StructureKind.field && tilledByMe(c, ks)) n++;
+  return n;
+}
+
+/** Sow a field: one of one's own that stands unsown first, otherwise dig a new one (which takes knowing how). */
+function sow(c: Ctx): Candidate | null {
+  const { a, m } = c;
+  // unlike a planted root, a sown field waits out the winter in the ground and bears in spring:
+  // it is sown until the cold has actually come
+  if (!hasHome(c) || c.cold > 1 || c.patience < 22) return null;
+  const rootE = ITEM_SPECS[Item.root]!.energy;
+  const roots = a.inv[Item.root] as number;
+  // seed is food not eaten: it is sown only by someone who can spare it
+  if (roots < 2 || c.foodE - 2 * rootE < DAILY_ENERGY * 0.5) return null;
+  const worth = FIELD_YIELD * rootE * (0.3 + c.patience / 110) - 2 * rootE;
+  if (worth <= 0) return null;
+  let fallow: KnownStructure | undefined;
+  let fallowD = 13;
+  for (const ks of m.structs) {
+    if (ks.kind !== StructureKind.field || ks.state !== 0) continue;
+    // an unsown field is sown by whoever tilled it; one that nobody has come back to is anyone's
+    if (!tilledByMe(c, ks) && c.tick - ks.tick < 3 * TICKS_PER_DAY) continue;
+    const d = cheb(ks.x, ks.y, m.homeX, m.homeY);
+    if (d < fallowD || (d === fallowD && fallow !== undefined && ks.id < fallow.id)) {
+      fallowD = d;
+      fallow = ks;
+    }
+  }
+  if (fallow) return buildProject(c, StructureKind.field, fallow.x, fallow.y, fallow.missing ?? fullNeeds(StructureKind.field), worth * 1.4, "sow", "field_stands_ready");
+  if (!knows(a, Craft.tillage)) return null;
+  if (ownFields(c) >= 2 + Math.floor(c.industry / 30)) return null;
+  const tile = siteNear(c, m.homeX, m.homeY, 5, FIELD_MIN_FERTILITY);
+  if (tile < 0) return null;
+  const x = tile % c.sc.w;
+  return buildProject(c, StructureKind.field, x, (tile - x) / c.sc.w, fullNeeds(StructureKind.field), worth, "dig_field", "sow_for_later");
+}
+
+/** A work near home: join one that stands unfinished, or lay one out if this agent knows how and none is known nearby. */
+function raise(c: Ctx, kind: number, craft: number, reach: number, worth: number, goal: string, why: string, site: () => number = () => siteNear(c, c.m.homeX, c.m.homeY, 3, 0)): Candidate | null {
+  const { a, m } = c;
+  if (!hasHome(c)) return null;
+  if (known(c, kind, reach, m.homeX, m.homeY, (k) => k.state >= 1)) return null;
+  const begun = siteOf(c, kind, reach + 4);
+  if (begun) return buildProject(c, kind, begun.x, begun.y, begun.missing ?? fullNeeds(kind), worth * 1.5, goal, "join_work");
+  if (!knows(a, craft) || c.patience < 25) return null;
+  const tile = site();
+  if (tile < 0) return null;
+  const x = tile % c.sc.w;
+  return buildProject(c, kind, x, (tile - x) / c.sc.w, fullNeeds(kind), worth, goal, why);
+}
+
+function granary(c: Ctx): Candidate | null {
+  if (c.prudence < 40) return null;
+  // worth raising once there is more food about than a store keeps well
+  const pressed = c.cold > 0 || c.foodE > 2 * DAILY_ENERGY || ownFields(c) > 0;
+  if (!pressed) return null;
+  return raise(c, StructureKind.granary, Craft.storekeeping, 8, (1500 * c.prudence) / 70, "build_granary", "keep_the_harvest");
+}
+
+function house(c: Ctx): Candidate | null {
+  const { m } = c;
+  if (c.cold === 0 && m.coldNights < 1 && m.wintersSeen === 0) return null;
+  const worth = (([700, 1700, 3400][c.cold] as number) + Math.min(1200, m.coldNights * 260) + m.wintersSeen * 500) * (0.5 + c.patience / 100);
+  return raise(c, StructureKind.house, Craft.masonry, 6, worth, "build_house", c.cold > 0 ? "cold_coming" : "walls_that_last");
+}
+
+function healingHouse(c: Ctx): Candidate | null {
+  const { a } = c;
+  const seenIll = a.ill > 0 || c.seen.some((s) => s.ill);
+  const worth = (900 + (seenIll ? 700 : 0)) * (0.5 + c.generosity / 100);
+  return raise(c, StructureKind.healing_house, Craft.herb_lore, 12, worth, "build_healing_house", seenIll ? "someone_is_ill" : "for_the_sick");
+}
+
+/** Lay up care in a healing house that has none: berries one can spare, or fibre fetched for it. */
+function layCare(c: Ctx): Candidate | null {
+  const { a, m } = c;
+  if (!knows(a, Craft.herb_lore) || !hasHome(c)) return null;
+  const hh = known(c, StructureKind.healing_house, 14, m.homeX, m.homeY, (k) => k.state === 1);
+  if (!hh) return null;
+  const spareBerries = Math.min(a.inv[Item.berry] as number, Math.floor((c.foodE - DAILY_ENERGY) / ITEM_SPECS[Item.berry]!.energy));
+  const fibre = a.inv[Item.fiber] as number;
+  const intents: Intent[] = [];
+  let time = walk(cheb(hh.x, hh.y, a.x, a.y)) + 2;
+  if (fibre >= 2) intents.push({ k: "deposit", structure: hh.id, item: Item.fiber, qty: Math.min(fibre, 6) });
+  else if (spareBerries >= 2) intents.push({ k: "deposit", structure: hh.id, item: Item.berry, qty: Math.min(spareBerries, 6) });
+  else {
+    const f = fetch(c, Item.fiber, 4);
+    if (!f) return null;
+    intents.push(f.intent, { k: "deposit", structure: hh.id, item: Item.fiber, qty: 4 });
+    time += f.time;
+  }
+  const seenIll = a.ill > 0 || c.seen.some((s) => s.ill);
+  const value = (380 + (seenIll ? 600 : 0)) * (0.5 + c.generosity / 100);
+  return { score: value / time, plan: plan("lay_up_care", seenIll ? "someone_is_ill" : "against_illness", ...intents) };
+}
+
+/** Ill or hurt, and a healing house is known: go and lie there. */
+function convalesce(c: Ctx): Plan | null {
+  const { a } = c;
+  if (a.ill <= 0 && a.health >= 600) return null;
+  if (a.energy < 400 || a.hydration < 450) return null; // the body's needs first
+  const hh = known(c, StructureKind.healing_house, 12, a.x, a.y, (k) => k.state >= 1);
+  if (!hh) return null;
+  return plan("convalesce", a.ill > 0 ? "ill" : "hurt", { k: "goto", x: hh.x, y: hh.y, near: 1 }, { k: "rest", ticks: 24 });
+}
+
+/** A seen, free tile beside a stream near a point (nearest first), or -1: where a mill's wheel can stand. */
+function millSite(c: Ctx, cx: number, cy: number, radius: number): number {
+  const { w, h } = c.sc;
+  const terrain = c.world.terrain;
+  let best = -1;
+  let bestD = 1 << 30;
+  for (let y = Math.max(0, cy - radius); y <= Math.min(h - 1, cy + radius); y++) {
+    for (let x = Math.max(0, cx - radius); x <= Math.min(w - 1, cx + radius); x++) {
+      const tile = y * w + x;
+      if (!hasSeen(c.m.seen, tile)) continue;
+      if ((terrain.moveCost[tile] as number) === 0 || terrain.water[tile] !== Water.none) continue;
+      if ((c.world.nodes.atTile[tile] as number) >= 0) continue;
+      if (c.m.structs.some((k) => k.x === x && k.y === y)) continue;
+      if (!besideStream(c.world, c.sc, x, y)) continue;
+      const d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+      if (d < bestD) {
+        bestD = d;
+        best = tile;
+      }
+    }
+  }
+  return best;
+}
+
+function mill(c: Ctx): Candidate | null {
+  const { m } = c;
+  const worth = 2600 * (0.5 + c.industry / 100);
+  return raise(c, StructureKind.mill, Craft.millwrighting, 12, worth, "build_mill", "let_the_stream_work", () => millSite(c, m.homeX, m.homeY, 9));
+}
+
+/** Take roots one can spare to a mill: they come back as rations, which feed more and keep. */
+function grind(c: Ctx): Candidate | null {
+  const { a } = c;
+  const rootE = ITEM_SPECS[Item.root]!.energy;
+  const spare = Math.min(a.inv[Item.root] as number, Math.floor((c.foodE - DAILY_ENERGY) / rootE));
+  if (spare < 4) return null;
+  const ml = known(c, StructureKind.mill, 12, a.x, a.y, (k) => k.state >= 1 && k.bound < 0);
+  if (!ml) return null;
+  const q = Math.min(spare, 10);
+  const time = walk(cheb(ml.x, ml.y, a.x, a.y)) + 3;
+  const gain = q * (ITEM_SPECS[Item.ration]!.energy - rootE) + q * rootE * 0.2;
+  return { score: (gain * (0.6 + c.prudence / 120)) / time, plan: plan("take_to_mill", "rations_keep", { k: "deposit", structure: ml.id, item: Item.root, qty: q }) };
+}
+
+function recordHouse(c: Ctx): Candidate | null {
+  const worth = 1500 * (0.4 + c.sociability / 120);
+  return raise(c, StructureKind.record_house, Craft.record_keeping, 14, worth, "build_record_house", "so_it_is_not_lost");
+}
+
+/** With nothing pressing: write down what one knows, or go and read. */
+function visitRecordHouse(c: Ctx): Plan | null {
+  const { a, m } = c;
+  if (!hasHome(c) || c.tick < cool(c, COOL.records)) return null;
+  const rh = known(c, StructureKind.record_house, 14, a.x, a.y, (k) => k.state >= 1);
+  if (!rh) return null;
+  const writes = knows(a, Craft.record_keeping) && a.lore !== 0;
+  // nobody knows what is written there without going; the curious go, and those who can write go to write
+  if (!writes && (rh.state < 2 || c.curiosity < 30)) return null;
+  m.cool[COOL.records] = c.tick + (writes ? 1 : 3) * TICKS_PER_DAY;
+  return plan(writes ? "keep_records" : "read_records", writes ? "write_it_down" : "curious", { k: "inspect", structure: rh.id });
 }
 
 // ───────────────────────── other people
@@ -740,7 +941,8 @@ function withdrawFood(c: Ctx, hungry: boolean): Plan | null {
   const { a, world } = c;
   if (c.foodE >= (hungry ? 200 : DAILY_ENERGY * 0.6)) return null;
   const refusedAt = (id: number): boolean => c.m.mem.some((x) => x.kind === "refused" && x.ref === id && c.tick - x.tick < 2 * TICKS_PER_DAY);
-  const st = known(c, StructureKind.store, hungry ? 14 : 6, a.x, a.y, (k) => k.state >= 2 && !refusedAt(k.id));
+  const stocked = (k: KnownStructure): boolean => k.state >= 2 && !refusedAt(k.id);
+  const st = larder(c, hungry ? 14 : 6, stocked);
   if (!st) return null;
   const mine = world.structures[st.id]?.contributors.includes(a.id) ?? false;
   // the conforming leave a store they had no hand in until they are truly starving
@@ -759,6 +961,27 @@ function withdrawFood(c: Ctx, hungry: boolean): Plan | null {
   }
   if (intents.length === 0) return null;
   return plan("eat", mine ? "from_my_store" : "from_a_store", ...intents);
+}
+
+/**
+ * The nearest place food is kept that passes `ok`: a store, and in a world with crafts a
+ * granary or a mill as well (nearest first; of two equally near, the one built first).
+ */
+function larder(c: Ctx, maxDist: number, ok: (k: KnownStructure) => boolean): KnownStructure | undefined {
+  const { a } = c;
+  const crafts = c.world.config.crafts;
+  let best: KnownStructure | undefined;
+  let bestD = maxDist + 1;
+  for (const ks of c.m.structs) {
+    if (ks.kind !== StructureKind.store && !(crafts && (ks.kind === StructureKind.granary || ks.kind === StructureKind.mill))) continue;
+    if (!ok(ks)) continue;
+    const d = cheb(ks.x, ks.y, a.x, a.y);
+    if (d < bestD || (d === bestD && best !== undefined && ks.id < best.id)) {
+      bestD = d;
+      best = ks;
+    }
+  }
+  return best;
 }
 
 /** Food lying on the ground in view is picked up by the hungry. */
@@ -830,6 +1053,11 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
   const home = evening(c);
   if (home) return home;
 
+  if (world.config.crafts) {
+    const mend = convalesce(c);
+    if (mend) return mend;
+  }
+
   let best: Candidate | null = null;
   const consider = (cand: Candidate | null) => {
     if (cand && cand.plan.intents.length > 0 && (!best || cand.score > best.score)) best = cand;
@@ -844,6 +1072,16 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
     consider(store(c));
     consider(stash(c));
     consider(plot(c));
+    if (world.config.crafts) {
+      consider(sow(c));
+      consider(granary(c));
+      consider(house(c));
+      consider(healingHouse(c));
+      consider(layCare(c));
+      consider(mill(c));
+      consider(grind(c));
+      consider(recordHouse(c));
+    }
   }
   // getting something by exchange is weighed against getting it oneself
   const offer = offerCandidate(world, a, c.seen);
@@ -858,6 +1096,11 @@ export function planDecide(world: WorldState, sc: Scratch, a: Agent): Plan | nul
 
   const civic = civicLeisure(world, a, c.seen);
   if (civic) return civic;
+
+  if (world.config.crafts && !night) {
+    const read = visitRecordHouse(c);
+    if (read) return read;
+  }
 
   const said = talk(c);
   if (said) return said;

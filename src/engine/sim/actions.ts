@@ -12,8 +12,14 @@ import { clampInt } from "../core/math";
 import { cleanText } from "../core/text";
 import { Stream, below, chance, stochasticDiv } from "../core/rng";
 import {
+  Craft,
+  FIELD_GROW_DAYS,
+  FIELD_RESOW_LABOR,
+  FIELD_RESOW_ROOTS,
+  FIELD_YIELD,
   FIRE_MAX_FUEL,
   FIRE_TICKS_PER_WOOD,
+  FIRST_WORK_KIND,
   ITEM_COUNT,
   ITEM_SPECS,
   Item,
@@ -29,6 +35,7 @@ import {
   StructureKind,
   TICKS_PER_DAY,
   Water,
+  craftFor,
 } from "../model/constants";
 import { Activity, type Agent, type Intent, type Structure, type WorldState } from "../model/types";
 import { droughtActive, hearingRadius, sightRadius } from "../world/climate";
@@ -41,6 +48,7 @@ import { carriedWeight, carryCapacity, dropOnGround, emptyInv, roomFor, sink, so
 import { checkIntent } from "./intents";
 import { findPath, isFrontier, nearestKnown } from "./pathfind";
 import { pileAt, structureAt, type Scratch } from "./scratch";
+import { bedsOf, demonstrate, goodsCapacity, holdsGoods, isRemedy, knows, layUpCare, mayFound, visitRecords } from "./works";
 
 const WEAR_THRESHOLD = 24;
 const MAX_TEXT = 200;
@@ -355,8 +363,14 @@ export function startNext(world: WorldState, sc: Scratch, a: Agent, out: EventOu
       case "rest": {
         const ticks = clampInt(intent.ticks, 1, 64);
         a.asleep = true;
-        // enter a shelter on or beside this tile if there is room and access
-        for (let dy = -1; dy <= 1 && a.shelter < 0; dy++) {
+        // Enter a dwelling on or beside this tile if there is room and access: the first found, unless a
+        // better kind stands beside it (a stone house over a shelter; for the ill or hurt, a healing
+        // house over both, and only they are taken in there). Where every dwelling is a shelter, as in
+        // any world without crafts, this is the first shelter found, as it always was.
+        const needy = a.ill > 0 || a.health < 700;
+        let bed = -1;
+        let rank = 0;
+        for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             const xx = a.x + dx;
             const yy = a.y + dy;
@@ -364,13 +378,19 @@ export function startNext(world: WorldState, sc: Scratch, a: Agent, out: EventOu
             const sid = structureAt(world, sc, yy * w + xx);
             if (sid < 0) continue;
             const s = world.structures[sid]!;
-            if (s.kind !== StructureKind.shelter || !s.complete) continue;
-            if (s.occupants >= STRUCTURE_SPECS[StructureKind.shelter]!.capacity) continue;
+            const beds = bedsOf(s.kind);
+            if (beds === 0 || !s.complete) continue;
+            const r = s.kind === StructureKind.healing_house ? (needy ? 3 : 0) : s.kind === StructureKind.house ? 2 : 1;
+            if (r <= rank) continue;
+            if (s.occupants >= beds) continue;
             if (!storeAccess(world, a, s, "shelter", 0, 0)) continue;
-            s.occupants++;
-            a.shelter = sid;
-            break;
+            bed = sid;
+            rank = r;
           }
+        }
+        if (bed >= 0) {
+          world.structures[bed]!.occupants++;
+          a.shelter = bed;
         }
         begin(a, "rest", ticks);
         emit(world, out, "sleep", a.id, a.shelter >= 0 ? { s: a.shelter, p: parentsOf(a.mind.decisionEvent) } : { p: parentsOf(a.mind.decisionEvent) });
@@ -428,6 +448,11 @@ export function startNext(world: WorldState, sc: Scratch, a: Agent, out: EventOu
           }
           if (spec.kind === StructureKind.plot && (terrain.fertility[tile] as number) < 35) {
             reject(world, a, out, intent, "infertile");
+            return;
+          }
+          const barred = mayFound(world, sc, a, spec.kind, intent.x, intent.y);
+          if (barred) {
+            reject(world, a, out, intent, barred);
             return;
           }
           begin(a, "build", 1);
@@ -618,20 +643,27 @@ function validateStructureIntent(world: WorldState, a: Agent, s: Structure, inte
       return null;
     }
     case "harvest": {
-      if (!s.complete || s.kind !== StructureKind.plot) return "not_a_plot";
+      if (!s.complete || (s.kind !== StructureKind.plot && s.kind !== StructureKind.field)) return "not_a_plot";
       if (s.ripeTick < 0 || world.tick < s.ripeTick) return "not_ripe";
       return null;
     }
     case "deposit": {
-      if (!s.complete || s.kind !== StructureKind.store) return "not_a_store";
+      if (s.complete && s.kind === StructureKind.healing_house) {
+        // care is laid up there from berries or fibre, by someone who knows which plants heal
+        if (!Number.isInteger(intent.item) || !isRemedy(intent.item) || !(intent.qty >= 1)) return "not_a_remedy";
+        if (!knows(a, Craft.herb_lore)) return "unknown_craft";
+        if ((a.inv[intent.item] as number) <= 0) return "no_item";
+        return null;
+      }
+      if (!s.complete || !holdsGoods(s.kind)) return "not_a_store";
       if (!Number.isInteger(intent.item) || intent.item < 0 || intent.item >= ITEM_COUNT || !(intent.qty >= 1)) return "bad_quantity";
       if ((a.inv[intent.item] as number) <= 0) return "no_item";
-      if (storeLoad(s) + ITEM_SPECS[intent.item]!.weight > STRUCTURE_SPECS[StructureKind.store]!.capacity) return "store_full";
+      if (storeLoad(s) + ITEM_SPECS[intent.item]!.weight > goodsCapacity(s.kind)) return "store_full";
       if (!storeAccess(world, a, s, "deposit", intent.item, intent.qty)) return "not_permitted";
       return null;
     }
     case "withdraw": {
-      if (!s.complete || s.kind !== StructureKind.store) return "not_a_store";
+      if (!s.complete || !holdsGoods(s.kind)) return "not_a_store";
       if (!Number.isInteger(intent.item) || intent.item < 0 || intent.item >= ITEM_COUNT || !(intent.qty >= 1)) return "bad_quantity";
       if ((s.inv[intent.item] as number) <= 0) return "nothing_here";
       if (roomFor(a, intent.item) <= 0) return "no_capacity";
@@ -649,9 +681,15 @@ function validateStructureIntent(world: WorldState, a: Agent, s: Structure, inte
 
 function completeStructure(world: WorldState, sc: Scratch, a: Agent, s: Structure, out: EventOut): void {
   s.complete = true;
-  s.builtTick = world.tick;
+  // a field is completed every time it is sown: its first sowing is when it was made
+  const resown = s.kind === StructureKind.field && s.builtTick >= 0;
+  if (!resown) s.builtTick = world.tick;
   if (s.kind === StructureKind.campfire) s.fuel = 2 * FIRE_TICKS_PER_WOOD;
-  if (s.kind === StructureKind.plot) {
+  if (s.kind === StructureKind.field) s.ripeTick = world.tick + FIELD_GROW_DAYS * TICKS_PER_DAY;
+  if (resown) {
+    gainSkill(world, a, Skill.farm, 3);
+    emit(world, out, "plant", a.id, { s: s.id, x: s.x, y: s.y, r: "field", p: parentsOf(a.mind.decisionEvent) });
+  } else if (s.kind === StructureKind.plot) {
     s.ripeTick = world.tick + PLOT_GROW_DAYS * TICKS_PER_DAY;
     gainSkill(world, a, Skill.farm, 3);
     emit(world, out, "plant", a.id, { s: s.id, x: s.x, y: s.y, p: parentsOf(a.mind.decisionEvent) });
@@ -858,6 +896,7 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         bound: -1,
         integrity: 1000,
         removed: false,
+        lore: 0,
       };
       world.structures.push(s);
       world.nextStructure = world.structures.length;
@@ -903,6 +942,8 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         return;
       }
       if (!s.complete && s.laborDone >= s.laborNeeded) completeStructure(world, sc, a, s, out);
+      // whoever knows the craft of a work and labours at it shows those watching how it is done
+      if (s.kind >= FIRST_WORK_KIND) demonstrate(world, a, craftFor(s.kind), out);
       if (s.complete || intent.k === "work") popIntent(a);
       return;
     }
@@ -931,14 +972,15 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
     case "harvest": {
       if (intent.k !== "harvest") return;
       const s = structureIfUsable(world, intent.structure);
-      if (!s || s.kind !== StructureKind.plot || s.ripeTick < 0 || world.tick < s.ripeTick) {
+      if (!s || (s.kind !== StructureKind.plot && s.kind !== StructureKind.field) || !s.complete || s.ripeTick < 0 || world.tick < s.ripeTick) {
         reject(world, a, out, intent, "contested");
         return;
       }
       const tile = s.y * w + s.x;
-      let y = PLOT_YIELD;
-      if ((world.terrain.fertility[tile] as number) >= 70) y += 1;
-      if ((a.skills[Skill.farm] as number) >= 500) y += 1;
+      const isField = s.kind === StructureKind.field;
+      let y = isField ? FIELD_YIELD : PLOT_YIELD;
+      if ((world.terrain.fertility[tile] as number) >= 70) y += isField ? 2 : 1;
+      if ((a.skills[Skill.farm] as number) >= 500) y += isField ? 2 : 1;
       source(world, Item.root, y);
       const kept = Math.min(y, roomFor(a, Item.root));
       a.inv[Item.root] = (a.inv[Item.root] as number) + kept;
@@ -946,10 +988,21 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
       a.stats.gathered[Item.root] = (a.stats.gathered[Item.root] as number) + y;
       world.metrics.gatheredUnits += y;
       world.metrics.workTicks += act.dur;
-      s.removed = true;
+      if (isField) {
+        // a reaped field stands, unsown: seed and the labour of sowing make it bear again
+        s.complete = false;
+        s.ripeTick = -1;
+        s.missing[Item.root] = FIELD_RESOW_ROOTS;
+        s.laborDone = 0;
+        s.laborNeeded = FIELD_RESOW_LABOR;
+        world.metrics.fieldHarvests++;
+      } else {
+        s.removed = true;
+      }
       sc.structDirty = true;
       gainSkill(world, a, Skill.farm, 5);
-      emit(world, out, "harvest", a.id, { s: s.id, q: y, b: s.founder, p: parents });
+      emit(world, out, "harvest", a.id, isField ? { s: s.id, q: y, b: s.founder, r: "field", p: parents } : { s: s.id, q: y, b: s.founder, p: parents });
+      if (isField) demonstrate(world, a, Craft.tillage, out);
       if (s.founder !== a.id) {
         // the planter, if watching, notices someone else reaping what they sowed
         for (const o of witnesses(world, s.x, s.y, a.id)) {
@@ -1032,7 +1085,19 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         reject(world, a, out, intent, "no_target");
         return;
       }
-      const cap = STRUCTURE_SPECS[StructureKind.store]!.capacity;
+      if (s.kind === StructureKind.healing_house) {
+        if (!isRemedy(intent.item) || !knows(a, Craft.herb_lore)) {
+          reject(world, a, out, intent, "unknown_craft");
+          return;
+        }
+        if (layUpCare(world, a, s, intent.item, Math.max(1, Math.floor(intent.qty)), out, parents) <= 0) {
+          reject(world, a, out, intent, (a.inv[intent.item] as number) <= 0 ? "no_item" : "store_full");
+          return;
+        }
+        popIntent(a);
+        return;
+      }
+      const cap = goodsCapacity(s.kind);
       const roomUnits = Math.floor((cap - storeLoad(s)) / ITEM_SPECS[intent.item]!.weight);
       const q = Math.min(Math.max(1, Math.floor(intent.qty)), a.inv[intent.item] as number, roomUnits);
       if (q <= 0 || !storeAccess(world, a, s, "deposit", intent.item, q)) {
@@ -1116,6 +1181,10 @@ function complete(world: WorldState, sc: Scratch, a: Agent, out: EventOut): void
         if (s.complete) delete ks.missing;
         else ks.missing = s.missing.slice();
         emit(world, out, "inspect", a.id, { s: s.id, p: parents });
+        if (s.kind === StructureKind.record_house) {
+          visitRecords(world, a, s, out);
+          ks.state = structureStateCode(s, world.tick);
+        }
       }
       popIntent(a);
       return;

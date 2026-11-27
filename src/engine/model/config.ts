@@ -20,7 +20,8 @@ export type ShockKind =
   | "bounty" // renewable nodes are topped up
   | "windfall" // a pile of food and wood washes ashore
   | "newcomers" // additional adults arrive on the shore
-  | "hush"; // voices carry less far
+  | "hush" // voices carry less far
+  | "stranger"; // one adult arrives who knows a craft (worlds with crafts only; ignored elsewhere)
 
 export interface ScheduledShock {
   kind: ShockKind;
@@ -93,6 +94,31 @@ export interface WorldConfig {
   planting: boolean;
   openStoresTakeable: boolean;
 
+  // world rules added in engine 0.8.0. Each is off (or zero) in every world made before it,
+  // and a world with all three off is stepped exactly as engine 0.7.0 stepped it (D-055).
+  /**
+   * Crafts and the works they open: know-how that people find by practice, pick up by
+   * watching and by study, and can lose; fields, granaries, stone houses, healing houses,
+   * mills and record houses (constants.ts: CRAFT_SPECS).
+   */
+  crafts: boolean;
+  /** A settlement with beds to spare and food laid up draws newcomers to its shore. */
+  arrivals: boolean;
+  /**
+   * How many changes the observer may make to this world in one season (0 = as many as they
+   * like). The engine never reads it: it is a rule for whoever holds the observer's hand, kept
+   * here so that it travels with the world and is part of what a scenario is.
+   */
+  changesPerSeason: number;
+  /**
+   * How readily a person's own practice turns into a craft (permille of the chances in
+   * CRAFT_SPECS; worlds with crafts). It scales finding a craft by oneself only — from long
+   * practice, or herb lore on getting over an illness — never learning from someone at work or
+   * from a record house. At 1000 a practised island finds most crafts within a few years by
+   * itself; lower, what an island knows depends more on who comes to it.
+   */
+  discovery: number;
+
   // exogenous scheduled shocks
   shocks: ScheduledShock[];
 }
@@ -137,6 +163,10 @@ export const DEFAULT_CONFIG: WorldConfig = {
   lockableStores: true,
   planting: true,
   openStoresTakeable: true,
+  crafts: false,
+  arrivals: false,
+  changesPerSeason: 0,
+  discovery: 1000,
   shocks: [],
 };
 
@@ -168,7 +198,27 @@ export interface ScenarioDef {
  */
 const SHORE_SPLIT = 800;
 
+/**
+ * The Long Road's island: First Light's, a little leaner and with a harder winter, so that
+ * the years in which the wild food gives out are felt. Set on development seeds with
+ * scripts/climb.ts as a place where an untouched island of baseline minds sometimes meets
+ * the aim and sometimes does not: within ten years it did on nine of fourteen development
+ * seeds; on one they got as far as mills; on four they never got past fields, and on one of
+ * those everybody died (D-056, and the table in docs/EVIDENCE.md). Nothing here was set or
+ * checked on a holdout seed.
+ */
+const LONG_ROAD: Partial<WorldConfig> = { crafts: true, arrivals: true, changesPerSeason: 1, richness: 1050, nodeDensity: 1300, winterSeverity: 1150 };
+
 export const SCENARIOS: readonly ScenarioDef[] = [
+  {
+    id: "long_road",
+    title: "The Long Road",
+    tagline: "From fifty foragers to a people that keeps its own record.",
+    description:
+      "Fifty people and the first toolkit: fire, shelter, a store, a planted root. Whatever more they come to — tilling fields, keeping a harvest, building in stone, healing, milling, writing things down — they will have to find by their own practice, and can lose again. You are the island's fortune: once a season you may change what it offers. You cannot tell anyone what to do with it.",
+    objective: { id: "letters_in_time", text: "Bring four in five of the first fifty to the Age of Letters by the end of the fifth year." },
+    overrides: LONG_ROAD,
+  },
   {
     id: "first_light",
     title: "First Light",
@@ -301,7 +351,15 @@ export function validateConfig(cfg: WorldConfig): WorldConfig {
   if (!["off", "grammar_search", "scripted_control", "open"].includes(cfg.institutions)) {
     throw new Error("config.institutions invalid");
   }
-  for (const key of ["strait", "escrow", "lockableStores", "planting", "openStoresTakeable"] as const) {
+  // configurations written before crafts, arrivals and a limited hand existed mean "none of them"
+  const later = cfg as { crafts?: boolean; arrivals?: boolean; changesPerSeason?: number; discovery?: number };
+  if (later.crafts === undefined) cfg.crafts = false;
+  if (later.arrivals === undefined) cfg.arrivals = false;
+  if (later.changesPerSeason === undefined) cfg.changesPerSeason = 0;
+  if (later.discovery === undefined) cfg.discovery = 1000;
+  intInRange("changesPerSeason", cfg.changesPerSeason, 0, 99);
+  intInRange("discovery", cfg.discovery, 0, 4000);
+  for (const key of ["strait", "escrow", "lockableStores", "planting", "openStoresTakeable", "crafts", "arrivals"] as const) {
     if (typeof cfg[key] !== "boolean") throw new Error(`config.${key} must be boolean`);
   }
   if (!Array.isArray(cfg.shocks) || cfg.shocks.length > 16) throw new Error("config.shocks invalid");

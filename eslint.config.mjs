@@ -76,6 +76,8 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     ".data/**",
+    // working copies that coding agents make for themselves (each has its own build output)
+    ".claude/**",
   ]),
   {
     rules: {

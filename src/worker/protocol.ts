@@ -6,7 +6,7 @@
  * The only inputs that affect a world are: its config, time control, and observer
  * interventions (which are logged in the world's own ledger).
  */
-import type { DecisionRecord, Manifest, SimEvent, Summary, WorldConfig } from "@/engine";
+import type { AgeNeed, DecisionRecord, Legacy, Manifest, SimEvent, Summary, WorldConfig } from "@/engine";
 
 /**
  * A recorded run: the world's configuration, every decision an outside mind made (the tape),
@@ -171,6 +171,8 @@ export interface StaticWorldView {
   nodeY: Uint8Array;
   nodeCap: Int16Array;
   agents: StaticAgentView[];
+  /** The most people this world's record can ever hold (the dead included): how many figures a renderer must have room for. */
+  capacity: number;
 }
 
 export interface StructureView {
@@ -188,6 +190,39 @@ export interface StructureView {
   occupants: number;
   bound: number;
   founder: number;
+  /** record house: the crafts written in it, one bit each (0 for everything else). */
+  lore: number;
+  /** mill: whether its stream runs today (false for everything else). */
+  running: boolean;
+}
+
+/**
+ * How far the island has come, for the observer (worlds with crafts): the ages reached, what
+ * the next one asks for, the legacy and its parts, who knows what — and the same reading of
+ * the untouched twin once there is one. No citizen is shown any of it.
+ */
+export interface ProgressView {
+  /** Highest age ever reached, and the highest whose thresholds hold now (indices into AGES). */
+  reached: number;
+  standing: number;
+  /** The tick each age was first reached (-1 = not yet). */
+  ticks: number[];
+  next: { age: number; needs: AgeNeed[] } | null;
+  legacy: Legacy;
+  /** Living people who know each craft, by craft id. */
+  knowers: number[];
+  /** Crafts written down in some record house, one bit each. */
+  recorded: number;
+  living: number;
+  works: { fields: number; granaries: number; houses: number; healingHouses: number; mills: number; recordHouses: number };
+  /** The untouched twin, once there is one: how far it has come, when, what it has to show and how many are alive. */
+  twin: { reached: number; legacy: number; living: number; ticks: number[] } | null;
+}
+
+/** The observer's hand in a world that limits it: how many changes a season allows and how many are left in this one. */
+export interface HandView {
+  perSeason: number;
+  left: number;
 }
 
 export interface PileView {
@@ -281,6 +316,10 @@ export interface ViewFrame {
   replay: ReplayView | null;
   /** The world's own history (absent while a recording is watched: that history is the recording). */
   history: HistoryView | null;
+  /** Ages, legacy and crafts (null in a world without crafts). */
+  progress: ProgressView | null;
+  /** Null where the observer's hand is not limited. */
+  hand: HandView | null;
 }
 
 /** One charter (proposal or institution) as the observer sees it. Rule sentences are generated from the validated charter. */
@@ -326,6 +365,9 @@ export interface DaySample {
   commons: number;
   gini: number;
   structures: number;
+  /** Legacy and the age reached that day (worlds with crafts; absent in samples made before they were counted). */
+  legacy?: number;
+  age?: number;
 }
 
 export type AimState = "open" | "met" | "lost" | "reading";
@@ -456,6 +498,8 @@ export interface AgentDetail {
   load: number;
   /** The citizen's most recent logged events, newest first. */
   recent: SimEvent[];
+  /** Crafts this citizen knows, one bit each (always 0 in a world without crafts). */
+  lore: number;
 }
 
 export interface TileDetail {

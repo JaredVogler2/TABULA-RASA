@@ -1,0 +1,39 @@
+Triangles per mesh in the picture's own pass (instances included), largest first.
+The changed build (D-054), First Light seed 1, the vista, high preset.
+Read from the studio's own listing (window.__studio.budget()) at this camera (its 28 largest rows); the line under
+this is what the renderer reports of a whole frame, every pass counted.
+A mesh that casts a shadow is drawn into the shadow map on every second frame only, and crowns, bushes and rocks
+are drawn there as coarse stand-ins. From this far, crowns and bushes wear their plainer form and three tufts of
+grass in ten are drawn.
+
+a frame that redraws shadows: 80 draw calls, 913,214 triangles · on average: 71 draw calls, 746,236 triangles
+
+triangles  instances  mesh
+   131072       1  terrain
+    54080     338  flora-canopyA
+    37760     236  flora-canopyC
+    37440     234  flora-canopyB
+    35931    1711  flora-grass
+    28160    1408  flora-berry
+    24120     134  flora-rock
+    21120     176  flora-bush
+    19600      50  citizen-head
+    19392     808  flora-trunk
+    17400      50  citizen-body
+    16800     100  citizen-shin
+    14400     100  citizen-forearm
+    12060      67  flora-rock2
+    10640     380  flora-root
+    10152     376  flora-reed
+    10080     504  flora-pebbles
+     9880     247  flora-conifer
+     9000      50  citizen-hair
+     8400     100  citizen-upper-arm
+     8152       1  fresh-water
+     6000     100  citizen-thigh
+     5940      27  campfires
+     5928     247  flora-trunkTall
+     4752      18  citizen-hat
+     4608       1  sea
+     4000      50  citizen-ghost-head
+     2600      13  flora-clay

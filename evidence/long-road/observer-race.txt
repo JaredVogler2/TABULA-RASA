@@ -1,0 +1,36 @@
+The observer test's race (tests/e2e/observer.spec.ts), 2026-11-27
+
+What failed: `e2e (desktop)` on pull request 11 at 343303a. One test of nineteen:
+  observer.spec.ts:138  expect(getByTestId('aim-yours')).toHaveAttribute('data-state', 'open')  — received "met"
+The phone project passed the same test in the same run; the desktop project passed it on `main` (pull request 10).
+
+What the test did: it pressed play at the fastest speed (128 ticks a second: a day in three quarters of a second),
+then tried the sound — seven pointer actions — and only then paused. Further down it reads the aim on First
+Light's card, which is decided on the forty-first morning (tick 3840).
+
+Measured here (headless Chromium on a software renderer, 1366 x 768, the low preset as the test uses it; a
+scratch script performing the same actions and reading the tick after each; three production builds served
+one at a time, three rounds, alternating). The tick at which the world was paused:
+
+  build                                         round 1   round 2   round 3
+  main at 71d4418 (before this pull request)      3761      4185      4404
+  this branch before the graphics merge           4846      4224      4596
+  this branch with the graphics merge             4659      3252      4628
+
+  The first winter ends at tick 3840. Under it: 1 of 3, 0 of 3, 1 of 3.
+
+Each click took between about one and eleven seconds; the seven of them, with the two waits on the sound
+level, took 31 to 42 seconds from play to pause. The spread between rounds of one build (3252 to 4659) is
+larger than any difference between builds: the test depended on how quick the clicks happened to be, on `main`
+as much as here.
+
+The fix: the sound is tried with the world at its slowest (2 ticks a second), then the world runs at sixteen
+times until it is past tick 300 and is paused; the test now also says outright that it must have stopped
+before the thirtieth day. A slow click then costs days, not weeks.
+
+After the fix (`pnpm exec playwright test tests/e2e/observer.spec.ts`, both projects, on the merged build):
+  ✓  1 [desktop] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.7m)
+  ✓  2 [mobile] › tests/e2e/observer.spec.ts:44:1 › the observer's instruments work: sound, what a citizen knows, atlas, almanac and field journal (2.7m)
+  2 passed (5.4m)
+
+Not shown: the same measurement on GitHub's runner, where the test passed on `main` and failed here once each.

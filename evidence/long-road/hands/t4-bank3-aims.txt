@@ -1,0 +1,21 @@
+24 runs: 2 players on 12 islands (seeds 1,2,3,4,5,6,7,8,9,10,11,12)
+
+When the last age was reached (day; — = not within the run), and how many of the first fifty were alive that morning:
+seed  steward      balanced     
+1     124 · 46     210 · 48     
+2     128 · 14     111 · 49     
+3     139 · 7      114 · 48     
+4     177 · 2      79 · 47      
+5     69 · 46      130 · 47     
+6     121 · 30     120 · 48     
+7     159 · 4      100 · 49     
+8     171 · 7      73 · 49      
+9     150 · 3      133 · 43     
+10    — (0)        119 · 47     
+11    110 · 15     86 · 46      
+12    69 · 47      89 · 44      
+
+Aim: the last age by the end of year 5 (day 200), with at least F of the first fifty alive — islands on which it would be met:
+F     steward      balanced     
+45    3 of 12      9 of 12      
+40    3 of 12      11 of 12     

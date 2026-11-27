@@ -2,6 +2,57 @@
 
 Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, then `docs/DECISIONS.md`.
 
+## The Long Road (2026-11-27): read this first
+
+**Engine 0.8.0, snapshot format 7, affordances 2026.11-j, prompt p3** (D-055 to D-058). What the owner asked
+for after playing, and what was done: `docs/HANDOFF.md` § Since this was written. In short: a world can be made
+with crafts and newcomers; the default scenario, The Long Road, has ages, a legacy, one change a season and an
+aim (four in five of the first fifty at the Age of Letters by the end of the fifth year); the aim's numbers
+were set with scripted players.
+
+- **Do not break the old worlds.** With `crafts` and `arrivals` off a world must be stepped exactly as 0.7.0
+  stepped it. `tests/support/legacy-0.7.0.json` was written by the unchanged 0.7.0 engine and must never be
+  regenerated; `pnpm exec tsx scripts/legacy-digests.ts --check` re-runs all thirteen worlds (the unit suite
+  runs eleven), and `scripts/legacy-studies.ts --bundle pilot|confirmatory` re-runs published study cells.
+  `DIGEST_COMPATIBLE_ENGINES` in `src/engine/version.ts` is the claim; those two scripts are its proof.
+- **Development seeds are 1–999; 9000–9999 are holdout and 9000–9031 are spent.** Everything about crafts,
+  arrivals and the aim was set on seeds 1–14. `scripts/climb.ts` and `scripts/hands.ts` refuse other seeds.
+- **How hard is it?** `pnpm exec tsx scripts/hands.ts --seeds 1-12 --years 5 --stop-at-aim` plays the same
+  islands with scripted hands and reports the game's own aim; `scripts/hands-aims.ts <files.json>` scores
+  other aims of the same kind from recorded runs. A thriving island (a hundred and more people) is slow to
+  step: a batch of twelve islands and seven players took about half an hour on three cores.
+- **People arrive in the middle of a step.** Anything sized by headcount must be sized by
+  `agentCapacity(config)`, not by how many are there (D-055: a table one place short stopped a world for good).
+- **What nobody has done:** played it. The players in every number are scripts.
+- **Ideas put to the owner and not built** (D-058): harder grades of the aim, choosing where a change falls,
+  hardships with signs and changes saved for them, a wonder that draws the curious, an island a day.
+- **A browser test must not depend on where the world happens to stop.** The world runs in its worker at
+  its own pace while a click waits for the page, so the tick at which a test reaches a step differs from run
+  to run, and by more on a software renderer. Two tests failed in CI on this pull request for that reason and
+  no other (`evidence/long-road/observer-race.txt`, `someone-else.txt`): step to a known tick, or make the
+  step work at any. CI keeps nothing of a failed browser run but its log, so a test's message should say the
+  tick.
+- **The owner merges quickly and a merge deploys itself** (below). The Long Road is the default scenario on
+  the title screen: a fault in it is the first thing a visitor meets.
+
+Checked on this work's tree: `pnpm test` 568 passed, 2 skipped by design, 48 files (with PostgreSQL); lint,
+types and every generated-file check; the legacy scripts above; `tests/e2e/goal.spec.ts` on both projects
+(2 passed). The whole browser suite was not finished here: a run on the tree before the graphics merge was
+stopped by the session's 30-minute limit on background commands after 13 of 38 tests, all passing
+(`evidence/long-road/e2e-local-partial.txt`). CI runs both projects on every push, and GitHub has the result
+for the head. **A background command here is stopped after 30 minutes unless given a longer limit: the whole
+suite needs about 45.**
+
+## Graphics, second pass (2026-11-27)
+
+D-054: a frame made cheaper, and the saving spent on leaves, water, rock and the sky's light
+(`src/render/detail.ts`, `flora.ts`, `terrain.ts`, `water.ts`; tests in `src/render/realism.test.ts`).
+`node scripts/frame-cost.mjs` sets one build beside another by processor time, which holds on a busy machine
+where the wall clock does not. `stats().drawCalls` and `.triangles` are now the dearer of the last two frames
+(shadows are redrawn every second frame); `drawCallsMean` and `trianglesMean` are new. Left for a next pass,
+by the one who made it: a still toward the sun to judge the glints and the light through a crown's rim; the
+leaf texture reads woolly close in; thin rock beds read as ruled lines; shadow grain on smooth crowns.
+
 ## Graphics update (2026-11-27)
 
 D-053 builds on `6ec20bc` (pull request 9). The renderer and desktop framing are in `a4fce54`. The citizen geometry lives in `src/render/citizenGeometry.ts`.
@@ -30,8 +81,9 @@ Review the branch preview before merging to the Vercel production branch. Physic
   https://tabula-rasa-bay.vercel.app** by the owner's import on 2026-11-26; 25 of 25 release checks; the console and
   live minds are not deployed) · 19 PASS (a self-assessment) · 20 PASS. **All twenty phases have been
   worked; what is left is the owner's: `docs/HANDOFF.md`.**
-- **The engine is frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2). The confirmatory
-  batch was run on it, once (D-044). Do not change engine behaviour without a new version, and never claim a
+- **The engine was frozen at 0.7.0** (snapshot schema 6, affordances 2026.11-i, prompt p2) when this section
+  was written, and the confirmatory batch was run on it, once (D-044). It is 0.8.0 now (top of this file),
+  and steps such worlds identically. Do not change engine behaviour without a new version, and never claim a
   new confirmatory result from seeds 9000–9031: they are spent.
 - **Last commit verified as a whole:** `de2f0e1` (phase 20), in a clean checkout: `pnpm check` and the whole of
   `pnpm e2e`. After it: that run's logs and stills; then D-050 (a page slower than its world), for which
@@ -58,6 +110,9 @@ pnpm e2e          # Playwright, production build, desktop + phone emulation (abo
                   # one Playwright run at a time on a machine: each run's set-up drops and recreates the `e2e` schema,
                   # so a second run started beside it fails the first one's owner-console tests with "The server answered 500"
 pnpm sim -- --scenario first_light --seed 1 --days 40 --policy planner --replay
+pnpm exec tsx scripts/climb.ts --scenario long_road --seeds 1-4 --years 10   # how far untouched islands climb, year by year
+pnpm exec tsx scripts/hands.ts --seeds 1-4 --years 5 --stop-at-aim           # the same islands under scripted players
+pnpm exec tsx scripts/legacy-digests.ts --check                              # every world recorded under 0.7.0, re-run
 pnpm compare -- --seeds 1-4 --days 40                  # paired baselines, development seeds
 pnpm schedulers -- --seeds 1-4 --days 6 --slots 8      # activation policies on the same worlds, mock minds, no cost
 pnpm record -- --id mock-first-light --seed 7 --days 6 # re-record the bundled mock recording (verifies it replays)

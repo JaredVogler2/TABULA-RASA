@@ -1,6 +1,6 @@
 # Art bible
 
-The island and its citizens are rendered from live simulation state. The phase 11 critique and measurements below are the baseline for the realism pass (D-053).
+The island and its citizens are rendered from live simulation state. The phase 11 critique and measurements below are the baseline for the realism pass (D-053) and for the one after it (D-054), which made a frame cheaper before it made it richer.
 
 ## The idea
 
@@ -35,7 +35,7 @@ Scene colours are authored in sRGB and converted to linear in shaders; tonemappi
 | Shore sand | `#d6c292` | |
 | Soil and worn path | `#7a5c3c`, `#b59a6c` | slab sides, traffic tint |
 | Sea | `#7fd6cf` shallow → `#328ca2` → `#164b73` deep; foam `#f2fbf8` | by distance from shore |
-| Fresh water | clear `#7fd6cf` over the gravel at the edge → `#175f5e` in mid-channel | streams streak along their fall; ponds lie still |
+| Fresh water | clear `#86b3a4`, a fifth opaque, over the gravel at the edge → `#175f5e` in mid-channel | the bed is what is mostly seen; streams are carried along their fall, ponds lie still, and both mirror the sky only at a slant (D-054; `#7fd6cf` and two fifths opaque before it) |
 | Banks and beds | damp earth `#665539`, gravel `#56655a`, pebbles `#9c9684` | where the channel mask says water meets land |
 | Cloth of agreements | `#b4533c` `#3f6a8c` `#c98a2b` `#5a7d4b` `#8c5a86` `#2f6e6a` `#c26d4a` `#6b7fb0` | one per institution: pennants, cords, the Charters panel, the atlas |
 | A person hidden by scenery | ember `#f6c57e` at 13–33% | the faint shape of D-027 |
@@ -66,10 +66,17 @@ after dark.
 ## Geometry language
 
 - Terrain: Catmull-Rom surface through tile centres at 4× subdivision, crags on steep highland, a sea floor
-  that falls away from the shore so shallows are luminous and the rim is deep.
-- Flora: faceted, slightly irregular lumps — three broadleaf silhouettes (round, tall, wide), a three-tier
-  conifer, low bushes with separate berries, reeds, root rosettes and grass tufts. Layered leaf colour and
-  curved grass blades add detail at ground level while the crowns retain their carved silhouettes.
+  that falls away from the shore so shallows are luminous and the rim is deep. Turf and gravel have a fine
+  relief that tilts the light (read from a small texture made in the browser); cliffs show the ledges of
+  their bedding, thick beds from far and thin ones from near; sand just above the waterline is wet (D-054).
+- Flora: irregular lumps, lit since D-054 as one soft mass and not as facets — three broadleaf silhouettes
+  (round, tall, wide), a conifer of four uneven skirts of boughs, low bushes with separate berries, reeds,
+  root rosettes and grass tufts. A crown's normals lean out from its middle; the dimness in its creases and
+  underneath is carried on its vertices; its leaves are one look at a texture of massed sprays wrapped round
+  it; with the sun behind it, light comes through at the rim. On the high preset the outline of each lump is
+  broken where the foliage is thin. From beyond 84 units crowns and bushes wear the plainer form the low
+  preset always wears, and from 42 to 105 units the grass thins to three tufts in ten. On the low
+  preset broad-leaved crowns keep their facets and take no leaf texture.
 - Citizens: a fitted tunic with folds, belt and cuffs, trousers and boots, sculpted facial features,
   hair, and articulated arms with hands. Medium and High add finer faces and woven cloth. A straw hat
   is part of who a person is (three in ten, fixed by id). What they wear or carry for work reflects state:
@@ -79,6 +86,19 @@ after dark.
 - Structures: timber and stone primitives with visible stock (sacks at a store, sprouts on a plot). The
   shelter is a thatched A-frame: three overlapping courses a side, a dark ridge, crossed gable poles, an open
   front in shadow.
+- The six works of a world with crafts (`src/render/works.ts`; D-055) are in the same hand — faceted timber,
+  stone and thatch — and are told apart by silhouette before colour. A **field**: furrows of dark earth
+  between stakes, bare when unsown, green shoots as tall as the crop is ripe, gold when it is. A
+  **granary**: a round bin on a ring of stones under a conical cap. A **stone house**: dry-stone walls in
+  three courses, a slate roof and a chimney. A **healing house**: pale daubed walls in a timber frame under
+  a low reed roof, an open doorway and a bench; herbs hang under the eaves only while care is laid up. A
+  **mill**: a stone foot, a timber storey jettied over it, a steep thatch, and a wheel on the side the water
+  is that turns only while the stream runs. A **record house**: a small hall of dressed stone on a plinth,
+  slate over it, a porch on two posts, and one upright slab outside for each craft written in it. Slate is
+  the island's only cool roof, and marks the two things built to last. A granary and a mill show sacks for
+  what they hold. Stills: `evidence/long-road/work-*.jpg` (summer, late morning, software renderer). They
+  were looked at by the builder in stills; nobody else has judged them, and none has been seen on a
+  graphics chip.
 - Agreements (D-031): where an institution was ratified stands a post with a cap stone, one cord tied round
   it for each person who holds to it, up to ten, and a pennant in the institution's colour; the same pennant
   flies beside each store it governs. When the institution ends the post is left leaning, bare. A proposal draws
@@ -130,9 +150,15 @@ output); the tests show only that signal is produced, follows the controls and s
 
 ## Light
 
-The sun and moon follow the simulation clock and season (day length changes through the year). Shadows from
-the sun on medium/high. Night is deliberately readable: a cool moon at 1.25, raised ambient and +0.38 exposure,
-so that the board stays legible while fires dominate. Rain and snow are particle sheets with overcast grading.
+The sun and moon follow the simulation clock and season (day length changes through the year). At noon the
+sun stands 44° up at the equinoxes and 56° at midsummer (50° and 63° until D-054), so that shadows are long
+enough to give the island its relief from the vista. Shadows from the sun on medium/high, drawn again on every
+second frame and cast by coarse stand-ins for crowns, bushes and rocks (D-054). The sky's light is dimmer
+where less of the sky can be seen: in gullies, at the foot of cliffs and in stream beds, worked out once from
+the height field; and under whatever stands on the ground, for as long as it stands. The sun's light is not
+dimmed that way: that is what its shadows are for. Night is deliberately readable: a cool moon at 1.25, raised
+ambient and +0.38 exposure, so that the board stays legible while fires dominate. Rain and snow are particle
+sheets with overcast grading; rain on the sea is rings that open where drops fall.
 
 ## Typography and icons
 
@@ -144,11 +170,17 @@ Icons are Lucide line icons, always paired with a text label or an accessible na
 
 | Preset | What changes | Measured budget (First Light, `scripts/shots.mjs`) |
 |---|---|---|
-| High | 4× terrain mesh, full canopies, sun shadows 2048², bloom, tilt-shift, 4× MSAA, pixel ratio ≤ 2 | 1.65 million triangles per frame incl. the shadow pass, 84 draw calls at the vista (seed 1, day 3) |
-| Medium | as high without bloom, shadows 1024², 2× MSAA, pixel ratio ≤ 1.5 | 1.62 million triangles, 71 draw calls |
-| Low | 2× terrain mesh, simplified canopies/bushes/rocks, no shadows or post chain, cheaper terrain and water shaders, pixel ratio ≤ 1 | 0.41 million triangles, 52 draw calls |
+| High | 4× terrain mesh, full canopies with broken outlines (a plainer form from far off), sun shadows 2048² redrawn on every second frame, bloom, tilt-shift, 4× MSAA, pixel ratio ≤ 2 | 0.75 million triangles a frame on average and 0.91 million on a frame that redraws shadows; 71 draw calls on average, 80 at most |
+| Medium | as high without bloom or broken outlines, shadows 1024², 2× MSAA, pixel ratio ≤ 1.5 | 0.73 and 0.88 million triangles; 57.5 and 66 draw calls |
+| Low | 2× terrain mesh, simplified faceted canopies/bushes/rocks, no shadows or post chain, one look at the ground texture, pixel ratio ≤ 1 | 0.42 million triangles, 47 draw calls |
 
-Measured after phase 11 (`evidence/phase-11/shots.txt`). In phase 04, before the ecology was retuned to carry
+Measured after D-054 at the vista (First Light, seed 1, day 3; `scripts/frame-cost.mjs`,
+`evidence/realism-2/`). Shadows are redrawn on every second frame, so a frame has two costs. After D-053 the
+same three presets submitted 1.77, 1.72 and 0.43 million triangles on every frame, in 80, 66
+and 47 draw calls. After phase 11 they submitted 1.65, 1.62 and 0.41 million, in 84, 71 and 52
+(`evidence/phase-11/shots.txt`).
+
+In phase 04, before the ecology was retuned to carry
 about one and a half times the flora (D-014), the phase-04 version of this table gave 1.08, 1.05 and 0.26
 million triangles in 58, 45 and 30 calls for the same three presets (seed 1; the high preset's figure was stated
 as including the shadow pass). No raw output for those figures was kept. The phase-04 measurement that is on
@@ -234,8 +266,28 @@ not a measurement of anything a player would see.
 - Sound has never been heard by anyone (D-028).
 - Nothing has been seen on a GPU or a phone.
 
+## After D-054 (2026-11-27)
+
+The phase 11 rubric held three things against the picture that D-054 takes up: "Trees are still faceted
+lumps", "No ambient occlusion pass on high", "materials are flat-shaded colour only". It answers the first, and
+the second without a pass (the dimness is worked out once and carried on the ground); of the third it answers
+crowns, ground and water, and leaves structures as they were. None of it adds a draw call or a triangle to a
+frame (`docs/DECISIONS.md` D-054; stills in `evidence/realism-2/`). The rubric above is left as it was scored:
+nobody has looked at the new picture but its builder, in stills, on a software renderer.
+
+Still weak, and said so:
+
+- A crown is still lumps: smooth, textured and, on high, ragged at the rim, but it has no leaves and no
+  branches, and from directly above a wood is still a field of rounded heads.
+- Structures are still flat-shaded primitives.
+- Water mirrors a sky colour, not the island: no reflection of a tree or a hill lies on a pond.
+- The sun's glints on the sea and the light through the rim of a crown are in the shaders, and no still that is
+  kept looks toward the sun: neither has been judged.
+- Grass tufts appear as the camera comes closer than 105 units, and crowns change form between 70 and 84.
+- None of it has been seen moving at a real frame rate, on a real screen.
+
 ## Sources and licensing
 
-All geometry, shaders and textures are generated by code in `src/render/`. Fonts: Fraunces and Inter (SIL Open
+All geometry, shaders and textures are generated by code in `src/render/` (the three small textures of D-054 by `detail.ts`, in the browser, when the first world is drawn). Fonts: Fraunces and Inter (SIL Open
 Font License 1.1) via `@fontsource-variable`. Icons: Lucide (ISC). three.js (MIT). No images, models, audio or
 third-party art are bundled.

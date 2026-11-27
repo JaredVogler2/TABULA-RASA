@@ -1,0 +1,125 @@
+"Someone else was chosen": the whole-loop test's failure on the phone project (tests/e2e/play.spec.ts), 2026-11-27
+
+What failed: `e2e (mobile)` on pull request 11 at 59ce36f (finished 18:53 UTC). One test of nineteen (13 passed,
+5 skipped by design):
+  play.spec.ts:279  expect(other, "someone else was chosen").not.toBe(who)  — Expected: not 0
+`check` and `e2e (desktop)` passed on that commit. The phone project had passed the same test on the commit
+before it (343303a; the two differ in another test file and in documents) and on `main`. The step that failed
+was added on 26 November (7d8a306); counting by the result of each run, CI had run it on the phone project
+nine times before this, and it had passed nine times.
+
+What the step did: with one person followed and the world paused, it zoomed out by ten wheel notches, looked
+for anyone else drawn on the uncovered map at least 48 px from the person followed, and tapped the first; up
+to twelve times. If nobody was there to tap, nothing was tapped, the first person stayed chosen, and the
+assertion failed with exactly the message above (`0` is the citizen the test follows: it was 0 in CI and in
+every run here).
+
+Measured here (headless Chromium on a software renderer; a 390 x 844 touch page with the phone project's
+settings; First Light, seed 7, the reflex policy, the low preset: the test's own world).
+
+1. How much of the map is uncovered. At that step the column of the page the followed person is drawn in
+   shows the map from y = 273 to y = 415: a band 142 px tall, between the tutorial's card above and the
+   citizen's card below. The person followed is held in the middle of it.
+
+2. Who stands where they can be tapped, tick by tick. A scratch script selected citizen 0, followed them, set
+   the view as the test does (one notch in, then N notches out), and at every tick from 140 to 430 — exact
+   ticks, by the step button, the camera at rest — counted the other people drawn on the uncovered map at
+   least 48 px from citizen 0. Two views: ten notches out (what the test used), and the widest there is.
+
+   others who could be tapped       ten notches out    the widest view
+   nobody                               45 ticks           2 ticks
+   one or two                          108                38
+   three or more                       138               251
+   (of 291 ticks; the most at any tick: 5 and 7; others drawn anywhere in the picture: 2 to 12, and 6 to 18)
+
+   Nobody at ten notches: ticks 207-208, 230, 232, 315-317, 327-328, 348-382, 384.
+   Nobody at the widest:  ticks 235 and 405.
+   At no tick are both views empty.
+
+   Tick by tick, "ten notches / the widest" (each row starts at the tick named and runs ten ticks):
+  140  1/2  1/3  1/2  1/2  1/2  1/2  2/3  1/4  1/3  2/2
+  150  2/3  3/3  3/3  3/4  3/5  3/4  3/4  2/4  2/4  1/3
+  160  2/4  1/4  4/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4
+  170  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4
+  180  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4
+  190  3/4  3/4  3/4  3/5  4/5  3/3  3/4  3/5  3/7  3/7
+  200  4/7  1/7  1/6  1/5  2/6  2/6  2/7  0/6  0/5  1/6
+  210  1/6  1/4  1/5  1/4  1/3  1/5  2/4  1/4  1/4  1/4
+  220  2/7  2/4  2/3  2/4  3/2  3/2  3/2  1/2  1/1  1/3
+  230  0/2  1/2  0/2  1/2  2/1  2/0  2/1  1/1  1/2  2/2
+  240  1/2  1/1  1/2  1/2  2/3  1/2  2/4  3/4  3/4  2/3
+  250  2/6  2/4  3/4  3/5  3/4  3/4  4/4  3/4  3/4  3/5
+  260  3/5  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4
+  270  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4
+  280  3/4  3/4  3/4  3/4  3/4  3/4  3/4  3/4  4/4  3/2
+  290  2/1  3/4  2/3  2/5  3/4  2/4  3/4  1/3  1/3  2/5
+  300  3/3  2/2  3/3  3/2  1/2  1/1  1/2  2/2  3/3  2/3
+  310  3/3  2/4  3/4  3/4  1/5  0/5  0/3  0/3  1/3  1/2
+  320  1/2  1/3  2/2  1/5  1/4  2/3  1/3  0/3  0/4  1/4
+  330  1/4  3/3  2/3  3/3  3/4  4/4  4/5  3/5  3/5  3/5
+  340  1/3  1/2  1/4  1/5  1/4  1/4  1/4  1/4  0/4  0/4
+  350  0/4  0/4  0/4  0/4  0/4  0/4  0/4  0/4  0/4  0/4
+  360  0/4  0/4  0/3  0/3  0/3  0/3  0/3  0/3  0/3  0/3
+  370  0/3  0/3  0/3  0/3  0/3  0/3  0/3  0/3  0/3  0/3
+  380  0/3  0/3  0/3  1/3  0/3  2/3  3/3  3/3  4/3  4/5
+  390  5/6  4/7  4/6  5/6  5/7  4/6  4/6  5/7  5/7  5/6
+  400  4/4  4/4  4/4  2/3  2/1  4/0  2/3  2/4  2/4  2/5
+  410  4/6  5/6  5/6  5/5  4/6  3/5  3/4  3/4  4/5  3/6
+  420  2/5  2/6  2/4  3/3  4/6  4/4  4/4  2/4  2/4  1/4
+  430  2/4
+
+3. Where the walk ends. The world runs in its worker at sixteen ticks a second while the test's clicks wait
+   for the page, so the tick at which the walk is paused differs from run to run. In five runs of the test
+   here it was 319, 334, 341, 344 and 348: the last is the first tick of the empty stretch, where the step
+   as it was has nobody to tap, and the one before it is four ticks (a quarter of a second) short of it.
+   (An earlier run, before any of this was measured, was paused at 338 and passed.)
+
+4. Taps beside a bar. The view that first has someone in it often has them in the few pixels of map beside
+   a bar or at the edge of the page (in the runs below: 3 px from the top, 2 px from the left). Checked that
+   such a tap is the map's: 36 taps on the map 3 px outside the edges of every bar and card on the page;
+   pointerdown, pointerup, mousedown and click all went to the map at the point tapped, none to a control.
+
+The failure, made to happen. The test as it was (HEAD's `play.spec.ts`), with one addition after the walk:
+step the world on to tick 350 before the step is made. On the phone project:
+  [forced] the walk ended at tick 344; "choose someone else" is made at tick 350
+  ✘  1 [mobile] › a new player can complete the whole loop offline (2.4m)
+    Error: someone else was chosen
+    expect(received).not.toBe(expected) // Object.is equality
+    Expected: not 0
+The same assertion, the same message and the same value as in CI.
+
+The fix (the test; nothing in the game). The view is widened a notch at a time — the picture let come to
+rest after each — until someone else can be tapped, as far as the view goes (fourteen notches); if every view
+is empty, a tick at a time is let pass, for at most half a day. The test then asserts that someone was there
+to tap (and says the tick if not), that neither zooming out nor time passing let go of the person followed —
+the button and the camera both — and everything it asserted before.
+
+After the fix, on the phone project, the same addition:
+  made at tick 350 (nobody at ten notches)   found someone 3 notches out          ✓ 1 passed (3.3m)
+  made at tick 405 (nobody at the widest)    found someone 1 notch out            ✓ 1 passed (3.6m)
+  made at tick 341 (where the walk ended)    found someone 4 notches out          ✓ 1 passed (4.6m)
+The waiting, which none of those needed, tried by itself: the same test with the view set ten notches out
+at once and no looking in between, made at tick 372, where that view is empty until tick 383:
+  [someone else] mobile: at tick 383, 10 notches out, 11 ticks waited          ✓ 1 passed (3.8m)
+
+The test as committed (`pnpm exec playwright test tests/e2e/play.spec.ts`, both projects, the merged build):
+  ✓  1 [desktop] › tests/e2e/play.spec.ts:63:1 › a new player can complete the whole loop offline (4.0m)
+  ✓  2 [desktop] › tests/e2e/play.spec.ts:475:1 › lists of rows are whole from the smallest phone to a desktop: the Recordings sheet (19.2s)
+  ✓  3 [desktop] › tests/e2e/play.spec.ts:506:1 › the keyboard alone can drive the game: every key it reads, and never a pointer (1.8m)
+  ✓  4 [desktop] › tests/e2e/play.spec.ts:636:1 › charters are shown in plain words, with how they came about (1.7m)
+  ✓  5 [mobile] › tests/e2e/play.spec.ts:63:1 › a new player can complete the whole loop offline (3.6m)
+  ✓  6 [mobile] › tests/e2e/play.spec.ts:475:1 › lists of rows are whole from the smallest phone to a desktop: the Recordings sheet (20.6s)
+  -  7 [mobile] › tests/e2e/play.spec.ts:506:1 › the keyboard alone can drive the game: every key it reads, and never a pointer
+  -  8 [mobile] › tests/e2e/play.spec.ts:636:1 › charters are shown in plain words, with how they came about
+  2 skipped (by design, on the phone project: the keyboard is a desktop concern, the charters panel is covered on desktop)
+  6 passed (11.9m)
+Lint, the type check, the link check and the secret scan pass on the same tree.
+
+Not shown: the tick GitHub's runner was at when it failed. CI keeps nothing of a failed browser run but its
+log, and the log did not say; the test's message now does. That the failure there was this one rests on the
+message being reproduced exactly and on the other way of leaving the first person chosen being out of reach:
+a tap that lands chooses whoever or whatever is under it, and a tap is ignored only if its two halves are
+handled more than 450 ms apart — in sixty taps measured here none was (the longest gap: 257 ms), and twelve
+in a row would have to be.
+Not changed: the band itself. With the tutorial's card and a citizen's card both open, a phone shows 142 px
+of map; that is the game as it is on `main`, and it is the owner's to judge.

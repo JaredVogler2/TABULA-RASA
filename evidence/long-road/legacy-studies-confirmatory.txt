@@ -1,0 +1,27 @@
+reproduced h1-scarcity r04 seed 9000: published b6eff1bd6ebf5d88 = b6eff1bd6ebf5d88
+reproduced h1-scarcity r04 seed 9018: published 4a8320e6378a94c2 = 4a8320e6378a94c2
+reproduced h1-scarcity r07 seed 9004: published cba08000cd161c93 = cba08000cd161c93
+reproduced h1-scarcity r07 seed 9022: published a9dca7ae8e2d3b5b = a9dca7ae8e2d3b5b
+reproduced h1-scarcity r13 seed 9008: published 994b58ebcb2b874c = 994b58ebcb2b874c
+reproduced h1-scarcity r13 seed 9026: published 26e129d35af961f3 = 26e129d35af961f3
+reproduced h2-mobility m10 seed 9012: published e1b3b25a130fba42 = e1b3b25a130fba42
+reproduced h2-mobility m10 seed 9030: published 8cc911b07b4b8a7d = 8cc911b07b4b8a7d
+reproduced h2-mobility m20 seed 9016: published 4942a026aa275425 = 4942a026aa275425
+reproduced h3-communication h2r seed 9002: published 6a122a538d0a537a = 6a122a538d0a537a
+reproduced h3-communication h2r seed 9020: published a02a5191606b4b9a = a02a5191606b4b9a
+reproduced h3-communication h9r seed 9006: published 01b63da4271092a3 = 01b63da4271092a3
+reproduced h3-communication h9r seed 9024: published ea67d83db83fd6b0 = ea67d83db83fd6b0
+reproduced h4-diversity d02 seed 9010: published bc05bfd93ef178a3 = bc05bfd93ef178a3
+reproduced h4-diversity d02 seed 9028: published 8e91dd2a5c6f165c = 8e91dd2a5c6f165c
+reproduced h4-diversity d10 seed 9014: published d904732d8996748f = d904732d8996748f
+reproduced h5-cadence c12 seed 9000: published 7f4fb291a5f29e19 = 7f4fb291a5f29e19
+reproduced h5-cadence c12 seed 9018: published 161d69cf2ca199e3 = 161d69cf2ca199e3
+reproduced h5-cadence c48 seed 9004: published 179218331623119a = 179218331623119a
+reproduced h5-cadence c48 seed 9022: published a297e9299c256908 = a297e9299c256908
+reproduced h6-institutions off seed 9008: published 4a9f062706b268e0 = 4a9f062706b268e0
+reproduced h6-institutions off seed 9026: published 04f56ffae4dd538f = 04f56ffae4dd538f
+reproduced h6-institutions scripted seed 9012: published c05e2cf63f12fdef = c05e2cf63f12fdef
+reproduced h6-institutions scripted seed 9030: published a3016f76333450fb = a3016f76333450fb
+
+confirmatory (made by engine 0.7.0), re-run by engine 0.8.0: 24 of 24 cells end on the published digest (53 s).
+exit 0

@@ -19,7 +19,7 @@ import { cleanLabel, cleanText } from "../core/text";
 import { checkExpr } from "../institutions/expr";
 import { LIMITS, type Diagnostic } from "../institutions/types";
 import type { WorldConfig } from "../model/config";
-import { ITEM_COUNT, NODE_KINDS, PHYS_COUNT, SKILLS, STRUCTURE_SPECS, TRAITS, WEATHER } from "../model/constants";
+import { AGE_COUNT, CRAFT_COUNT, ITEM_COUNT, NODE_KINDS, PHYS_COUNT, SKILLS, STRUCTURE_SPECS, TRAITS, WEATHER } from "../model/constants";
 import { ACTIVITY_CLASSES, type Terrain, type WorldState } from "../model/types";
 import { checkIntent, checkSpeechAct } from "../sim/intents";
 import { agentCapacity } from "../world/population";
@@ -29,6 +29,8 @@ const FAR = 2_000_000_000;
 /** Sums that grow for as long as a world runs. */
 const HUGE = Number.MAX_SAFE_INTEGER;
 const GOODS = 10_000_000;
+/** Every craft's bit set: the most a person or a record house can hold. */
+const LORE_ALL = (1 << CRAFT_COUNT) - 1;
 
 const MEMORY_KINDS = new Set(["found", "empty", "got", "gave", "refused", "took", "kept", "broke", "hungry", "thirsty", "cold", "exhausted", "death", "heard", "built", "proposal", "joined", "spoiled"]);
 const SOURCES = new Set(["baseline", "mock", "live", "replay", "fallback"]);
@@ -258,6 +260,7 @@ export function validateState(state: Omit<WorldState, "terrain">, cfg: WorldConf
     int(t.bound, -1, FAR, `${at}.bound`);
     int(t.integrity, 0, 1000, `${at}.integrity`);
     bool(t.removed, `${at}.removed`);
+    int(t.lore, 0, LORE_ALL, `${at}.lore`);
   });
   list(s.piles, N, "piles").forEach((raw, i) => {
     const p = obj(raw, `piles[${i}]`);
@@ -324,6 +327,8 @@ export function validateState(state: Omit<WorldState, "terrain">, cfg: WorldConf
     int(a.pathKey, -1, HUGE, `${at}.pathKey`);
     int(a.progress, 0, FAR, `${at}.progress`);
     int(a.memberships, 0, 1024, `${at}.memberships`);
+    int(a.lore, 0, LORE_ALL, `${at}.lore`);
+    int(a.since, 0, FAR, `${at}.since`);
 
     const st = obj(a.stats, `${at}.stats`);
     ints(st.activity, ACTIVITY_CLASSES.length, 0, HUGE, `${at}.stats.activity`);
@@ -550,4 +555,6 @@ export function validateState(state: Omit<WorldState, "terrain">, cfg: WorldConf
   }
   ints(mt.sources, ITEM_COUNT, 0, HUGE, "metrics.sources");
   ints(mt.sinks, ITEM_COUNT, 0, HUGE, "metrics.sinks");
+  for (const k of ["discoveries", "learned", "inscribed", "fieldHarvests", "milled", "careLaid", "careSpent", "arrivals"]) int(mt[k], 0, HUGE, `metrics.${k}`);
+  ints(mt.ages, AGE_COUNT, -1, FAR, "metrics.ages");
 }

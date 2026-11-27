@@ -5,6 +5,74 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
+## Graphics: more realism at no cost in speed (D-054, 2026-11-27)
+
+Nothing the simulation computes changes: this is the picture only.
+
+- A frame is cheaper. Shadows are redrawn on every second frame and cast by coarse stand-ins; from far off,
+  crowns wear a plainer form and the grass thins; noise that was computed for every pixel is read from three
+  small textures made in the browser. At the vista on the high preset a frame submits 746,236 triangles on
+  average where it submitted 1,773,875, in no more draw calls; medium likewise; low a little less than it did.
+- What was saved is spent on matter. Crowns are lit as soft masses with leaves on them, and on the high preset
+  their outlines are broken. Streams are clear water over their beds; rain is rings on the sea; the shallows
+  take the water's colour over the sand, and the beach has a wet edge. Gullies, cliff feet and the ground
+  under trees are dimmer, and the dimness under a tree goes when the tree is felled. Cliffs show the ledges of
+  their bedding. The sun stands lower, and shadows are about a quarter longer at noon.
+- In the shaders and not yet judged in a still: the sun's glints on the sea, placed by the waves' own slopes,
+  and light coming through the rim of a crown against the sun.
+- `node scripts/frame-cost.mjs`: what a frame costs a software renderer in processor time, for setting one
+  build beside another on a busy machine.
+- Not measured: a frame rate on any device (there is no graphics chip here), and whether a frame arrives
+  sooner by the wall clock on this machine, which was too busy to say.
+
+[Stills and numbers](docs/EVIDENCE.md#more-realism-at-no-cost-in-speed-d-054-2026-11-27)
+
+## Pull request 11 — a people that can grow, and a goal (2026-11-27)
+
+**Engine 0.8.0** (snapshot format 7, affordances 2026.11-j, prompt p3). Written with the pull request: whether
+it has been merged is on GitHub, not here. A world saved under 0.7.0 opens and continues exactly as it would
+have; every published study is reproduced digest for digest.
+
+Asked for by the owner after playing: *"with the current state civilizations only can die rather than
+progress"* and *"it doesn't feel like there is much of a goal"*.
+
+- **The Long Road**, a new scenario and the default. Fifty foragers; the aim is to bring four in five of
+  them to the Age of Letters by the end of the fifth year. You may change the island once a season, so each
+  season is a choice — most often between knowledge and food.
+- **Crafts and works** (D-055). Six kinds of know-how that nobody has on the first morning — tillage,
+  storekeeping, masonry, herb lore, millwrighting, record keeping — found by practice, by watching, or by
+  reading. Each opens one thing to build: a field, a granary, a stone house, a healing house, a mill beside a
+  stream, a record house in which a craft can outlive everyone who knew it.
+- **Newcomers.** A settlement with beds to spare and food laid up draws people to it in spring and summer.
+  Nobody is born and nobody ages (D-057: births were designed and set aside at the owner's word).
+- **Ages and a legacy** (D-056). Foraging, Hearths, Fields, Stone, Mills, Letters — read each morning from
+  what stands; a legacy in points, shown beside the untouched twin's. A bar under the top bar carries both;
+  the Atlas has the ladder, the points part by part, who knows which craft, and the works on the map.
+- **An ending.** On the morning the aim is met, or the last person dies, a page says what they came to and
+  offers the same island again or another.
+- **A stranger with a craft**: a ninth change to the world, in worlds with crafts. You choose the craft; the
+  panel says how many on the island know each, and what each rests on.
+- **What your hand was worth** (D-058): wherever the legacy is shown, this world is set beside its untouched
+  twin — legacy more or less, people more or fewer, an age days sooner or later. The aim's count is on the
+  bar ("47 of 50 · year 3 of 5"), and when it is lost by deaths the page says what the founders died of.
+- **Tested for difficulty with scripted players** (`scripts/hands.ts`, D-058), after the owner found the
+  first aim too easy — it was: an untouched island met it on nine of fourteen seeds. Under the aim as it is
+  now, on twelve development islands: left alone 1, a hand that only feeds 4, one that only teaches 3, one
+  that draws changes by lot 0, one that teaches in the growing seasons and feeds before winter 11.
+- The five earlier scenarios are as they were unless "Crafts and newcomers" is switched on at setup.
+- The Laboratory checks a bundle made by engine 0.7.0 on the digest of the state, and says why the file hash
+  is shown and not compared.
+- **A defect found and fixed before release**: a world that took in more than sixty-four newcomers stopped
+  for good in the middle of a step (D-055). Two long measurement runs found it by never coming back.
+- The baseline planner's hungry branch now reaps a ripe crop in worlds with crafts; before, people starved
+  beside ripe fields.
+
+What the designers drew — the crafts, what each opens, where one age ends — is listed in the registry
+("What was designed") and said on the Atlas. No mind is told of an age, a legacy or an aim.
+
+Not measured: whether a person finds this a goal worth having (no person has played it; the players in the
+test are scripts); anything on a holdout seed or a physical device.
+
 ## Pull request 10 — citizen and island realism (2026-11-27)
 
 - Citizens have shaped faces and hands, fitted woven tunics, boots, and articulated walking and work poses.

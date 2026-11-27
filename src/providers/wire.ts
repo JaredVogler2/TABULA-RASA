@@ -15,6 +15,7 @@
  */
 import {
   DECISION_LIMITS,
+  FIRST_WORK_KIND,
   GRAMMAR_VERSION,
   INSTITUTION_LIMITS,
   ITEMS,
@@ -82,8 +83,13 @@ const ITEM_NAMES: readonly string[] = ITEMS;
 const RECIPE_NAMES: readonly string[] = RECIPES.map((r) => r.name);
 const STRUCTURE_NAMES: readonly string[] = STRUCTURE_KINDS;
 const PLACE_NAMES: readonly string[] = NODE_KINDS;
-/** Everything the `what` field can name: an item, a recipe or a kind of structure. */
-export const WHAT_NAMES: readonly string[] = [...new Set([...ITEM_NAMES, ...RECIPE_NAMES, ...STRUCTURE_NAMES])];
+/**
+ * Everything the `what` field can name: an item, a recipe or a kind of structure. The works
+ * are named only to minds in a world that has crafts; every other world's schema is the one it
+ * always was.
+ */
+const whatNames = (crafts: boolean): readonly string[] => [...new Set([...ITEM_NAMES, ...RECIPE_NAMES, ...(crafts ? STRUCTURE_NAMES : STRUCTURE_NAMES.slice(0, FIRST_WORK_KIND))])];
+export const WHAT_NAMES: readonly string[] = whatNames(false);
 
 /** Hard limits on what is read from a model's answer. */
 export const WIRE_LIMITS = { maxChars: 24_000, maxActions: 12, maxCites: 8, maxRules: 12, maxRoles: 4, maxStructures: 4 } as const;
@@ -158,11 +164,11 @@ const whole = (description: string): Json => ({ type: "integer", description });
 const oneOf = (values: readonly string[], description: string): Json => ({ type: "string", enum: [...values], description });
 const record = (properties: Record<string, Json>, required: string[]): Json => ({ type: "object", properties, required, additionalProperties: false });
 
-const ACTION_SCHEMA = record(
+const actionSchema = (crafts: boolean): Json => record(
   {
     do: oneOf(ACTION_KINDS, "The action."),
     target: whole("The id acted on: a place, a structure, a person (-1 = everyone in earshot), an agreement, a motion or an offer."),
-    what: oneOf(WHAT_NAMES, "An item, a recipe (craft) or a kind of structure (build)."),
+    what: oneOf(whatNames(crafts), "An item, a recipe (craft) or a kind of structure (build)."),
     qty: whole("How many."),
     x: whole("Tile column."),
     y: whole("Tile row."),
@@ -221,11 +227,12 @@ const CHARTER_SCHEMA = record(
  * The schema sent as `output_config.format`. `civic` adds the charter block; worlds without
  * the institutional affordance use the smaller schema.
  */
-export function decisionSchema(civic: boolean): Json {
-  const actions: Json = { ...ACTION_SCHEMA };
+export function decisionSchema(civic: boolean, crafts = false): Json {
+  const base = actionSchema(crafts);
+  const actions: Json = { ...base };
   if (!civic) {
     const kinds = ACTION_KINDS.filter((k) => !["propose", "endorse", "motion", "vote", "leave", "pact_offer", "pact_accept"].includes(k));
-    const p = { ...(ACTION_SCHEMA.properties as Record<string, Json>) };
+    const p = { ...(base.properties as Record<string, Json>) };
     p.do = oneOf(kinds, "The action.");
     delete p.yes;
     delete p.motion;

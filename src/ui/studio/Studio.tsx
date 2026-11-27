@@ -7,6 +7,7 @@
  *
  *   /studio?scenario=first_light&seed=1&days=3&ticks=30&q=high&az=0.6&polar=0.9&dist=80
  *           &tx=30&ty=28&agent=4&play=1&speed=8&policy=reflex&inst=grammar_search
+ *           &crafts=1&work=8   (a world with crafts and newcomers; look at the first standing structure of kind 8, a mill)
  */
 import { useEffect, useRef, useState } from "react";
 import { TICKS_PER_DAY, makeConfig, type InstitutionMode, type PolicyKind } from "@/engine";
@@ -43,6 +44,8 @@ export function Studio() {
     const renderer = new WorldRenderer(canvas, overlayRef.current, { quality, reducedMotion: params.get("still") === "1", maxPixelRatio: num("pr", 2), adaptiveResolution: params.get("adaptive") === "1" });
     const client = new SimClient();
     let latest: ViewFrame | null = null;
+    // the list of structures is sent only when it changes: keep the last one that came
+    let structures: NonNullable<ViewFrame["structures"]> = [];
     // frames arrive in a callback: read the latest through a function so its type is not narrowed away
     const current = (): ViewFrame | null => latest;
     let disposed = false;
@@ -50,6 +53,7 @@ export function Studio() {
 
     client.onFrame = (frame) => {
       latest = frame;
+      if (frame.structures) structures = frame.structures;
       if (window.__studio) window.__studio.tick = frame.tick;
       renderer.pushFrame(frame);
     };
@@ -59,6 +63,7 @@ export function Studio() {
         policy: (params.get("policy") as PolicyKind | null) ?? "planner",
         population: num("population", 50),
         ...(params.get("inst") ? { institutions: params.get("inst") as InstitutionMode } : {}),
+        ...(params.get("crafts") === "1" ? { crafts: true, arrivals: true } : {}),
       });
       const ready = await client.init(config);
       if (disposed) return;
@@ -67,6 +72,8 @@ export function Studio() {
       renderer.start();
 
       const total = Math.round(num("days", 0) * TICKS_PER_DAY + num("ticks", 0));
+      // a long advance is not watched: drawing it would only keep the page from hearing the worker
+      if (total > TICKS_PER_DAY * 4) renderer.stop();
       for (let done = 0; done < total && !disposed; ) {
         const chunk = Math.min(TICKS_PER_DAY * 2, total - done);
         client.step(chunk);
@@ -80,6 +87,7 @@ export function Studio() {
         });
       }
       if (disposed) return;
+      renderer.start();
 
       const rig = renderer.camera();
       if (rig) {
@@ -99,6 +107,28 @@ export function Studio() {
           rig.focus(seat.x + 0.5 - ready.world.w / 2, seat.y + 0.5 - ready.world.h / 2);
           rig.setView(num("az", 0.62), num("polar", 0.9), num("dist", 12), true);
         }
+      }
+      // `work=8` looks at the first standing structure of that kind (the works are kinds 4 to 9), if there is one
+      const workKind = num("work", -1);
+      if (workKind >= 0 && rig) {
+        const found = structures.find((s) => s.kind === workKind && s.complete);
+        setStatus(found ? `structure ${found.id} of kind ${workKind} at ${found.x},${found.y}` : `no standing structure of kind ${workKind}`);
+        if (found) {
+          rig.focus(found.x + 0.5 - ready.world.w / 2, found.y + 0.5 - ready.world.h / 2);
+          rig.setView(num("az", 0.62), num("polar", 0.95), num("dist", 9), true);
+        }
+      }
+      // for a script that wants several stills of one world: `__studio.look(8)` turns to the first standing
+      // structure of a kind (or the nth with a second argument) and says where it is, or null if there is none
+      if (window.__studio && rig) {
+        (window.__studio as { look?: (kind: number, nth?: number, dist?: number, az?: number, polar?: number) => { id: number; x: number; y: number; of: number } | null }).look = (kind, nth = 0, dist = 9, az = 0.62, polar = 0.95) => {
+          const all = structures.filter((s) => s.kind === kind && s.complete);
+          const found = all[nth];
+          if (!found) return null;
+          rig.focus(found.x + 0.5 - ready.world.w / 2, found.y + 0.5 - ready.world.h / 2);
+          rig.setView(az, polar, dist, true);
+          return { id: found.id, x: found.x, y: found.y, of: all.length };
+        };
       }
       let agent = num("agent", -1);
       // `doing=gather_wood` frames the first living person performing that action, stepping on until someone is

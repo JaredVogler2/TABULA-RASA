@@ -15,12 +15,14 @@ import { structureAt } from "../sim/scratch";
 export function structureStateCode(s: Structure, tick = -1): number {
   if (!s.complete) return 0;
   if (s.kind === StructureKind.campfire) return s.fuel > 0 ? 2 : 1;
-  if (s.kind === StructureKind.store) {
+  if (s.kind === StructureKind.store || s.kind === StructureKind.granary || s.kind === StructureKind.mill) {
     let total = 0;
     for (const q of s.inv) total += q;
     return total === 0 ? 1 : total < 20 ? 2 : 3;
   }
-  if (s.kind === StructureKind.plot) return s.ripeTick >= 0 && tick >= s.ripeTick ? 2 : 1; // 1 growing, 2 ripe
+  if (s.kind === StructureKind.plot || s.kind === StructureKind.field) return s.ripeTick >= 0 && tick >= s.ripeTick ? 2 : 1; // 1 growing, 2 ripe
+  if (s.kind === StructureKind.healing_house) return s.fuel > 0 ? 2 : 1; // 2: care is laid up
+  if (s.kind === StructureKind.record_house) return s.lore !== 0 ? 2 : 1; // 2: something is written in it
   return 1;
 }
 
@@ -196,7 +198,7 @@ export function perceive(world: WorldState, sc: Scratch, a: Agent): void {
       const sid = structureAt(world, sc, tile);
       if (sid >= 0) noteStructure(a, world.structures[sid]!, tick);
       if (drought && terrain.fresh[tile] === 1) m.droughtSeen = tick;
-      for (let other = sc.head[tile] as number; other !== -1; other = sc.next[other] as number) {
+      for (let other = sc.head[tile] as number; other >= 0; other = sc.next[other] as number) {
         if (other === a.id) continue;
         m.metX[other] = x;
         m.metY[other] = y;

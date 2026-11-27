@@ -336,6 +336,10 @@ export interface Agent {
   mind: Mind;
   /** Membership bitmap is stored in institutions; kept here only as a count for quick checks. */
   memberships: number;
+  /** Crafts this person knows, one bit each (constants.ts: Craft). Zero in a world without crafts. */
+  lore: number;
+  /** The tick this person came to the island: 0 for those it began with. A record; nothing in the simulation reads it. */
+  since: number;
 }
 
 // ───────────────────────── structures and piles
@@ -359,7 +363,7 @@ export interface Structure {
   laborDone: number;
   laborNeeded: number;
   complete: boolean;
-  /** campfire: ticks of fuel left; lit iff > 0. */
+  /** campfire: ticks of fuel left; lit iff > 0. healing house: ticks of care laid up. */
   fuel: number;
   /** store: contents per item id. */
   inv: number[];
@@ -369,7 +373,7 @@ export interface Structure {
    * stay open to everyone until drawn down. All zero for a store nobody controls.
    */
   open: number[];
-  /** plot: tick it becomes ripe (-1 if not planted / already harvested). */
+  /** plot, field: tick it becomes ripe (-1 if not planted / already harvested). */
   ripeTick: number;
   /** shelter: number of current occupants. */
   occupants: number;
@@ -378,6 +382,8 @@ export interface Structure {
   /** Integrity 0..1000; structures decay slowly without upkeep and collapse at 0. */
   integrity: number;
   removed: boolean;
+  /** record house: the crafts written down in it, one bit each. Zero for everything else. */
+  lore: number;
 }
 
 export interface Pile {
@@ -470,7 +476,14 @@ export type EventKind =
   | "pact_done"
   | "pact_void"
   | "promise_kept"
-  | "promise_broken";
+  | "promise_broken"
+  // worlds with crafts
+  | "discovered" // a craft came to someone from their own practice
+  | "learned" // a craft was taken in from watching someone, or from a record house
+  | "inscribed" // a craft was written down in a record house
+  | "milled" // a mill turned roots into rations
+  | "tended" // care was laid up in a healing house
+  | "age"; // the island as a whole passed a threshold (a reading, logged once; no citizen is told)
 
 /**
  * One ledger entry. Compact keys keep ledgers small:
@@ -559,6 +572,21 @@ export interface MetricsAcc {
    */
   sources: number[];
   sinks: number[];
+  // counted since engine 0.8.0 (all zero in a world without crafts or arrivals)
+  discoveries: number;
+  learned: number;
+  inscribed: number;
+  fieldHarvests: number;
+  milled: number;
+  careLaid: number;
+  careSpent: number;
+  arrivals: number;
+  /**
+   * The tick at which each age was first reached (-1 = not yet), by AGES index
+   * (metrics/ages.ts). A reading of the world kept with it so that a save remembers when;
+   * nothing in the simulation depends on it.
+   */
+  ages: number[];
 }
 
 // ───────────────────────── the world

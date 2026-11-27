@@ -13,6 +13,7 @@
  */
 import { ITEM_SPECS, Item, StructureKind, TICKS_PER_DAY, Trait } from "../model/constants";
 import type { Agent, WorldState } from "../model/types";
+import { holdsGoods } from "../sim/works";
 import { calendarAt } from "../world/climate";
 import { recall } from "../mind/knowledge";
 import { sensesCold } from "../mind/social";
@@ -79,8 +80,8 @@ export function judgeCharter(world: WorldState, agent: Agent, charter: Charter, 
   // a unit of food when hungry is worth more than a unit given up when fed; the prudent feel this more
   const relief = 1.6 + prudence / 50;
   const fuel = { left: 4000 };
-  const hasStore = charter.stores.some((id) => world.structures[id]?.kind === StructureKind.store);
-  const hasShelter = charter.stores.some((id) => world.structures[id]?.kind === StructureKind.shelter);
+  const hasStore = charter.stores.some((id) => holdsGoods(world.structures[id]?.kind ?? -1));
+  const hasShelter = charter.stores.some((id) => world.structures[id]?.kind === StructureKind.shelter || world.structures[id]?.kind === StructureKind.house);
 
   let dues = 0; // units of food per period I would owe
   let supply = 0;
@@ -169,7 +170,7 @@ export function judgeCharter(world: WorldState, agent: Agent, charter: Charter, 
   }
   if (hasShelter) {
     const need = m.coldNights * 250 + cold * 700;
-    const have = m.structs.some((k) => k.kind === StructureKind.shelter && k.state >= 1 && k.bound < 0);
+    const have = m.structs.some((k) => (k.kind === StructureKind.shelter || k.kind === StructureKind.house) && k.state >= 1 && k.bound < 0);
     considerations.push(["a_roof", (have ? need * 0.2 : need) * reach]);
   }
   if (restraintCost > 0) considerations.push(["harvest_limits", -restraintCost * periods * (1.3 - (t[Trait.patience] as number) / 100)]);

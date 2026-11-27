@@ -18,6 +18,7 @@ import { noteFeedback } from "../mind/feedback";
 import { emit, type EventOut } from "../sim/events";
 import { dropOnGround, emptyInv, roomFor } from "../sim/inventory";
 import type { Scratch } from "../sim/scratch";
+import { holdsGoods } from "../sim/works";
 import { evalExpr, type Facts, type Fuel } from "./expr";
 import { LIMITS, type Charter, type Institution, type Member, type Motion, type Origin, type Proposal, type Rule, type Sanction, type Who } from "./types";
 import { hasStanding, validateCharter, validateMotion } from "./validate";
@@ -71,7 +72,7 @@ function stockOf(world: WorldState, inst: Institution, item: number): number {
   let n = 0;
   for (const sid of inst.stores) {
     const s = world.structures[sid];
-    if (!s || s.removed || s.kind !== StructureKind.store) continue;
+    if (!s || s.removed || !holdsGoods(s.kind)) continue;
     if (item >= 0) n += (s.inv[item] as number) - openPart(s, item);
     else for (const f of FOOD_ITEMS) n += (s.inv[f] as number) - openPart(s, f);
   }
@@ -132,7 +133,7 @@ function releaseBond(world: WorldState, sc: Scratch, inst: Institution, m: Membe
     if (kept < q) dropOnGround(world, sc, agent.x, agent.y, bond.item, q - kept);
   } else {
     // a forfeited bond (or one whose owner has died) passes to the common stock, or lies at the seat
-    const store = inst.stores.map((sid) => world.structures[sid]).find((s) => s && !s.removed && s.complete && s.kind === StructureKind.store);
+    const store = inst.stores.map((sid) => world.structures[sid]).find((s) => s && !s.removed && s.complete && holdsGoods(s.kind));
     if (store) store.inv[bond.item] = (store.inv[bond.item] as number) + q;
     else dropOnGround(world, sc, inst.seatX, inst.seatY, bond.item, q);
   }

@@ -5,6 +5,7 @@
  */
 import { FIRE_RADIUS, StructureKind } from "../model/constants";
 import type { WorldState } from "../model/types";
+import { agentCapacity } from "../world/population";
 
 export interface Scratch {
   w: number;
@@ -56,9 +57,41 @@ export const NO_ROUTE_SLOTS = 8;
 
 const cache = new WeakMap<WorldState, Scratch>();
 
+/**
+ * How many people the per-person tables hold: everyone this world can ever have (the dead keep
+ * their place), and never fewer than are there now.
+ *
+ * It must be the most the world can hold, not "those here and some to spare". People arrive in
+ * the middle of a step, after its tables were fetched, and a table one place too short does not
+ * fail loudly: reading past the end of a typed array gives `undefined`, and a walk along a tile's
+ * list that ends on -1 then never ends. (Sixty-four spare places were enough while at most
+ * twenty-four people could ever come; a world that draws newcomers can take in far more.)
+ */
+function seats(world: WorldState): number {
+  return Math.max(64, world.agents.length + 64, agentCapacity(world.config));
+}
+
+/** Make the per-person tables longer, keeping what they hold (a world should never need it; see `seats`). */
+function grow(world: WorldState, sc: Scratch): void {
+  const size = seats(world);
+  const next = new Int32Array(size).fill(-1);
+  next.set(sc.next);
+  sc.next = next;
+  const from = new Int32Array(size).fill(-1);
+  from.set(sc.noRouteFrom);
+  sc.noRouteFrom = from;
+  const keys = new Int32Array(size * NO_ROUTE_SLOTS);
+  keys.set(sc.noRouteKeys);
+  sc.noRouteKeys = keys;
+  const count = new Uint8Array(size);
+  count.set(sc.noRouteCount);
+  sc.noRouteCount = count;
+}
+
 export function scratchOf(world: WorldState): Scratch {
   let sc = cache.get(world);
   if (sc && sc.next.length >= world.agents.length) return sc;
+  const size = seats(world);
   const w = world.terrain.w;
   const h = world.terrain.h;
   const n = w * h;
@@ -73,7 +106,7 @@ export function scratchOf(world: WorldState): Scratch {
     h,
     n,
     head: new Int32Array(n).fill(-1),
-    next: new Int32Array(Math.max(64, world.agents.length + 64)).fill(-1),
+    next: new Int32Array(size).fill(-1),
     structAt: new Int32Array(n).fill(-1),
     pileAt: new Int32Array(n).fill(-1),
     structDirty: true,
@@ -91,9 +124,9 @@ export function scratchOf(world: WorldState): Scratch {
     bfsDist: new Int16Array(n),
     bfsGen: 0,
     minCost,
-    noRouteFrom: new Int32Array(Math.max(64, world.agents.length + 64)).fill(-1),
-    noRouteKeys: new Int32Array(Math.max(64, world.agents.length + 64) * NO_ROUTE_SLOTS),
-    noRouteCount: new Uint8Array(Math.max(64, world.agents.length + 64)),
+    noRouteFrom: new Int32Array(size).fill(-1),
+    noRouteKeys: new Int32Array(size * NO_ROUTE_SLOTS),
+    noRouteCount: new Uint8Array(size),
     noRouteSeen: [],
     order: [],
     orderKeys: [],
@@ -104,6 +137,7 @@ export function scratchOf(world: WorldState): Scratch {
 
 /** Rebuild the agents-per-tile index from current positions (living agents only). */
 export function indexAgents(world: WorldState, sc: Scratch): void {
+  if (world.agents.length > sc.next.length) grow(world, sc);
   sc.head.fill(-1);
   const w = sc.w;
   // iterate in reverse so that each tile's list is in ascending id order
