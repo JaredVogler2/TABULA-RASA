@@ -26,6 +26,7 @@
 import { below, Stream } from "../core/rng";
 import { Item, NodeKind, StructureKind, TICKS_PER_DAY } from "../model/constants";
 import type { Agent, WorldState } from "../model/types";
+import { holdsGoods } from "../sim/works";
 import { judgeCharter, signingBar } from "./judge";
 import { GRAMMAR_VERSION, type Charter, type Expr, type Rule, type Sanction } from "./types";
 import { validateCharter } from "./validate";
@@ -49,12 +50,14 @@ export function sampleCharter(world: WorldState, agent: Agent, draw: number): Ch
   const pick = (k: number): number => below(k, seed, Stream.Institution, world.tick, agent.id, draw * 64 + n++);
   const pct = (): number => pick(100);
 
-  const stores = ownStructures(world, agent, StructureKind.store);
-  const shelters = ownStructures(world, agent, StructureKind.shelter);
+  // in a world with crafts, a granary or a mill one built is a store like any other, and a stone house a home
+  const crafts = world.config.crafts;
+  const stores = crafts ? [...ownStructures(world, agent, StructureKind.store), ...ownStructures(world, agent, StructureKind.granary), ...ownStructures(world, agent, StructureKind.mill)] : ownStructures(world, agent, StructureKind.store);
+  const shelters = crafts ? [...ownStructures(world, agent, StructureKind.shelter), ...ownStructures(world, agent, StructureKind.house)] : ownStructures(world, agent, StructureKind.shelter);
   const controls: number[] = [];
   if (stores.length && pct() < 85) controls.push(stores[0] as number);
   if (shelters.length && pct() < 50) controls.push(shelters[0] as number);
-  const hasStore = controls.some((id) => world.structures[id]!.kind === StructureKind.store);
+  const hasStore = controls.some((id) => holdsGoods(world.structures[id]!.kind));
 
   let bond: Charter["bond"] = null;
   if (pct() >= 40) {

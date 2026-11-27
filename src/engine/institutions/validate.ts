@@ -14,6 +14,7 @@
 import { cleanLabel, cleanText } from "../core/text";
 import { ITEM_COUNT, NODE_KINDS, StructureKind } from "../model/constants";
 import type { WorldState } from "../model/types";
+import { bindable } from "../sim/works";
 import { checkExpr } from "./expr";
 import { GRAMMAR_VERSION, LIMITS, type Charter, type DecisionRule, type Diagnostic, type MotionBody, type Rule, type Sanction, type Who } from "./types";
 
@@ -236,7 +237,7 @@ export function validateCharter(world: WorldState, proposerId: number, raw: unkn
     } else {
       raw.stores.forEach((id: unknown, i: number) => {
         const s = isInt(id) ? world.structures[id] : undefined;
-        if (!s || s.removed || (s.kind !== StructureKind.store && s.kind !== StructureKind.shelter)) {
+        if (!s || s.removed || !bindable(s.kind)) {
           bad(`stores[${i}]`, "no_such_structure", "only a store or a shelter that exists can be placed under common control");
         } else if (s.bound >= 0) {
           bad(`stores[${i}]`, "already_controlled", "that structure is already controlled by another institution");
@@ -304,7 +305,7 @@ export function validateMotion(world: WorldState, charter: Charter, memberIds: r
       return { ok: true, value: { m: "grant", agent: raw.agent, item: raw.item, qty: raw.qty } };
     case "bind": {
       const s = isInt(raw.structure) ? world.structures[raw.structure] : undefined;
-      if (!s || s.removed || (s.kind !== StructureKind.store && s.kind !== StructureKind.shelter)) return fail("no_such_structure", "only a store or a shelter that exists can be placed under common control");
+      if (!s || s.removed || !bindable(s.kind)) return fail("no_such_structure", "only a store or a shelter that exists can be placed under common control");
       if (s.bound >= 0) return fail("already_controlled", "that structure is already controlled by an institution");
       return { ok: true, value: { m: "bind", structure: s.id } };
     }

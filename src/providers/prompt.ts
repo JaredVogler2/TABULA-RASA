@@ -13,8 +13,13 @@
  * version they were made with and are never re-interpreted under a later one.
  */
 import {
+  CARE_PER_UNIT,
   DECISION_LIMITS,
+  FIELD_GROW_DAYS,
+  FIELD_RESOW_ROOTS,
+  FIELD_YIELD,
   FIRE_RADIUS,
+  FIRST_WORK_KIND,
   FOOD_ITEMS,
   INSTITUTION_LIMITS,
   ITEMS,
@@ -33,7 +38,7 @@ import {
 } from "@/engine";
 import { WIRE_VERSION, decisionSchema } from "./wire";
 
-export const PROMPT_VERSION = "p2";
+export const PROMPT_VERSION = "p3";
 
 /** How much of what the engine keeps for a mind is put on its page. A treatment, recorded with every run. */
 export type PromptContext = "minimal" | "rich";
@@ -46,11 +51,13 @@ export interface PromptFeatures {
   escrow: boolean;
   planting: boolean;
   takeable: boolean;
+  /** Whether the world has crafts and the works they open. Where it has none, the text is word for word what p2 was. */
+  crafts: boolean;
 }
 
 export function promptFeatures(cfg: WorldConfig): PromptFeatures {
   const civic = cfg.institutions !== "off";
-  return { civic, propose: cfg.institutions === "open" || cfg.institutions === "grammar_search", escrow: cfg.escrow, planting: cfg.planting, takeable: cfg.openStoresTakeable };
+  return { civic, propose: cfg.institutions === "open" || cfg.institutions === "grammar_search", escrow: cfg.escrow, planting: cfg.planting, takeable: cfg.openStoresTakeable, crafts: cfg.crafts };
 }
 
 const itemName = (i: number): string => ITEMS[i] ?? "?";
@@ -66,8 +73,14 @@ function structuresText(f: PromptFeatures): string {
     shelter: "sleeps 4; keeps out cold and rain",
     store: "holds goods",
     plot: "a planted root, on fertile ground; yields several roots to harvest later",
+    field: `sown on fertile ground, it ripens in ${FIELD_GROW_DAYS} growing days and yields about ${FIELD_YIELD} roots; once reaped it still stands, and bears again when someone builds on its site with ${FIELD_RESOW_ROOTS} roots`,
+    granary: "holds goods; food in it keeps about three times as long as in a store",
+    house: "of stone; sleeps 6; warmer than a shelter, and lasts",
+    healing_house: `the ill or hurt who sleep there mend faster; someone who knows herb_lore can deposit berry or fiber there, and each unit is ${CARE_PER_UNIT} ticks of care that makes them mend faster still`,
+    mill: "beside a stream; roots left in it become rations, one for one, on each day the stream runs",
+    record_house: "inspect it to read (you may come away knowing a craft written there) or, if you know record_keeping, to write down one craft you know",
   };
-  return STRUCTURE_SPECS.filter((s) => f.planting || s.name !== "plot")
+  return STRUCTURE_SPECS.filter((s) => (f.planting || s.name !== "plot") && (f.crafts || s.kind < FIRST_WORK_KIND))
     .map((s) => `${s.name} = ${list(s.materials)} (${notes[s.name] ?? ""})`)
     .join(" · ");
 }
@@ -101,6 +114,14 @@ ${f.takeable ? `Anything lying on the ground, and anything in a store${f.civic ?
 You can say things to people within earshot; they hear it on the next tick. Speech has a kind — greet, inform_node (tell of a place and how much is there), inform_structure, inform_agent (say that someone gave, helped, took, kept or broke a promise), request, offer, promise, accept, decline, warn (a place is bare), free${f.civic ? ", announce or invite (tell of an agreement)" : ""} — and may carry a few words of your own. You can tell only of a place${f.civic ? ", a structure or an agreement" : " or a structure"} that is on your page: nobody can point someone else at what they do not know of themselves. Nothing checks that what anyone says about it is true.
 You can give things to a person beside you. Nothing obliges anything in return. A promise you make aloud is remembered by you and by whoever heard it, and so is whether it was kept.`,
   );
+  if (f.crafts) {
+    parts.push(
+      `CRAFTS
+Some things take knowing how: laying out a new field, granary, house, healing_house, mill or record_house takes its craft (tillage, storekeeping, masonry, herb_lore, millwrighting, record_keeping). Your page says which crafts you know. Nobody starts with any.
+A craft comes to a person in one of three ways: from long practice of the work it grows out of; from watching someone who knows it at work; or from a record house in which it has been written down. Some crafts come only to those who already know others. A craft is known by persons: if everyone who knows one dies and it was never written down, it is gone.
+Carrying materials to a work someone else laid out, and working on it, takes no craft. Building anything else takes none either.`,
+    );
+  }
   if (f.civic) {
     parts.push(
       `AGREEMENTS
@@ -134,7 +155,7 @@ goal: two or three plain words. why: one short sentence you would say aloud. con
 Each action has "do" and only the fields that action needs:
   goto x y (qty: how near is near enough, 0 to 6) · explore · rest ticks · wait ticks · drink · fill
   eat what qty · gather target (place) qty · craft what (recipe) · build what (kind) x y, or build target (a site you know) to carry on with it
-  refuel target (fire) qty${f.planting ? " · harvest target (plot)" : ""} · inspect target (structure) · deposit or withdraw target (store) what qty
+  refuel target (fire) qty${f.crafts ? " · harvest target (plot or field)" : f.planting ? " · harvest target (plot)" : ""} · inspect target (structure) · deposit or withdraw target (${f.crafts ? "store, granary or mill; deposit also at a healing house" : "store"}) what qty
   give target (person) what qty · drop what qty · pickup what qty
   say target (a person, or -1 for everyone in earshot) speech, and as the kind needs: inform_node about (place) and qty (the amount you state; left out, it is what you believe) · inform_structure about (structure) · inform_agent about (person) claim · request what qty · offer what qty want want_qty · promise what qty ticks (until it falls due) · accept or decline about (the id of what was said) · warn about (place)${f.civic ? " · announce or invite about (agreement)" : ""} · and text for your own words (at most ${DECISION_LIMITS.maxTextChars} characters)${
       f.civic
@@ -315,6 +336,7 @@ function page(obs: Observation, context: PromptContext, level: number): string {
     `Needs: energy ${s.needs.energy}, water ${s.needs.hydration}, rest ${s.needs.rest}, warmth ${s.needs.warmth}, health ${s.needs.health}.${s.ill ? " You are ill." : ""}`,
     `Carrying: ${inv(s.carrying)} (weight ${s.load.weight} of ${s.load.capacity}).${s.home ? ` You think of (${s.home.x},${s.home.y}) as home.` : ""}`,
   );
+  if (s.crafts) out.push(s.crafts.length ? `Crafts you know: ${s.crafts.join(", ")}.` : "You know no craft yet.");
   if (rich) {
     out.push(
       `Temperament (0 to 100): ${Object.entries(s.traits).map(([k, v]) => `${k} ${v}`).join(", ")}.`,
@@ -446,7 +468,7 @@ export function buildRequest(obs: Observation, features: PromptFeatures, context
   const rendered = renderObservation(obs, context);
   // a world without the institutional affordance uses the smaller schema; whether a mind may
   // write an agreement decides whether the charter block is offered at all
-  return { promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context, system: systemPrompt(features), user: rendered.text, schema: decisionSchema(features.civic && features.propose), shortened: rendered.shortened };
+  return { promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context, system: systemPrompt(features), user: rendered.text, schema: decisionSchema(features.civic && features.propose, features.crafts), shortened: rendered.shortened };
 }
 
 const utf8Length = (s: string): number => {

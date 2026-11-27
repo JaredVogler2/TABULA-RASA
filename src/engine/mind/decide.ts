@@ -167,7 +167,7 @@ export function deliverSpeech(world: WorldState, sc: Scratch, radius: number): v
     const x1 = u.x + radius >= w ? w - 1 : u.x + radius;
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
-        for (let id = sc.head[y * w + x] as number; id !== -1; id = sc.next[id] as number) {
+        for (let id = sc.head[y * w + x] as number; id >= 0; id = sc.next[id] as number) {
           if (id === u.from) continue;
           const t = world.agents[id]!;
           if (t.alive && !t.asleep) hear(world, t, u, false);

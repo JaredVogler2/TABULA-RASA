@@ -124,6 +124,15 @@ export function worldDigest(world: WorldState): string {
   h.ints(world.traffic);
   h.int(world.speech.length);
   h.str(canonicalJson(world.inst));
+  // What the rules added in engine 0.8.0 keep. A world with those rules off holds none of it
+  // (every value below is its starting one), and leaving it out there is what makes that world's
+  // digest the one engine 0.7.0 computed for it (D-055).
+  if (world.config.crafts || world.config.arrivals) {
+    for (const a of world.agents) h.int(a.lore);
+    for (const s of world.structures) h.int(s.lore);
+    const m = world.metrics;
+    h.ints(m.ages).int(m.discoveries).int(m.learned).int(m.inscribed).int(m.fieldHarvests).int(m.milled).int(m.careLaid).int(m.careSpent).int(m.arrivals);
+  }
   return h.digest();
 }
 

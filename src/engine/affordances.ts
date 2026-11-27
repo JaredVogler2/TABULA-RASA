@@ -208,7 +208,7 @@ export const AFFORDANCES: readonly Affordance[] = [
     category: "body",
     name: "Death is permanent",
     what: "A dead agent stops acting; carried items fall to the ground where they stand.",
-    why: "Stakes. No respawning, no replacement unless the observer brings newcomers.",
+    why: "Stakes. No respawning, and no replacement unless the observer brings newcomers or, in a world that draws them, a thriving settlement does (see Newcomers drawn by a thriving settlement).",
     status: "implemented",
   },
   {
@@ -222,6 +222,15 @@ export const AFFORDANCES: readonly Affordance[] = [
   },
 
   // ───────────────────────── items
+  {
+    id: "world.arrivals",
+    category: "world",
+    name: "Newcomers drawn by a thriving settlement",
+    what: "On a spring or summer morning when the island has at least two beds standing empty and food laid up in its stores worth five days of eating for everyone alive, there is a one-in-five chance that a boat lands one to three adults on the shore nearest the fullest larder. They know nothing of the island and no craft. No more come once two and a half times the founders are alive, or once the world's record of people is full.",
+    why: "Without this a people can only shrink. It is the growth rule of a settlement that is fed and housed, and it is also a trap the designers left in on purpose: more mouths arrive exactly when things look best. Who feeds them is not written anywhere.",
+    knob: "arrivals (off in every world made before engine 0.8.0, and in every registered study)",
+    status: "implemented",
+  },
   {
     id: "items.materials",
     category: "items",
@@ -254,6 +263,24 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "A root can be planted on fertile ground and yields several roots after a growing period. Anyone can harvest a ripe plot.",
     why: "Delayed returns that others can appropriate: the raw material for property norms. Planting is given, ownership is not.",
     knob: "plantingEnabled",
+    status: "implemented",
+  },
+  {
+    id: "items.crafts",
+    category: "items",
+    name: "Crafts: know-how that has to be come by",
+    what: "Six crafts — tillage, storekeeping, masonry, herb lore, millwrighting, record keeping — each known by persons, never by the island. Nobody starts with one. A craft comes to a person in three ways only: from their own practice (hours spent at the work it grows out of, then a small chance each morning, larger for the curious; herb lore instead on recovering from an illness); from watching someone who knows it at work, within sight; or from a visit to a record house in which it is written. Millwrighting comes only to those who know masonry and tillage, record keeping only to those who know storekeeping and masonry. If everyone who knows a craft dies and it was never written down, it is gone and has to be found again.",
+    why: "This is a ladder the designers drew, and it is the largest thing they have added since the first toolkit: which crafts exist, what each asks for and what each opens are all supplied, exactly as the recipes were. What is not supplied is who learns, who is allowed near, who works for whom, and whether a people keeps what it has learned. The thresholds were set on development seeds so that an untouched island of baseline minds usually finds tillage in its first year and the last craft, if at all, years later (scripts/climb.ts).",
+    knob: "crafts (off in every world made before engine 0.8.0, and in every registered study), learningRate, discovery (how readily practice alone turns into a craft; it does not touch learning from others)",
+    status: "implemented",
+  },
+  {
+    id: "items.works",
+    category: "items",
+    name: "The works a craft opens",
+    what: "Laying out one of these takes its craft; carrying materials to one that is begun, and working on it, takes none. Field (tillage): sown with two roots, ripens in ten growing days, yields fourteen roots or more; once reaped it stands and can be sown again; like a plot it waits out winter and drought, and anyone can reap it. Granary (storekeeping): holds goods; food in it spoils about a third as fast as in a store. House (masonry): stone; sleeps six, warmer than a shelter, and lasts many years. Healing house (herb lore): the ill or hurt who sleep there mend faster; someone who knows herbs can lay up care there from berries or fibre, which makes the ill mend faster still and the hurt regain health; only the ill or hurt are taken in. Mill (millwrighting): must stand beside a stream; roots left in it become rations, one for one, on each day the stream runs — not in a hard frost, and not in a drought where the stream is a seasonal one. Record house (record keeping): someone who keeps records writes down one craft they know on each visit; anyone who visits may come away knowing a craft written there.",
+    why: "Each answers one way the first toolkit lets people die or forget: fields the wild food giving out, granaries the winter, stone the cold, healing the weakness that follows illness, the mill food that will not keep, records a craft dying with its holders. An agreement can take a granary, a mill or a stone house under its control as it can a store or a shelter; a field and a healing house stay open to all. Every figure is the designers'.",
+    knob: "crafts",
     status: "implemented",
   },
 
@@ -372,6 +399,15 @@ export const AFFORDANCES: readonly Affordance[] = [
     what: "With no need pressing, weighs a fixed repertoire — gather for stock, smoke fish, make a basket, spear or axe, light or feed a fire, raise a shelter or a store, plant and reap, give, repay, tell — by expected benefit per tick under the agent's own beliefs, and queues the best. Every threshold is shifted by a named trait, skill or lived experience. It senses the season only from temperatures it has felt, looks one project ahead, and contains no institutional act.",
     why: "A strong non-LLM comparison. Its repertoire and its rules of thumb are hand-written and therefore a prior about sensible behaviour: that food should be stored, that crops are worth sowing, that favours are returned.",
     knob: "policy, plannerShare, planEvery (0 = deliberates whenever a plan runs out; otherwise at most once per that many ticks, acting on reflex in between)",
+    status: "implemented",
+  },
+  {
+    id: "base.crafts",
+    category: "baseline-cognition",
+    name: "What baseline minds do with a craft",
+    what: "In a world with crafts the planner's repertoire is longer: dig and sow a field (and sow again one of its own that stands reaped), raise a granary, a stone house, a healing house, a mill or a record house if it knows the craft and none is known near home, or join one that someone else began; put by in a granary before a store; take spare roots to a mill; lay up care; lie in a healing house when ill or hurt; visit a record house to write or to read. Each is weighed like every other project, by expected benefit per tick. Also in such a world only, the hungry reap a ripe crop — their own, or anyone's once they are going short — where before they would walk past it to a bare bush.",
+    why: "Hand-written rules of thumb, and therefore a prior: that a field is worth its seed, that stone is worth the hauling, that the sick should be housed. The last sentence repairs, for these worlds only, a defect the long benchmark found in the baseline (people starving beside ripe plots); worlds without crafts keep the defect, because the registered studies were run with it.",
+    knob: "crafts, policy",
     status: "implemented",
   },
   {
@@ -546,8 +582,26 @@ export const AFFORDANCES: readonly Affordance[] = [
     id: "observer.interventions",
     category: "observer",
     name: "Environmental interventions",
-    what: "Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and hushing how far voices carry. Each is logged with observer provenance and forks the timeline; an untouched twin of the world keeps running with the same random draws for comparison.",
+    what: "Weather events, enriching or blighting a resource, a windfall on the shore, newcomers, and hushing how far voices carry. In a world with crafts, also one stranger who arrives knowing a craft of the observer's choosing and the crafts it rests on; nobody is made to watch them or to learn from them. Each is logged with observer provenance and forks the timeline; an untouched twin of the world keeps running with the same random draws for comparison.",
     why: "The player's lever is the environment, never a mind.",
+    status: "implemented",
+  },
+  {
+    id: "observer.ages",
+    category: "observer",
+    name: "Ages and legacy: two readings for the observer",
+    what: "In a world with crafts the observer is shown how far the island has come along a ladder of six ages — foraging, hearths (five fires, eight dwellings, two stores), fields (three fields, three harvests from them), stone (four stone houses, a granary), mills (a mill that has ground thirty roots, and a healing house), letters (a record house holding five crafts) — each needing all before it, counted each morning from what stands and what has been done; and a legacy: ten for each person alive, sixty for each craft someone living knows, forty for each craft written down, a few points for each work standing up to a limit for its kind, and a hundred and fifty for each age reached. No citizen is told that an age exists, nothing anyone can do depends on one, and no mind, baseline or model, is shown either number.",
+    why: "They give an observer something to steer by, and they are a value judgement of the designers': that more people, more know-how and more building is further along. The islanders were not asked. The aim on a scenario's card, and what the observer's hand has been worth against the untouched twin, are counted from the same state and shown to the observer alone.",
+    knob: "crafts",
+    status: "implemented",
+  },
+  {
+    id: "observer.limit",
+    category: "observer",
+    name: "A hand that can be limited",
+    what: "A scenario can allow the observer only so many changes to the world in one season. Where it does, the limit travels with the world and is enforced where the observer's hand enters it.",
+    why: "A hand that can do anything at any time has nothing to weigh. The limit is on the observer only: nothing in the simulation reads it.",
+    knob: "changesPerSeason (0 = no limit, as in every world made before engine 0.8.0)",
     status: "implemented",
   },
   {
@@ -573,8 +627,8 @@ export const AFFORDANCES: readonly Affordance[] = [
     id: "init.knowledge",
     category: "initial-conditions",
     name: "Innate knowledge",
-    what: "Every agent knows its own needs, which things are edible, all recipes and the action vocabulary. It knows nothing about the map beyond what it can see, nothing about other agents, and has not experienced a winter.",
-    why: "Technical know-how is given; geography, people and the future are not.",
+    what: "Every agent knows its own needs, which things are edible, all recipes and the action vocabulary, and how to raise a fire, a shelter and a store and plant a root. It knows nothing about the map beyond what it can see, nothing about other agents, has not experienced a winter, and knows no craft.",
+    why: "The first toolkit is given; geography, people, the future and — in a world that has them — the crafts are not.",
     status: "implemented",
   },
 
@@ -590,9 +644,9 @@ export const AFFORDANCES: readonly Affordance[] = [
   {
     id: "absent.script",
     category: "absent",
-    name: "No stages, epochs or unlocks",
-    what: "There is no tech tree, no scheduled social milestone and no hidden trigger that creates an institution. An institution can only come into being through an agent's validated proposal and other agents' individual consent.",
-    why: "Outcomes are not scripted.",
+    name: "No schedule, and no trigger that makes an institution",
+    what: "Nothing happens to a society because a day has come: there is no scheduled social milestone and no hidden trigger that creates an institution. An institution can only come into being through an agent's validated proposal and other agents' individual consent. A world with crafts does have a ladder of crafts and works, supplied and listed above — and nothing on it is scheduled either: a craft comes to a person only from that person's practice, from watching another, or from reading, and may never come at all. The ages are readings of the island for the observer; no citizen is told of one and nothing is unlocked by one. (Before engine 0.8.0 this entry also said there was no tech tree. In a world with crafts there now is one, drawn by the designers.)",
+    why: "Outcomes are not scripted. What can be built is.",
     status: "implemented",
   },
   {

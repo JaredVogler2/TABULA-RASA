@@ -25,6 +25,11 @@ type Migration = (env: SnapshotEnvelope) => SnapshotEnvelope;
  *        (not counted before: the count starts at zero from the moment of migration).
  *  5 → 6 (engine 0.7.0): configurations say how unevenly the two shores of a strait are endowed
  *        (every earlier world had them alike: 0; its nodes, which a snapshot stores, stay as they are).
+ *  6 → 7 (engine 0.8.0): configurations say whether the world has crafts, whether it draws
+ *        newcomers and how often the observer may change it (every earlier world: no, no, as
+ *        often as they like); people record the tick they came to the island (0: it was not kept
+ *        before) and, with structures, the crafts they hold (none); the
+ *        world counts what crafts did and when each age was reached (nothing, never).
  */
 const MIGRATIONS: Record<number, Migration> = {
   1: (env) => {
@@ -80,6 +85,28 @@ const MIGRATIONS: Record<number, Migration> = {
     const state = env.state as unknown as { config?: Record<string, unknown> };
     if (state.config && typeof state.config.shoreSplit !== "number") state.config.shoreSplit = 0;
     return { ...env, schema: 6 };
+  },
+  6: (env) => {
+    const state = env.state as unknown as { config?: Record<string, unknown>; agents?: Record<string, unknown>[]; structures?: Record<string, unknown>[]; metrics?: Record<string, unknown> };
+    const cfg = state.config;
+    if (cfg) {
+      if (typeof cfg.crafts !== "boolean") cfg.crafts = false;
+      if (typeof cfg.arrivals !== "boolean") cfg.arrivals = false;
+      if (typeof cfg.changesPerSeason !== "number") cfg.changesPerSeason = 0;
+      if (typeof cfg.discovery !== "number") cfg.discovery = 1000;
+    }
+    for (const a of state.agents ?? []) {
+      if (typeof a.lore !== "number") a.lore = 0;
+      // when a newcomer came was not recorded before; they are counted from the first day, as the founders are
+      if (typeof a.since !== "number") a.since = 0;
+    }
+    for (const s of state.structures ?? []) if (typeof s.lore !== "number") s.lore = 0;
+    const m = state.metrics;
+    if (m) {
+      for (const k of ["discoveries", "learned", "inscribed", "fieldHarvests", "milled", "careLaid", "careSpent", "arrivals"]) if (typeof m[k] !== "number") m[k] = 0;
+      if (!Array.isArray(m.ages)) m.ages = [-1, -1, -1, -1, -1, -1];
+    }
+    return { ...env, schema: 7 };
   },
 };
 

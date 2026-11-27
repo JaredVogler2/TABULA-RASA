@@ -67,7 +67,7 @@ export function plannedCalls(spec: Pick<RunSpec, "epochs" | "epochTicks" | "sche
  */
 export function requestTokenBound(cfg: WorldConfig, context: PromptContext): number {
   const features = promptFeatures(cfg);
-  return inputTokenBound({ promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context, system: systemPrompt(features), user: "", schema: decisionSchema(features.civic && features.propose), shortened: 0 }) + PAGE_LIMITS.maxBytes;
+  return inputTokenBound({ promptVersion: PROMPT_VERSION, wireVersion: WIRE_VERSION, context, system: systemPrompt(features), user: "", schema: decisionSchema(features.civic && features.propose, features.crafts), shortened: 0 }) + PAGE_LIMITS.maxBytes;
 }
 
 const intIn = (name: string, v: unknown, lo: number, hi: number): number => {

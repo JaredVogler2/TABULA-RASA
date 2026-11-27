@@ -5,6 +5,7 @@
  */
 import { ITEM_COUNT, NODE_SPECS, NodeKind, TICKS_PER_DAY } from "../model/constants";
 import { WORK_ACTIVITIES, type MetricsAcc, type WorldState } from "../model/types";
+import { AGE_COUNT } from "../model/constants";
 import { worthOf } from "../sim/inventory";
 
 export function emptyMetrics(): MetricsAcc {
@@ -31,6 +32,15 @@ export function emptyMetrics(): MetricsAcc {
     deliberations: 0,
     sources: new Array<number>(ITEM_COUNT).fill(0),
     sinks: new Array<number>(ITEM_COUNT).fill(0),
+    discoveries: 0,
+    learned: 0,
+    inscribed: 0,
+    fieldHarvests: 0,
+    milled: 0,
+    careLaid: 0,
+    careSpent: 0,
+    arrivals: 0,
+    ages: new Array<number>(AGE_COUNT).fill(-1),
   };
 }
 

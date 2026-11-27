@@ -46,7 +46,7 @@ export function visibleAgents(world: WorldState, sc: Scratch, a: Agent): SeenAge
     for (let x = x0; x <= x1; x++) {
       const dx = x - a.x;
       if (dx * dx + dy * dy > r2) continue;
-      for (let id = sc.head[y * w + x] as number; id !== -1; id = sc.next[id] as number) {
+      for (let id = sc.head[y * w + x] as number; id >= 0; id = sc.next[id] as number) {
         if (id === a.id) continue;
         const o = world.agents[id]!;
         if (!o.alive) continue;

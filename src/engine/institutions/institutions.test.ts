@@ -121,6 +121,7 @@ function addStructure(world: WorldState, founder: Agent, kind: number, complete:
     bound: -1,
     integrity: 1000,
     removed: false,
+    lore: 0,
   };
   world.structures.push(s);
   world.nextStructure = world.structures.length;
