@@ -79,6 +79,19 @@ after dark.
 - Structures: timber and stone primitives with visible stock (sacks at a store, sprouts on a plot). The
   shelter is a thatched A-frame: three overlapping courses a side, a dark ridge, crossed gable poles, an open
   front in shadow.
+- The six works of a world with crafts (`src/render/works.ts`; D-055) are in the same hand — faceted timber,
+  stone and thatch — and are told apart by silhouette before colour. A **field**: furrows of dark earth
+  between stakes, bare when unsown, green shoots as tall as the crop is ripe, gold when it is. A
+  **granary**: a round bin on a ring of stones under a conical cap. A **stone house**: dry-stone walls in
+  three courses, a slate roof and a chimney. A **healing house**: pale daubed walls in a timber frame under
+  a low reed roof, an open doorway and a bench; herbs hang under the eaves only while care is laid up. A
+  **mill**: a stone foot, a timber storey jettied over it, a steep thatch, and a wheel on the side the water
+  is that turns only while the stream runs. A **record house**: a small hall of dressed stone on a plinth,
+  slate over it, a porch on two posts, and one upright slab outside for each craft written in it. Slate is
+  the island's only cool roof, and marks the two things built to last. A granary and a mill show sacks for
+  what they hold. Stills: `evidence/long-road/work-*.jpg` (summer, late morning, software renderer). They
+  were looked at by the builder in stills; nobody else has judged them, and none has been seen on a
+  graphics chip.
 - Agreements (D-031): where an institution was ratified stands a post with a cap stone, one cord tied round
   it for each person who holds to it, up to ten, and a pennant in the institution's colour; the same pennant
   flies beside each store it governs. When the institution ends the post is left leaning, bare. A proposal draws

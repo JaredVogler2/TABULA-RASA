@@ -106,7 +106,23 @@ Everything the owner did or said, from the session's own record (times in UTC, 2
 21. 2026-11-26, 05:24 — merged pull request 8, a minute after its checks went green. The site rebuilt by
     itself.
 
-Items 17 and 18 are the only observations of the product by a person other than the builder. No design
+22. 2026-11-27, about 13:07 — merged pull request 10 (citizen and island realism, D-053; made in another
+    session).
+23. 2026-11-27, 14:10 — asked whether the graphics could be made more realistic without costing speed,
+    whether there were "genders and capability for having children", and for "developing civilizations,
+    hospitals, power", pointing at their own Epoch60 repository, and said: *"with the current state
+    civilizations only can die rather than progress."* **The second report from a person who had played, and
+    the first about the game itself rather than a defect.** It was true (D-055).
+24. 2026-11-27, within the next hour and a half, on reading the first plan: *"If we don't feel the need for children then that's
+    fine if people don't age. I'm open to suggestions. Right now it doesn't feel like there is much of a goal
+    when playing the game from a user perspective."* Births and ageing were set aside (D-057); the goal became
+    the work (D-056).
+25. 2026-11-27, 16:17 — on reading how the first runs had gone: *"Is progression plan too easy — day of
+    letters doesn't seem too hard to achieve for example. Run detailed in depth testing. I want some form of
+    skill involved for user to influence progress, suggest ideas here."* It was too easy; the test and what
+    it changed are D-058.
+
+Items 17, 18 and 23–25 are the only observations of the product by a person other than the builder. No design
 direction, code, review, test result or decision came from a person beyond what is listed. A deployment of the
 game alone was authorized, and made by the owner. No spend, key, database or other billable infrastructure has
 been authorized.
@@ -115,3 +131,15 @@ been authorized.
 and elbows, detailed faces, cloth, hands and boots. Updated ground, grass, foliage and sea rendering.
 Production-build screenshots and check results are indexed in [Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27).
 Physical-device performance remains open.
+
+**The Long Road: a people that can grow, a goal, and a hand that takes skill (D-055 to D-058, 2026-11-27) —
+PARTIAL.** Asked for by the owner in three messages (interventions 23–25). Engine 0.8.0 adds know-how that has
+to be found, six works it opens (among them a healing house and a mill), and newcomers drawn by a settlement
+that can feed and house them; every earlier world is stepped as before, digest for digest. A new default
+scenario gives the one who watches ages to reach, a legacy counted beside the untouched twin's, one change a
+season, an aim — four in five of the first fifty brought to the Age of Letters by the end of the fifth year —
+and a page that ends the story. The aim was first easier, the owner said so, and a test with scripted players
+of different skill set it where an island left alone rarely meets it and a hand that reads the island usually
+does. Evidence: [`docs/EVIDENCE.md`](EVIDENCE.md#the-long-road-d-055-to-d-058-2026-11-27). PARTIAL, not PASS,
+because the thing this was built for — whether a person finds it a game worth playing — has not been tried by
+anyone, and nothing was seen on a device.
