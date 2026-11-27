@@ -143,7 +143,7 @@ describe("camera rig: following", () => {
     rig.resize(390, 600);
     rig.setInsets(150, 250, true);
     const who = new Vector3(5, 0, -3);
-    rig.follow(() => who, 26);
+    rig.follow(() => who, 18, 0.45);
     settle();
     expect(rig.target.x).toBeCloseTo(5, 3);
     expect(rig.target.z).toBeCloseTo(-3, 3);
@@ -151,8 +151,9 @@ describe("camera rig: following", () => {
     settle();
     expect(rig.target.x).toBeCloseTo(9, 3);
     expect(rig.target.z).toBeCloseTo(2, 3);
-    // and they are drawn at the middle of the uncovered map
-    const at = drawnAt(rig, who, 390, 600);
+    expect(rig.getDistance()).toBeCloseTo(18, 3);
+    // Follow frames the middle of the citizen in the uncovered map at close range.
+    const at = drawnAt(rig, who.clone().add(new Vector3(0, 0.45, 0)), 390, 600);
     expect(at.x).toBeCloseTo(195, 2);
     expect(at.y).toBeCloseTo(250, 2);
   });

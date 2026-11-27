@@ -121,7 +121,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   expect(who, "the inspector is open on a citizen").not.toBeNull();
   const seen = () => sight(page, who!);
   /** Where the citizen is drawn once the camera has come to rest, having waited for nothing to stand over them. */
-  const atRest = async (): Promise<{ x: number; y: number }> => {
+  const atRest = async (centered = false): Promise<{ x: number; y: number }> => {
     let last = { x: Number.NaN, y: Number.NaN };
     await expect
       .poll(
@@ -129,7 +129,10 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
           const s = await seen();
           const moved = s.at ? Math.hypot(s.at.x - last.x, s.at.y - last.y) : Number.NaN;
           if (s.at) last = s.at;
-          return s.under === "" && moved < 1.5 ? "at rest in sight" : `under "${s.under}", moved ${moved}`;
+          const inPlace = !centered || (s.fromMiddle >= 0 && s.fromMiddle < 40);
+          return s.under === "" && moved < 1.5 && inPlace
+            ? "at rest in sight"
+            : `under "${s.under}", moved ${moved}, ${s.fromMiddle}px from the uncovered middle`;
         },
         { message: "the citizen comes to rest where they can be seen", timeout: 30_000, intervals: [500] },
       )
@@ -178,7 +181,7 @@ test("a new player can complete the whole loop offline", async ({ page }, testIn
   await expect(follow).toHaveAttribute("aria-pressed", "true");
   // following is for watching: a card that was open in full draws back
   if (touch) await expect(page.getByTestId("inspector")).toHaveAttribute("data-compact", "true");
-  const home = await atRest();
+  const home = await atRest(true);
   const held = await seen();
   expect(held.under, "nothing stands over the person followed").toBe("");
   expect(held.fromMiddle, `the person followed is drawn at the middle of the uncovered map (${JSON.stringify(held)})`).toBeLessThan(40);

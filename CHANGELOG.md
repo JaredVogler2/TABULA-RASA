@@ -5,6 +5,14 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
+## Citizen and island realism (2026-11-27)
+
+- Citizens have shaped faces and hands, fitted woven tunics, boots, and articulated walking and work poses.
+- Follow moves closer. Distant citizens use simpler meshes, and tools and loads are drawn only when visible.
+- Rock, turf, grass, foliage, streams and the sea have finer surface detail in the existing diorama.
+
+[Before-and-after captures](docs/EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27)
+
 ## Pull request 9 — the record brought up to date (2026-11-26)
 
 Engine 0.7.0, unchanged. Nothing in the product changes. Written with the pull request: whether it has been

@@ -14,6 +14,7 @@ import {
   Color,
   ConeGeometry,
   CylinderGeometry,
+  DoubleSide,
   DynamicDrawUsage,
   IcosahedronGeometry,
   InstancedMesh,
@@ -28,6 +29,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { StaticWorldView } from "@/worker/protocol";
 import { valueNoise, type HeightField } from "./heightfield";
 import { type KnowledgeUniforms, veil } from "./overlays";
+import { GLSL_NOISE } from "./terrain";
 import { CANOPY_BY_SEASON, CONIFER_BY_SEASON, GRASS_BY_SEASON, rand01, wearOf } from "./palette";
 
 const NODE = { berry: 0, root: 1, tree: 2, reed: 3, stone: 4, clay: 5, fish: 6 } as const;
@@ -159,28 +161,35 @@ function clayGeometry(seed: number): BufferGeometry {
 }
 
 /** A fan of narrow tapering blades. */
-function bladeCluster(count: number, height: number, spread: number, lean: number, seed: number, base: Color, tip: Color): BufferGeometry {
+function bladeCluster(count: number, height: number, spread: number, lean: number, seed: number, base: Color, tip: Color, simple: boolean): BufferGeometry {
   const pos: number[] = [];
   const col: number[] = [];
   const c = new Color();
   for (let b = 0; b < count; b++) {
     const a = (b / count) * Math.PI * 2 + rand01(seed, b) * 0.9;
     const r = spread * (0.25 + 0.75 * rand01(seed, b + 40));
-    const hgt = height * (0.65 + 0.5 * rand01(seed, b + 80));
-    const bx = Math.cos(a) * r;
-    const bz = Math.sin(a) * r;
-    const wdt = 0.035 + 0.02 * rand01(seed, b + 120);
-    const px = -Math.sin(a) * wdt;
-    const pz = Math.cos(a) * wdt;
-    const tx = bx + Math.cos(a) * lean * hgt;
-    const tz = bz + Math.sin(a) * lean * hgt;
-    // two triangles back to back so blades are visible from both sides without double-sided materials
-    const v = [bx - px, 0, bz - pz, bx + px, 0, bz + pz, tx, hgt, tz];
-    pos.push(...v, v[3]!, v[4]!, v[5]!, v[0]!, v[1]!, v[2]!, v[6]!, v[7]!, v[8]!);
-    for (let k = 0; k < 2; k++) {
-      c.copy(base).multiplyScalar(0.8 + 0.3 * rand01(seed, b + 160));
-      col.push(c.r, c.g, c.b, c.r, c.g, c.b);
-      c.copy(tip);
+    const hgt = height * (0.60 + 0.65 * rand01(seed, b + 80));
+    const dx = Math.cos(a);
+    const dz = Math.sin(a);
+    const bx = dx * r;
+    const bz = dz * r;
+    const width = (height > 0.3 ? 0.017 : 0.009) * (0.65 + 0.9 * rand01(seed, b + 120));
+    const px = -dz * width;
+    const pz = dx * width;
+    const bend = lean * hgt * (0.7 + rand01(seed, b + 140) * 0.75);
+    const rootL = [bx - px, 0, bz - pz];
+    const rootR = [bx + px, 0, bz + pz];
+    const midL = [bx + dx * bend * 0.35 - px * 0.68, hgt * 0.63, bz + dz * bend * 0.35 - pz * 0.68];
+    const midR = [bx + dx * bend * 0.35 + px * 0.68, hgt * 0.63, bz + dz * bend * 0.35 + pz * 0.68];
+    const end = [bx + dx * bend, hgt, bz + dz * bend];
+    if (simple) {
+      pos.push(...rootL, ...rootR, ...end);
+    } else {
+      pos.push(...rootL, ...rootR, ...midL, ...rootR, ...midR, ...midL, ...midL, ...midR, ...end);
+    }
+    const variation = 0.80 + 0.36 * rand01(seed, b + 160);
+    for (const t of simple ? [0, 0, 1] : [0, 0, 0.63, 0, 0.63, 0.63, 0.63, 0.63, 1]) {
+      c.copy(base).lerp(tip, t).multiplyScalar(variation * (0.67 + t * 0.4));
       col.push(c.r, c.g, c.b);
     }
   }
@@ -236,11 +245,28 @@ export interface FloraUniforms {
   [key: string]: IUniform<unknown>;
 }
 
-function swayMaterial(uniforms: FloraUniforms, options: { flat?: boolean; rough?: number; sway?: number } = {}): MeshStandardMaterial {
+function swayMaterial(uniforms: FloraUniforms, options: { flat?: boolean; rough?: number; sway?: number; canopyDetail?: boolean } = {}): MeshStandardMaterial {
   const m = new MeshStandardMaterial({ vertexColors: true, roughness: options.rough ?? 0.88, metalness: 0, flatShading: options.flat ?? true });
   const sway = (options.sway ?? 1).toFixed(3);
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
+    if (options.canopyDetail) {
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nvarying vec3 vCrown;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvCrown = position;");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>", `#include <common>
+varying vec3 vCrown;
+${GLSL_NOISE}`)
+        .replace("#include <color_fragment>", `#include <color_fragment>
+vec2 leaves = vCrown.xz + vCrown.y * vec2(0.73, -0.61);
+float scaleFade = 1.0 - smoothstep(0.35, 0.95, length(fwidth(leaves)) * 16.0);
+float clusters = trNoise(leaves * 11.0);
+float tips = trNoise(leaves * 42.0 + clusters * 2.0);
+float canopyLight = 0.82 + 0.32 * smoothstep(0.21, 0.76, clusters);
+diffuseColor.rgb *= canopyLight * (1.0 + scaleFade * (tips - 0.5) * 0.23);
+diffuseColor.rgb *= mix(vec3(0.92, 0.97, 1.06), vec3(1.12, 1.04, 0.89), clusters);`);
+    }
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nuniform float uTime;\nuniform float uWind;")
       .replace(
@@ -258,7 +284,7 @@ function swayMaterial(uniforms: FloraUniforms, options: { flat?: boolean; rough?
   transformed.z += swayAmt * swayH * swayH * 0.045;`,
       );
   };
-  m.customProgramCacheKey = () => `tr-sway-${sway}-${options.flat ?? true}`;
+  m.customProgramCacheKey = () => `tr-sway-${sway}-${options.flat ?? true}-${options.canopyDetail ?? false}`;
   return m;
 }
 
@@ -292,10 +318,11 @@ interface NodeVisual {
 export function buildFlora(view: StaticWorldView, field: HeightField, quality: "low" | "medium" | "high", know?: KnowledgeUniforms): FloraParts {
   const seed = view.config.seed;
   const uniforms: FloraUniforms = { uTime: { value: 0 }, uWind: { value: 1 } };
-  const foliage = swayMaterial(uniforms, { sway: 1 });
+  const foliage = swayMaterial(uniforms, { sway: 1, canopyDetail: quality !== "low" });
   const wood = swayMaterial(uniforms, { sway: 0.5, rough: 0.95 });
   const stiff = swayMaterial(uniforms, { sway: 0, rough: 0.9 });
   const grassMat = swayMaterial(uniforms, { sway: 2.2, flat: false, rough: 0.95 });
+  grassMat.side = DoubleSide;
   const berryMat = new MeshStandardMaterial({ color: "#b3273f", roughness: 0.45, metalness: 0, emissive: "#3a0a12", emissiveIntensity: 0.35 });
   if (know) for (const m of [foliage, wood, stiff, grassMat, berryMat]) veil(m, know);
 
@@ -312,9 +339,9 @@ export function buildFlora(view: StaticWorldView, field: HeightField, quality: "
     rock: rockGeometry(9, simple),
     rock2: rockGeometry(31, simple),
     clay: clayGeometry(13),
-    reed: bladeCluster(9, 0.62, 0.16, 0.12, 21, new Color("#6f8f4a"), new Color("#c9b97a")),
+    reed: bladeCluster(9, 0.62, 0.16, 0.24, 21, new Color("#6f8f4a"), new Color("#c9b97a"), simple),
     root: leafRosette(27),
-    grass: bladeCluster(7, 0.17, 0.1, 0.35, 33, new Color("#ffffff"), new Color("#ffffff")),
+    grass: bladeCluster(7, 0.17, 0.1, 0.52, 33, WHITE, WHITE, simple),
   };
 
   // First pass: decide every instance so that InstancedMesh capacities are exact.

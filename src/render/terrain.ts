@@ -243,6 +243,9 @@ uniform float uWet;
 uniform sampler2D uTraffic;
 uniform vec3 uWorld;
 uniform float uNight;
+#ifndef TR_LOW
+float terrainRelief;
+#endif
 ${GLSL_NOISE}
 #ifdef TR_LOW
 #define trFbmQ(p) trNoise(p)
@@ -272,10 +275,13 @@ ${GLSL_NOISE}
   vec3 dormant = mix(base, vec3(dot(base, vec3(0.3, 0.5, 0.2))) * vec3(1.12, 1.02, 0.78), 0.75);
   base = mix(base, mix(seasonal, dormant, uSeasonMix), greenness * land);
   base *= 0.84 + 0.2 * n2 + 0.12 * n3;
-  // meadow flecks: small lighter and darker patches read as tussocks from above
+  // Variations in turf and exposed soil carry from the vista down to ground level.
 #ifndef TR_LOW
-  float tuft = trNoise(p * 23.0);
-  base *= mix(1.0, 0.86 + 0.3 * tuft, greenness * land * 0.8);
+  float detail = 1.0 - smoothstep(0.22, 0.64, length(fwidth(p)) * 18.0);
+  float grain = trNoise(p * 18.0 + n2 * 2.0);
+  float patches = smoothstep(0.24, 0.77, n2 * 0.72 + n1 * 0.28);
+  base *= mix(0.86, 1.12, patches);
+  base *= 1.0 + (grain - 0.5) * detail * land * (0.21 + 0.19 * greenness);
 #endif
 
   // rock where it is steep, with faint strata following elevation
@@ -286,6 +292,13 @@ ${GLSL_NOISE}
   strata = mix(0.5, smoothstep(0.2, 0.8, strata), 0.55);
   vec3 rockCol = mix(vec3(${ROCK_DARK.r.toFixed(4)}, ${ROCK_DARK.g.toFixed(4)}, ${ROCK_DARK.b.toFixed(4)}), vec3(${ROCK_LIGHT.r.toFixed(4)}, ${ROCK_LIGHT.g.toFixed(4)}, ${ROCK_LIGHT.b.toFixed(4)}), 0.2 + 0.8 * strata * (0.45 + 0.55 * n1));
   rockCol *= 0.82 + 0.3 * n3;
+#ifndef TR_LOW
+  // Irregular fractures cut across the softer sediment bands.
+  float fault = trNoise(p * 4.8 + vec2(vWPos.y * 2.6, vWPos.y * -3.8));
+  float fissure = 1.0 - smoothstep(0.018, 0.105, abs(fault - 0.43));
+  rockCol *= 0.90 + n3 * 0.21 - fissure * 0.16;
+  rockCol *= 1.0 + detail * (grain - 0.5) * 0.28;
+#endif
   // lichen and moss creep onto rock where it is not too steep
   rockCol = mix(rockCol, base * 0.8, (1.0 - smoothstep(0.3, 0.55, slope)) * 0.35 * n2);
   base = mix(base, rockCol, rock);
@@ -319,7 +332,23 @@ ${GLSL_NOISE}
   base = mix(base, vec3(${SNOW.r.toFixed(4)}, ${SNOW.g.toFixed(4)}, ${SNOW.b.toFixed(4)}), snowAmt * 0.92);
 
   diffuseColor.rgb = base;
+#ifndef TR_LOW
+  terrainRelief = land * detail * ((grain - 0.5) * mix(0.005, 0.009, rock) - fissure * rock * 0.004) * (1.0 - snowAmt * 0.65);
+#endif
 }`,
+      )
+      .replace(
+        "#include <normal_fragment_maps>",
+        `#include <normal_fragment_maps>
+#ifndef TR_LOW
+vec3 dx = dFdx(-vViewPosition);
+vec3 dy = dFdy(-vViewPosition);
+vec3 sx = cross(dy, normal);
+vec3 sy = cross(normal, dx);
+float area = dot(dx, sx);
+vec3 gradient = sign(area) * (dFdx(terrainRelief) * sx + dFdy(terrainRelief) * sy);
+normal = normalize(max(abs(area), 0.00000001) * normal - gradient);
+#endif`,
       )
       .replace(
         "#include <roughnessmap_fragment>",
@@ -328,7 +357,7 @@ roughnessFactor = mix(roughnessFactor, 0.55, clamp(uWet, 0.0, 1.0) * 0.5);`,
       );
   };
   if (quality === "low") material.defines = { ...(material.defines ?? {}), TR_LOW: "" };
-  material.customProgramCacheKey = () => `tr-terrain-v3-${quality}`;
+  material.customProgramCacheKey = () => `tr-terrain-v4-${quality}`;
   if (know) veil(material, know);
 
   const mesh = new Mesh(geometry, material);

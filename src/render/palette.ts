@@ -33,8 +33,8 @@ export const STREAM_BED = c("#56655a");
 export const FRESH_DEEP = c("#175f5e");
 
 export const WATER_SHALLOW = c("#7fd6cf");
-export const WATER_MID = c("#2f9aa3");
-export const WATER_DEEP = c("#0f4f63");
+export const WATER_MID = c("#328ca2");
+export const WATER_DEEP = c("#164b73");
 export const FOAM = c("#f2fbf8");
 
 export const TUNICS = ["#b4533c", "#c98a2b", "#3f6a8c", "#5a7d4b", "#d9c9a3", "#7a4a2e", "#8c5a86", "#2f6e6a", "#a8a094", "#c26d4a", "#6b7fb0", "#93a85a"].map(c);

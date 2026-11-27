@@ -2,6 +2,14 @@
 
 Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, then `docs/DECISIONS.md`.
 
+## Graphics update (2026-11-27)
+
+D-053 builds on `6ec20bc` (pull request 9). The citizen geometry lives in `src/render/citizenGeometry.ts`.
+Pose, visibility and equipment still follow the worker frame in `src/render/citizens.ts`. Use
+`pnpm exec vitest run src/render/citizens.test.ts` to check the batched limbs and props, and the
+[studio queries in Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27) to reproduce the captures.
+Review the branch preview before merging to the Vercel production branch. Physical-device frame rates are open.
+
 ## Current state (2026-11-26)
 
 - **Branch:** `claude/friendly-gauss-kejb2m`, brought up to `main` after each merge. Pull requests 1 (phases

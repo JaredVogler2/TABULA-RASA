@@ -19,7 +19,7 @@ const MiniatureShader = {
     uBand: { value: 0.16 },
     uBlur: { value: 5.0 },
     uVignette: { value: 0.38 },
-    uGrain: { value: 0.012 },
+    uGrain: { value: 0.004 },
     uTime: { value: 0 },
   },
   vertexShader: /* glsl */ `
@@ -88,7 +88,7 @@ export function buildPost(renderer: WebGLRenderer, scene: Scene, camera: Camera,
     composer.addPass(bloom);
   }
   const mini = new ShaderPass(MiniatureShader);
-  mini.uniforms.uGrain!.value = reducedMotion ? 0 : 0.012;
+  mini.uniforms.uGrain!.value = reducedMotion ? 0 : 0.004;
   composer.addPass(mini);
   composer.addPass(new OutputPass());
 
@@ -104,8 +104,8 @@ export function buildPost(renderer: WebGLRenderer, scene: Scene, camera: Camera,
     },
     setMiniature(focusY: number, strength: number, time: number) {
       mini.uniforms.uFocus!.value = focusY;
-      mini.uniforms.uBlur!.value = 1.0 + 4.6 * strength;
-      mini.uniforms.uBand!.value = 0.2 - 0.07 * strength;
+      mini.uniforms.uBlur!.value = 0.9 + 3.4 * strength;
+      mini.uniforms.uBand!.value = 0.25 - 0.07 * strength;
       mini.uniforms.uTime!.value = reducedMotion ? 0 : time;
     },
     dispose() {

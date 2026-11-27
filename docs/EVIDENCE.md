@@ -416,3 +416,25 @@ database. **Not done by the builder, in any phase:** a playtest by a person; any
 The owner's few minutes on their own phone, above, are the only use by a person and on a device that this
 repository knows of.
 
+
+## Citizen and island realism (D-053, 2026-11-27)
+
+The comparison uses First Light, seed 1, at the same frame and camera in both builds. The baseline
+is `6ec20bc`. Chromium ran WebGL through SwiftShader. The triangle counts include all submitted
+passes and are useful for comparing render budgets. Physical-device frame rates remain unmeasured.
+
+| Capture | Viewport and studio parameters | Before | After |
+|---|---|---|---|
+| Citizen at the shore | 960 × 640, `?scenario=first_light&seed=1&days=2&ticks=30&agent=7&az=0.35&polar=1.34&dist=7&still=1&q=high` | [Citizen](../evidence/realism/citizen-before.jpg) | [Citizen](../evidence/realism/citizen-after.jpg) |
+| Island vista | 1200 × 720, `?scenario=first_light&seed=1&days=2&ticks=22&az=0.62&polar=0.88&q=high` | [Island](../evidence/realism/island-before.jpg) | [Island](../evidence/realism/island-after.jpg) |
+
+| Render budget | Before | After |
+|---|---:|---:|
+| High, island vista | 84 draws · 1,650,579 triangles | 80 draws · 1,773,875 triangles |
+| High, citizen at the shore | 86 draws · 1,650,655 triangles | 82 draws · 1,907,899 triangles |
+| Low, citizen at the shore | 54 draws · 414,838 triangles | 49 draws · 434,229 triangles |
+
+The studio also rendered the shore close-up on Medium at 390 × 844, with 68 draws and 1,820,450
+submitted triangles. The local Node 22 production build and client bundle scan passed. The unit
+suite reported 509 passed and 10 skipped. The skips require PostgreSQL. The renderer tests exercise
+the closer camera aim, the switch to cheaper meshes at distance and visibility of state-driven props.
