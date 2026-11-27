@@ -1,0 +1,13 @@
+[WebServer] ▲ Next.js 16.4.6
+[WebServer] - Local:         http://localhost:3210
+[WebServer] - Network:       http://192.0.2.2:3210
+[WebServer] ✓ Ready in 114ms
+[WebServer] ✓ Running next.config.ts took 32ms
+
+Running 2 tests using 1 worker
+
+  ✓  1 [desktop] › tests/e2e/goal.spec.ts:33:1 › the goal: an age, a legacy and one change a season, from the first morning; the ladder in the Atlas (2.7m)
+  ✓  2 [mobile] › tests/e2e/goal.spec.ts:33:1 › the goal: an age, a legacy and one change a season, from the first morning; the ladder in the Atlas (2.9m)
+
+  2 passed (5.6m)
+e2e exit 0

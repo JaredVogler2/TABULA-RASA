@@ -1,0 +1,236 @@
+
+ RUN  v5.1.1 /home/user/TABULA-RASA
+
+ ✓ src/server/runs.test.ts (20 tests) 11199ms
+   ✓ server-side runs (in memory) (19)
+     ✓ a mock run needs no budget, advances epoch by epoch, and its stored record replays to the same world 781ms
+     ✓ a paid run reserves before every call, settles what each cost, and never exceeds what was previewed 807ms
+     ✓ refuses to create a paid run without approval that covers it 402ms
+     ✓ the kill switch stops a paid run mid-epoch; lifting it lets the run finish; nothing is asked twice 1199ms
+     ✓ a call cut off in flight and then swept as unknown does not wedge the run: the next step records it and moves on 320ms
+     ✓ a run that keeps paying for answers it cannot use is stopped after three, and an answer from the wrong model stops it at once 896ms
+     ✓ a step that runs out of time stops cleanly; the next step finishes the epoch; nobody is asked twice 376ms
+     ✓ an error no retry can fix fails the run at once and says why 489ms
+   ✓ server-side runs with two instances stepping at once (PostgreSQL server) (1)
+     ✓ two instances racing through a paid run commit every epoch once and pay for every call once 849ms
+ ✓ src/server/ledger.test.ts (23 tests) 8549ms
+   ✓ the budget ledger (PostgreSQL semantics, in memory) (16)
+     ✓ property: after any sequence of operations the books balance and no ceiling is exceeded 1076ms
+   ✓ the budget ledger under real concurrency (PostgreSQL server) (5)
+     ✓ the same holds for a run's cap and for the day's cap 316ms
+     ✓ holds, settlements, releases and refusals interleaved from two instances leave the books exact 762ms
+   ✓ database plumbing (2)
+     ✓ migrations are applied once, in order, and are recorded 1431ms
+     ✓ a transaction that throws leaves nothing behind 1445ms
+ ✓ src/server/db.test.ts (10 tests) 2041ms
+   ✓ the limits every transaction runs under (PostgreSQL) (4)
+     ✓ a statement that runs past its limit is cancelled, and the connection goes on working 332ms
+     ✓ a lock that is not given within its limit is not waited for any longer 344ms
+     ✓ a transaction left idle past its limit is ended by the server; its work is undone and its connection is not used again 1256ms
+ ✓ src/server/api.test.ts (14 tests) 34981ms
+   ✓ the owner API (14)
+     ✓ signs the owner in with the passphrase, and slows down anyone guessing it 3009ms
+     ✓ one address hammering sign-in cannot lock the owner out, and strangers together cannot keep the owner off a device they have used 20095ms
+     ✓ signing out ends every copy of the session, and nobody but the owner can do it 1426ms
+     ✓ no request without the owner's session, origin and token changes anything or reaches a provider 954ms
+     ✓ runs a mock society end to end through the API, and the published record can be verified by anyone 1358ms
+     ✓ spends nothing until the owner authorizes an amount, releases the switch and approves a run in words 1286ms
+     ✓ the credential that spends cannot raise its own limit: the ceiling belongs to the deployment 718ms
+     ✓ a switch that money tripped is not released by a click, and what was overcharged counts from then on 759ms
+     ✓ lets the owner settle the fate of a request whose outcome is unknown 778ms
+     ✓ refuses bodies that are too large, not JSON, or not objects, and worlds outside the allowed knobs 617ms
+     ✓ fails closed when the database cannot be reached 563ms
+ ✓ src/worker/sim.worker.test.ts (29 tests) 44663ms
+   ✓ worker: a world's own history (5)
+     ✓ keeps the start and every second morning as moments that can be returned to 972ms
+     ✓ an intervention forks an untouched twin at that tick, and the frame says so 1334ms
+     ✓ an exact re-run does again what the observer did, when it was done, and arrives at the world that was left 1590ms
+     ✓ leaving from an earlier morning starts a new line without what was done later, and the old line can be returned to exactly 1391ms
+   ✓ worker: a saved world's past, lived again from its seed (6)
+     ✓ a loaded world has only its present in memory, and says its past can be rebuilt 1700ms
+     ✓ rebuilding re-lives every day, forks the twin where it was forked, and is kept because it arrives at exactly the loaded world 1943ms
+     ✓ a save whose record of interventions was edited does not survive the check, and nothing of the false past is kept 908ms
+     ✓ a save kept packed is a fraction of its text, opens to the same world, and is refused if a byte of it changes 1009ms
+     ✓ a line that took new luck cannot be rebuilt from the seed alone, and says why 986ms
+   ✓ worker: a file out and back in (1)
+     ✓ an exported world opens to the same state, and an altered one is refused without changing anything 1856ms
+   ✓ worker: a recording beside the engine's own minds (1)
+     ✓ a recording with outside minds gets a twin of the same seed with the built-in planner, and the comparison is named for what it is 589ms
+   ✓ worker: the event ledger (2)
+     ✓ is the engine's own list of what happened: consecutive ids from the first event, time never running backwards, every recorded cause earlier than its effect 391ms
+     ✓ a loaded world's ledger says it is partial, until its past has been lived again 838ms
+   ✓ worker: time is driven in many ways, the world in one (2)
+     ✓ single steps, long steps, play at any speed, any frame rate and any pauses arrive at the same world at the same tick 5303ms
+   ✓ worker: the world is lived at its own pace, the picture sent at the page's (4)
+     ✓ a page that takes each frame at once is sent them at the rate asked 459ms
+     ✓ no second frame is sent until the first is taken; the world runs on; the frame sent then shows it as it is, with everything the missing ones would have carried 1463ms
+     ✓ a slow page is sent one frame for each it takes, and the world keeps the pace it would have kept 1858ms
+   ✓ worker: when a world cannot be carried on (2)
+     ✓ a world file that is well formed but cannot be lived is refused, and the world on hand stays 365ms
+   ✓ worker: the aim on the scenario's card (3)
+     ✓ is answered when asked and sent each morning, for the world being lived and, once the observer has touched it, for its twin 620ms
+     ✓ is decided on the morning spring comes, and a save opened again reads the same in both worlds 12571ms
+     ✓ an aim with no day of reckoning is a reading from the first morning, never a verdict 302ms
+   ✓ worker: the goal — ages, legacy and a limited hand (3)
+     ✓ the island allows one change a season: the second is refused, and the hand comes back when the season turns 3871ms
+     ✓ the aim of the long road is read from the state: open, with the age stood in and what the next asks for 1139ms
+ ✓ src/engine/sim/sim.test.ts (43 tests) 13160ms
+   ✓ phase 03 gate: fifty agents, a thousand ticks, deterministic replay (4)
+     ✓ runs 1,056 ticks with 50 agents and replays to the same digests and snapshot hash 1408ms
+     ✓ pins the reference run of the planner baseline as well 338ms
+     ✓ event streams are identical across replays, with sequential ids and valid causal parents 560ms
+   ✓ snapshots (5)
+     ✓ save → restore → continue equals an uninterrupted run 1154ms
+   ✓ branches (4)
+     ✓ a fork with common random numbers and no intervention retraces its parent exactly 605ms
+     ✓ an intervention makes the fork diverge while the parent is untouched 463ms
+     ✓ re-keying the branch gives an independent stochastic continuation 622ms
+   ✓ conservation and invariants (properties) (3)
+     ✓ every scenario keeps its books balanced on every tick 1129ms
+     ✓ holds for arbitrary seeds, sizes and knob settings 1603ms
+   ✓ invalid intents are rejected, never applied (19)
+     ✓ survives a storm of arbitrary intent objects without throwing or breaking invariants 1907ms
+   ✓ arbitration and action mechanics (5)
+     ✓ moves only between adjacent walkable tiles and takes terrain time to do it 415ms
+   ✓ knowledge is local (3)
+     ✓ beliefs go stale: what an agent remembers can differ from the truth 546ms
+ ✓ src/engine/mind/cognition.test.ts (26 tests) 12362ms
+   ✓ external decisions: proposals, not writes (5)
+     ✓ replay uses the recorded intents and reproduces the same world without consulting any mind 410ms
+   ✓ baseline competence (2)
+     ✓ sharing one lean island, planners outlive reflex-only neighbours 6240ms
+     ✓ on the reference island a society of planners comes through its first winter, and with institutions off none exists 3593ms
+ ✓ src/providers/run.test.ts (17 tests) 6947ms
+   ✓ a society of fifty minds outside the engine (mock provider, no cost) (6)
+     ✓ round_robin: fifty people decide independently over three days, and the record replays to the same world 1418ms
+     ✓ event: fifty people decide independently over three days, and the record replays to the same world 798ms
+     ✓ voi: fifty people decide independently over three days, and the record replays to the same world 643ms
+     ✓ mock minds that write and sign agreements leave them attributed to the mock, in the run and in its replay 905ms
+     ✓ a baseline arm runs through the same harness and is exactly the engine's own world 414ms
+   ✓ rationing deliberation fairly (6)
+     ✓ round_robin: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 484ms
+     ✓ event: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 516ms
+     ✓ voi: with six slots for fifty minds nobody exceeds the daily cap and nobody is passed over for ever 471ms
+     ✓ the three policies spend differently on the same world: round-robin fills every slot, the others ask only when there is cause 658ms
+ ✓ tests/unit/legacy.test.ts (17 tests | 2 skipped) 43865ms
+   ✓ a world without crafts or arrivals is the world engine 0.7.0 made (17)
+     ✓ first-light-planner-1: 30 days end where 0.7.0 ended them, on every fifth day and the last 4684ms
+     ✓ first-light-planner-2: 30 days end where 0.7.0 ended them, on every fifth day and the last 3684ms
+     ✓ first-light-reflex-3: 20 days end where 0.7.0 ended them, on every fifth day and the last 1146ms
+     ✓ first-light-no-agreements-5: 20 days end where 0.7.0 ended them, on every fifth day and the last 2125ms
+     ✓ long-winter-scripted-1: 30 days end where 0.7.0 ended them, on every fifth day and the last 3129ms
+     ✓ thin-commons-2: 20 days end where 0.7.0 ended them, on every fifth day and the last 1744ms
+     ✓ two-shores-1: 20 days end where 0.7.0 ended them, on every fifth day and the last 2396ms
+     ✓ dry-year-4: 25 days end where 0.7.0 ended them, on every fifth day and the last 2486ms
+     ✓ first-light-mixed-6: 15 days end where 0.7.0 ended them, on every fifth day and the last 835ms
+     ✓ newcomers-7: 15 days end where 0.7.0 ended them, on every fifth day and the last 1639ms
+     ✓ crowded-8: 12 days end where 0.7.0 ended them, on every fifth day and the last 1864ms
+     ✓ the recording 0.7.0 bundled is reached, epoch by epoch, from its decisions 740ms
+     ✓ cells of the published pilot study end on their published digests 16705ms
+     ✓ a world saved by 0.7.0 opens, is the same world, and goes on as it would have 661ms
+ ✓ src/engine/save/validate.test.ts (3 tests) 61040ms
+   ✓ a stored world is checked before it is lived in (3)
+     ✓ everything the engine itself produces passes: every scenario, with interventions, agreements, offers and outside minds 25500ms
+     ✓ refuses a state that would drive the engine out of bounds or into an endless loop, and says where 3052ms
+     ✓ property: whatever passes can be lived in — a corrupted save is refused or runs, and never breaks the engine 32484ms
+ ✓ src/engine/save/history.test.ts (15 tests) 6877ms
+   ✓ history: re-running a stretch of a world line (5)
+     ✓ a replay from an earlier snapshot, with the logged interventions re-applied at their ticks, ends byte-identical to the original 673ms
+     ✓ a replay from the very beginning does too 391ms
+     ✓ shocks scheduled by the scenario are applied once, by the engine, never twice by the replay 766ms
+   ✓ history: branches (4)
+     ✓ a branch with new luck starts from the same moment and then goes its own way 584ms
+   ✓ history: export, import and integrity (6)
+     ✓ a bundle opens to the same world and the same twin, with a manifest that says what they are 551ms
+     ✓ refuses a manifest that was edited to describe a different history 426ms
+     ✓ a world edited by hand and repacked with a manifest of its own is whole, and still refused: its goods do not add up 897ms
+     ✓ refuses a twin from another world or another moment, a truncated file, an empty file and a file that is something else 832ms
+     ✓ two manifests say how the worlds they describe were made differently 448ms
+ ✓ src/engine/sim/pathfind.test.ts (2 tests) 8887ms
+   ✓ the route finder's memory of failed searches (2)
+     ✓ answers every question exactly as a fresh search does, whatever was asked before and whatever has been learned, forgotten or walked since 686ms
+     ✓ a crowded island in famine arrives at the same world, to the last bit, with the memory and without it 8198ms
+ ✓ src/engine/sim/works.test.ts (22 tests) 6550ms
+   ✓ newcomers drawn by a thriving settlement (5)
+     ✓ come in spring, with beds to spare and food laid up — and not to an island that is short of either 491ms
+     ✓ do not come in autumn or winter, nor to a world that does not draw them 397ms
+   ✓ a world with crafts and newcomers is still a deterministic, balanced, saveable world (2)
+     ✓ replays to the same digests, conserves every unit, and opens from its own save 4216ms
+ ✓ src/engine/institutions/institutions.test.ts (40 tests) 9633ms
+   ✓ fuzz: no charter creates goods, escalates privilege or runs forever (3)
+     ✓ random valid charters, lived under by acting members, conserve every item and terminate 1785ms
+   ✓ decision rules are whatever the charter says (2)
+     ✓ majority, two thirds, unanimity, quorum and decision by a role each do what they say 358ms
+   ✓ grammar search and the civic mind (5)
+     ✓ every charter the search can draw passes the validator, and the draw is a pure function of its keys 1992ms
+     ✓ a proposer only puts forward what it would itself sign 696ms
+     ✓ in a planner world with grammar search, institutions arise only through validated proposals and individual consent, and are labelled 2988ms
+ ✓ src/server/auth.test.ts (20 tests) 7138ms
+   ✓ the owner's passphrase (3)
+     ✓ is stored as a salted scrypt hash that only the passphrase opens 2094ms
+     ✓ matches nothing when the hash is missing, malformed or absurd, and never throws 371ms
+   ✓ rate limiting, shared through the database (2)
+     ✓ refuses when it cannot count 1905ms
+ ✓ src/engine/metrics/society.test.ts (9 tests) 4673ms
+   ✓ the tracker agrees with the engine's own counters on a real run (1)
+     ✓ gifts, exchanges, proposals and agent-days match; every institution's rung is at most what its record allows 2905ms
+   ✓ a scarcity shock shows in the measures (1)
+     ✓ a drought leaves the commons poorer than in the untouched twin that shares its luck 1356ms
+ ✓ src/server/smoke.test.ts (6 tests) 4573ms
+   ✓ the live smoke test (canned responses: nothing is sent, nothing is spent) (6)
+     ✓ an authorized run asks three minds once each inside its amount, the books balance, and the switch is on again afterwards 421ms
+     ✓ the same words do nothing a second time: every run has its own number, and its own words 711ms
+ ✓ tests/unit/recording.test.ts (3 tests) 870ms
+   ✓ the bundled recording is reproduced by this engine (3)
+     ✓ every epoch's digest is reached from the recorded decisions, with no mind consulted 681ms
+ ✓ src/engine/mind/clock.test.ts (5 tests) 1339ms
+   ✓ the planner's deliberation clock (config.planEvery) (5)
+     ✓ a longer interval means fewer deliberations: the treatment really is applied 542ms
+ ✓ src/worker/aims.test.ts (12 tests) 6492ms
+   ✓ the aim on a scenario's card, counted (12)
+     ✓ every scenario has an aim this reading knows, and says it in the card's own words 601ms
+     ✓ Dry Year: the drought is not foretold; once it has come its day is said, and the aim is decided the morning it ends 2553ms
+     ✓ is read from the state alone: a world saved and opened again gives the same answer, and so does its twin 2484ms
+ ✓ src/server/anthropic.test.ts (14 tests) 976ms
+ ✓ src/providers/wire.test.ts (17 tests) 1250ms
+   ✓ answers are read into intents, deterministically (9)
+     ✓ every charter the grammar search can draw survives the wire unchanged 894ms
+ ✓ src/engine/world/world.test.ts (32 tests) 4345ms
+   ✓ two shores (4)
+     ✓ most of the stone and clay lie on one shore, most of the timber, berries and roots on the other 554ms
+     ✓ what one shore lacks the other has: the island as a whole is not poorer in food or stone than an undivided one 684ms
+     ✓ which shore is the poor one depends on the seed, and a world with no split is exactly as it was 937ms
+ ✓ src/engine/metrics/metrics.test.ts (8 tests) 509ms
+ ✓ src/providers/prompt.test.ts (16 tests) 775ms
+ ✓ src/lab/cost.test.ts (8 tests) 476ms
+   ✓ laboratory cost estimator: ceilings that can be worked by hand (5)
+     ✓ when only some people are decided for from outside, the largest such group over the seeds is priced 439ms
+ ✓ src/lab/analyse.test.ts (13 tests) 265ms
+ ✓ src/lab/stats.test.ts (13 tests) 187ms
+ ✓ src/engine/institutions/formula.test.ts (6 tests) 136ms
+ ✓ src/engine/core/text.test.ts (7 tests) 174ms
+ ✓ src/engine/core/bounded.test.ts (7 tests) 95ms
+ ✓ src/engine/core/core.test.ts (19 tests) 145ms
+ ✓ src/render/citizens.test.ts (1 test) 43ms
+ ✓ tests/unit/css-order.test.ts (3 tests) 26ms
+ ✓ src/render/cameraRig.test.ts (11 tests) 59ms
+ ✓ src/engine/core/core.selftest.test.ts (2 tests) 32ms
+ ✓ tests/unit/contrast.test.ts (10 tests) 6ms
+ ✓ src/ui/game/worth.test.ts (3 tests) 24ms
+ ✓ tests/unit/scans.test.ts (8 tests) 13ms
+ ✓ src/ui/game/fit.test.ts (3 tests) 6ms
+ ✓ src/ui/game/runs.test.ts (4 tests) 4ms
+ ✓ src/ui/game/toasts.test.ts (6 tests) 6ms
+ ✓ src/ui/game/text.test.ts (3 tests) 5ms
+ ✓ tests/unit/links.test.ts (3 tests) 5ms
+ ✓ src/ui/game/swipe.test.ts (5 tests) 4ms
+ ✓ src/ui/game/coverOf.test.ts (6 tests) 5ms
+ ✓ src/ui/game/quality.test.ts (3 tests) 5ms
+ ✓ src/render/pick.test.ts (3 tests) 4ms
+
+ Test Files  48 passed (48)
+      Tests  568 passed | 2 skipped (570)
+   Start at  17:01:36
+   Duration  105.48s (tests 98%, import 1%)
+
+unit exit 0

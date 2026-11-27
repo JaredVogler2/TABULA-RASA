@@ -1,0 +1,25 @@
+== pnpm lint
+exit 0
+== pnpm typecheck
+Generating route types...
+✓ Types generated successfully
+exit 0
+== pnpm gen:affordances --check
+docs/AFFORDANCES.md is up to date.
+exit 0
+== pnpm gen:migrations --check
+src/server/migrations.generated.ts is up to date.
+exit 0
+== pnpm gen:prompts --check
+docs/PROMPTS.md is up to date.
+exit 0
+== pnpm gen:licenses --check
+docs/THIRD_PARTY.md and public/licenses.txt are up to date.
+exit 0
+== pnpm check:links
+check:links passed: 42 documents; every link to a file in the repository and every root-relative path in backticks exists.
+== pnpm scan:secrets
+scan:secrets passed: 541 text files (tracked, and untracked but not ignored), 9 credential patterns, no env files, no archives, template values empty, no secret-named public variables.
+== pnpm scan:history
+scan:history passed: 246789 added lines across the diffs of every commit on every ref (54 diffs), 9 credential patterns, no env file, archive or secret-named public variable ever committed.
+scan:bundle passed: 157 client-facing files (2262 KB of text), 13 server-only markers, 4 credential shapes, 0 live secret value(s) checked.

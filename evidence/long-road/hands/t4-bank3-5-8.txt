@@ -1,0 +1,15 @@
+long_road seed   5 steward    aim met day 70  ages 10/46/49/69/69         alive  50 of  55 fewest 50 founders lost  4 (46 alive at letters) legacy  2260 moves 6 (5 strangers) 6 s
+long_road seed   5 balanced   aim met day 131 ages 10/47/70/70/130        alive  68 of  71 fewest 50 founders lost  3 (47 alive at letters) legacy  2660 moves 14 (5 strangers) 21 s
+long_road seed   6 steward    aim not met     ages 10/29/48/62/121        alive  50 of  71 fewest 35 founders lost 20 (30 alive at letters) legacy  2445 moves 9 (5 strangers) 11 s
+long_road seed   6 balanced   aim met day 121 ages 10/29/74/79/120        alive  63 of  65 fewest 50 founders lost  2 (48 alive at letters) legacy  2525 moves 13 (4 strangers) 18 s
+long_road seed   7 steward    aim not met     ages 10/122/122/122/159     alive  20 of  73 fewest  6 founders lost 46 (4 alive at letters) legacy  2111 moves 13 (11 strangers) 6 s
+long_road seed   7 balanced   aim met day 101 ages 10/69/69/100/100       alive  63 of  64 fewest 50 founders lost  1 (49 alive at letters) legacy  2460 moves 11 (5 strangers) 9 s
+long_road seed   8 steward    aim not met     ages 10/77/101/101/171      alive  26 of  75 fewest 10 founders lost 43 (7 alive at letters) legacy  2120 moves 13 (11 strangers) 6 s
+long_road seed   8 balanced   aim met day 74  ages 10/57/57/57/73         alive  54 of  55 fewest 50 founders lost  1 (49 alive at letters) legacy  2430 moves 8 (4 strangers) 6 s
+
+long_road, 4 islands (seeds 5-8), 6 years, 1 change a season, up to 3 held:
+player     aim met   by y4  by y6  by y8  median day  letters  died out  turned  moves to the aim
+steward     1 of 4       1      1      1          70        4         0  +0 −0   6
+balanced    4 of 4       4      4      4         111        4         0  +0 −0   12
+
+"turned": islands where this player met the aim and the untouched island did not (+), and the other way about (−).

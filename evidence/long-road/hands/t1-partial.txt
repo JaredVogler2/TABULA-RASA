@@ -1,0 +1,26 @@
+long_road seed   1 none       aim met day 221 ages 9/49/80/95/220         alive  69 of  78 fewest 47 legacy  2670 moves 0 53 s
+long_road seed   1 bounty     aim met day 292 ages 9/49/66/99/291         alive  93 of  97 fewest 50 legacy  2995 moves 30 100 s
+long_road seed   1 savvy      aim met day 248 ages 9/31/60/63/247         alive  78 of  86 fewest 50 legacy  2805 moves 25 (9 strangers) 104 s
+long_road seed   1 scholar    aim met day 131 ages 9/30/52/52/130         alive  63 of  69 fewest 50 legacy  2595 moves 14 (7 strangers) 33 s
+long_road seed   1 strangers  aim met day 153 ages 9/31/60/63/152         alive  70 of  81 fewest 50 legacy  2725 moves 16 (16 strangers) 49 s
+long_road seed   5 none       aim met day 291 ages 10/61/95/174/290       alive  53 of  80 fewest 24 legacy  2525 moves 0 35 s
+long_road seed   5 bounty     aim met day 294 ages 11/50/80/97/293        alive  96 of  99 fewest 50 legacy  2970 moves 30 123 s
+long_road seed   5 savvy      aim met day 291 ages 10/58/105/140/247      alive  50 of 108 fewest  2 legacy  2445 moves 30 (16 strangers) 15 s
+long_road seed   5 scholar    aim met day 169 ages 10/46/49/168/168       alive  54 of  66 fewest 45 legacy  2565 moves 17 (5 strangers) 42 s
+long_road seed   5 strangers  aim met day 301 ages 10/58/105/140/254      alive  50 of 110 fewest  2 legacy  2520 moves 31 (31 strangers) 20 s
+long_road seed   5 random     aim met day 292 ages 10/50/167/167/291      alive  57 of 109 fewest  6 legacy  2460 moves 30 (4 strangers) 36 s
+long_road seed   5 newcomers  aim not met     ages 10/49/-1/-1/-1         alive   0 of 150 fewest  0 legacy   419 moves 20 11 s
+long_road seed   5 saboteur   aim not met     ages 11/59/-1/-1/-1         alive   1 of  80 fewest  1 legacy   900 moves 40 8 s
+long_road seed   6 none       aim met day 323 ages 9/52/122/149/260       alive  52 of  85 fewest 18 legacy  2455 moves 0 53 s
+long_road seed   9 none       aim not met     ages 7/168/-1/-1/-1         alive  30 of  72 fewest 10 legacy  1700 moves 0 18 s
+long_road seed   9 bounty     aim met day 287 ages 8/61/80/107/286        alive  98 of 103 fewest 48 legacy  3020 moves 29 88 s
+long_road seed   9 savvy      aim met day 251 ages 7/42/97/97/217         alive  50 of 100 fewest  9 legacy  2375 moves 26 (11 strangers) 11 s
+long_road seed   9 scholar    aim met day 216 ages 8/30/150/150/150       alive  53 of 109 fewest  4 legacy  2445 moves 22 (14 strangers) 7 s
+long_road seed   9 strangers  aim met day 242 ages 7/42/97/97/223         alive  51 of 103 fewest  9 legacy  2485 moves 25 (25 strangers) 11 s
+long_road seed   9 random     aim met day 327 ages 9/97/153/224/326       alive  54 of 116 fewest  6 legacy  2475 moves 33 (4 strangers) 28 s
+long_road seed   9 newcomers  aim not met     ages 8/86/361/361/-1        alive  29 of 174 fewest 11 legacy  1695 moves 40 31 s
+long_road seed   9 saboteur   aim not met     ages 11/-1/-1/-1/-1         alive   0 of  50 fewest  0 legacy   150 moves 4 1 s
+long_road seed  10 none       aim not met     ages 12/100/-1/-1/-1        alive  25 of  72 fewest  4 legacy  1315 moves 0 26 s
+long_road seed  10 bounty     aim met day 209 ages 10/61/74/102/208       alive  90 of  94 fewest 50 legacy  2965 moves 21 107 s
+long_road seed  10 savvy      aim met day 211 ages 12/31/122/122/136      alive  54 of 103 fewest 10 legacy  2470 moves 22 (12 strangers) 15 s
+long_road seed  10 scholar    aim not met     ages 11/30/70/70/-1         alive   0 of  58 fewest  0 legacy   963 moves 8 (8 strangers) 4 s

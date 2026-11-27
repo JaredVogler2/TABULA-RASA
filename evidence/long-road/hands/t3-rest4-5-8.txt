@@ -1,0 +1,20 @@
+long_road seed   5 balanced   aim met day 138 ages 10/46/81/81/137        alive  60 of  65 fewest 50 founders lost  5 (45 alive at letters) legacy  2600 moves 11 (4 strangers) 22 s
+long_road seed   5 scholar    aim met day 138 ages 10/46/81/81/137        alive  60 of  65 fewest 50 founders lost  5 (45 alive at letters) legacy  2600 moves 11 (4 strangers) 21 s
+long_road seed   5 bounty     aim not met     ages 11/51/67/162/-1        alive  62 of  72 fewest 42 founders lost 10 legacy  2145 moves 12 45 s
+long_road seed   6 balanced   aim met day 173 ages 10/25/73/73/172        alive  64 of  77 fewest 47 founders lost 11 (39 alive at letters) legacy  2645 moves 14 (5 strangers) 30 s
+long_road seed   6 scholar    aim met day 173 ages 10/25/73/73/172        alive  64 of  77 fewest 47 founders lost 11 (39 alive at letters) legacy  2645 moves 14 (5 strangers) 27 s
+long_road seed   6 bounty     aim met day 225 ages 8/59/100/124/224       alive  66 of  73 fewest 44 founders lost  7 (43 alive at letters) legacy  2685 moves 12 39 s
+long_road seed   7 balanced   aim met day 137 ages 10/72/85/109/136       alive  62 of  68 fewest 50 founders lost  6 (44 alive at letters) legacy  2630 moves 10 (3 strangers) 17 s
+long_road seed   7 scholar    aim met day 137 ages 10/72/85/109/136       alive  62 of  68 fewest 50 founders lost  6 (44 alive at letters) legacy  2630 moves 10 (3 strangers) 17 s
+long_road seed   7 bounty     aim met day 140 ages 9/50/75/87/139         alive  68 of  73 fewest 47 founders lost  5 (45 alive at letters) legacy  2645 moves 8 19 s
+long_road seed   8 balanced   aim met day 137 ages 10/63/66/74/136        alive  58 of  64 fewest 50 founders lost  6 (44 alive at letters) legacy  2560 moves 11 (4 strangers) 17 s
+long_road seed   8 scholar    aim met day 137 ages 10/63/66/74/136        alive  58 of  64 fewest 50 founders lost  6 (44 alive at letters) legacy  2560 moves 11 (4 strangers) 18 s
+long_road seed   8 bounty     aim met day 138 ages 8/58/69/107/137        alive  52 of  59 fewest 47 founders lost  6 (44 alive at letters) legacy  2430 moves 8 16 s
+
+long_road, 4 islands (seeds 5-8), 6 years, 1 change a season, each kind resting 4 seasons after use:
+player     aim met   by y4  by y6  by y8  median day  letters  died out  turned  moves to the aim
+balanced    4 of 4       3      4      4         138        4         0  +0 −0   11
+scholar     4 of 4       3      4      4         138        4         0  +0 −0   11
+bounty      3 of 4       2      3      3         140        3         0  +0 −0   8
+
+"turned": islands where this player met the aim and the untouched island did not (+), and the other way about (−).

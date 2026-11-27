@@ -1,0 +1,27 @@
+reproduced h1-scarcity r04 seed 1: published 996bbb69191014d8 = 996bbb69191014d8
+reproduced h1-scarcity r04 seed 10: published ced02f369ce2a8f3 = ced02f369ce2a8f3
+reproduced h1-scarcity r07 seed 3: published 0c8516c718fd6714 = 0c8516c718fd6714
+reproduced h1-scarcity r07 seed 12: published e62abf387f969391 = e62abf387f969391
+reproduced h1-scarcity r13 seed 5: published 2252ff3eebaddd4b = 2252ff3eebaddd4b
+reproduced h1-scarcity r13 seed 14: published 2d8253d5357e025d = 2d8253d5357e025d
+reproduced h2-mobility m10 seed 7: published 641c70d42cb4491a = 641c70d42cb4491a
+reproduced h2-mobility m10 seed 16: published 5c4024f28bcbc153 = 5c4024f28bcbc153
+reproduced h2-mobility m20 seed 9: published 1873822920194ac5 = 1873822920194ac5
+reproduced h3-communication h2r seed 2: published a8f17935e1e2968e = a8f17935e1e2968e
+reproduced h3-communication h2r seed 11: published c5cfc7ef14462b9b = c5cfc7ef14462b9b
+reproduced h3-communication h9r seed 4: published 10ea90c64e584b3e = 10ea90c64e584b3e
+reproduced h3-communication h9r seed 13: published 80743330fb62e245 = 80743330fb62e245
+reproduced h4-diversity d02 seed 6: published 08a3666c3b1645f3 = 08a3666c3b1645f3
+reproduced h4-diversity d02 seed 15: published c06c781a9fd5d03b = c06c781a9fd5d03b
+reproduced h4-diversity d10 seed 8: published 55bc31507cbe4c13 = 55bc31507cbe4c13
+reproduced h5-cadence c12 seed 1: published 22d9eab855c879bc = 22d9eab855c879bc
+reproduced h5-cadence c12 seed 10: published 0023cf91c2200cab = 0023cf91c2200cab
+reproduced h5-cadence c48 seed 3: published 8068578d352e3407 = 8068578d352e3407
+reproduced h5-cadence c48 seed 12: published 78f07b5c03c299c4 = 78f07b5c03c299c4
+reproduced h6-institutions off seed 5: published 34a8e9feee7bad92 = 34a8e9feee7bad92
+reproduced h6-institutions off seed 14: published dd1f93bbd6cb5e70 = dd1f93bbd6cb5e70
+reproduced h6-institutions scripted seed 7: published 660b227ca9d8c95b = 660b227ca9d8c95b
+reproduced h6-institutions scripted seed 16: published 71e18b027b2c44ba = 71e18b027b2c44ba
+
+pilot (made by engine 0.7.0), re-run by engine 0.8.0: 24 of 24 cells end on the published digest (52 s).
+exit 0

@@ -1,0 +1,15 @@
+first-light-planner-1           30 days  alive  50 of  50  events   26483  405e30075e737c90  2.8 s  same
+first-light-planner-2           30 days  alive  50 of  50  events   26606  c696029d89b0808d  2.1 s  same
+first-light-reflex-3            20 days  alive  50 of  50  events   14579  1738f1b6b25becf0  0.5 s  same
+first-light-no-agreements-5     20 days  alive  50 of  50  events   17324  bd05fd5e85c79c3f  1.0 s  same
+long-winter-scripted-1          30 days  alive  32 of  50  events   24752  68c96926c5f80efb  1.6 s  same
+thin-commons-2                  20 days  alive  50 of  50  events   17401  97d844ef5456a3bc  1.0 s  same
+two-shores-1                    20 days  alive  50 of  50  events   17183  15a91929502b7ca3  1.1 s  same
+dry-year-4                      25 days  alive  50 of  50  events   20418  e672b05e98f8905c  1.2 s  same
+first-light-mixed-6             15 days  alive  50 of  50  events   11389  4dfcdf943496ff19  0.3 s  same
+newcomers-7                     15 days  alive  58 of  58  events   15349  c9934ebd53594cd1  0.8 s  same
+crowded-8                       12 days  alive 114 of 120  events   22402  042008c8ca878620  0.8 s  same
+first-light-three-years-2      124 days  alive   5 of  50  events   88482  53b8e026a39b35e6  7.4 s  same
+first-light-six-years-1        240 days  alive  50 of  50  events  232597  d4699b14239f9862  30.4 s  same
+engine 0.8.0 reproduces all 13 worlds recorded by engine 0.7.0
+exit 0
