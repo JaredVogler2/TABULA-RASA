@@ -13,7 +13,7 @@ import {
   HemisphereLight,
   Mesh,
   type Object3D,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   Points,
   ShaderMaterial,
   SphereGeometry,
@@ -52,7 +52,8 @@ export function buildAtmosphere(extent: number, quality: "low" | "medium" | "hig
   sun.shadow.camera.far = extent * 3.2;
   sun.shadow.bias = -0.0008;
   sun.shadow.normalBias = 0.06;
-  sun.shadow.radius = 3.5;
+  // (3.5 until D-054: the filter this three.js uses scatters its five samples, and over that width it showed as stipple)
+  sun.shadow.radius = 2.2;
 
   const moon = new DirectionalLight(new Color("#a9c2ee"), 0);
   moon.position.set(-0.45, 0.8, -0.35).multiplyScalar(extent);
@@ -234,7 +235,11 @@ export function buildAtmosphere(extent: number, quality: "low" | "medium" | "hig
     state,
     configure(renderer: WebGLRenderer) {
       renderer.shadowMap.enabled = quality !== "low";
-      renderer.shadowMap.type = PCFSoftShadowMap;
+      // (the soft variant asked for here until D-054 no longer exists in this three.js: it warned and fell back to this one)
+      renderer.shadowMap.type = PCFShadowMap;
+      // the shadow map is redrawn when the renderer says so, not on every frame (WorldRenderer, D-054)
+      renderer.shadowMap.autoUpdate = false;
+      renderer.shadowMap.needsUpdate = true;
       const pr = renderer.getPixelRatio();
       starUniforms.uScale!.value = pr;
       dropUniforms.uScale!.value = pr;

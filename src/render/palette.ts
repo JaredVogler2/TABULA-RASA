@@ -31,6 +31,8 @@ export const SNOW = c("#eef2f4");
 export const WET_SOIL = c("#665539");
 export const STREAM_BED = c("#56655a");
 export const FRESH_DEEP = c("#175f5e");
+/** Fresh water where it is a hand deep: almost no colour of its own, so that the bed shows through it (D-054). */
+export const FRESH_CLEAR = c("#86b3a4");
 
 export const WATER_SHALLOW = c("#7fd6cf");
 export const WATER_MID = c("#328ca2");
@@ -99,7 +101,8 @@ export function lightAt(tickOfDay: number, dayLength: number, yearPos: number, o
   const hgt = Math.cos((Math.PI * d) / (2 * half)) * (Math.abs(d) <= 2 * half ? 1 : -1);
   const elevated = Math.abs(d) < half ? hgt : -Math.min(1, (Math.abs(d) - half) / 14);
   const seasonal = Math.sin(2 * Math.PI * (yearPos - 0.125));
-  const maxEl = (50 + 13 * seasonal) * (Math.PI / 180);
+  // (50° + 13° until D-054: a lower sun lays longer shadows, and the island's relief reads from far off)
+  const maxEl = (44 + 12 * seasonal) * (Math.PI / 180);
   const el = Math.max(0.05, elevated) * maxEl;
   const az = (d / half) * (Math.PI / 2) * 0.92 + Math.PI * 0.12;
   out.sunDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).normalize();

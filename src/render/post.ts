@@ -45,7 +45,7 @@ const MiniatureShader = {
       float amt = smoothstep(uBand, uBand + 0.42, d);
       float radius = amt * uBlur;
       vec3 col = texture2D(tDiffuse, vUv).rgb;
-      if (radius > 0.35) {
+      if (radius > 1.5) {
         // golden-angle disc; brighter samples weigh more so highlights bloom into discs
         vec3 acc = col;
         float wsum = 1.0;
@@ -59,6 +59,10 @@ const MiniatureShader = {
           wsum += w;
         }
         col = acc / wsum;
+      } else if (radius > 0.35) {
+        // a blur of a pixel or so needs four looks, not thirteen: from far off, most of the frame is here
+        vec2 o = vec2(0.62, 0.38) * radius / uRes;
+        col = (col + texture2D(tDiffuse, vUv + o).rgb + texture2D(tDiffuse, vUv - o).rgb + texture2D(tDiffuse, vUv + vec2(-o.y, o.x)).rgb + texture2D(tDiffuse, vUv - vec2(-o.y, o.x)).rgb) * 0.2;
       }
       vec2 q = vUv - 0.5;
       float vig = 1.0 - uVignette * smoothstep(0.25, 0.95, dot(q, q) * 2.2);
