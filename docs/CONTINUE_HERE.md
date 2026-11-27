@@ -4,7 +4,7 @@ Read `CLAUDE.md`, `prompts/00-MASTER.md`, `prompts/README.md`, then this file, t
 
 ## Graphics update (2026-11-27)
 
-D-053 builds on `6ec20bc` (pull request 9). The citizen geometry lives in `src/render/citizenGeometry.ts`.
+D-053 builds on `6ec20bc` (pull request 9). The renderer and desktop framing are in `a4fce54`. The citizen geometry lives in `src/render/citizenGeometry.ts`.
 Pose, visibility and equipment still follow the worker frame in `src/render/citizens.ts`. Use
 `pnpm exec vitest run src/render/citizens.test.ts` to check the batched limbs and props, and the
 [studio queries in Evidence](EVIDENCE.md#citizen-and-island-realism-d-053-2026-11-27) to reproduce the captures.

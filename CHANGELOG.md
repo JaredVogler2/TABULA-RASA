@@ -5,7 +5,7 @@ What changed, pull request by pull request. Dates are UTC. Versions named here a
 thing was done is in [`docs/DECISIONS.md`](docs/DECISIONS.md); what backs each claim is in
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md).
 
-## Citizen and island realism (2026-11-27)
+## Pull request 10 — citizen and island realism (2026-11-27)
 
 - Citizens have shaped faces and hands, fitted woven tunics, boots, and articulated walking and work poses.
 - Follow moves closer. Distant citizens use simpler meshes, and tools and loads are drawn only when visible.

@@ -438,3 +438,8 @@ The studio also rendered the shore close-up on Medium at 390 × 844, with 68 dra
 submitted triangles. The local Node 22 production build and client bundle scan passed. The unit
 suite reported 509 passed and 10 skipped. The skips require PostgreSQL. The renderer tests exercise
 the closer camera aim, the switch to cheaper meshes at distance and visibility of state-driven props.
+
+The desktop and phone game flows sampled a followed citizen as they walked. The closer camera holds
+the body within the visible map, with the centre-column toolbar measured on desktop. First Light
+seed 7 with the reflex baseline logs its first living citizen in the Chronicle on the step to tick 325.
+The desktop flow steps to at least 336 before testing a jump from that entry.
