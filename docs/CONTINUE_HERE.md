@@ -34,6 +34,16 @@ types and every generated-file check; the legacy scripts above; `tests/e2e/goal.
 (2 passed). The whole browser suite had not finished here when this was written: CI runs it on every push,
 and GitHub has its result (`docs/EVIDENCE.md` § The Long Road).
 
+## Graphics, second pass (2026-11-27)
+
+D-054: a frame made cheaper, and the saving spent on leaves, water, rock and the sky's light
+(`src/render/detail.ts`, `flora.ts`, `terrain.ts`, `water.ts`; tests in `src/render/realism.test.ts`).
+`node scripts/frame-cost.mjs` sets one build beside another by processor time, which holds on a busy machine
+where the wall clock does not. `stats().drawCalls` and `.triangles` are now the dearer of the last two frames
+(shadows are redrawn every second frame); `drawCallsMean` and `trianglesMean` are new. Left for a next pass,
+by the one who made it: a still toward the sun to judge the glints and the light through a crown's rim; the
+leaf texture reads woolly close in; thin rock beds read as ruled lines; shadow grain on smooth crowns.
+
 ## Graphics update (2026-11-27)
 
 D-053 builds on `6ec20bc` (pull request 9). The renderer and desktop framing are in `a4fce54`. The citizen geometry lives in `src/render/citizenGeometry.ts`.

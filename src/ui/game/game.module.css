@@ -958,6 +958,15 @@
   border-color: rgba(93, 67, 43, 0.5);
   transform: translateY(-1px);
 }
+/* a change that cannot be made now (the season's is spent, or one is being made) looks it */
+.card:disabled {
+  opacity: 0.55;
+}
+.card:disabled:hover {
+  background: rgba(255, 255, 255, 0.42);
+  border-color: rgba(93, 67, 43, 0.25);
+  transform: none;
+}
 .card[aria-pressed="true"],
 .card[aria-checked="true"] {
   border-color: var(--ink-700);

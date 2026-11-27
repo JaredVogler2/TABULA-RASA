@@ -143,3 +143,17 @@ of different skill set it where an island left alone rarely meets it and a hand 
 does. Evidence: [`docs/EVIDENCE.md`](EVIDENCE.md#the-long-road-d-055-to-d-058-2026-11-27). PARTIAL, not PASS,
 because the thing this was built for — whether a person finds it a game worth playing — has not been tried by
 anyone, and nothing was seen on a device.
+
+**More realism at no cost in speed (D-054, 2026-11-27) — PARTIAL.** Asked for by the owner in the same message
+(intervention 23): could the graphics be made more realistic "without damaging speed and run time". A frame was
+made cheaper first — shadows redrawn every second frame and cast by coarse stand-ins, plainer crowns and
+thinner grass far off, noise that was computed for every pixel read from three small textures made in the
+browser — and what was saved was spent on softer, leafier crowns, clear streams over their beds, rain as rings
+on the sea, a wet edge to the sand, dimmer hollows and ground under trees, and rock that shows its bedding.
+The widest view on the high preset submits 746,236 triangles a frame on average where it submitted 1,773,875,
+in no more draw calls; on a software renderer the processor time a frame takes is lower in five of the six
+cases measured and level in the sixth. Evidence:
+[`docs/EVIDENCE.md`](EVIDENCE.md#more-realism-at-no-cost-in-speed-d-054-2026-11-27). PARTIAL because there is
+no frame rate to report (no graphics chip here), nothing was judged in motion or on a device, the wall clock
+on a busy machine could not say which build was quicker, and the gain is plain close in and modest from far
+off — the stills say so.
